@@ -1,0 +1,37 @@
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 60px;
+    width: 100%;
+    font-size: x-large;
+    background-color: grey;
+    padding: 5px;
+}
+
+nav div {
+    display: flex;
+}
+
+nav div a {
+    display: flex;
+    align-items: center;
+}
+
+.nav-img {
+    height: 45px;
+    width: 45px;
+}
+
+#titleBird {
+    font-family: 'Fredericka the Great'
+}
+
+#titleAlert {
+    font-family: 'Bungee Spice'
+}
+
+.text-link {
+    color: inherit;
+    text-decoration: inherit;
+}
