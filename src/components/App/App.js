@@ -4,6 +4,7 @@ import Nav from '../Nav/Nav';
 import Home from '../Home/Home';
 import Saved from '../Saved/Saved';
 import Settings from '../Settings/Settings';
+import EmptyState from '../EmptyState/EmptyState';
 
 const App = () => {
 
@@ -16,6 +17,7 @@ const App = () => {
           <Route path='/' element={<Home />}/>
           <Route path='/saved' element={<Saved />}/>
           <Route path='/settings' element={<Settings />}/>
+          <Route path="*" element={<EmptyState />} />
         </Routes>
       </main>
     </>
