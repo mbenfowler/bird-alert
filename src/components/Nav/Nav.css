@@ -7,6 +7,8 @@ nav {
     font-size: x-large;
     background-color: grey;
     padding: 5px;
+    position: sticky;
+    top: 0;
 }
 
 nav div {

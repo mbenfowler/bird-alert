@@ -12,7 +12,7 @@ const getBirdsData = (keys) => {
     keys.forEach(async key => {
         let thisBirdData;
         await getBirdData(key).then(result => thisBirdData = result)
-        birdsData.push(thisBirdData)
+        birdsData.push(thisBirdData[0])
     });
 
     return birdsData
