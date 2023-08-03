@@ -1,21 +1,16 @@
 import { useState, useContext } from "react"
 import './Card.css'
-import WatchedBirdContext from "../WatchedBirdsContext/WatchedBirdsContext"
+import BirdsContext from "../BirdsContext/BirdsContext"
 
 const Card = ({ bird }) => {
-    const [isChecked, setIsChecked] = useState(false)
-    const { setWatchedBirds } = useContext(WatchedBirdContext)
+    const { birds, setBirds } = useContext(BirdsContext)
+    const [isToggled, setIsToggled] = useState(false)
 
-    const handleClick = (e) => {
-        console.log(e.target)
-        setIsChecked(!isChecked)
-        setWatchedBirds((prev) => {
-            if (!isChecked) {
-                return [...prev, e.target]
-            } else {
-                return prev.filter(bird => bird.id !== e.target.id)
-            }
-        })
+    const handleClick = () => {
+        const thisBird = birds.find(b => b.speciesCode === bird.speciesCode)
+        thisBird.isChecked = !thisBird.isChecked
+        setIsToggled(!isToggled)
+        setBirds(birds)
     }
 
     return (
@@ -25,7 +20,7 @@ const Card = ({ bird }) => {
                 <p>Bird name: {bird.comName}</p>
                 <p className='sci-name'>{`(${bird.sciName})`}</p>
             </div>
-            <input type="checkbox" id={bird.comName} name={bird.comName} value={isChecked} onClick={(e) => handleClick(e)} />
+            <input type="checkbox" checked={bird.isChecked ? 'checked' : ''} id={bird.speciesCode} name={bird.comName} value={bird.isChecked} onChange={handleClick} />
         </div>
     )
 }

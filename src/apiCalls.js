@@ -11,8 +11,8 @@ const getBirdsData = (keys) => {
     let birdsData = [];
     keys.forEach(async key => {
         let thisBirdData;
-        await getBirdData(key).then(result => thisBirdData = result)
-        birdsData.push(thisBirdData[0])
+        await getBirdData(key).then(result => thisBirdData = {...result[0], isChecked: false})
+        birdsData.push(thisBirdData)
     });
 
     return birdsData
