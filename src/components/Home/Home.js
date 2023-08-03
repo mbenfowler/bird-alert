@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react"
+import { useContext } from "react"
 import BirdsList from "../BirdsList/BirdsList"
 import BirdsContext from "../BirdsContext/BirdsContext"
 import './Home.css'
