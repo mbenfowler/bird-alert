@@ -7,6 +7,14 @@
     padding: 10px;
 }
 
+.card {
+    justify-content: space-between;
+}
+
+.card input {
+    align-self: flex-start;
+}
+
 .bird-img {
     width: 50%;
     height: auto;
