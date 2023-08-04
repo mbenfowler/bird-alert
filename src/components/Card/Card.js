@@ -17,7 +17,7 @@ const Card = ({ bird }) => {
         <div className='card'>
             <img className='bird-img' src={process.env.PUBLIC_URL + 'images/testBirdImg.png'} alt={`a ${bird.comName}`}/>
             <div className='bird-details'>
-                <p>Bird name: {bird.comName}</p>
+                <p>{bird.comName}</p>
                 <p className='sci-name'>{`(${bird.sciName})`}</p>
             </div>
             <input type="checkbox" checked={bird.isChecked ? 'checked' : ''} id={bird.speciesCode} name={bird.comName} value={bird.isChecked} onChange={handleClick} />

@@ -26,12 +26,10 @@ const App = () => {
       (async() => {
           try {
               const birdKeys = await getBirdKeysByLocation(user.location)
-              const birdsData = getBirdsData(birdKeys)
-              // const birdsData = getBirdsData(mockBirdKeys)
+              const birdsData = await getBirdsData(birdKeys)
+              // const birdsData = await getBirdsData(mockBirdKeys)
               setBirds(birdsData)
-              setTimeout(() => {
-                  setIsLoaded(true)
-              }, 1000)
+              setIsLoaded(true)
           } catch (error) {
               handleNetworkErrors(error)
           }
