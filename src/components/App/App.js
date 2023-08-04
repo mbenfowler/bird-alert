@@ -11,17 +11,23 @@ import EmptyState from '../EmptyState/EmptyState';
 import BirdsContext from '../BirdsContext/BirdsContext';
 
 const App = () => {
+  const [user, setUser] = useState({
+        name: "",
+        location: "",
+        emailAddress: "",
+        phoneNumber: ""
+  })
   const [birds, setBirds] = useState([])
   const [isLoaded, setIsLoaded] = useState(false)
   const [networkError, setNetworkError] = useState(null)
-  const dummyLoc = 'US-GA-139'
 
   useEffect(() => {
+    if (user.location.length) {
       (async() => {
           try {
-              // const birdKeys = await getBirdKeysByLocation(dummyLoc)
-              // const birdsData = await getBirdsData(birdKeys)
-              const birdsData = getBirdsData(mockBirdKeys)
+              const birdKeys = await getBirdKeysByLocation(user.location)
+              const birdsData = getBirdsData(birdKeys)
+              // const birdsData = getBirdsData(mockBirdKeys)
               setBirds(birdsData)
               setTimeout(() => {
                   setIsLoaded(true)
@@ -30,7 +36,8 @@ const App = () => {
               handleNetworkErrors(error)
           }
       })()
-  }, [])
+    }
+  }, [user.location])
 
   const handleNetworkErrors = (error) => {
       setNetworkError(error.message)
@@ -38,11 +45,11 @@ const App = () => {
 
   return (
     <>
-      <BirdsContext.Provider value={{birds, setBirds}}>
+      <BirdsContext.Provider value={{user, setUser, birds, setBirds}}>
         <Nav />
         <main className="App">
           <Routes>
-            <Route path='/' element={<Home isLoaded={isLoaded}/>}/>
+            <Route path='/' element={user.location ? <Home isLoaded={isLoaded}/> : 'Go to settings and set a location'}/>
             <Route path='/saved' element={<Saved />}/>
             <Route path='/settings' element={<Settings />}/>
             <Route path="*" element={<EmptyState />} />

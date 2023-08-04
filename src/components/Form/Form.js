@@ -1,27 +1,26 @@
-import { useState } from 'react'
+import { useState, useContext } from 'react'
+import BirdsContext from '../BirdsContext/BirdsContext'
 import './Form.css'
 
 const Form = () => {
+    const { user, setUser } = useContext(BirdsContext)
+
     const [form, setForm] = useState({
-        name: "",
-        location: "",
-        emailAddress: "",
-        phoneNumber: ""
+        name: user.name,
+        location: user.location,
+        emailAddress: user.emailAddress,
+        phoneNumber: user.phoneNumber
     })
 
-    const [user, setUser] = useState([])
-    
     const handleChange = (e) => {
         setForm(prev => ({...prev, [e.target.name]: e.target.value}))
     }
 
     const handleSubmit = (e) => {
         console.log(form)
-        setUser(prev => ([...prev, form]))
+        setUser(form)
         e.preventDefault()
     }
-
-    console.log(user)
 
     return (
         <form>
