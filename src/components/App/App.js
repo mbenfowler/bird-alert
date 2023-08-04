@@ -26,8 +26,8 @@ const App = () => {
       (async() => {
           try {
               const birdKeys = await getBirdKeysByLocation(user.location)
-              const birdsData = await getBirdsData(birdKeys)
-              // const birdsData = await getBirdsData(mockBirdKeys)
+              // const birdsData = await getBirdsData(birdKeys)
+              const birdsData = await getBirdsData(mockBirdKeys)
               setBirds(birdsData)
               setIsLoaded(true)
           } catch (error) {

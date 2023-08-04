@@ -17,7 +17,6 @@ const Form = () => {
     }
 
     const handleSubmit = (e) => {
-        console.log(form)
         setUser(form)
         e.preventDefault()
     }

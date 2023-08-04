@@ -1,0 +1,20 @@
+[
+    {
+        "sciName": "Anser cygnoides",
+        "comName": "Swan Goose",
+        "speciesCode": "swagoo1",
+        "category": "species",
+        "taxonOrder": 264.0,
+        "bandingCodes": [],
+        "comNameCodes": [
+            "SWGO"
+        ],
+        "sciNameCodes": [
+            "ANCY"
+        ],
+        "order": "Anseriformes",
+        "familyCode": "anatid1",
+        "familyComName": "Ducks, Geese, and Waterfowl",
+        "familySciName": "Anatidae"
+    }
+]
