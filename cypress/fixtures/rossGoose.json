@@ -1,0 +1,20 @@
+[
+    {
+        "sciName": "Anser rossii",
+        "comName": "Ross's Goose",
+        "speciesCode": "rosgoo",
+        "category": "species",
+        "taxonOrder": 256.0,
+        "bandingCodes": [
+            "ROGO"
+        ],
+        "comNameCodes": [],
+        "sciNameCodes": [
+            "ANRO"
+        ],
+        "order": "Anseriformes",
+        "familyCode": "anatid1",
+        "familyComName": "Ducks, Geese, and Waterfowl",
+        "familySciName": "Anatidae"
+    }
+]

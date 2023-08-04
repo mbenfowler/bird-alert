@@ -1,0 +1,20 @@
+[
+    {
+        "sciName": "Anser caerulescens",
+        "comName": "Snow Goose",
+        "speciesCode": "snogoo",
+        "category": "species",
+        "taxonOrder": 252.0,
+        "bandingCodes": [
+            "SNGO"
+        ],
+        "comNameCodes": [],
+        "sciNameCodes": [
+            "ANCA"
+        ],
+        "order": "Anseriformes",
+        "familyCode": "anatid1",
+        "familyComName": "Ducks, Geese, and Waterfowl",
+        "familySciName": "Anatidae"
+    }
+]

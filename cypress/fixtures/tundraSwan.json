@@ -1,0 +1,22 @@
+[
+    {
+        "sciName": "Cygnus columbianus",
+        "comName": "Tundra Swan",
+        "speciesCode": "tunswa",
+        "category": "species",
+        "taxonOrder": 360.0,
+        "bandingCodes": [
+            "TUSW"
+        ],
+        "comNameCodes": [
+            "BESW"
+        ],
+        "sciNameCodes": [
+            "CYCO"
+        ],
+        "order": "Anseriformes",
+        "familyCode": "anatid1",
+        "familyComName": "Ducks, Geese, and Waterfowl",
+        "familySciName": "Anatidae"
+    }
+]
