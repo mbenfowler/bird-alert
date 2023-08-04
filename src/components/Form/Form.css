@@ -1,0 +1,10 @@
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    display: flex;
+    justify-content: space-around;
+    padding: 2%;
+}
