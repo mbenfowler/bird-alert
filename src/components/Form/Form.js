@@ -31,8 +31,9 @@ const Form = () => {
             <label>
                 Location:
                 <select name="location" value={form.location} onChange={handleChange}>
+                    <option value="">Select your region</option>
                     <option value="US-GA-139">US-GA-139</option>
-                    <option value="US-GA-140">US-GA-140</option>
+                    <option value="US-NV-510">US-NV-510</option>
                 </select>
             </label>
             <label>
