@@ -1,6 +1,10 @@
+import Form from "../Form/Form"
+
 const Settings = () => {
     return (
-        <div></div>
+        <div>
+            <Form />
+        </div>
     )
 }
 

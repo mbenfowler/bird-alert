@@ -4,7 +4,7 @@ import BirdsContext from "../BirdsContext/BirdsContext"
 import './Home.css'
 
 const Home = ({ isLoaded }) => {
-    const { birds, setBirds } = useContext(BirdsContext)
+    const { birds } = useContext(BirdsContext)
     
     return (
         <>
