@@ -1,10 +1,11 @@
+import './Settings.css'
 import Form from "../Form/Form"
 
 const Settings = () => {
     return (
-        <div>
+        <section id='userSettings'>
             <Form />
-        </div>
+        </section>
     )
 }
 

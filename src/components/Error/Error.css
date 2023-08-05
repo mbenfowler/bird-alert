@@ -1,0 +1,12 @@
+.error {
+    height: 90%;
+    background-color: lightgray;
+    font-family: 'Fredericka the Great';
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: xx-large;
+    position: sticky;
+    top: 10%;
+}
