@@ -1,4 +1,5 @@
 import { useContext, useEffect } from 'react'
+import PropTypes from "prop-types"
 import BirdsContext from '../BirdsContext/BirdsContext'
 import './Error.css'
 
@@ -21,3 +22,7 @@ const Error = ({networkError}) => {
 }
 
 export default Error
+
+Error.propTypes = {
+    networkError: PropTypes.string.isRequired
+}

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom"
+import PropTypes from "prop-types"
 import './Nav.css'
 
 const Nav = ({setNetworkError}) => {
@@ -18,3 +19,7 @@ const Nav = ({setNetworkError}) => {
 }
 
 export default Nav
+
+Nav.propTypes = {
+    setNetworkError: PropTypes.func.isRequired
+}
