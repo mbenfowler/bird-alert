@@ -29,3 +29,9 @@
 .sci-name {
     font-style: italic;
 }
+
+@media screen and (min-width: 900px) {
+    .card {
+        width: 300px;
+    }
+}
