@@ -31,8 +31,8 @@ const Form = () => {
                 Location:
                 <select name="location" value={form.location} onChange={handleChange}>
                     <option value="">Select your region</option>
-                    <option value="US-GA-139">US-GA-139</option>
-                    <option value="US-NV-510">US-NV-510</option>
+                    <option value="US-GA-139">Gainesville, GA</option>
+                    <option value="US-NV-510">Carson City, NV</option>
                 </select>
             </label>
             <label>
