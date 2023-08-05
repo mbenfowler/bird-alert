@@ -8,7 +8,7 @@ import Error from '../Error/Error';
 import Home from '../Home/Home';
 import Saved from '../Saved/Saved';
 import Settings from '../Settings/Settings';
-import EmptyState from '../EmptyState/EmptyState';
+import NotFound from '../NotFound/NotFound';
 import BirdsContext from '../BirdsContext/BirdsContext';
 
 const App = () => {
@@ -48,10 +48,10 @@ const App = () => {
         <Nav setNetworkError={setNetworkError}/>
         <main className="App">
             <Routes>
-              <Route path='/' element={user.location ? <Home isLoaded={isLoaded}/> : <section id='init'><p id='initText'>Go to settings and set a location</p></section>}/>
+              <Route path='/' element={networkError ? <Error networkError={networkError} /> : user.location ? <Home isLoaded={isLoaded}/> : <section id='init'><p id='initText'>Go to settings and set a location</p></section>}/>
               <Route path='/saved' element={<Saved />}/>
-              <Route path='/settings' element={networkError ? <Error networkError={networkError} /> : <Settings />}/>
-              <Route path="*" element={<EmptyState />} />
+              <Route path='/settings' element={<Settings />}/>
+              <Route path="*" element={<NotFound />} />
             </Routes>
         </main>
       </BirdsContext.Provider>

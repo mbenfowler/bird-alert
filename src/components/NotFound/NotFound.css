@@ -1,0 +1,16 @@
+#notFound {
+    font-family: 'Fredericka the Great';
+    font-size: xx-large;
+    height: 100%;
+    background-color: lightgray;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#notFound button {
+    height: 100%;
+    width: 100px;
+    border-radius: 25px;
+    cursor: pointer;
+}

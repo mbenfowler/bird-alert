@@ -10,7 +10,7 @@ const Error = ({networkError}) => {
         setUser(prev => {
             return ({...prev, location: ""})
         })
-    }, [])
+    }, [setUser])
     
     return (
         <section className='error'>

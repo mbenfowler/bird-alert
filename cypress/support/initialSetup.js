@@ -2,7 +2,7 @@ export const initialSetup = () => {
     cy.get('[href="/settings"] > .nav-img').click()
     .url().should('eq', 'http://localhost:3000/settings')
     .get('select').select('US-GA-139')
-    .get('button').click()
+    .get('form > a').click()
     .get('.text-link').click()
     .url().should('eq', 'http://localhost:3000/')
     .get('.birds-list').children().should('have.length', 5)
