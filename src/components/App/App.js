@@ -4,6 +4,7 @@ import { getBirdKeysByLocation, getBirdsData } from "../../apiCalls"
 import { mockBirdKeys } from "../../mockData/birdKeys"
 import './App.css';
 import Nav from '../Nav/Nav';
+import Error from '../Error/Error';
 import Home from '../Home/Home';
 import Saved from '../Saved/Saved';
 import Settings from '../Settings/Settings';
@@ -44,14 +45,14 @@ const App = () => {
   return (
     <>
       <BirdsContext.Provider value={{user, setUser, birds, setBirds}}>
-        <Nav />
+        <Nav setNetworkError={setNetworkError}/>
         <main className="App">
-          <Routes>
-            <Route path='/' element={user.location ? <Home isLoaded={isLoaded}/> : 'Go to settings and set a location'}/>
-            <Route path='/saved' element={<Saved />}/>
-            <Route path='/settings' element={<Settings />}/>
-            <Route path="*" element={<EmptyState />} />
-          </Routes>
+            <Routes>
+              <Route path='/' element={user.location ? <Home isLoaded={isLoaded}/> : <section id='init'><p id='initText'>Go to settings and set a location</p></section>}/>
+              <Route path='/saved' element={<Saved />}/>
+              <Route path='/settings' element={networkError ? <Error networkError={networkError} /> : <Settings />}/>
+              <Route path="*" element={<EmptyState />} />
+            </Routes>
         </main>
       </BirdsContext.Provider>
     </>

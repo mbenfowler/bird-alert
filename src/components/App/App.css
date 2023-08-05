@@ -3,3 +3,26 @@
     padding: 0;
     box-sizing: border-box;
 }
+
+html,
+body,
+#root {
+    height: 100%;
+}
+
+.App {
+    height: 100%;
+}
+
+#init {
+    background-color: lightgray;
+    height: 90%;
+    text-align: center;
+    position: sticky;
+    top: 10%;
+}
+
+#initText {
+    font-family: 'Fredericka the Great';
+    font-size: xx-large;
+}
