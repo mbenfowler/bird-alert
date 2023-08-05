@@ -4,7 +4,7 @@ import BirdsContext from '../BirdsContext/BirdsContext'
 import './Form.css'
 
 const Form = () => {
-    const { user, setUser } = useContext(BirdsContext)
+    const { user, setUser, setBirds } = useContext(BirdsContext)
 
     const [form, setForm] = useState({
         name: user.name,
@@ -19,6 +19,9 @@ const Form = () => {
 
     const handleSubmit = () => {
         setUser(form)
+        if (!form.location.length) {
+            setBirds([])
+        }
     }
 
     return (
