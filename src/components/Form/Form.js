@@ -1,4 +1,5 @@
 import { useState, useContext } from 'react'
+import { Link } from 'react-router-dom'
 import BirdsContext from '../BirdsContext/BirdsContext'
 import './Form.css'
 
@@ -16,9 +17,8 @@ const Form = () => {
         setForm(prev => ({...prev, [e.target.name]: e.target.value}))
     }
 
-    const handleSubmit = (e) => {
+    const handleSubmit = () => {
         setUser(form)
-        e.preventDefault()
     }
 
     return (
@@ -43,7 +43,7 @@ const Form = () => {
                 Phone #:
                 <input type="text" name='phoneNumber' value={form.phoneNumber} onChange={handleChange} />
             </label>
-            <button onClick={handleSubmit}>Lock in details</button>
+            <Link to='/' onClick={handleSubmit}>Lock in details</Link>
         </form>
     )
 }
