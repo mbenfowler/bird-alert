@@ -1,7 +1,7 @@
 const getBirdKeysByLocation = async (region) => {
     const res = await fetch(`https://api.ebird.org/v2/product/spplist/${region}`, {
         headers: {
-            "X-eBirdApiToken": "f5n5l2qml9if"
+            "X-eBirdApiToken": process.env.REACT_APP_EBIRD_API_KEY
         }
     })
 
