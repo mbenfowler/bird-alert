@@ -1,4 +1,5 @@
 import { useContext } from "react"
+import PropTypes from "prop-types"
 import BirdsList from "../BirdsList/BirdsList"
 import BirdsContext from "../BirdsContext/BirdsContext"
 import './Home.css'
@@ -20,3 +21,7 @@ const Home = ({ isLoaded }) => {
 }
 
 export default Home
+
+Home.propTypes = {
+    isLoaded: PropTypes.bool.isRequired
+};

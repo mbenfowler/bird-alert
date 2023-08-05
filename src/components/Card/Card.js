@@ -1,4 +1,5 @@
 import { useState, useContext } from "react"
+import PropTypes from "prop-types"
 import './Card.css'
 import BirdsContext from "../BirdsContext/BirdsContext"
 
@@ -26,3 +27,7 @@ const Card = ({ bird }) => {
 }
 
 export default Card
+
+Card.propTypes = {
+    bird: PropTypes.object.isRequired
+}
