@@ -16,7 +16,7 @@ const Card = ({ bird }) => {
 
     return (
         <div className='card'>
-            <img className='bird-img' src={process.env.PUBLIC_URL + 'images/testBirdImg.png'} alt={`a ${bird.comName}`}/>
+            <img className='bird-img' src={bird.birdImg || process.env.PUBLIC_URL + 'images/noBirdImg.png'} alt={`a ${bird.comName}`}/>
             <div className='bird-details'>
                 <p>{bird.comName}</p>
                 <p className='sci-name'>{`(${bird.sciName})`}</p>
