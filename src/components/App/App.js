@@ -26,7 +26,8 @@ const App = () => {
     if (user.location.length) {
       (async() => {
           try {
-              const birdKeys = await getBirdKeysByLocation(user.location)
+              // eslint-disable-next-line no-unused-vars
+              // const birdKeys = await getBirdKeysByLocation(user.location)
               // const birdsData = await getBirdsData(birdKeys)
               const birdsData = await getBirdsData(mockBirdKeys)
               setBirds(birdsData)
