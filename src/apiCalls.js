@@ -14,10 +14,10 @@ const getBirdsData = async (keys) => {
         const birdData = await getBirdData(key)
         const nuthatchData = await getBirdImg(birdData[0].comName)
         const birdImg = nuthatchData.entities[0]?.images[0]
-        birdsData.push({...birdData[0], birdImg, isChecked: false})
+        const wikiData = await getBirdWiki(birdData[0].comName)
+        const wikiURL = `https://en.wikipedia.org/?curid=${wikiData.pages[0].id}`
+        birdsData.push({...birdData[0], birdImg, wikiURL, isChecked: false})
     }
-
-    console.log(birdsData)
 
     return birdsData
 }
@@ -34,6 +34,11 @@ const getBirdImg = async (comName) => {
         }
     })
 
+    return await handleError(res)
+}
+
+const getBirdWiki = async (comName) => {
+    const res = await fetch(`https://api.wikimedia.org/core/v1/wikipedia/en/search/page?q=${comName}&User-Agent=bird alert&limit=1`)
     return await handleError(res)
 }
 
