@@ -2,10 +2,15 @@ import React from "react"
 import PropTypes from "prop-types"
 import Card from "../Card/Card"
 import './BirdsList.css'
+import { Link } from "react-router-dom"
 
 const BirdsList = ({ birds }) => {
     const birdCards = birds.map(bird => {
-        return <Card key={bird.speciesCode} bird={bird} />
+        return (
+            <Link key={bird.speciesCode} to={bird.wikiURL} target="_blank">
+                <Card key={bird.speciesCode} bird={bird} />
+            </Link>
+        )
     })
     
     return (
