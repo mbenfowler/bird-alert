@@ -19,33 +19,50 @@ const App = () => {
         phoneNumber: ""
   })
   const [birds, setBirds] = useState([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageCount, setPageCount] = useState()
   const [isLoaded, setIsLoaded] = useState(false)
   const [networkError, setNetworkError] = useState(null)
+
+  const RESULTS_PER_PAGE = 5
 
   useEffect(() => {
     if (user.location.length) {
       (async() => {
           try {
               // eslint-disable-next-line no-unused-vars
-              // const birdKeys = await getBirdKeysByLocation(user.location)
+              const birdKeys = await getBirdKeysByLocation(user.location)
               // const birdsData = await getBirdsData(birdKeys)
-              const birdsData = await getBirdsData(mockBirdKeys)
-              setBirds(birdsData)
+              // const mutatableBirdKeys = [...mockBirdKeys]
+              const splicedBirdKeys = spliceBirdKeys(birdKeys, RESULTS_PER_PAGE)
+              const splicedBirdsData = await getBirdsData(splicedBirdKeys[currentPage - 1])
+              setBirds(splicedBirdsData)
               setIsLoaded(true)
           } catch (error) {
               handleNetworkErrors(error)
           }
       })()
     }
-  }, [user.location])
+  }, [user.location, currentPage])
 
   const handleNetworkErrors = (error) => {
       setNetworkError(error.message)
   }
 
+  const spliceBirdKeys = (arr, chunkSize) => {
+    const splicedBirdKeys = [];
+    while (arr.length > 0) {
+        const chunk = arr.splice(0, chunkSize);
+        splicedBirdKeys.push(chunk);
+    }
+
+    setPageCount(splicedBirdKeys.length)
+    return splicedBirdKeys;
+  }
+
   return (
     <>
-      <BirdsContext.Provider value={{user, setUser, birds, setBirds}}>
+      <BirdsContext.Provider value={{user, setUser, birds, setBirds, currentPage, setCurrentPage, pageCount, setIsLoaded}}>
         <Nav setNetworkError={setNetworkError}/>
         <main className="App">
             <Routes>
