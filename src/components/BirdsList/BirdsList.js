@@ -14,9 +14,9 @@ const BirdsList = ({ birds }) => {
     })
     
     return (
-        <div className='birds-list'>
+        <section className='birds-list'>
             {birdCards}
-        </div>
+        </section>
     )
 }
 
