@@ -1,18 +1,37 @@
-import { useState, useContext } from "react"
+import { useContext, useState, useEffect } from "react"
 import PropTypes from "prop-types"
 import './Card.css'
 import BirdsContext from "../BirdsContext/BirdsContext"
+import { postSavedBird, deleteSavedBird } from "../../apiCalls"
 
-const Card = ({ bird }) => {
+const Card = ({ bird, saved }) => {
     const { birds, setBirds } = useContext(BirdsContext)
-    const [isToggled, setIsToggled] = useState(false)
+    const [isChecked, setIsChecked] = useState(saved)
+
+    useEffect(() => {
+        setIsChecked(saved);
+    }, []);
 
     const handleClick = () => {
-        const thisBird = birds.find(b => b.speciesCode === bird.speciesCode)
-        thisBird.isChecked = !thisBird.isChecked
-        setIsToggled(!isToggled)
-        setBirds(birds)
-    }
+        setIsChecked(!isChecked);
+
+        const updatedBirds = birds.map(b => {
+            if (b.speciesCode === bird.speciesCode) {
+                return { ...b, isChecked: !isChecked };
+            }
+            return b;
+        });
+
+        setBirds(updatedBirds);
+
+        if (isChecked) {
+            deleteSavedBird(bird);
+        } else {
+            postSavedBird(bird);
+        }
+    };
+
+    console.log('isChecked', isChecked)
 
     return (
         <div className='card'>
@@ -21,7 +40,7 @@ const Card = ({ bird }) => {
                 <p>{bird.comName}</p>
                 <p className='sci-name'>{`(${bird.sciName})`}</p>
             </div>
-            <input type="checkbox" checked={bird.isChecked ? 'checked' : ''} id={bird.speciesCode} name={bird.comName} value={bird.isChecked} onChange={handleClick} />
+            <input type="checkbox" checked={isChecked} id={bird.speciesCode} name={bird.comName} value={bird.isChecked} onChange={handleClick} />
         </div>
     )
 }

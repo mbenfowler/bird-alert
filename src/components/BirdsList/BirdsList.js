@@ -4,11 +4,11 @@ import Card from "../Card/Card"
 import './BirdsList.css'
 import { Link } from "react-router-dom"
 
-const BirdsList = ({ birds }) => {
+const BirdsList = ({ birds, saved = false }) => {
     const birdCards = birds.map(bird => {
         return (
             <Link key={bird.speciesCode} to={bird.wikiURL} target="_blank">
-                <Card key={bird.speciesCode} bird={bird} />
+                <Card key={bird.speciesCode} bird={bird} saved={saved}/>
             </Link>
         )
     })

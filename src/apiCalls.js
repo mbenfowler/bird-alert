@@ -60,6 +60,37 @@ const patchUser = async (user) => {
     return await handleError(res, false)
 }
 
+const getSavedBirds = async () => {
+    const res = await fetch('http://localhost:3001/api/v1/saved')
+    return await handleError(res)
+}
+
+const postSavedBird = async (bird) => {
+    console.log('post')
+    const res = await fetch('http://localhost:3001/api/v1/saved', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(bird)
+    })
+
+    return await handleError(res)
+}
+
+const deleteSavedBird = async (bird) => {
+    console.log('delete')
+    const res = await fetch('http://localhost:3001/api/v1/saved', {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(bird)
+    })
+
+    return await handleError(res)
+}
+
 const handleError = (res, required = true) => {
     if (res.ok && required) {
       return res.json();
@@ -68,4 +99,4 @@ const handleError = (res, required = true) => {
     }
 }
 
-export { getBirdKeysByLocation, getBirdsData, getUser, patchUser }
+export { getBirdKeysByLocation, getBirdsData, getUser, patchUser, getSavedBirds, postSavedBird, deleteSavedBird }

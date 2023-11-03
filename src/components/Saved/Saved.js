@@ -1,14 +1,21 @@
-import { useContext } from 'react'
-import BirdsContext from '../BirdsContext/BirdsContext'
+import { useState, useEffect } from 'react'
+import { getSavedBirds } from '../../apiCalls'
 import BirdsList from '../BirdsList/BirdsList'
 
 const Saved = () => {
-    const { birds } = useContext(BirdsContext)
+    const [savedBirds, setSavedBirds] = useState([])
+
+    useEffect(() => {
+        (async() => {
+            const savedBirds = await getSavedBirds()
+            setSavedBirds(savedBirds)
+        })()
+    }, [])
 
     return (
         <section id='birdsInArea'>
                 <h2>Birds on your watch list:</h2>
-                <BirdsList birds={birds.filter(bird => bird.isChecked)} />
+                <BirdsList birds={savedBirds} saved={true}/>
         </section>
     )
 }
