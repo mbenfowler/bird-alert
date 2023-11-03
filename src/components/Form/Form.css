@@ -11,7 +11,7 @@ label {
     padding: 2%;
 }
 
-form a {
+.submit {
     width: 30%;
     align-self: center;
     display: flex;
@@ -20,8 +20,4 @@ form a {
     height: 50px;
     background-color: white;
     border-radius: 25px;
-}
-
-a:link{
-    text-decoration: none!important;
 }

@@ -12,11 +12,11 @@ const getBirdsData = async (keys) => {
     let birdsData = [];
     for (const key of keys) {
         const birdData = await getBirdData(key)
-        const nuthatchData = await getBirdImg(birdData[0].comName)
-        const birdImg = nuthatchData.entities[0]?.images[0]
+        // const nuthatchData = await getBirdImg(birdData[0].comName)
+        // const birdImg = nuthatchData.entities[0]?.images[0]
         const wikiData = await getBirdWiki(birdData[0].comName)
         const wikiURL = `https://en.wikipedia.org/?curid=${wikiData.pages[0].id}`
-        birdsData.push({...birdData[0], birdImg, wikiURL, isChecked: false})
+        birdsData.push({...birdData[0], wikiURL, isChecked: false})
     }
 
     return birdsData
@@ -42,12 +42,30 @@ const getBirdWiki = async (comName) => {
     return await handleError(res)
 }
 
-const handleError = (res) => {
-    if (res.ok) {
+const getUser = async () => {
+    const res = await fetch('http://localhost:3001/api/v1/user')
+    return await handleError(res)
+}
+
+const patchUser = async (user) => {
+    console.log(JSON.stringify(user))
+    const res = await fetch('http://localhost:3001/api/v1/user', {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(user)
+    })
+
+    return await handleError(res, false)
+}
+
+const handleError = (res, required = true) => {
+    if (res.ok && required) {
       return res.json();
-    } else {
+    } else if (res.bad) {
       throw new Error(`HTTP Error: ${res.status} ${res.statusText}`);
     }
 }
 
-export { getBirdKeysByLocation, getBirdsData }
+export { getBirdKeysByLocation, getBirdsData, getUser, patchUser }
