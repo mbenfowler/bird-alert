@@ -4,16 +4,17 @@ import './Card.css'
 import BirdsContext from "../BirdsContext/BirdsContext"
 import { postSavedBird, deleteSavedBird } from "../../apiCalls"
 
-const Card = ({ bird, saved }) => {
+const Card = ({ bird }) => {
     const { birds, setBirds } = useContext(BirdsContext)
-    const [isChecked, setIsChecked] = useState(saved)
+    const [isChecked, setIsChecked] = useState()
 
     useEffect(() => {
-        setIsChecked(saved);
+        setIsChecked(bird.isChecked);
     }, []);
 
     const handleClick = () => {
         setIsChecked(!isChecked);
+        bird.isChecked = !isChecked;
 
         const updatedBirds = birds.map(b => {
             if (b.speciesCode === bird.speciesCode) {
@@ -31,8 +32,6 @@ const Card = ({ bird, saved }) => {
         }
     };
 
-    console.log('isChecked', isChecked)
-
     return (
         <div className='card'>
             <img className='bird-img' src={bird.birdImg || process.env.PUBLIC_URL + 'images/noBirdImg.png'} alt={`a ${bird.comName}`}/>
@@ -40,7 +39,7 @@ const Card = ({ bird, saved }) => {
                 <p>{bird.comName}</p>
                 <p className='sci-name'>{`(${bird.sciName})`}</p>
             </div>
-            <input type="checkbox" checked={isChecked} id={bird.speciesCode} name={bird.comName} value={bird.isChecked} onChange={handleClick} />
+            <input type="checkbox" checked={bird.isChecked} id={bird.speciesCode} name={bird.comName} value={bird.isChecked} onChange={handleClick} />
         </div>
     )
 }

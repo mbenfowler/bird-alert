@@ -1,6 +1,6 @@
 import { useState, useEffect } from  'react';
 import { Routes, Route } from 'react-router-dom';
-import { getBirdKeysByLocation, getBirdsData, getUser } from "../../apiCalls"
+import { getBirdKeysByLocation, getBirdsData, getUser, getSavedBirds } from "../../apiCalls"
 import { mockBirdKeys } from "../../mockData/birdKeys"
 import './App.css';
 import Nav from '../Nav/Nav';
@@ -15,6 +15,7 @@ const App = () => {
   const [user, setUser] = useState()
   const [birds, setBirds] = useState([])
   // need to pull in savedBirds here so we can compare and apply isChecked to birds
+  const [savedBirds, setSavedBirds] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
   const [pageCount, setPageCount] = useState()
   const [isLoaded, setIsLoaded] = useState(false)
@@ -39,12 +40,20 @@ const App = () => {
       (async() => {
           try {
               // eslint-disable-next-line no-unused-vars
+              const savedBirds = await getSavedBirds()
               // const birdKeys = await getBirdKeysByLocation(user.location)
               // const birdsData = await getBirdsData(birdKeys)
               const mutatableBirdKeys = [...mockBirdKeys]
               const splicedBirdKeys = spliceBirdKeys(mutatableBirdKeys, RESULTS_PER_PAGE)
               const splicedBirdsData = await getBirdsData(splicedBirdKeys[currentPage - 1])
-              setBirds(splicedBirdsData)
+              const checkedBirds = splicedBirdsData.map(bird => {
+                const savedBird = savedBirds.find(savedBird => savedBird.speciesCode === bird.speciesCode)
+                if (savedBird) {
+                  return { ...bird, isChecked: true }
+                }
+                return bird
+              })
+              setBirds(checkedBirds)
               setIsLoaded(true)
           } catch (error) {
               handleNetworkErrors(error)

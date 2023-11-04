@@ -48,7 +48,6 @@ const getUser = async () => {
 }
 
 const patchUser = async (user) => {
-    console.log(JSON.stringify(user))
     const res = await fetch('http://localhost:3001/api/v1/user', {
         method: 'PATCH',
         headers: {
@@ -66,7 +65,6 @@ const getSavedBirds = async () => {
 }
 
 const postSavedBird = async (bird) => {
-    console.log('post')
     const res = await fetch('http://localhost:3001/api/v1/saved', {
         method: 'POST',
         headers: {
@@ -79,7 +77,6 @@ const postSavedBird = async (bird) => {
 }
 
 const deleteSavedBird = async (bird) => {
-    console.log('delete')
     const res = await fetch('http://localhost:3001/api/v1/saved', {
         method: 'DELETE',
         headers: {

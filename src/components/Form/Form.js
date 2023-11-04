@@ -14,7 +14,6 @@ const Form = () => {
     })
 
     const handleChange = (e) => {
-        console.log(e.target.name, e.target.value)
         setForm(prev => ({...prev, [e.target.name]: e.target.value}))
     }
 

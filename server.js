@@ -38,7 +38,6 @@ app.get('/api/v1/saved', (req, res) => {
 app.post('/api/v1/saved', (req, res) => {
   const bird = req.body
   app.locals.saved.push(bird)
-  console.log('post', app.locals.saved)
   res.json(app.locals.saved)
 })
 
@@ -46,7 +45,6 @@ app.delete('/api/v1/saved', (req, res) => {
   const bird = req.body
   const index = app.locals.saved.findIndex(b => b.speciesCode === bird.speciesCode)
   app.locals.saved.splice(index, 1)
-  console.log('delete', app.locals.saved)
   res.json(app.locals.saved)
 })
 
