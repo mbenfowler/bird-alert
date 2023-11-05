@@ -42,8 +42,8 @@ const getBirdWiki = async (comName) => {
     return await handleError(res)
 }
 
-const getUser = async () => {
-    const res = await fetch('http://localhost:3001/api/v1/user')
+const getUser = async (userID) => {
+    const res = await fetch(`http://localhost:3001/api/v1/user/${userID}`)
     return await handleError(res)
 }
 

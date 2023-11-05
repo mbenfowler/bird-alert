@@ -24,8 +24,8 @@ const App = () => {
   useEffect(() => {
     (async() => {
       try {
-          const user = await getUser()
-          setUser(user[0])
+          const user = await getUser(1)
+          setUser(user)
           setIsLoaded(true)
       } catch (error) {
           handleNetworkErrors(error)

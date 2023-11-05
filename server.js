@@ -26,19 +26,29 @@ app.get('/', (req, res) => {
 
 app.locals.saved = []
 
-app.get('/api/v1/user', async (req, res) => {
+app.get('/api/v1/user/:id', async (req, res) => {
   // res.json(app.locals.user)
-  try {
-    await db('users').select()
-      .then(users => res.status(200).json(users))
-  } catch (error) {
-    res.status(500).json({ error })
-  }
+  const userId = req.params.id;
+  await db('users').where({id: userId}).first()
+    .then(user => res.status(200).json(user))
+    .catch(error => res.status(500).json({ error }))
 })
 
-app.patch('/api/v1/user', (req, res) => {
-  app.locals.user = req.body
-  res.json(app.locals.user)
+app.patch('/api/v1/user', async (req, res) => {
+  // app.locals.user = req.body
+  // res.json(app.locals.user)
+  const user = req.body
+  await db('users').where('id', 2).update({
+    username: user.name,
+    password: user.password,
+    location: user.location,
+    email: user.email,
+    phone: user.phone,
+    state: user.state,
+    updated_at: new Date()
+  })
+    .then(() => res.status(200).json(user))
+    .catch(error => res.status(500).json({ error }))
 })
 
 app.get('/api/v1/saved', (req, res) => {

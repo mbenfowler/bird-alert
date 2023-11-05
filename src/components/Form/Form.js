@@ -9,8 +9,8 @@ const Form = () => {
     const [form, setForm] = useState({
         name: `${user?.name ? user.name : ''}`,
         location: `${user?.location ? user.location : ''}`,
-        emailAddress: `${user?.email ? user.email : ''}`,
-        phoneNumber: `${user?.phone ? user.phone : ''}`
+        email: `${user?.email ? user.email : ''}`,
+        phone: `${user?.phone ? user.phone : ''}`
     })
 
     const handleChange = (e) => {
@@ -45,11 +45,11 @@ const Form = () => {
             </label>
             <label>
                 Email:
-                <input type="text" name='emailAddress' value={form.emailAddress} onChange={handleChange} />
+                <input type="text" name='emailAddress' value={form.email} onChange={handleChange} />
             </label>
             <label>
                 Phone #:
-                <input type="text" name='phoneNumber' value={form.phoneNumber} onChange={handleChange} />
+                <input type="text" name='phoneNumber' value={form.phone} onChange={handleChange} />
             </label>
             <div className='submit' onClick={handleSubmit}>Lock in details</div>
         </form>

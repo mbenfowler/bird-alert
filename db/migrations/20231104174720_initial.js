@@ -44,7 +44,7 @@ exports.up = function(knex) {
  */
 exports.down = function(knex) {
   return knex.schema
-    .dropTable('savedBirds')
+    .dropTable('saved_birds')
     .dropTable('birds')
     .dropTable('users')
 };
