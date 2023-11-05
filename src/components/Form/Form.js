@@ -14,6 +14,7 @@ const Form = () => {
     })
 
     const handleChange = (e) => {
+        console.log(e.target.value)
         setForm(prev => ({...prev, [e.target.name]: e.target.value}))
     }
 
@@ -45,11 +46,11 @@ const Form = () => {
             </label>
             <label>
                 Email:
-                <input type="text" name='emailAddress' value={form.email} onChange={handleChange} />
+                <input type="text" name='email' value={form.email} onChange={handleChange} />
             </label>
             <label>
                 Phone #:
-                <input type="text" name='phoneNumber' value={form.phone} onChange={handleChange} />
+                <input type="text" name='phone' value={form.phone} onChange={handleChange} />
             </label>
             <div className='submit' onClick={handleSubmit}>Lock in details</div>
         </form>

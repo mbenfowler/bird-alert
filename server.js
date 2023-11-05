@@ -38,7 +38,7 @@ app.patch('/api/v1/user', async (req, res) => {
   // app.locals.user = req.body
   // res.json(app.locals.user)
   const user = req.body
-  await db('users').where('id', 2).update({
+  await db('users').where('id', 1).update({
     username: user.name,
     password: user.password,
     location: user.location,
