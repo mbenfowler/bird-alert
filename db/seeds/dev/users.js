@@ -5,7 +5,7 @@
 exports.seed = async function(knex) {
   // Deletes ALL existing entries
   try {
-    await knex('savedBirds').del()
+    await knex('saved_birds').del()
     await knex('birds').del()
     await knex('users').del()
 
@@ -31,10 +31,7 @@ exports.seed = async function(knex) {
       taxonOrder: 256
     }, 'id')
 
-    console.log('userID: ', userID)
-    console.log('birdID: ', birdID)
-
-    return knex('savedBirds').insert({
+    return knex('saved_birds').insert({
       user_id: userID.id,
       bird_id: birdID.id
     })

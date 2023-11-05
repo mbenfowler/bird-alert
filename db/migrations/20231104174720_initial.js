@@ -28,7 +28,7 @@ exports.up = function(knex) {
       table.integer('taxonOrder');
       table.timestamps(true, true);
     })
-    .createTable('savedBirds', (table) => {
+    .createTable('saved_birds', (table) => {
       table.increments('id').primary();
       table.integer('user_id').unsigned();
       table.integer('bird_id').unsigned();
