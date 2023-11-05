@@ -14,8 +14,6 @@ import BirdsContext from '../BirdsContext/BirdsContext';
 const App = () => {
   const [user, setUser] = useState()
   const [birds, setBirds] = useState([])
-  // need to pull in savedBirds here so we can compare and apply isChecked to birds
-  const [savedBirds, setSavedBirds] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
   const [pageCount, setPageCount] = useState()
   const [isLoaded, setIsLoaded] = useState(false)
@@ -27,7 +25,7 @@ const App = () => {
     (async() => {
       try {
           const user = await getUser()
-          setUser(user)
+          setUser(user[0])
           setIsLoaded(true)
       } catch (error) {
           handleNetworkErrors(error)

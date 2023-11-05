@@ -9,8 +9,8 @@ const Form = () => {
     const [form, setForm] = useState({
         name: `${user?.name ? user.name : ''}`,
         location: `${user?.location ? user.location : ''}`,
-        emailAddress: `${user?.emailAddress ? user.emailAddress : ''}`,
-        phoneNumber: `${user?.phoneNumber ? user.phoneNumber : ''}`
+        emailAddress: `${user?.email ? user.email : ''}`,
+        phoneNumber: `${user?.phone ? user.phone : ''}`
     })
 
     const handleChange = (e) => {

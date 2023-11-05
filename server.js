@@ -17,17 +17,23 @@ app.get('/', (req, res) => {
     res.send('Hello World')
 })
 
-app.locals.user = {
-  "name": "",
-  "location": "",
-  "emailAddress": "",
-  "phoneNumber": ""
-}
+// app.locals.user = {
+//   "name": "",
+//   "location": "",
+//   "emailAddress": "",
+//   "phoneNumber": ""
+// }
 
 app.locals.saved = []
 
-app.get('/api/v1/user', (req, res) => {
-  res.json(app.locals.user)
+app.get('/api/v1/user', async (req, res) => {
+  // res.json(app.locals.user)
+  try {
+    await db('users').select()
+      .then(users => res.status(200).json(users))
+  } catch (error) {
+    res.status(500).json({ error })
+  }
 })
 
 app.patch('/api/v1/user', (req, res) => {
