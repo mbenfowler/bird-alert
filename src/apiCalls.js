@@ -27,6 +27,7 @@ const getBirdData = async (key) => {
     return await handleError(res)
 }
 
+// eslint-disable-next-line no-unused-vars
 const getBirdImg = async (comName) => {
     const res = await fetch(`https://nuthatch.lastelm.software/v2/birds?page=1&pageSize=25&name=${comName}&operator=AND`, {
         headers: {
