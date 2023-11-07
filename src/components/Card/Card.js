@@ -2,33 +2,39 @@ import { useContext, useState, useEffect } from "react"
 import PropTypes from "prop-types"
 import './Card.css'
 import BirdsContext from "../BirdsContext/BirdsContext"
-import { postSavedBird, deleteSavedBird } from "../../apiCalls"
+import { postSavedBird, deleteSavedBird, isBirdSaved } from "../../apiCalls"
 
 const Card = ({ bird }) => {
     const { birds, setBirds } = useContext(BirdsContext)
-    const [isChecked, setIsChecked] = useState()
+    const [isChecked, setIsChecked] = useState(false)
 
     useEffect(() => {
-        setIsChecked(bird.isChecked);
-    }, []);
+        const checkSavedStatus = async () => {
+            const saved = await isBirdSaved(bird)
+            setIsChecked(saved)
+        };
+        checkSavedStatus();
+    }, [bird])
 
-    const handleClick = () => {
-        setIsChecked(!isChecked);
-        bird.isChecked = !isChecked;
-
-        const updatedBirds = birds.map(b => {
-            if (b.speciesCode === bird.speciesCode) {
-                return { ...b, isChecked: !isChecked };
+    const handleClick = async () => {
+        try {
+            if (isChecked) {
+                await deleteSavedBird(bird)
+            } else {
+                await postSavedBird(bird)
             }
-            return b;
-        });
 
-        setBirds(updatedBirds);
-
-        if (isChecked) {
-            deleteSavedBird(bird);
-        } else {
-            postSavedBird(bird);
+            const updatedBirds = birds.map(b => {
+                if (b.speciesCode === bird.speciesCode) {
+                    return { ...b, isChecked: !isChecked }
+                }
+                return b
+            })
+            setBirds(updatedBirds)
+        } catch (error) {
+            console.error("API call error:", error)
+        } finally {
+            setIsChecked(!isChecked)
         }
     };
 
@@ -39,7 +45,7 @@ const Card = ({ bird }) => {
                 <p>{bird.comName}</p>
                 <p className='sci-name'>{`(${bird.sciName})`}</p>
             </div>
-            <input type="checkbox" checked={bird.isChecked} id={bird.speciesCode} name={bird.comName} value={bird.isChecked} onChange={handleClick} />
+            <input type="checkbox" checked={isChecked} id={bird.speciesCode} name={bird.comName} value={bird.isChecked} onChange={handleClick} />
         </div>
     )
 }

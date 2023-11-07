@@ -7,6 +7,10 @@ module.exports = {
   development: {
     client: 'pg',
     connection: "postgres://postgres:Jackson77@localhost/birdalert",
+    pool: {
+      min: 2,
+      max: 10,
+    },
     migrations: {
       directory: './db/migrations'
     },

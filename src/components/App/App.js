@@ -45,7 +45,7 @@ const App = () => {
               const splicedBirdKeys = spliceBirdKeys(mutatableBirdKeys, RESULTS_PER_PAGE)
               const splicedBirdsData = await getBirdsData(splicedBirdKeys[currentPage - 1])
               const checkedBirds = splicedBirdsData.map(bird => {
-                const savedBird = savedBirds.find(savedBird => savedBird.speciesCode === bird.speciesCode)
+                const savedBird = savedBirds.find(savedBird => savedBird && savedBird.speciesCode === bird.speciesCode)
                 if (savedBird) {
                   return { ...bird, isChecked: true }
                 }

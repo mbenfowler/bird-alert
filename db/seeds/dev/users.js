@@ -29,9 +29,10 @@ exports.seed = async function(knex) {
       familySciName: 'Anatidae',
       wikiURL: 'https://en.wikipedia.org/?curid=199013',
       taxonOrder: 256
-    }, 'id')
+    }, ['id', 'speciesCode'])
 
     return knex('saved_birds').insert({
+      speciesCode: birdID.speciesCode,
       user_id: userID.id,
       bird_id: birdID.id
     })

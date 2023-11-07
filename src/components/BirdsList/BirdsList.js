@@ -31,7 +31,6 @@ BirdsList.propTypes = {
         familyCode: PropTypes.string,
         familyComName: PropTypes.string,
         familySciName: PropTypes.string,
-        isChecked: PropTypes.bool.isRequired,
         order: PropTypes.string,
         sciName: PropTypes.string.isRequired,
         sciNameCodes: PropTypes.arrayOf(PropTypes.string),

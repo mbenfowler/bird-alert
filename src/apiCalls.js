@@ -16,7 +16,7 @@ const getBirdsData = async (keys) => {
         // const birdImg = nuthatchData.entities[0]?.images[0]
         const wikiData = await getBirdWiki(birdData[0].comName)
         const wikiURL = `https://en.wikipedia.org/?curid=${wikiData.pages[0].id}`
-        birdsData.push({...birdData[0], wikiURL, isChecked: false})
+        birdsData.push({...birdData[0], wikiURL})
     }
 
     return birdsData
@@ -64,6 +64,23 @@ const getSavedBirds = async () => {
     return await handleError(res)
 }
 
+
+const isBirdSaved = async (bird) => {
+    try {
+      const res = await fetch(`http://localhost:3001/api/v1/saved/${bird.speciesCode}`)
+      if (res.ok) {
+        const data = await res.json()
+        return data
+      } else {
+        console.error("Error response:", res.status, res.statusText)
+        return false
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+      return false;
+    }
+}
+
 const postSavedBird = async (bird) => {
     const res = await fetch('http://localhost:3001/api/v1/saved', {
         method: 'POST',
@@ -96,4 +113,4 @@ const handleError = (res, required = true) => {
     }
 }
 
-export { getBirdKeysByLocation, getBirdsData, getUser, patchUser, getSavedBirds, postSavedBird, deleteSavedBird }
+export { getBirdKeysByLocation, getBirdsData, getUser, patchUser, getSavedBirds, isBirdSaved, postSavedBird, deleteSavedBird }

@@ -18,7 +18,7 @@ exports.up = function(knex) {
       table.increments('id').primary();
       table.string('comName');
       table.string('sciName');
-      table.string('speciesCode');
+      table.string('speciesCode').unique();
       table.string('category');
       table.string('order');
       table.string('familyCode');
@@ -30,8 +30,10 @@ exports.up = function(knex) {
     })
     .createTable('saved_birds', (table) => {
       table.increments('id').primary();
+      table.string('speciesCode').unsigned();
       table.integer('user_id').unsigned();
       table.integer('bird_id').unsigned();
+      table.foreign('speciesCode').references('birds.speciesCode');
       table.foreign('user_id').references('users.id');
       table.foreign('bird_id').references('birds.id');
       table.timestamps(true, true);
