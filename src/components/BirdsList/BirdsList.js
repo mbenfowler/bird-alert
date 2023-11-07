@@ -8,7 +8,7 @@ const BirdsList = ({ birds }) => {
     const birdCards = birds.map(bird => {
         return (
             <Link key={bird.speciesCode} to={bird.wikiURL} target="_blank">
-                <Card key={bird.speciesCode} bird={bird} />
+                <Card key={bird.speciesCode} bird={bird}/>
             </Link>
         )
     })
@@ -31,7 +31,6 @@ BirdsList.propTypes = {
         familyCode: PropTypes.string,
         familyComName: PropTypes.string,
         familySciName: PropTypes.string,
-        isChecked: PropTypes.bool.isRequired,
         order: PropTypes.string,
         sciName: PropTypes.string.isRequired,
         sciNameCodes: PropTypes.arrayOf(PropTypes.string),

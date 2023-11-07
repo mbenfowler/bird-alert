@@ -1,27 +1,32 @@
 import { useState, useContext } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { patchUser } from '../../apiCalls'
 import BirdsContext from '../BirdsContext/BirdsContext'
 import './Form.css'
 
 const Form = () => {
-    const { user, setUser, setBirds } = useContext(BirdsContext)
-
+    const { user, setBirds, setIsLoaded } = useContext(BirdsContext)
     const [form, setForm] = useState({
-        name: user.name,
-        location: user.location,
-        emailAddress: user.emailAddress,
-        phoneNumber: user.phoneNumber
+        name: `${user?.name ? user.name : ''}`,
+        location: `${user?.location ? user.location : ''}`,
+        email: `${user?.email ? user.email : ''}`,
+        phone: `${user?.phone ? user.phone : ''}`
     })
 
     const handleChange = (e) => {
         setForm(prev => ({...prev, [e.target.name]: e.target.value}))
     }
 
-    const handleSubmit = () => {
-        setUser(form)
+    const navigate = useNavigate()
+
+    const handleSubmit = async () => {
+        await patchUser(form)
+        setIsLoaded(false)
         if (!form.location.length) {
             setBirds([])
         }
+
+        navigate('/');
     }
 
     return (
@@ -40,13 +45,13 @@ const Form = () => {
             </label>
             <label>
                 Email:
-                <input type="text" name='emailAddress' value={form.emailAddress} onChange={handleChange} />
+                <input type="text" name='email' value={form.email} onChange={handleChange} />
             </label>
             <label>
                 Phone #:
-                <input type="text" name='phoneNumber' value={form.phoneNumber} onChange={handleChange} />
+                <input type="text" name='phone' value={form.phone} onChange={handleChange} />
             </label>
-            <Link to='/' onClick={handleSubmit}>Lock in details</Link>
+            <div className='submit' onClick={handleSubmit}>Lock in details</div>
         </form>
     )
 }

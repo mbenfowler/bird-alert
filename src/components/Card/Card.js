@@ -1,18 +1,42 @@
-import { useState, useContext } from "react"
+import { useContext, useState, useEffect } from "react"
 import PropTypes from "prop-types"
 import './Card.css'
 import BirdsContext from "../BirdsContext/BirdsContext"
+import { postSavedBird, deleteSavedBird, isBirdSaved } from "../../apiCalls"
 
 const Card = ({ bird }) => {
     const { birds, setBirds } = useContext(BirdsContext)
-    const [isToggled, setIsToggled] = useState(false)
+    const [isChecked, setIsChecked] = useState(false)
 
-    const handleClick = () => {
-        const thisBird = birds.find(b => b.speciesCode === bird.speciesCode)
-        thisBird.isChecked = !thisBird.isChecked
-        setIsToggled(!isToggled)
-        setBirds(birds)
-    }
+    useEffect(() => {
+        const checkSavedStatus = async () => {
+            const saved = await isBirdSaved(bird)
+            setIsChecked(saved)
+        };
+        checkSavedStatus();
+    }, [bird])
+
+    const handleClick = async () => {
+        try {
+            if (isChecked) {
+                await deleteSavedBird(bird)
+            } else {
+                await postSavedBird(bird)
+            }
+
+            const updatedBirds = birds.map(b => {
+                if (b.speciesCode === bird.speciesCode) {
+                    return { ...b, isChecked: !isChecked }
+                }
+                return b
+            })
+            setBirds(updatedBirds)
+        } catch (error) {
+            console.error("API call error:", error)
+        } finally {
+            setIsChecked(!isChecked)
+        }
+    };
 
     return (
         <div className='card'>
@@ -21,7 +45,7 @@ const Card = ({ bird }) => {
                 <p>{bird.comName}</p>
                 <p className='sci-name'>{`(${bird.sciName})`}</p>
             </div>
-            <input type="checkbox" checked={bird.isChecked ? 'checked' : ''} id={bird.speciesCode} name={bird.comName} value={bird.isChecked} onChange={handleClick} />
+            <input type="checkbox" checked={isChecked} id={bird.speciesCode} name={bird.comName} value={bird.isChecked} onChange={handleClick} />
         </div>
     )
 }
