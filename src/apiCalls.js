@@ -1,3 +1,13 @@
+const getApiBaseURL = () => {
+    if (process.env.NODE_ENV === 'development') {
+        return process.env.REACT_APP_LOCAL_API_BASE;
+    } else if (process.env.NODE_ENV === 'production') {
+        return process.env.REACT_APP_PROD_API_BASE;
+    }
+};
+
+const apiBaseURL = getApiBaseURL();
+
 const getBirdKeysByLocation = async (region) => {
     const res = await fetch(`https://api.ebird.org/v2/product/spplist/${region}`, {
         headers: {
@@ -44,12 +54,12 @@ const getBirdWiki = async (comName) => {
 }
 
 const getUser = async (userID) => {
-    const res = await fetch(`http://localhost:3001/api/v1/user/${userID}`)
+    const res = await fetch(`${apiBaseURL}/getUser`)
     return await handleError(res)
 }
 
 const patchUser = async (user) => {
-    const res = await fetch('http://localhost:3001/api/v1/user', {
+    const res = await fetch(`${apiBaseURL}/patchUser`, {
         method: 'PATCH',
         headers: {
             'Content-Type': 'application/json'
@@ -61,14 +71,14 @@ const patchUser = async (user) => {
 }
 
 const getSavedBirds = async () => {
-    const res = await fetch('http://localhost:3001/api/v1/saved')
+    const res = await fetch(`${apiBaseURL}/getSaved`)
     return await handleError(res)
 }
 
 
 const isBirdSaved = async (bird) => {
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/saved/${bird.speciesCode}`)
+      const res = await fetch(`${apiBaseURL}/getSavedSpeciesCode?speciesCode=${bird.speciesCode}`)
       if (res.ok) {
         const data = await res.json()
         return data
@@ -83,7 +93,7 @@ const isBirdSaved = async (bird) => {
 }
 
 const postSavedBird = async (bird) => {
-    const res = await fetch('http://localhost:3001/api/v1/saved', {
+    const res = await fetch(`${apiBaseURL}/postSaved`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -95,7 +105,7 @@ const postSavedBird = async (bird) => {
 }
 
 const deleteSavedBird = async (bird) => {
-    const res = await fetch('http://localhost:3001/api/v1/saved', {
+    const res = await fetch(`${apiBaseURL}/deleteSaved`, {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json'
