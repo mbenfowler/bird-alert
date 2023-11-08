@@ -61,12 +61,9 @@ const getUser = async (userID) => {
 const patchUser = async (user) => {
     console.log(user)
     const queryParameters = new URLSearchParams({
-        username: '',
-        password: '',
         location: user.location,
         email: user.email,
-        phone: user.phone,
-        state: ''
+        phone: user.phone
     });
     const res = await fetch(`${apiBaseURL}/patchUserpostSaved?${queryParameters.toString()}`, {
         method: 'PATCH',
