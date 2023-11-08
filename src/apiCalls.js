@@ -65,7 +65,7 @@ const patchUser = async (user) => {
         email: user.email,
         phone: user.phone
     });
-    const res = await fetch(`${apiBaseURL}/patchUserpostSaved?${queryParameters.toString()}`, {
+    const res = await fetch(`${apiBaseURL}/patchUser?${queryParameters.toString()}`, {
         method: 'PATCH',
         headers: {
             'Content-Type': 'application/json'
