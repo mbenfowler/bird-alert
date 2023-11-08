@@ -59,7 +59,6 @@ const getUser = async (userID) => {
 }
 
 const patchUser = async (user) => {
-    console.log(user)
     const queryParameters = new URLSearchParams({
         location: user.location,
         email: user.email,
