@@ -93,24 +93,35 @@ const isBirdSaved = async (bird) => {
 }
 
 const postSavedBird = async (bird) => {
-    const res = await fetch(`${apiBaseURL}/postSaved`, {
+    const queryParameters = new URLSearchParams({
+        comName: bird.comName,
+        sciName: bird.sciName,
+        speciesCode: bird.speciesCode,
+        category: bird.category,
+        order: bird.order,
+        familyCode: bird.familyCode,
+        familyComName: bird.familyComName,
+        familySciName: bird.familySciName,
+        wikiURL: bird.wikiURL,
+        taxonOrder: bird.taxonOrder,
+    });
+    console.log(queryParameters.toString())
+    const res = await fetch(`${apiBaseURL}/postSaved?${queryParameters.toString()}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(bird)
+        }
     })
 
     return await handleError(res)
 }
 
 const deleteSavedBird = async (bird) => {
-    const res = await fetch(`${apiBaseURL}/deleteSaved`, {
+    const res = await fetch(`${apiBaseURL}/deleteSaved?speciesCode=${bird.speciesCode}`, {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(bird)
+        }
     })
 
     return await handleError(res)
