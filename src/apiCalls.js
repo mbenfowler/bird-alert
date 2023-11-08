@@ -59,7 +59,16 @@ const getUser = async (userID) => {
 }
 
 const patchUser = async (user) => {
-    const res = await fetch(`${apiBaseURL}/patchUser`, {
+    console.log(user)
+    const queryParameters = new URLSearchParams({
+        username: '',
+        password: '',
+        location: user.location,
+        email: user.email,
+        phone: user.phone,
+        state: ''
+    });
+    const res = await fetch(`${apiBaseURL}/patchUserpostSaved?${queryParameters.toString()}`, {
         method: 'PATCH',
         headers: {
             'Content-Type': 'application/json'
