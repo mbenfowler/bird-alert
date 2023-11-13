@@ -20,7 +20,7 @@ const App = () => {
   const [isLoaded, setIsLoaded] = useState(false)
   const [networkError, setNetworkError] = useState(null)
 
-  const RESULTS_PER_PAGE = 2
+  const RESULTS_PER_PAGE = 5
 
   useEffect(() => {
     (async() => {

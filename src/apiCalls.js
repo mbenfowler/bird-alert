@@ -22,11 +22,11 @@ const getBirdsData = async (keys) => {
     let birdsData = [];
     for (const key of keys) {
         const birdData = await getBirdData(key)
-        // const nuthatchData = await getBirdImg(birdData[0].comName)
-        // const birdImg = nuthatchData.entities[0]?.images[0]
+        const nuthatchData = await getBirdImg(birdData[0].comName)
+        const birdImg = nuthatchData.entities[0]?.images[0]
         const wikiData = await getBirdWiki(birdData[0].comName)
         const wikiURL = `https://en.wikipedia.org/?curid=${wikiData.pages[0].id}`
-        birdsData.push({...birdData[0], wikiURL})
+        birdsData.push({...birdData[0], birdImg, wikiURL})
     }
 
     return birdsData
