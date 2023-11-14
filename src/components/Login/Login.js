@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getUserExists, getIsCorrectPass, getUser } from '../../apiCalls'
+import { getUserExists, getIsCorrectPass, getUser, createUser } from '../../apiCalls'
 import BirdsContext from '../BirdsContext/BirdsContext'
 import './Login.css'
 
@@ -51,6 +51,12 @@ const Login = () => {
             .then(res => {
               setCorrectPass(res.isCorrectPass)
             })
+      } else if (e.key === 'Enter' && field.classList.contains('password') && !userFound) {
+          await createUser(email, password)
+          await getUserExists(email)
+            .then(res => setUserFound(res.userExists))
+        // TODO: validations
+        // TODO: confirm email flow
       }
     }
 

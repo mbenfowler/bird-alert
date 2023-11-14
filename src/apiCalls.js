@@ -85,6 +85,17 @@ const patchUser = async (user) => {
     return await handleError(res, false)
 }
 
+const createUser = async (email, password) => {
+    const res = await fetch(`${apiBaseURL}/createUser?email=${email}&password=${password}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+
+    return await handleError(res)
+}
+
 const getSavedBirds = async () => {
     const res = await fetch(`${apiBaseURL}/getSaved`)
     return await handleError(res)
@@ -150,4 +161,4 @@ const handleError = (res, required = true) => {
     }
 }
 
-export { getBirdKeysByLocation, getBirdsData, getUserExists, getIsCorrectPass, getUser, patchUser, getSavedBirds, isBirdSaved, postSavedBird, deleteSavedBird }
+export { getBirdKeysByLocation, getBirdsData, getUserExists, getIsCorrectPass, getUser, patchUser, createUser, getSavedBirds, isBirdSaved, postSavedBird, deleteSavedBird }
