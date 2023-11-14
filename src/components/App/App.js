@@ -1,5 +1,5 @@
 import { useState, useEffect } from  'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 // eslint-disable-next-line no-unused-vars
 import { getBirdKeysByLocation, getBirdsData, getUser, getSavedBirds } from "../../apiCalls"
 import { mockBirdKeys } from "../../mockData/birdKeys"
@@ -23,17 +23,16 @@ const App = () => {
 
   const RESULTS_PER_PAGE = 5
 
+  const navigate = useNavigate();
+
   useEffect(() => {
-    (async() => {
-      try {
-          const user = await getUser(1)
-          setUser(user)
-          setIsLoaded(true)
-      } catch (error) {
-          handleNetworkErrors(error)
-      }
-    })()
-  }, [isLoaded])
+    if (!user) {
+      navigate('/login')
+    } else {
+      setIsLoaded(true)
+    }
+  //eslint-disable-next-line
+  }, [user])
 
   useEffect(() => {
     if (user && user.location) {
@@ -79,7 +78,7 @@ const App = () => {
 
   return (
     <>
-      <BirdsContext.Provider value={{user, setUser, birds, setBirds, currentPage, setCurrentPage, pageCount, setIsLoaded}}>
+      <BirdsContext.Provider value={{user, setUser, birds, setBirds, currentPage, setCurrentPage, pageCount, setIsLoaded, handleNetworkErrors}}>
         <Nav setNetworkError={setNetworkError}/>
         <main className="App">
             <Routes>

@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { mockEmailData } from './mockEmailData'
+import { getUserExists, getIsCorrectPass, getUser } from '../../apiCalls'
+import BirdsContext from '../BirdsContext/BirdsContext'
 import './Login.css'
 
 const Login = () => {
-    const [user, setUser] = useState()
+    const { setUser, handleNetworkErrors } = useContext(BirdsContext)
     const [userFound, setUserFound] = useState()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -12,36 +13,44 @@ const Login = () => {
 
     const navigate = useNavigate();
 
+    useEffect(() => {
+      if (correctPass) {
+        (async() => {
+          try {
+              const user = await getUser(email)
+              setUser(user)
+              navigate('/')
+          } catch (error) {
+              handleNetworkErrors(error)
+          }
+        })()
+      }
+    //eslint-disable-next-line
+    }, [correctPass])
+
     const handleChange = (e) => {
       const field = e.target
       if (field.classList.contains('email')) setEmail(e.target.value)
       else if (field.classList.contains('password')) setPassword(e.target.value)
     }
 
-    const handleEnter = (e) => {
+    const handleEnter = async (e) => {
       const field = e.target
 
       if (e.key === 'Enter' && field.classList.contains('email')) {
-          console.log(email)
-          //api call to login
-          //if user exists, ask for password
-          if (mockEmailData.find(user => user.email === email)) {
-              setUserFound(true)
-          } else {
-            setUserFound(false)
+          setCorrectPass(undefined)
+          setPassword('')
+          const passwordInput = document.querySelector('.password')
+          if (passwordInput) {
+            passwordInput.value = ''
           }
+          await getUserExists(email)
+            .then(res => setUserFound(res.userExists))
       } else if (e.key === 'Enter' && field.classList.contains('password') && userFound) {
-          console.log('password entered')
-          //api call to login
-          //if password is correct, set user and redirect to main page
-          const correctUserPass = mockEmailData.find(user => user.email === email && user.password === password)
-          if (correctUserPass) {
-            setUser(mockEmailData.find(user => user.email === email))
-            setCorrectPass(true)
-            navigate('/')
-          } else {
-            setCorrectPass(false)
-          }
+          await getIsCorrectPass(email, password)
+            .then(res => {
+              setCorrectPass(res.isCorrectPass)
+            })
       }
     }
 
@@ -54,7 +63,7 @@ const Login = () => {
             </div>
             {
               userFound === false &&
-              <div className='user-entry'>
+              <div>
                 <h3 className='info'>Email not found!</h3>
                 <p className='info'>Please make a password to continue creating an account for this email.</p>
               </div>
@@ -66,12 +75,7 @@ const Login = () => {
                 <input className='input password' type='password' onChange={handleChange} onKeyDown={handleEnter}></input>
               </div>
             }
-            {
-              correctPass === false &&
-              <div className='user-entry'>
-                <h3>incorrect password</h3>
-              </div>
-            }
+            {correctPass === false && <h3 className='info'>incorrect password</h3>}
           </section>
         </main>
     )

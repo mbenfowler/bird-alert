@@ -22,11 +22,11 @@ const getBirdsData = async (keys) => {
     let birdsData = [];
     for (const key of keys) {
         const birdData = await getBirdData(key)
-        const nuthatchData = await getBirdImg(birdData[0].comName)
-        const birdImg = nuthatchData.entities[0]?.images[0]
+        // const nuthatchData = await getBirdImg(birdData[0].comName)
+        // const birdImg = nuthatchData.entities[0]?.images[0]
         const wikiData = await getBirdWiki(birdData[0].comName)
         const wikiURL = `https://en.wikipedia.org/?curid=${wikiData.pages[0].id}`
-        birdsData.push({...birdData[0], birdImg, wikiURL})
+        birdsData.push({...birdData[0], wikiURL})
     }
 
     return birdsData
@@ -53,8 +53,18 @@ const getBirdWiki = async (comName) => {
     return await handleError(res)
 }
 
-const getUser = async (userID) => {
-    const res = await fetch(`${apiBaseURL}/getUser`)
+const getUserExists = async (email) => {
+    const res = await fetch(`${apiBaseURL}/getUserExists?email=${email}`)
+    return await handleError(res)
+}
+
+const getIsCorrectPass = async (email, password) => {
+    const res = await fetch(`${apiBaseURL}/getIsCorrectPass?email=${email}&password=${password}`)
+    return await handleError(res)
+}
+
+const getUser = async (email) => {
+    const res = await fetch(`${apiBaseURL}/getUser?email=${email}`)
     return await handleError(res)
 }
 
@@ -110,7 +120,7 @@ const postSavedBird = async (bird) => {
         wikiURL: bird.wikiURL,
         taxonOrder: bird.taxonOrder,
     });
-    console.log(queryParameters.toString())
+
     const res = await fetch(`${apiBaseURL}/postSaved?${queryParameters.toString()}`, {
         method: 'POST',
         headers: {
@@ -140,4 +150,4 @@ const handleError = (res, required = true) => {
     }
 }
 
-export { getBirdKeysByLocation, getBirdsData, getUser, patchUser, getSavedBirds, isBirdSaved, postSavedBird, deleteSavedBird }
+export { getBirdKeysByLocation, getBirdsData, getUserExists, getIsCorrectPass, getUser, patchUser, getSavedBirds, isBirdSaved, postSavedBird, deleteSavedBird }
