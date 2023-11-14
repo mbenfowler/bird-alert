@@ -1,9 +1,10 @@
 import { useState, useEffect } from  'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 // eslint-disable-next-line no-unused-vars
 import { getBirdKeysByLocation, getBirdsData, getUser, getSavedBirds } from "../../apiCalls"
 import { mockBirdKeys } from "../../mockData/birdKeys"
 import './App.css';
+import Login from '../Login/Login';
 import Nav from '../Nav/Nav';
 import Error from '../Error/Error';
 import Home from '../Home/Home';
@@ -22,17 +23,16 @@ const App = () => {
 
   const RESULTS_PER_PAGE = 5
 
+  const navigate = useNavigate();
+
   useEffect(() => {
-    (async() => {
-      try {
-          const user = await getUser(1)
-          setUser(user)
-          setIsLoaded(true)
-      } catch (error) {
-          handleNetworkErrors(error)
-      }
-    })()
-  }, [isLoaded])
+    if (!user) {
+      navigate('/login')
+    } else {
+      setIsLoaded(true)
+    }
+  //eslint-disable-next-line
+  }, [user])
 
   useEffect(() => {
     if (user && user.location) {
@@ -78,13 +78,14 @@ const App = () => {
 
   return (
     <>
-      <BirdsContext.Provider value={{user, setUser, birds, setBirds, currentPage, setCurrentPage, pageCount, setIsLoaded}}>
+      <BirdsContext.Provider value={{user, setUser, birds, setBirds, currentPage, setCurrentPage, pageCount, setIsLoaded, handleNetworkErrors}}>
         <Nav setNetworkError={setNetworkError}/>
         <main className="App">
             <Routes>
-              <Route path='/' element={networkError ? <Error networkError={networkError} /> : user?.location ? <Home isLoaded={isLoaded}/> : <section id='init'><p id='initText'>Go to settings and set a location</p></section>}/>
-              <Route path='/saved' element={<Saved />}/>
-              <Route path='/settings' element={<Settings />}/>
+              <Route path='/' element={networkError ? <Error networkError={networkError} /> : user?.location ? <Home isLoaded={isLoaded}/> : <section id='init'><p id='initText'>Go to settings and set a location</p></section>} />
+              <Route path='/login' element={<Login />} />
+              <Route path='/saved' element={<Saved />} />
+              <Route path='/settings' element={<Settings />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
         </main>
