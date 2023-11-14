@@ -57,7 +57,9 @@ const Login = () => {
           await new Promise(resolve => setTimeout(resolve, 1000))
           await getUserExists(email)
           setUser(await getUser(email))
-          navigate('/')
+          console.log('After getUser, before navigate');
+          navigate('/');
+          console.log('After navigate');
         } catch (error) {
           handleNetworkErrors(error)
         }
