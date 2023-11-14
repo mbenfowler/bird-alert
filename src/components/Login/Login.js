@@ -53,8 +53,8 @@ const Login = () => {
             })
       } else if (e.key === 'Enter' && field.classList.contains('password') && !userFound) {
           await createUser(email, password)
-          await getUserExists(email)
-            .then(res => setUserFound(res.userExists))
+          setUser(await getUser(email))
+          navigate('/')
         // TODO: validations
         // TODO: confirm email flow
       }
