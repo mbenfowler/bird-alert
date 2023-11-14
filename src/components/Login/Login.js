@@ -54,6 +54,7 @@ const Login = () => {
       } else if (e.key === 'Enter' && field.classList.contains('password') && !userFound) {
         try {
           await createUser(email, password)
+          await new Promise(resolve => setTimeout(resolve, 1000))
           await getUserExists(email)
           setUser(await getUser(email))
           navigate('/')
