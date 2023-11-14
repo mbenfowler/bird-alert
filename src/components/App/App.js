@@ -4,6 +4,7 @@ import { Routes, Route } from 'react-router-dom';
 import { getBirdKeysByLocation, getBirdsData, getUser, getSavedBirds } from "../../apiCalls"
 import { mockBirdKeys } from "../../mockData/birdKeys"
 import './App.css';
+import Login from '../Login/Login';
 import Nav from '../Nav/Nav';
 import Error from '../Error/Error';
 import Home from '../Home/Home';
@@ -82,9 +83,10 @@ const App = () => {
         <Nav setNetworkError={setNetworkError}/>
         <main className="App">
             <Routes>
-              <Route path='/' element={networkError ? <Error networkError={networkError} /> : user?.location ? <Home isLoaded={isLoaded}/> : <section id='init'><p id='initText'>Go to settings and set a location</p></section>}/>
-              <Route path='/saved' element={<Saved />}/>
-              <Route path='/settings' element={<Settings />}/>
+              <Route path='/' element={networkError ? <Error networkError={networkError} /> : user?.location ? <Home isLoaded={isLoaded}/> : <section id='init'><p id='initText'>Go to settings and set a location</p></section>} />
+              <Route path='/login' element={<Login />} />
+              <Route path='/saved' element={<Saved />} />
+              <Route path='/settings' element={<Settings />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
         </main>
