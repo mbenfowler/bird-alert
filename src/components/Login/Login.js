@@ -52,9 +52,14 @@ const Login = () => {
               setCorrectPass(res.isCorrectPass)
             })
       } else if (e.key === 'Enter' && field.classList.contains('password') && !userFound) {
+        try {
           await createUser(email, password)
+          await getUserExists(email)
           setUser(await getUser(email))
           navigate('/')
+        } catch (error) {
+          handleNetworkErrors(error)
+        }
         // TODO: validations
         // TODO: confirm email flow
       }
