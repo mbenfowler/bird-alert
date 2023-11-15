@@ -1,7 +1,7 @@
 import { useState, useEffect } from  'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 // eslint-disable-next-line no-unused-vars
-import { getBirdKeysByLocation, getBirdsData, getUser, getSavedBirds } from "../../apiCalls"
+import { getBirdKeysByLocation, getBirdsData, getSavedBirds } from "../../apiCalls"
 import { mockBirdKeys } from "../../mockData/birdKeys"
 import './App.css';
 import Login from '../Login/Login';
@@ -39,7 +39,7 @@ const App = () => {
       (async() => {
           try {
               // eslint-disable-next-line no-unused-vars
-              const savedBirds = await getSavedBirds()
+              const savedBirds = await getSavedBirds(user.email)
               // const birdKeys = await getBirdKeysByLocation(user.location)
               // const birdsData = await getBirdsData(birdKeys)
               const mutatableBirdKeys = [...mockBirdKeys]

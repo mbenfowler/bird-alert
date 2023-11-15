@@ -96,8 +96,8 @@ const createUser = async (email, password) => {
     return await handleError(res)
 }
 
-const getSavedBirds = async () => {
-    const res = await fetch(`${apiBaseURL}/getSaved`)
+const getSavedBirds = async (email) => {
+    const res = await fetch(`${apiBaseURL}/getSaved?email=${email}`)
     return await handleError(res)
 }
 

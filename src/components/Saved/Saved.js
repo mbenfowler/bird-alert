@@ -1,14 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useContext } from 'react'
 import { getSavedBirds } from '../../apiCalls'
 import BirdsList from '../BirdsList/BirdsList'
+import BirdsContext from '../BirdsContext/BirdsContext'
 import './Saved.css'
 
 const Saved = () => {
     const [savedBirds, setSavedBirds] = useState([])
+    const { user } = useContext(BirdsContext)
 
     useEffect(() => {
         (async() => {
-            const savedBirds = await getSavedBirds()
+            const savedBirds = await getSavedBirds(user.email)
             setSavedBirds(savedBirds)
         })()
     }, [])
