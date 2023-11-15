@@ -5,7 +5,7 @@ import BirdsContext from '../BirdsContext/BirdsContext'
 import './Form.css'
 
 const Form = () => {
-    const { user, setBirds, setIsLoaded } = useContext(BirdsContext)
+    const { user, setBirds, setIsLoaded, setUser } = useContext(BirdsContext)
     const [form, setForm] = useState({
         name: `${user?.name ? user.name : ''}`,
         location: `${user?.location ? user.location : ''}`,
@@ -21,6 +21,9 @@ const Form = () => {
 
     const handleSubmit = async () => {
         await patchUser(form)
+            .then(res => {
+                setUser(res)
+            })
         setIsLoaded(false)
         if (!form.location.length) {
             setBirds([])
