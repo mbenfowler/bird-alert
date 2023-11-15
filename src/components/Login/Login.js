@@ -55,8 +55,9 @@ const Login = () => {
         try {
           await createUser(email, password)
           await new Promise(resolve => setTimeout(resolve, 1000))
-          await getUserExists(email)
-          setUser(await getUser(email))
+          const newUser = await getUser(email)
+          console.log('got new user', newUser)
+          setUser(newUser)
           console.log('After getUser, before navigate');
           navigate('/');
           console.log('After navigate');
