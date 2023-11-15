@@ -39,7 +39,7 @@ const App = () => {
       (async() => {
           try {
               // eslint-disable-next-line no-unused-vars
-              const savedBirds = await getSavedBirds(user.email)
+              const savedBirds = await getSavedBirds(user.id)
               // const birdKeys = await getBirdKeysByLocation(user.location)
               // const birdsData = await getBirdsData(birdKeys)
               const mutatableBirdKeys = [...mockBirdKeys]

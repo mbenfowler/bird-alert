@@ -10,7 +10,7 @@ const Saved = () => {
 
     useEffect(() => {
         (async() => {
-            const savedBirds = await getSavedBirds(user.email)
+            const savedBirds = await getSavedBirds(user.id)
             setSavedBirds(savedBirds)
         })()
     }, [])
