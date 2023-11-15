@@ -5,7 +5,7 @@ import BirdsContext from "../BirdsContext/BirdsContext"
 import { postSavedBird, deleteSavedBird, isBirdSaved } from "../../apiCalls"
 
 const Card = ({ bird }) => {
-    const { birds, setBirds } = useContext(BirdsContext)
+    const { birds, setBirds, user } = useContext(BirdsContext)
     const [isChecked, setIsChecked] = useState(false)
 
     useEffect(() => {
@@ -21,7 +21,7 @@ const Card = ({ bird }) => {
             if (isChecked) {
                 await deleteSavedBird(bird)
             } else {
-                await postSavedBird(bird)
+                await postSavedBird(bird, user.email)
             }
 
             const updatedBirds = birds.map(b => {

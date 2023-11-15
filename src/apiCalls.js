@@ -118,7 +118,7 @@ const isBirdSaved = async (bird) => {
     }
 }
 
-const postSavedBird = async (bird) => {
+const postSavedBird = async (bird, email) => {
     const queryParameters = new URLSearchParams({
         comName: bird.comName,
         sciName: bird.sciName,
@@ -132,7 +132,7 @@ const postSavedBird = async (bird) => {
         taxonOrder: bird.taxonOrder,
     });
 
-    const res = await fetch(`${apiBaseURL}/postSaved?${queryParameters.toString()}`, {
+    const res = await fetch(`${apiBaseURL}/postSaved?${queryParameters.toString()}&email=${email}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
