@@ -102,9 +102,9 @@ const getSavedBirds = async (id) => {
 }
 
 
-const isBirdSaved = async (bird) => {
+const isBirdSaved = async (bird, id) => {
     try {
-      const res = await fetch(`${apiBaseURL}/getSavedSpeciesCode?speciesCode=${bird.speciesCode}`)
+      const res = await fetch(`${apiBaseURL}/getSavedSpeciesCode?speciesCode=${bird.speciesCode}&user_id=${id}`)
       if (res.ok) {
         const data = await res.json()
         return data

@@ -10,10 +10,11 @@ const Card = ({ bird }) => {
 
     useEffect(() => {
         const checkSavedStatus = async () => {
-            const saved = await isBirdSaved(bird)
+            const saved = await isBirdSaved(bird, user.id)
             setIsChecked(saved)
         };
         checkSavedStatus();
+    //eslint-disable-next-line
     }, [bird])
 
     const handleClick = async () => {

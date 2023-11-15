@@ -13,6 +13,7 @@ const Saved = () => {
             const savedBirds = await getSavedBirds(user.id)
             setSavedBirds(savedBirds)
         })()
+    //eslint-disable-next-line
     }, [])
 
     return (
