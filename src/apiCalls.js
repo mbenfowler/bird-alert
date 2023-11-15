@@ -89,7 +89,8 @@ const createUser = async (email, password) => {
     const res = await fetch(`${apiBaseURL}/createUser?email=${email}&password=${password}`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-Custom-Header': 'value'
         },
         mode: 'cors'
     })
