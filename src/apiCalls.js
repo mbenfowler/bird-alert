@@ -142,8 +142,8 @@ const postSavedBird = async (bird, email) => {
     return await handleError(res)
 }
 
-const deleteSavedBird = async (bird) => {
-    const res = await fetch(`${apiBaseURL}/deleteSaved?speciesCode=${bird.speciesCode}`, {
+const deleteSavedBird = async (bird, email) => {
+    const res = await fetch(`${apiBaseURL}/deleteSaved?speciesCode=${bird.speciesCode}&email=${email}`, {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json'

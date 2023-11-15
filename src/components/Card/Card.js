@@ -19,7 +19,7 @@ const Card = ({ bird }) => {
     const handleClick = async () => {
         try {
             if (isChecked) {
-                await deleteSavedBird(bird)
+                await deleteSavedBird(bird, user.email)
             } else {
                 await postSavedBird(bird, user.email)
             }
