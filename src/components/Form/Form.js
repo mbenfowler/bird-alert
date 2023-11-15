@@ -29,6 +29,8 @@ const Form = () => {
             setBirds([])
         }
 
+        console.log(user)
+
         navigate('/');
     }
 
