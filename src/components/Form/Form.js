@@ -1,6 +1,6 @@
 import { useState, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { patchUser } from '../../apiCalls'
+import { patchUser, getUser } from '../../apiCalls'
 import BirdsContext from '../BirdsContext/BirdsContext'
 import './Form.css'
 
@@ -21,8 +21,8 @@ const Form = () => {
 
     const handleSubmit = async () => {
         await patchUser(form)
-            .then(res => {
-                setUser(res)
+            .then(async res => {
+                setUser(await getUser(form.email))
             })
         setIsLoaded(false)
         if (!form.location.length) {
