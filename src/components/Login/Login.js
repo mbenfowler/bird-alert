@@ -39,7 +39,7 @@ const Login = () => {
 
       if (e.key === 'Enter') {
         e.preventDefault()
-
+        
         if (field.classList.contains('email')) {
           setCorrectPass(undefined)
           setPassword('')
@@ -56,7 +56,6 @@ const Login = () => {
               })
         } else if (field.classList.contains('password') && !userFound) {
           try {
-            e.preventDefault()
             await createUser(email, password)
             await new Promise(resolve => setTimeout(resolve, 1000))
             const newUser = await getUser(email)
