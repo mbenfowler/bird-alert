@@ -35,6 +35,7 @@ const Login = () => {
     }
 
     const handleEnter = async (e) => {
+      e.preventDefault()
       const field = e.target
 
       if (e.key === 'Enter' && field.classList.contains('email')) {
