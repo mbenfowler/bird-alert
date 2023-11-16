@@ -37,7 +37,10 @@ const Login = () => {
     const handleEnter = async (e) => {
       const field = e.target
 
-      if (e.key === 'Enter' && field.classList.contains('email')) {
+      if (e.key === 'Enter') {
+        e.preventDefault()
+
+        if (field.classList.contains('email')) {
           setCorrectPass(undefined)
           setPassword('')
           const passwordInput = document.querySelector('.password')
@@ -46,24 +49,25 @@ const Login = () => {
           }
           await getUserExists(email)
             .then(res => setUserFound(res.userExists))
-      } else if (e.key === 'Enter' && field.classList.contains('password') && userFound) {
-          await getIsCorrectPass(email, password)
-            .then(res => {
-              setCorrectPass(res.isCorrectPass)
-            })
-      } else if (e.key === 'Enter' && field.classList.contains('password') && !userFound) {
-        try {
-          e.preventDefault()
-          await createUser(email, password)
-          await new Promise(resolve => setTimeout(resolve, 1000))
-          const newUser = await getUser(email)
-          setUser(newUser)
-          navigate('/');
-        } catch (error) {
-          handleNetworkErrors(error)
+        } else if (field.classList.contains('password') && userFound) {
+            await getIsCorrectPass(email, password)
+              .then(res => {
+                setCorrectPass(res.isCorrectPass)
+              })
+        } else if (field.classList.contains('password') && !userFound) {
+          try {
+            e.preventDefault()
+            await createUser(email, password)
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            const newUser = await getUser(email)
+            setUser(newUser)
+            navigate('/');
+          } catch (error) {
+            handleNetworkErrors(error)
+          }
+          // TODO: validations
+          // TODO: confirm email flow
         }
-        // TODO: validations
-        // TODO: confirm email flow
       }
     }
 
