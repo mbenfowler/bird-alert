@@ -35,7 +35,6 @@ const Login = () => {
     }
 
     const handleEnter = async (e) => {
-      e.preventDefault()
       const field = e.target
 
       if (e.key === 'Enter' && field.classList.contains('email')) {
@@ -54,6 +53,7 @@ const Login = () => {
             })
       } else if (e.key === 'Enter' && field.classList.contains('password') && !userFound) {
         try {
+          e.preventDefault()
           await createUser(email, password)
           await new Promise(resolve => setTimeout(resolve, 1000))
           const newUser = await getUser(email)
