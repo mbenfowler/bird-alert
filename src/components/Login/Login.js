@@ -55,7 +55,7 @@ const Login = () => {
         } else if (field.classList.contains('password') && !userFound) {
           try {
             const thisUserExists = await getUserExists(email)
-            thisUserExists.userExists && await createUser(email, password)
+            !thisUserExists.userExists && await createUser(email, password)
             const newUser = await getUser(email)
             setUser(newUser)
             navigate('/');
