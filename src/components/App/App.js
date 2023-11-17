@@ -2,7 +2,7 @@ import { useState, useEffect } from  'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 // eslint-disable-next-line no-unused-vars
 import { getBirdKeysByLocation, getBirdsData, getSavedBirds } from "../../apiCalls"
-import { mockBirdKeys } from "../../mockData/birdKeys"
+// import { mockBirdKeys } from "../../mockData/birdKeys"
 import './App.css';
 import Login from '../Login/Login';
 import Nav from '../Nav/Nav';

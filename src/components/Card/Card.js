@@ -39,9 +39,11 @@ const Card = ({ bird }) => {
         }
     };
 
+    const img = bird.birdImg === '?q=75&fm=jpg&w=400&fit=max' ? 'images/noBirdImg.png' : bird.birdImg
+
     return (
         <div className='card'>
-            <img className='bird-img' src={bird.birdImg || process.env.PUBLIC_URL + 'images/noBirdImg.png'} alt={`a ${bird.comName}`}/>
+            <img className='bird-img' src={img} alt={`a ${bird.comName}`}/>
             <div className='bird-details'>
                 <p>{bird.comName}</p>
                 <p className='sci-name'>{`(${bird.sciName})`}</p>
