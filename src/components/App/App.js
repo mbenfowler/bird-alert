@@ -40,9 +40,8 @@ const App = () => {
           try {
               // eslint-disable-next-line no-unused-vars
               const savedBirds = await getSavedBirds(user.id)
-              // const birdKeys = await getBirdKeysByLocation(user.location)
-              // const birdsData = await getBirdsData(birdKeys)
-              const mutatableBirdKeys = [...mockBirdKeys]
+              const birdKeys = await getBirdKeysByLocation(user.location)
+              const mutatableBirdKeys = [...birdKeys]
               const splicedBirdKeys = spliceBirdKeys(mutatableBirdKeys, RESULTS_PER_PAGE)
               const splicedBirdsData = await getBirdsData(splicedBirdKeys[currentPage - 1])
               const checkedBirds = splicedBirdsData.map(bird => {
