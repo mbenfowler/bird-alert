@@ -39,7 +39,7 @@ const Card = ({ bird }) => {
         }
     };
 
-    const img = bird.birdImg === '?q=75&fm=jpg&w=400&fit=max' ? 'images/noBirdImg.png' : bird.birdImg
+    const img = bird.birdImg === 'undefined?q=75&fm=jpg&w=400&fit=max' ? 'images/noBirdImg.png' : bird.birdImg
 
     return (
         <div className='card'>
