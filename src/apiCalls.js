@@ -119,6 +119,7 @@ const isBirdSaved = async (bird, id) => {
 }
 
 const postSavedBird = async (bird, id) => {
+    console.log(bird)
     const queryParameters = new URLSearchParams({
         comName: bird.comName,
         sciName: bird.sciName,
@@ -128,6 +129,7 @@ const postSavedBird = async (bird, id) => {
         familyCode: bird.familyCode,
         familyComName: bird.familyComName,
         familySciName: bird.familySciName,
+        birdImg: bird.birdImg,
         wikiURL: bird.wikiURL,
         taxonOrder: bird.taxonOrder,
     });
