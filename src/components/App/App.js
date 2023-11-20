@@ -16,6 +16,7 @@ import BirdsContext from '../BirdsContext/BirdsContext';
 const App = () => {
   const [user, setUser] = useState()
   const [birds, setBirds] = useState([])
+  const [savedBirds, setSavedBirds] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
   const [pageCount, setPageCount] = useState()
   const [isLoaded, setIsLoaded] = useState(false)
@@ -39,7 +40,7 @@ const App = () => {
       (async() => {
           try {
               // eslint-disable-next-line no-unused-vars
-              const savedBirds = await getSavedBirds(user.id)
+              setSavedBirds(await getSavedBirds(user.id))
               const birdKeys = await getBirdKeysByLocation(user.location)
               const mutatableBirdKeys = [...birdKeys]
               const splicedBirdKeys = spliceBirdKeys(mutatableBirdKeys, RESULTS_PER_PAGE)
@@ -58,6 +59,7 @@ const App = () => {
           }
       })()
     }
+  //eslint-disable-next-line
   }, [user, user?.location, currentPage])
 
   const handleNetworkErrors = (error) => {
@@ -77,7 +79,7 @@ const App = () => {
 
   return (
     <>
-      <BirdsContext.Provider value={{user, setUser, birds, setBirds, currentPage, setCurrentPage, pageCount, setIsLoaded, handleNetworkErrors}}>
+      <BirdsContext.Provider value={{user, setUser, birds, setBirds, savedBirds, setSavedBirds, currentPage, setCurrentPage, pageCount, setIsLoaded, handleNetworkErrors}}>
         <Nav setNetworkError={setNetworkError}/>
         <main className="App">
             <Routes>

@@ -19,26 +19,45 @@ const getBirdKeysByLocation = async (region) => {
 }
 
 const getBirdsData = async (keys) => {
-    let birdsData = [];
-    for (const key of keys) {
-        const birdData = await getBirdData(key)
-        const nuthatchData = await getBirdImg(birdData[0].comName)
-        const birdImg = nuthatchData.entities[0]?.images[0] ? `${nuthatchData.entities[0]?.images[0]}?q=75&fm=jpg&w=400&fit=max` : undefined
-        const wikiData = await getBirdWiki(birdData[0].comName)
-        const wikiURL = `https://en.wikipedia.org/?curid=${wikiData.pages[0].id}`
-        birdsData.push({...birdData[0], birdImg, wikiURL})
-    }
+    try {
+        const birdDataPromises = keys.map(async (key) => {
+            // if bird exists in birds table, get birdData, birdImg, and wikiURL from birds table
+            const thisBird = await getBird(key);
+            if (thisBird.speciesCode) {
+                return thisBird;
+            } else {
+                try {
+                    const birdData = await getExternalBirdData(key);
+                    const nuthatchData = await getExternalBirdImg(birdData[0].comName);
+                    const birdImg = nuthatchData.entities[0]?.images[0]
+                        ? `${nuthatchData.entities[0]?.images[0]}?q=75&fm=jpg&w=400&fit=max`
+                        : undefined;
+                    const wikiData = await getExternalBirdWiki(birdData[0].comName);
+                    const wikiURL = `https://en.wikipedia.org/?curid=${wikiData.pages[0].id}`;
+                    return { ...birdData[0], birdImg, wikiURL };
+                } catch (error) {
+                        console.error(`Error fetching external bird data for key ${key}: ${error}`);
+                        throw error;
+                }
+            }
+        });
 
-    return birdsData
+        const birdsData = await Promise.all(birdDataPromises);
+
+        return birdsData;
+    } catch (error) {
+        console.error(`Error fetching birds data: ${error}`);
+        throw error;
+    }
 }
 
-const getBirdData = async (key) => {
+const getExternalBirdData = async (key) => {
     const res = await fetch(`https://api.ebird.org/v2/ref/taxonomy/ebird?species=${key}&fmt=json`)
     return await handleError(res)
 }
 
 // eslint-disable-next-line no-unused-vars
-const getBirdImg = async (comName) => {
+const getExternalBirdImg = async (comName) => {
     const res = await fetch(`https://nuthatch.lastelm.software/v2/birds?page=1&pageSize=25&name=${comName}&operator=AND`, {
         headers: {
             "API-Key": process.env.NUTHATCH_API_KEY
@@ -48,7 +67,7 @@ const getBirdImg = async (comName) => {
     return await handleError(res)
 }
 
-const getBirdWiki = async (comName) => {
+const getExternalBirdWiki = async (comName) => {
     const res = await fetch(`https://api.wikimedia.org/core/v1/wikipedia/en/search/page?q=${comName}&User-Agent=bird alert&limit=1`)
     return await handleError(res)
 }
@@ -65,6 +84,11 @@ const getIsCorrectPass = async (email, password) => {
 
 const getUser = async (email) => {
     const res = await fetch(`${apiBaseURL}/getUser?email=${email}`)
+    return await handleError(res)
+}
+
+const getBird = async (speciesCode) => {
+    const res = await fetch(`${apiBaseURL}/getBird?speciesCode=${speciesCode}`)
     return await handleError(res)
 }
 

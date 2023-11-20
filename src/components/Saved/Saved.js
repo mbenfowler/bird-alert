@@ -1,20 +1,10 @@
-import { useState, useEffect, useContext } from 'react'
-import { getSavedBirds } from '../../apiCalls'
+import { useContext } from 'react'
 import BirdsList from '../BirdsList/BirdsList'
 import BirdsContext from '../BirdsContext/BirdsContext'
 import './Saved.css'
 
 const Saved = () => {
-    const [savedBirds, setSavedBirds] = useState([])
-    const { user } = useContext(BirdsContext)
-
-    useEffect(() => {
-        (async() => {
-            const savedBirds = await getSavedBirds(user.id)
-            setSavedBirds(savedBirds)
-        })()
-    //eslint-disable-next-line
-    }, [])
+    const { savedBirds } = useContext(BirdsContext)
 
     return (
         <section id='birdsInArea'>
