@@ -98,23 +98,14 @@ const patchUser = async (user) => {
         email: user.email,
         phone: user.phone
     });
-    const res = await fetch(`${apiBaseURL}/patchUser?${queryParameters.toString()}`, {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(user)
-    })
+    const res = await fetch(`${apiBaseURL}/patchUser?${queryParameters.toString()}`)
 
     return await handleError(res, false)
 }
 
 const createUser = async (email, password) => {
     const res = await fetch(`${apiBaseURL}/createUser?email=${email}&password=${password}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        method: 'POST'
     })
 
     return await handleError(res)
@@ -143,7 +134,6 @@ const isBirdSaved = async (bird, id) => {
 }
 
 const postSavedBird = async (bird, id) => {
-    console.log(bird)
     const queryParameters = new URLSearchParams({
         comName: bird.comName,
         sciName: bird.sciName,
@@ -156,25 +146,21 @@ const postSavedBird = async (bird, id) => {
         birdImg: bird.birdImg,
         wikiURL: bird.wikiURL,
         taxonOrder: bird.taxonOrder,
+        user_id: id
     });
 
-    const res = await fetch(`${apiBaseURL}/postSaved?${queryParameters.toString()}&user_id=${id}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    })
+    const res = await fetch(`${apiBaseURL}/postSaved?${queryParameters.toString()}`)
 
     return await handleError(res)
 }
 
 const deleteSavedBird = async (bird, id) => {
-    const res = await fetch(`${apiBaseURL}/deleteSaved?speciesCode=${bird.speciesCode}&user_id=${id}`, {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    })
+    const queryParameters = new URLSearchParams({
+        speciesCode: bird.speciesCode,
+        user_id: id
+    });
+
+    const res = await fetch(`${apiBaseURL}/deleteSaved?${queryParameters.toString()}`)
 
     return await handleError(res)
 }
