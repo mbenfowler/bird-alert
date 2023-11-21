@@ -25,7 +25,7 @@ const Home = ({ isLoaded }) => {
                 <h2>Birds in your area:</h2>
                 {isLoaded ? <BirdsList birds={birds} /> : <p>Loading...</p>}
             </section>
-            <div id='pagination'>
+            <div className='pagination'>
                 {currentPage !== 1 && <button className='pagination-btn' onClick={handlePageChange}>&lt;</button>}
                 <p>{`Page ${currentPage} of ${pageCount}`}</p>
                 {currentPage !== pageCount && <button className='pagination-btn' onClick={handlePageChange}>&gt;</button>}
