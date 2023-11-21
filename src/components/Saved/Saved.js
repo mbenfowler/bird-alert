@@ -1,10 +1,22 @@
-import { useContext } from 'react'
+import { useContext, useEffect } from 'react'
 import BirdsList from '../BirdsList/BirdsList'
 import BirdsContext from '../BirdsContext/BirdsContext'
+import { getSavedBirds } from '../../apiCalls'
 import './Saved.css'
 
 const Saved = () => {
-    const { savedBirds } = useContext(BirdsContext)
+    const { user, savedBirds, setSavedBirds, handleNetworkErrors } = useContext(BirdsContext)
+
+    useEffect(() => {
+        (async() => {
+            try {
+                setSavedBirds(await getSavedBirds(user.id))
+            } catch (error) {
+                handleNetworkErrors(error)
+            }
+        })()
+    //eslint-disable-next-line
+    }, [])
 
     return (
         <section id='birdsInArea'>
