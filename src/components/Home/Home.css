@@ -1,15 +1,17 @@
-#alerts {
+#alertArea {
     height: 200px;
     background-color: lightgray;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     position: sticky;
     top: 55px;
     color: gray;
     border-bottom: solid darkgray;
     border-width: thick;
     z-index: 2;
+}
+
+#alertArea a {
+    text-decoration: none;
+    color: inherit;
 }
 
 #birdsInArea {

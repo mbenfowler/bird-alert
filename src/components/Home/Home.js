@@ -1,11 +1,12 @@
 import { useContext } from "react"
 import PropTypes from "prop-types"
+import BirdAlerts from "../BirdAlerts/BirdAlerts"
 import BirdsList from "../BirdsList/BirdsList"
 import BirdsContext from "../BirdsContext/BirdsContext"
 import './Home.css'
 
 const Home = ({ isLoaded }) => {
-    const { birds, currentPage, setCurrentPage, pageCount, setIsLoaded } = useContext(BirdsContext)
+    const { birdAlerts, birds, currentPage, setCurrentPage, pageCount, setIsLoaded } = useContext(BirdsContext)
 
     const handlePageChange = (e) => {
         setIsLoaded(false)
@@ -15,11 +16,11 @@ const Home = ({ isLoaded }) => {
             setCurrentPage(prev => prev + 1)
         }
     }
-    
+
     return (
         <>
-            <section id='alerts'>
-                <div>No alerts yet!</div>
+            <section id='alertArea'>
+                <BirdAlerts alerts={birdAlerts} />
             </section>
             <section id='birdsInArea'>
                 <h2>Birds in your area:</h2>

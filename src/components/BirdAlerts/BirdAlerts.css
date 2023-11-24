@@ -1,0 +1,17 @@
+#birdAlerts {
+  height: 100%;
+  display: flex;
+  overflow-x: auto;
+  align-items: center;
+}
+
+#alertsHeaderBox {
+  height: 80%;
+  background-color: lightgray;
+  position: sticky;
+  left: 0;
+  border-right: 2px black solid;
+  display: flex;
+  align-items: center;
+  z-index: 1;
+}
