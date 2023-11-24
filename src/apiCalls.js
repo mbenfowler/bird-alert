@@ -74,7 +74,7 @@ const getExternalBirdWiki = async (comName) => {
 
 const getBirdObservationsByLocation = async (region) => {
     const newDate = new Date()
-    const res = await fetch(`https://api.ebird.org/v2/data/obs/${region}/historic/${newDate.getFullYear()}/${newDate.getMonth() + 1}/${newDate.getDate()}`, {
+    const res = await fetch(`https://api.ebird.org/v2/data/obs/${region}/historic/${newDate.getFullYear()}/${newDate.getMonth() + 1}/${newDate.getDate() - 1}`, {
         headers: {
             "X-eBirdApiToken": process.env.REACT_APP_EBIRD_API_KEY
         }
