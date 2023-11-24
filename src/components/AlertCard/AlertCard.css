@@ -1,0 +1,4 @@
+.alert-card {
+    min-width: 200px;
+    flex-direction: column;
+}

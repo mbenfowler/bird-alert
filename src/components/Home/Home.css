@@ -1,9 +1,6 @@
-#alerts {
+#alertArea {
     height: 200px;
     background-color: lightgray;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     position: sticky;
     top: 55px;
     color: gray;
