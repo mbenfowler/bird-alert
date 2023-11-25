@@ -3,7 +3,7 @@
   "name": "Bird Alert!",
   "icons": [
     {
-      "src": "images/bird.ico",
+      "src": "images/bird.png",
       "sizes": "256x256",
       "type": "image/png"
     }
