@@ -56,7 +56,15 @@ const getExternalBirdData = async (key) => {
     return await handleError(res)
 }
 
-// eslint-disable-next-line no-unused-vars
+const getExternalRegions = async (state) => {
+    const res = await fetch(`https://api.ebird.org/v2/ref/region/list/subnational2/US-${state}`, {
+        headers: {
+            "X-eBirdApiToken": process.env.REACT_APP_EBIRD_API_KEY
+        }
+    })
+    return await handleError(res)
+}
+
 const getExternalBirdImg = async (comName) => {
     const res = await fetch(`https://nuthatch.lastelm.software/v2/birds?page=1&pageSize=25&name=${comName}&operator=AND`, {
         headers: {
@@ -183,4 +191,4 @@ const handleError = (res, required = true) => {
     }
 }
 
-export { getBirdKeysByLocation, getBirdsData, getBirdObservationsByLocation, getUserExists, getIsCorrectPass, getUser, patchUser, createUser, getSavedBirds, isBirdSaved, postSavedBird, deleteSavedBird }
+export { getBirdKeysByLocation, getBirdsData, getBirdObservationsByLocation, getUserExists, getIsCorrectPass, getUser, patchUser, createUser, getSavedBirds, isBirdSaved, postSavedBird, deleteSavedBird, getExternalRegions }
