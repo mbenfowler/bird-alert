@@ -26,7 +26,6 @@ const Form = () => {
     useEffect(() => {
         if (form.state.length) {
             (async() => {
-                console.log('has length')
                 setRegions(await getExternalRegions(form.state))
             })()
         } else {

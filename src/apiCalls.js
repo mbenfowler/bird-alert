@@ -112,6 +112,7 @@ const getBird = async (speciesCode) => {
 
 const patchUser = async (user) => {
     const queryParameters = new URLSearchParams({
+        state: user.state,
         location: user.location,
         email: user.email,
         phone: user.phone
