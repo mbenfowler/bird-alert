@@ -1,10 +1,11 @@
-form {
+#settings-form {
     display: flex;
     align-items: center;
     flex-direction: column;
+    width: 100%;
 }
 
-label {
+#settings-form label {
     display: flex;
     justify-content: space-around;
     width: 40%;
@@ -20,4 +21,15 @@ label {
     height: 50px;
     background-color: white;
     border-radius: 25px;
+    cursor: pointer;
+}
+
+@media screen and (max-width: 900px) {
+    #settings-form label {
+        width: 80%;
+    }
+
+    .submit {
+        width: 50%;
+    }
 }

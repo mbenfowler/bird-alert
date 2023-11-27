@@ -10,12 +10,14 @@ const Login = () => {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [correctPass, setCorrectPass] = useState()
+    const [isLoaded, setIsLoaded] = useState(true)
 
     const navigate = useNavigate();
 
     useEffect(() => {
       if (correctPass) {
         (async() => {
+          setIsLoaded(false)
           try {
               const user = await getUser(email)
               setUser(user)
@@ -38,6 +40,7 @@ const Login = () => {
       const field = e.target
 
       if (e.key === 'Enter') {
+        setIsLoaded(false)
         if (field.classList.contains('email')) {
           setCorrectPass(undefined)
           setPassword('')
@@ -64,6 +67,7 @@ const Login = () => {
           // TODO: validations
           // TODO: confirm email flow
         }
+        setIsLoaded(true)
       }
     }
 
@@ -89,6 +93,7 @@ const Login = () => {
               </div>
             }
             {correctPass === false && <h3 className='info'>incorrect password</h3>}
+            {isLoaded === false && <div className='spinner login-spinner'></div>}
           </section>
         </main>
     )

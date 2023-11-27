@@ -101,7 +101,7 @@ const App = () => {
               <Route path='/' element={networkError ? <Error networkError={networkError} /> : user?.location ? <Home isLoaded={isLoaded}/> : <section id='init'><p id='initText'>Go to settings and set a location</p></section>} />
               <Route path='/login' element={<Login />} />
               <Route path='/saved' element={<Saved />} />
-              <Route path='/settings' element={<Settings />} />
+              <Route path='/settings' element={<Settings isLoaded={isLoaded}/>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
         </main>

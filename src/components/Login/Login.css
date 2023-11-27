@@ -43,3 +43,8 @@
   text-align: center;
   padding: 0;
 }
+
+.login-spinner:before {
+  width: 30px;
+  height: 30px;
+}

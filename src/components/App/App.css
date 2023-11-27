@@ -22,3 +22,26 @@ body,
     font-family: 'Fredericka the Great';
     font-size: xx-large;
 }
+
+.spinner:before {
+    content: '';
+    display: inline-flex;
+    align-self: center;
+    margin: 2em;
+    padding: 2em;
+    position: relative;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 1px solid #f6f;
+    border-top-color: #0e0;
+    border-right-color: #0dd;
+    border-bottom-color: #f90;
+    animation: spinner .6s linear infinite;
+}
+
+@keyframes spinner {
+    to {
+        transform: rotate(360deg);
+    }
+}

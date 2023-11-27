@@ -1,10 +1,10 @@
 import './Settings.css'
 import Form from "../Form/Form"
 
-const Settings = () => {
+const Settings = ({ isLoaded }) => {
     return (
         <section id='userSettings'>
-            <Form />
+            <Form isLoaded={isLoaded}/>
         </section>
     )
 }

@@ -12,7 +12,7 @@ const STATE_CODES = [
     "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
 ]
 
-const Form = () => {
+const Form = ({ isLoaded }) => {
     const { user, setBirds, setIsLoaded, setUser } = useContext(BirdsContext)
     const [regions, setRegions] = useState([])
     const [form, setForm] = useState({
@@ -42,11 +42,11 @@ const Form = () => {
     const navigate = useNavigate()
 
     const handleSubmit = async () => {
+        setIsLoaded(false)
         await patchUser(form)
             .then(async res => {
                 setUser(await getUser(form.email))
             })
-        setIsLoaded(false)
         if (!form.location.length) {
             setBirds([])
         }
@@ -55,37 +55,42 @@ const Form = () => {
     }
 
     return (
-        <form>
-            <label>
-                Name:
-                <input type="text" name='name' value={form.name} onChange={handleChange} />
-            </label>
-            <label>
-                State:
-                <select name="state" value={form.state} onChange={handleChange}>
-                    <option value="">Select your state</option>
-                    {STATE_CODES.map(state => <option key={state} value={state}>{state}</option>)}
-                </select>
-            </label>
-                {!!regions.length &&
+        <>
+            {!isLoaded
+                ? <div className='spinner'></div>
+                : <form id='settings-form'>
                     <label>
-                        Region:
-                        <select name="location" value={form.location} onChange={handleChange}>
-                            <option value="">Select your region</option>
-                            {regions.map(region => <option key={region.code} value={region.code}>{region.name} - {region.code}</option>)}
+                        Name:
+                        <input type="text" name='name' value={form.name} onChange={handleChange} />
+                    </label>
+                    <label>
+                        State:
+                        <select name="state" value={form.state} onChange={handleChange}>
+                            <option value="">Select your state</option>
+                            {STATE_CODES.map(state => <option key={state} value={state}>{state}</option>)}
                         </select>
                     </label>
-                }
-            <label>
-                Email:
-                <input type="text" name='email' value={form.email} onChange={handleChange} />
-            </label>
-            <label>
-                Phone #:
-                <input type="text" name='phone' value={form.phone} onChange={handleChange} />
-            </label>
-            <div className='submit' onClick={handleSubmit}>Lock in details</div>
-        </form>
+                        {!!regions.length &&
+                            <label>
+                                Region:
+                                <select name="location" value={form.location} onChange={handleChange}>
+                                    <option value="">Select your region</option>
+                                    {regions.map(region => <option key={region.code} value={region.code}>{region.name} - {region.code}</option>)}
+                                </select>
+                            </label>
+                        }
+                    <label>
+                        Email:
+                        <input type="text" name='email' value={form.email} onChange={handleChange} />
+                    </label>
+                    <label>
+                        Phone #:
+                        <input type="text" name='phone' value={form.phone} onChange={handleChange} />
+                    </label>
+                    <div className='submit' onClick={handleSubmit}>Lock in details</div>
+                </form>
+            }
+        </>
     )
 }
 

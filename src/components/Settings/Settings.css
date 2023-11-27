@@ -2,5 +2,7 @@
     height: 90%;
     position: sticky;
     top: 10%;
+    display: flex;
+    justify-content: center;
     background-color: lightgray;
 }

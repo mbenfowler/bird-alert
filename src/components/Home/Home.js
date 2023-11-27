@@ -24,7 +24,7 @@ const Home = ({ isLoaded }) => {
             </section>
             <section id='birdsInArea'>
                 <h2>Birds in your area:</h2>
-                {isLoaded ? <BirdsList birds={birds} /> : <p>Loading...</p>}
+                {isLoaded ? <BirdsList birds={birds} /> : <div className='spinner'></div>}
             </section>
             <div className='pagination'>
                 {currentPage !== 1 && <button className='pagination-btn' onClick={handlePageChange}>&lt;</button>}
