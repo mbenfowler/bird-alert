@@ -1,7 +1,7 @@
 import { useState, useEffect } from  'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 // eslint-disable-next-line no-unused-vars
-import { getBirdKeysByLocation, getBirdsData, getSavedBirds, getBirdObservationsByLocation } from "../../apiCalls"
+import { getBirdKeysByLocation, getBirdsData, getSavedBirds, getBirdObservationsByLocation, getAllBirds } from "../../apiCalls"
 // import { mockBirdKeys } from "../../mockData/birdKeys"
 import './App.css';
 import Login from '../Login/Login';
@@ -16,6 +16,7 @@ import BirdsContext from '../BirdsContext/BirdsContext';
 const App = () => {
   const [user, setUser] = useState()
   const [birds, setBirds] = useState([])
+  const [allBirds, setAllBirds] = useState([])
   const [savedBirds, setSavedBirds] = useState([])
   const [birdAlerts, setBirdAlerts] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
@@ -35,6 +36,16 @@ const App = () => {
     }
   //eslint-disable-next-line
   }, [user])
+
+  useEffect(() => {
+    (async() => {
+      try {
+        setAllBirds(await getAllBirds())
+      } catch (error) {
+        handleNetworkErrors(error)
+      }
+    })()
+  }, [])
 
   useEffect(() => {
     if (user && user.location) {
@@ -94,7 +105,7 @@ const App = () => {
 
   return (
     <>
-      <BirdsContext.Provider value={{user, setUser, birds, setBirds, savedBirds, setSavedBirds, birdAlerts, currentPage, setCurrentPage, pageCount, setIsLoaded, handleNetworkErrors}}>
+      <BirdsContext.Provider value={{user, setUser, birds, setBirds, allBirds, savedBirds, setSavedBirds, birdAlerts, currentPage, setCurrentPage, pageCount, setIsLoaded, handleNetworkErrors}}>
         <Nav setNetworkError={setNetworkError}/>
         <main className="App">
             <Routes>

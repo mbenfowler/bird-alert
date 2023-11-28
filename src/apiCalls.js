@@ -110,6 +110,11 @@ const getBird = async (speciesCode) => {
     return await handleError(res)
 }
 
+const getAllBirds = async () => {
+    const res = await fetch(`${apiBaseURL}/getAllBirds`)
+    return await handleError(res)
+}
+
 const patchUser = async (user) => {
     const queryParameters = new URLSearchParams({
         state: user.state,
@@ -192,4 +197,19 @@ const handleError = (res, required = true) => {
     }
 }
 
-export { getBirdKeysByLocation, getBirdsData, getBirdObservationsByLocation, getUserExists, getIsCorrectPass, getUser, patchUser, createUser, getSavedBirds, isBirdSaved, postSavedBird, deleteSavedBird, getExternalRegions }
+export {
+            getBirdKeysByLocation,
+            getBirdsData,
+            getBirdObservationsByLocation,
+            getUserExists,
+            getIsCorrectPass,
+            getUser,
+            patchUser,
+            createUser,
+            getAllBirds,
+            getSavedBirds,
+            isBirdSaved,
+            postSavedBird,
+            deleteSavedBird,
+            getExternalRegions
+       }
