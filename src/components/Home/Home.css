@@ -20,6 +20,7 @@
     border-radius: 10px;
     text-align: center;
     font-size: x-large;
+    margin: 10px;
 }
 
 #birdSearch::placeholder {
@@ -43,6 +44,11 @@
 
 h2 {
     text-align: center;
+}
+
+.note {
+    font-style: italic;
+    font-size: 15px;
 }
 
 @media screen and (min-width: 900px) {
