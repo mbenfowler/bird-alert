@@ -1,4 +1,4 @@
-import { useContext } from "react"
+import { useContext, useState, useEffect } from "react"
 import PropTypes from "prop-types"
 import BirdAlerts from "../BirdAlerts/BirdAlerts"
 import BirdsList from "../BirdsList/BirdsList"
@@ -6,7 +6,24 @@ import BirdsContext from "../BirdsContext/BirdsContext"
 import './Home.css'
 
 const Home = ({ isLoaded }) => {
-    const { birdAlerts, birds, currentPage, setCurrentPage, pageCount, setIsLoaded } = useContext(BirdsContext)
+    const { birdAlerts, birds, allBirds, currentPage, setCurrentPage, pageCount, setIsLoaded } = useContext(BirdsContext)
+    const [search, setSearch] = useState('')
+    const [isSearching, setIsSearching] = useState(false)
+    const [searchedBirds, setSearchedBirds] = useState([])
+
+    useEffect(() => {
+        if (search.length > 0) {
+            setIsSearching(true)
+        } else {
+            setIsSearching(false)
+        }
+
+        if (search.length >= 3) {
+            const filteredBirds = allBirds.filter(bird => bird.comName.toLowerCase().includes(search))
+            setSearchedBirds(filteredBirds)
+        }
+    // eslint-disable-next-line
+    }, [search])
 
     const handlePageChange = (e) => {
         setIsLoaded(false)
@@ -17,20 +34,33 @@ const Home = ({ isLoaded }) => {
         }
     }
 
+    const handleSearch = (e) => {
+        setSearch(e.target.value.toLowerCase())
+    }
+
     return (
         <>
             <section id='alertArea'>
                 <BirdAlerts alerts={birdAlerts} />
             </section>
             <section id='birdsInArea'>
-                <h2>Birds in your area:</h2>
-                {isLoaded ? <BirdsList birds={birds} /> : <div className='spinner'></div>}
+                <input id='birdSearch' type="text" placeholder='Search birds by name' onChange={handleSearch}/>
+                {isLoaded && !isSearching
+                    ? <><h2>Birds in your area:</h2> <BirdsList birds={birds} /></>
+                    : isLoaded && isSearching && search.length >= 3 && searchedBirds.length > 0
+                    ? <><h2 className='note'>Note: these birds may not be common to your area</h2><BirdsList birds={searchedBirds} /></>
+                    : isLoaded && isSearching && search.length >= 3 && searchedBirds.length === 0
+                    ? <p>No birds found</p>
+                    : <div className='spinner'></div>
+                }
             </section>
-            <div className='pagination'>
-                {currentPage !== 1 && <button className='pagination-btn' onClick={handlePageChange}>&lt;</button>}
-                <p>{`Page ${currentPage} of ${pageCount}`}</p>
-                {currentPage !== pageCount && <button className='pagination-btn' onClick={handlePageChange}>&gt;</button>}
-            </div>
+            {isLoaded && !isSearching &&
+                <div className='pagination'>
+                    {currentPage !== 1 && <button className='pagination-btn' onClick={handlePageChange}>&lt;</button>}
+                    <p>{`Page ${currentPage} of ${pageCount}`}</p>
+                    {currentPage !== pageCount && <button className='pagination-btn' onClick={handlePageChange}>&gt;</button>}
+                </div>
+            }
         </>
     )
 }
