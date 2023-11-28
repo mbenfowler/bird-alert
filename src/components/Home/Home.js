@@ -50,7 +50,8 @@ const Home = ({ isLoaded }) => {
                     ? <BirdsList birds={birds} />
                     : isLoaded && isSearching && search.length >= 3
                     ? <BirdsList birds={searchedBirds} />
-                    : <div className='spinner'></div>}
+                    : <div className='spinner'></div>
+                }
             </section>
             {isLoaded && !isSearching &&
                 <div className='pagination'>
