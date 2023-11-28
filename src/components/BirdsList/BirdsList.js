@@ -7,7 +7,7 @@ import { Link } from "react-router-dom"
 const BirdsList = ({ birds }) => {
     const birdCards = birds.map(bird => {
         return (
-            <Link key={bird.speciesCode} to={bird.wikiURL} target="_blank">
+            <Link key={bird.speciesCode} to={bird.wikiURL && bird.wikiURL} target="_blank">
                 <Card key={bird.speciesCode} bird={bird}/>
             </Link>
         )

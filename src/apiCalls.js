@@ -21,7 +21,7 @@ const getBirdKeysByLocation = async (region) => {
 const getBirdsData = async (keys) => {
     try {
         const birdDataPromises = keys.map(async (key) => {
-            // if bird exists in birds table, get birdData, birdImg, and wikiURL from birds table
+            // if bird exists in birds table get data there, else go external
             const thisBird = await getBird(key);
             if (thisBird.speciesCode) {
                 return thisBird;
@@ -33,7 +33,7 @@ const getBirdsData = async (keys) => {
                         ? `${nuthatchData.entities[0]?.images[0]}?q=75&fm=jpg&w=400&fit=max`
                         : undefined;
                     const wikiData = await getExternalBirdWiki(birdData[0].comName);
-                    const wikiURL = `https://en.wikipedia.org/?curid=${wikiData.pages[0].id}`;
+                    const wikiURL = wikiData.pages[0]?.id ? `https://en.wikipedia.org/?curid=${wikiData.pages[0].id}` : undefined
                     return { ...birdData[0], birdImg, wikiURL };
                 } catch (error) {
                         console.error(`Error fetching external bird data for key ${key}: ${error}`);
