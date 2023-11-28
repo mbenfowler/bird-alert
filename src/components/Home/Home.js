@@ -48,8 +48,10 @@ const Home = ({ isLoaded }) => {
                 <h2>Birds in your area:</h2>
                 {isLoaded && !isSearching
                     ? <BirdsList birds={birds} />
-                    : isLoaded && isSearching && search.length >= 3
+                    : isLoaded && isSearching && search.length >= 3 && searchedBirds.length > 0
                     ? <BirdsList birds={searchedBirds} />
+                    : isLoaded && isSearching && search.length >= 3 && searchedBirds.length === 0
+                    ? <p>No birds found</p>
                     : <div className='spinner'></div>
                 }
             </section>
