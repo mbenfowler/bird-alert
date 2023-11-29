@@ -24,6 +24,42 @@ nav div a {
 .nav-img {
     height: 45px;
     width: 45px;
+    cursor: pointer;
+}
+
+#settings {
+    display: flex;
+    align-items: center;
+    height: 45px;
+    width: 45px;
+    justify-content: flex-end;
+    overflow-x: clip;
+}
+
+#settings:hover {
+    animation: action-hover 0.25s ease-in forwards;
+}
+
+@keyframes action-hover {
+    0% {
+        width: 45px;
+    }
+    100% {
+        width: 125px;
+    }
+}
+
+#settingsActions {
+    display: flex;
+    flex-direction: column;
+}
+
+#settingsActions {
+    font-size: 20px;
+}
+
+#settingsActions p:hover {
+    color: red;
 }
 
 #titleBird {
@@ -34,7 +70,7 @@ nav div a {
     font-family: 'Bungee Spice';
 }
 
-.text-link {
+nav a {
     color: inherit;
     text-decoration: inherit;
 }
