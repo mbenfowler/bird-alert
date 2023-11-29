@@ -63,9 +63,10 @@ const Form = ({ isLoaded }) => {
                         Name:
                         <input type="text" name='name' value={form.name} onChange={handleChange} />
                     </label> */}
-                    <label>
+                    <label id='emailLabel'>
                         Email:
                         <input type="text" name='email' value={form.email} onChange={handleChange} />
+                        <p className='password-reset-text'>Click here to receive a password reset email</p>
                     </label>
                     <label>
                         State:
