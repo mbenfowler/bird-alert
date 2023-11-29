@@ -5,7 +5,7 @@ import BirdsContext from "../BirdsContext/BirdsContext"
 import './Nav.css'
 
 const Nav = ({setNetworkError}) => {
-    const { setUser } = useContext(BirdsContext)
+    const { user, setUser } = useContext(BirdsContext)
 
     const handleClick = (e) => {
         setNetworkError(null)
@@ -17,18 +17,20 @@ const Nav = ({setNetworkError}) => {
 
     return (
         <nav>
-            <Link onClick={handleClick} className='text-link' to='/'><span id='titleBird'>Bird </span><span id='titleAlert'>Alert!</span></Link>
-            <div>
-                <Link to='/saved'><img className='nav-img' src={process.env.PUBLIC_URL + '/images/bird.ico'} alt='saved birds'/></Link>
-                {/* <Link to='/settings'><img className='nav-img' src={process.env.PUBLIC_URL + '/images/settings.png'} alt='user settings'/></Link> */}
-                <div id='settings'>
-                    <div id="settingsActions">
-                        <Link to='/settings'><p>Settings</p></Link>
-                        <Link to='/login'><p onClick={handleClick}>Logout</p></Link>
+            <Link onClick={handleClick} className='text-link' to={user ? '/' : '/login'}><span id='titleBird'>Bird </span><span id='titleAlert'>Alert!</span></Link>
+            {user &&
+                <div>
+                    <Link to='/saved'><img className='nav-img' src={process.env.PUBLIC_URL + '/images/bird.ico'} alt='saved birds'/></Link>
+                    {/* <Link to='/settings'><img className='nav-img' src={process.env.PUBLIC_URL + '/images/settings.png'} alt='user settings'/></Link> */}
+                    <div id='settings'>
+                        <div id="settingsActions">
+                            <Link to='/settings'><p>Settings</p></Link>
+                            <Link to='/login'><p onClick={handleClick}>Logout</p></Link>
+                        </div>
+                        <img className='nav-img' src={process.env.PUBLIC_URL + '/images/settings.png'} alt='user settings'/>
                     </div>
-                    <img className='nav-img' src={process.env.PUBLIC_URL + '/images/settings.png'} alt='user settings'/>
                 </div>
-            </div>
+            }
         </nav>
     )
 }
