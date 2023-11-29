@@ -59,9 +59,13 @@ const Form = ({ isLoaded }) => {
             {!isLoaded
                 ? <div className='spinner'></div>
                 : <form id='settings-form'>
-                    <label>
+                    {/* <label>
                         Name:
                         <input type="text" name='name' value={form.name} onChange={handleChange} />
+                    </label> */}
+                    <label>
+                        Email:
+                        <input type="text" name='email' value={form.email} onChange={handleChange} />
                     </label>
                     <label>
                         State:
@@ -79,10 +83,6 @@ const Form = ({ isLoaded }) => {
                                 </select>
                             </label>
                         }
-                    <label>
-                        Email:
-                        <input type="text" name='email' value={form.email} onChange={handleChange} />
-                    </label>
                     <label>
                         Phone #:
                         <input type="text" name='phone' value={form.phone} onChange={handleChange} />
