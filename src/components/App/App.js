@@ -14,7 +14,10 @@ import NotFound from '../NotFound/NotFound';
 import BirdsContext from '../BirdsContext/BirdsContext';
 
 const App = () => {
-  const [user, setUser] = useState()
+  const [user, setUser] = useState(() => {
+    const storedUser = localStorage.getItem('user')
+    return storedUser ? JSON.parse(storedUser) : null
+  })
   const [birds, setBirds] = useState([])
   const [allBirds, setAllBirds] = useState([])
   const [savedBirds, setSavedBirds] = useState([])
@@ -32,6 +35,8 @@ const App = () => {
     if (!user) {
       navigate('/login')
     } else {
+      const userToStore = { ...user, password: 'nunya' }
+      localStorage.setItem('user', JSON.stringify(userToStore))
       setIsLoaded(true)
     }
   //eslint-disable-next-line
