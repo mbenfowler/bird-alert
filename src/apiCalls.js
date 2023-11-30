@@ -189,6 +189,11 @@ const deleteSavedBird = async (bird, id) => {
     return await handleError(res)
 }
 
+const getPasswordResetEmail = async (email) => {
+    const res = await fetch(`${apiBaseURL}/getResetPass?email=${email}`)
+    return await handleError(res)
+}
+
 const handleError = (res, required = true) => {
     if (res.ok && required) {
       return res.json();
@@ -211,5 +216,6 @@ export {
             isBirdSaved,
             postSavedBird,
             deleteSavedBird,
-            getExternalRegions
+            getExternalRegions,
+            getPasswordResetEmail
        }

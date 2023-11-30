@@ -1,6 +1,7 @@
 import { useState, useContext, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { patchUser, getUser, getExternalRegions } from '../../apiCalls'
+import { toast } from 'react-toastify'
+import { patchUser, getUser, getExternalRegions, getPasswordResetEmail } from '../../apiCalls'
 import BirdsContext from '../BirdsContext/BirdsContext'
 import './Form.css'
 
@@ -16,12 +17,30 @@ const Form = ({ isLoaded }) => {
     const { user, setBirds, setIsLoaded, setUser } = useContext(BirdsContext)
     const [regions, setRegions] = useState([])
     const [form, setForm] = useState({
-        name: `${user?.name ? user.name : ''}`,
-        state: `${user?.state ? user.state : ''}`,
-        location: `${user?.location ? user.location : ''}`,
-        email: `${user?.email ? user.email : ''}`,
-        phone: `${user?.phone ? user.phone : ''}`
+        name:       `${user?.name ? user.name : ''}`,
+        state:      `${user?.state ? user.state : ''}`,
+        location:   `${user?.location ? user.location : ''}`,
+        email:      `${user?.email ? user.email : ''}`,
+        phone:      `${user?.phone ? user.phone : ''}`
     })
+
+    const resolveAfter1Sec = new Promise(resolve => setTimeout(resolve, 1000));
+    const notify = () => {
+        toast.promise(resolveAfter1Sec, {
+          success: {
+            render: 'Password reset email sent!',
+            position: 'bottom-center'
+          }
+        //   pending: {
+        //     render: 'Updating zip code...',
+        //     position: 'bottom-center'
+        //   },
+        //   error: {
+        //     render: 'Something went wrong...',
+        //     position: 'bottom-center'
+        //   }
+        });
+    }
 
     useEffect(() => {
         if (form.state.length) {
@@ -40,6 +59,11 @@ const Form = ({ isLoaded }) => {
     }
 
     const navigate = useNavigate()
+
+    const handleClick = () => {
+        getPasswordResetEmail(user.email)
+        notify()
+    }
 
     const handleSubmit = async () => {
         setIsLoaded(false)
@@ -66,7 +90,7 @@ const Form = ({ isLoaded }) => {
                     <label id='emailLabel'>
                         Email:
                         <input type="text" name='email' value={form.email} onChange={handleChange} />
-                        <p className='password-reset-text'>Click here to receive a password reset email</p>
+                        <p className='password-reset-text' onClick={handleClick}>Click here to receive a password reset email</p>
                     </label>
                     <label>
                         State:

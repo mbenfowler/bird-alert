@@ -1,6 +1,7 @@
 import { useState, useEffect } from  'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
-// eslint-disable-next-line no-unused-vars
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 import { getBirdKeysByLocation, getBirdsData, getSavedBirds, getBirdObservationsByLocation, getAllBirds } from "../../apiCalls"
 // import { mockBirdKeys } from "../../mockData/birdKeys"
 import './App.css';
@@ -120,6 +121,7 @@ const App = () => {
               <Route path='/settings' element={<Settings isLoaded={isLoaded}/>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <ToastContainer />
         </main>
       </BirdsContext.Provider>
     </>
