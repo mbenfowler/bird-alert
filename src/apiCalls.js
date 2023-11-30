@@ -117,11 +117,14 @@ const getAllBirds = async () => {
 
 const patchUser = async (user) => {
     const queryParameters = new URLSearchParams({
-        state: user.state,
-        location: user.location,
         email: user.email,
-        phone: user.phone
     });
+
+    if (user.password) queryParameters.append('password', user.password)
+    if (user.state) queryParameters.append('state', user.state)
+    if (user.location) queryParameters.append('location', user.location)
+    if (user.phone) queryParameters.append('phone', user.phone)
+
     const res = await fetch(`${apiBaseURL}/patchUser?${queryParameters.toString()}`)
 
     return await handleError(res, false)

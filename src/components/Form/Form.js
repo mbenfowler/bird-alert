@@ -24,6 +24,7 @@ const Form = ({ isLoaded }) => {
         phone:      `${user?.phone ? user.phone : ''}`
     })
 
+    // might need to update toast so that it is actually dynamic based on result of api call
     const resolveAfter1Sec = new Promise(resolve => setTimeout(resolve, 1000));
     const notify = () => {
         toast.promise(resolveAfter1Sec, {
