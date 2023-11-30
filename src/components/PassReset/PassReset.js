@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import { patchUser } from '../../apiCalls'
 import './PassReset.css'
 
@@ -22,12 +23,32 @@ const PassReset = () => {
   }
 
   const navigate = useNavigate()
+
+  // might need to update toast so that it is actually dynamic based on result of api call
+  const resolveAfter1Sec = new Promise(resolve => setTimeout(resolve, 1000));
+  const notify = () => {
+      toast.promise(resolveAfter1Sec, {
+        success: {
+          render: 'Password has been reset!',
+          position: 'bottom-center'
+        }
+      //   pending: {
+      //     render: 'Updating zip code...',
+      //     position: 'bottom-center'
+      //   },
+      //   error: {
+      //     render: 'Something went wrong...',
+      //     position: 'bottom-center'
+      //   }
+      });
+  }
   
   const handleSubmit = async () => {
     if (newPasswordOne.length < 4) setPasswordTooShort(true)
     else if (passwordsMatch) {
       setPasswordTooShort(false)
       await patchUser({ email, password: newPasswordOne })
+      notify()
       navigate('/')
     }
   }
