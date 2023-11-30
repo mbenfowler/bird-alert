@@ -1,0 +1,37 @@
+#resetPasswordForm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#resetPasswordForm label {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 40%;
+  padding: 2%;
+  font-family: "Fredericka the Great";
+}
+
+#resetPasswordForm input {
+  height: 40px;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid darkgray;
+}
+
+#passwordErrorText {
+  color: red;
+}
+
+#confirmPasswordReset {
+  width: 30%;
+  align-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50px;
+  background-color: white;
+  border-radius: 25px;
+  cursor: pointer;
+}

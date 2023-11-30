@@ -1,6 +1,7 @@
 import { useState, useContext, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { patchUser, getUser, getExternalRegions } from '../../apiCalls'
+import { toast } from 'react-toastify'
+import { patchUser, getUser, getExternalRegions, getPasswordResetEmail } from '../../apiCalls'
 import BirdsContext from '../BirdsContext/BirdsContext'
 import './Form.css'
 
@@ -16,12 +17,31 @@ const Form = ({ isLoaded }) => {
     const { user, setBirds, setIsLoaded, setUser } = useContext(BirdsContext)
     const [regions, setRegions] = useState([])
     const [form, setForm] = useState({
-        name: `${user?.name ? user.name : ''}`,
-        state: `${user?.state ? user.state : ''}`,
-        location: `${user?.location ? user.location : ''}`,
-        email: `${user?.email ? user.email : ''}`,
-        phone: `${user?.phone ? user.phone : ''}`
+        name:       `${user?.name ? user.name : ''}`,
+        state:      `${user?.state ? user.state : ''}`,
+        location:   `${user?.location ? user.location : ''}`,
+        email:      `${user?.email ? user.email : ''}`,
+        phone:      `${user?.phone ? user.phone : ''}`
     })
+
+    // might need to update toast so that it is actually dynamic based on result of api call
+    const resolveAfter1Sec = new Promise(resolve => setTimeout(resolve, 1000));
+    const notify = () => {
+        toast.promise(resolveAfter1Sec, {
+          success: {
+            render: 'Password reset email sent!',
+            position: 'bottom-center'
+          }
+        //   pending: {
+        //     render: 'Updating zip code...',
+        //     position: 'bottom-center'
+        //   },
+        //   error: {
+        //     render: 'Something went wrong...',
+        //     position: 'bottom-center'
+        //   }
+        });
+    }
 
     useEffect(() => {
         if (form.state.length) {
@@ -41,6 +61,11 @@ const Form = ({ isLoaded }) => {
 
     const navigate = useNavigate()
 
+    const handleClick = () => {
+        getPasswordResetEmail(user.email)
+        notify()
+    }
+
     const handleSubmit = async () => {
         setIsLoaded(false)
         await patchUser(form)
@@ -59,9 +84,14 @@ const Form = ({ isLoaded }) => {
             {!isLoaded
                 ? <div className='spinner'></div>
                 : <form id='settings-form'>
-                    <label>
+                    {/* <label>
                         Name:
                         <input type="text" name='name' value={form.name} onChange={handleChange} />
+                    </label> */}
+                    <label id='emailLabel'>
+                        Email:
+                        <input type="text" name='email' value={form.email} onChange={handleChange} />
+                        <p className='password-reset-text' onClick={handleClick}>Click here to receive a password reset email</p>
                     </label>
                     <label>
                         State:
@@ -79,10 +109,6 @@ const Form = ({ isLoaded }) => {
                                 </select>
                             </label>
                         }
-                    <label>
-                        Email:
-                        <input type="text" name='email' value={form.email} onChange={handleChange} />
-                    </label>
                     <label>
                         Phone #:
                         <input type="text" name='phone' value={form.phone} onChange={handleChange} />

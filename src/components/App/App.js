@@ -1,6 +1,7 @@
 import { useState, useEffect } from  'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
-// eslint-disable-next-line no-unused-vars
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 import { getBirdKeysByLocation, getBirdsData, getSavedBirds, getBirdObservationsByLocation, getAllBirds } from "../../apiCalls"
 // import { mockBirdKeys } from "../../mockData/birdKeys"
 import './App.css';
@@ -10,6 +11,7 @@ import Error from '../Error/Error';
 import Home from '../Home/Home';
 import Saved from '../Saved/Saved';
 import Settings from '../Settings/Settings';
+import PassReset from '../PassReset/PassReset';
 import NotFound from '../NotFound/NotFound';
 import BirdsContext from '../BirdsContext/BirdsContext';
 
@@ -118,8 +120,10 @@ const App = () => {
               <Route path='/login' element={<Login />} />
               <Route path='/saved' element={<Saved />} />
               <Route path='/settings' element={<Settings isLoaded={isLoaded}/>} />
+              <Route path='/reset/:email' element={<PassReset />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <ToastContainer />
         </main>
       </BirdsContext.Provider>
     </>
