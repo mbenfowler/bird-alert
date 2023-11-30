@@ -1,18 +1,25 @@
 import { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getUserExists, getIsCorrectPass, getUser, createUser } from '../../apiCalls'
+import { toast } from 'react-toastify'
+import { getUserExists, getIsCorrectPass, getUser, createUser, getPasswordResetEmail } from '../../apiCalls'
 import BirdsContext from '../BirdsContext/BirdsContext'
 import './Login.css'
 
 const Login = () => {
     const { setUser, handleNetworkErrors } = useContext(BirdsContext)
-    const [userFound, setUserFound] = useState()
+    const [isUserFound, setIsUserFound] = useState()
     const [email, setEmail] = useState('')
+    const [foundEmail, setFoundEmail] = useState()
     const [password, setPassword] = useState('')
     const [correctPass, setCorrectPass] = useState()
     const [isLoaded, setIsLoaded] = useState(true)
 
     const navigate = useNavigate();
+
+    useEffect(() => {
+      setFoundEmail(email)
+    //eslint-disable-next-line
+    }, [isUserFound])
 
     useEffect(() => {
       if (correctPass) {
@@ -49,13 +56,13 @@ const Login = () => {
             passwordInput.value = ''
           }
           await getUserExists(email)
-            .then(res => setUserFound(res.userExists))
-        } else if (field.classList.contains('password') && userFound) {
+            .then(res => setIsUserFound(res.userExists))
+        } else if (field.classList.contains('password') && isUserFound) {
             await getIsCorrectPass(email, password)
               .then(res => {
                 setCorrectPass(res.isCorrectPass)
               })
-        } else if (field.classList.contains('password') && !userFound) {
+        } else if (field.classList.contains('password') && !isUserFound) {
           try {
             await createUser(email, password)
             const newUser = await getUser(email)
@@ -71,22 +78,47 @@ const Login = () => {
       }
     }
 
+    // might need to update toast so that it is actually dynamic based on result of api call
+    const resolveAfter1Sec = new Promise(resolve => setTimeout(resolve, 1000));
+    const notify = () => {
+        toast.promise(resolveAfter1Sec, {
+          success: {
+            render: 'Password reset email sent!',
+            position: 'bottom-center'
+          }
+        //   pending: {
+        //     render: 'Updating zip code...',
+        //     position: 'bottom-center'
+        //   },
+        //   error: {
+        //     render: 'Something went wrong...',
+        //     position: 'bottom-center'
+        //   }
+        });
+    }
+
+    const handleClick = async () => {
+      getPasswordResetEmail(foundEmail)
+      notify()
+    }
+
     return (
         <main className='login'>
           <section className='login-panel'>
             <div className='user-entry'>
               <h2>email</h2>
               <input className='input email' onChange={handleChange} onKeyDown={handleEnter}></input>
+              {foundEmail && <p className='password-reset-text' onClick={handleClick}>Click here to receive a password reset email</p>}
             </div>
             {
-              userFound === false &&
+              isUserFound === false &&
               <div>
                 <h3 className='info'>Email not found!</h3>
                 <p className='info'>Please make a password to continue creating an account for this email.</p>
               </div>
             }
             {
-              userFound !== undefined &&
+              isUserFound !== undefined &&
               <div className='user-entry'>
                 <h2>enter password</h2>
                 <input className='input password' type='password' onChange={handleChange} onKeyDown={handleEnter}></input>
