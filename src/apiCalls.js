@@ -68,7 +68,7 @@ const getExternalRegions = async (state) => {
 const getExternalBirdImg = async (comName) => {
     const res = await fetch(`https://nuthatch.lastelm.software/v2/birds?page=1&pageSize=25&name=${comName}&operator=AND`, {
         headers: {
-            "API-Key": process.env.NUTHATCH_API_KEY
+            "API-Key": process.env.REACT_APP_NUTHATCH_API_KEY
         }
     })
 
