@@ -63,4 +63,25 @@ describe("Adding to watch list", () => {
         .get('#cangoo').should('not.exist')
         .get('.birds-list').children().should('have.length', 1)
     })
+
+    it('should remove 1 bird from saved view and that change should be reflected in the main screen', () => {
+        cy.intercept('http://localhost:3001/api/getSaved?user_id=1',{
+            statusCode: 200,
+            fixture: 'savedBirds.json'
+        }).as('getSaved4')
+
+        cy.intercept('http://localhost:3001/api/deleteSaved?speciesCode=snogoo&user_id=1', {
+            statusCode: 200,
+            fixture: 'snogoo.json'
+        }).as('deleteSaved2')
+
+        cy.get('[href="/saved"] > .nav-img').click()
+        .get('#snogoo').should('be.checked').click()
+        cy.intercept('http://localhost:3001/api/getSavedSpeciesCode?speciesCode=snogoo&user_id=1', {
+            statusCode: 200,
+            body: false
+        }).as('snogooGetSavedSpeciesCode')
+        .get('.text-link').click()
+        .get('#snogoo').should('not.be.checked')
+    })
 })
