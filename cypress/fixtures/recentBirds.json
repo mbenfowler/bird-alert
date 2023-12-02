@@ -1,0 +1,47 @@
+[
+  {
+      "speciesCode": "cangoo",
+      "comName": "Canada Goose",
+      "sciName": "Branta canadensis",
+      "locId": "L14136408",
+      "locName": "Rusty's Gainesville Yard",
+      "obsDt": "2023-12-01 13:49",
+      "howMany": 12,
+      "lat": 34.2695382,
+      "lng": -83.9014098,
+      "obsValid": true,
+      "obsReviewed": false,
+      "locationPrivate": true,
+      "subId": "S155544243"
+  },
+  {
+      "speciesCode": "ruckin",
+      "comName": "Ruby-crowned Kinglet",
+      "sciName": "Corthylio calendula",
+      "locId": "L14136408",
+      "locName": "Rusty's Gainesville Yard",
+      "obsDt": "2023-12-01 13:49",
+      "howMany": 3,
+      "lat": 34.2695382,
+      "lng": -83.9014098,
+      "obsValid": true,
+      "obsReviewed": false,
+      "locationPrivate": true,
+      "subId": "S155544243"
+  },
+  {
+      "speciesCode": "tuftit",
+      "comName": "Tufted Titmouse",
+      "sciName": "Baeolophus bicolor",
+      "locId": "L14136408",
+      "locName": "Rusty's Gainesville Yard",
+      "obsDt": "2023-12-01 13:49",
+      "howMany": 1,
+      "lat": 34.2695382,
+      "lng": -83.9014098,
+      "obsValid": true,
+      "obsReviewed": false,
+      "locationPrivate": true,
+      "subId": "S155544243"
+  }
+]
