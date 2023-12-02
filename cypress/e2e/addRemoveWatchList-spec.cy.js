@@ -1,6 +1,3 @@
-import { intercepts } from "../support/intercepts"
-import { initialSetup } from "../support/initialSetup"
-
 describe("Setting a location", () => {
     beforeEach(() => {
         intercepts()

@@ -1,0 +1,16 @@
+{
+  "id": 970,
+  "comName": "Blue-winged Teal",
+  "sciName": "Spatula discors",
+  "speciesCode": "buwtea",
+  "category": "species",
+  "order": "Anseriformes",
+  "familyCode": "anatid1",
+  "familyComName": "Ducks, Geese, and Waterfowl",
+  "familySciName": "Anatidae",
+  "birdImg": "https://images.unsplash.com/photo-1662692837581-4df7428e1c5b?q=75&fm=jpg&w=400&fit=max",
+  "wikiURL": "https://en.wikipedia.org/?curid=251176",
+  "taxonOrder": 460,
+  "created_at": "2023-11-21T19:33:35.230Z",
+  "updated_at": "2023-11-21T19:33:35.230Z"
+}
