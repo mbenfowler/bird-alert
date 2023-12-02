@@ -6,9 +6,7 @@ describe("Login flow for a user that already has location set", () => {
   })
 
   it("should be able to login with correct email and password", () => {
-    cy.get('.input').type('robinware456@gmail.com').type('{enter}')
-      .get(':nth-child(2) > .input', { timeout: 10000 }).should('be.visible').type('1234').type('{enter}')
-      .get('#titleBird').should('contain', 'Bird')
+      cy.get('#titleBird').should('contain', 'Bird')
       .get('#titleAlert').should('contain', 'Alert')
       .get('[href="/saved"] > .nav-img').should('be.visible')
       .get(':nth-child(2) > .nav-img').should('be.visible')

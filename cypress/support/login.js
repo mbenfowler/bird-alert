@@ -59,4 +59,6 @@ export const login = () => {
   })
 
   cy.visit('http://localhost:3000/')
+  cy.get('.input').type('robinware456@gmail.com').type('{enter}')
+    .get(':nth-child(2) > .input', { timeout: 10000 }).should('be.visible').type('1234').type('{enter}')
 }
