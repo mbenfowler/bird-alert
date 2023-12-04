@@ -22,6 +22,5 @@ workflows:
     jobs:
       - cypress/run: 
           cypress-command: npx cypress run --browser electron
-          # install-browsers: true
           start-command: npm start
       - build
