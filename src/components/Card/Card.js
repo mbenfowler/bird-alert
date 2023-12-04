@@ -20,7 +20,6 @@ const Card = ({ bird }) => {
 
     const resolveAfter1Sec = new Promise(resolve => setTimeout(resolve, 1000));
     const notify = (action) => {
-        console.log(action)
         toast.promise(resolveAfter1Sec, {
           success: {
             render: action === 'delete' ? 'Bird removed from watch list!' : 'Bird saved to watch list!',
