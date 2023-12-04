@@ -52,6 +52,7 @@ const App = () => {
         handleNetworkErrors(error)
       }
     })()
+  //eslint-disable-next-line
   }, [])
 
   useEffect(() => {

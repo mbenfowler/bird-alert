@@ -182,14 +182,26 @@ const postSavedBird = async (bird, id) => {
 }
 
 const deleteSavedBird = async (bird, id) => {
-    const queryParameters = new URLSearchParams({
-        speciesCode: bird.speciesCode,
-        user_id: id
-    });
+    try {
+        const queryParameters = new URLSearchParams({
+            speciesCode: bird.speciesCode,
+            user_id: id
+        });
 
-    const res = await fetch(`${apiBaseURL}/deleteSaved?${queryParameters.toString()}`)
+        const res = await fetch(`${apiBaseURL}/deleteSaved?${queryParameters.toString()}`)
 
-    return await handleError(res)
+        if (!res.ok) {
+            throw new Error('Network response was not ok');
+        }
+
+        const responseBody = await res.text();
+        const data = responseBody ? JSON.parse(responseBody) : {}
+
+        return data
+    } catch(error) {
+        console.error('Error deleting saved bird:', error);
+        throw error;
+    }
 }
 
 const getPasswordResetEmail = async (email) => {

@@ -1,4 +1,5 @@
 import { useContext, useState, useEffect } from "react"
+import { toast } from 'react-toastify'
 import PropTypes from "prop-types"
 import './Card.css'
 import BirdsContext from "../BirdsContext/BirdsContext"
@@ -17,12 +18,33 @@ const Card = ({ bird }) => {
     //eslint-disable-next-line
     }, [bird])
 
+    const resolveAfter1Sec = new Promise(resolve => setTimeout(resolve, 1000));
+    const notify = (action) => {
+        console.log(action)
+        toast.promise(resolveAfter1Sec, {
+          success: {
+            render: action === 'delete' ? 'Bird removed from watch list!' : 'Bird saved to watch list!',
+            position: 'bottom-center'
+          }
+        //   pending: {
+        //     render: 'Updating zip code...',
+        //     position: 'bottom-center'
+        //   },
+        //   error: {
+        //     render: 'Something went wrong...',
+        //     position: 'bottom-center'
+        //   }
+        });
+    }
+
     const handleClick = async () => {
         try {
             if (isChecked) {
                 await deleteSavedBird(bird, user.id)
+                notify('delete')
             } else {
                 await postSavedBird(bird, user.id)
+                notify('save')
             }
 
             const updatedBirds = birds.map(b => {
