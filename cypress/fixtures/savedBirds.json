@@ -1,0 +1,31 @@
+[
+  {
+    "id": 963,
+    "comName": "Canada Goose",
+    "sciName": "Branta canadensis",
+    "speciesCode": "cangoo",
+    "category": "species",
+    "order": "Anseriformes",
+    "familyCode": "anatid1",
+    "familyComName": "Ducks, Geese, and Waterfowl",
+    "familySciName": "Anatidae",
+    "birdImg": "https://images.unsplash.com/photo-1513209395699-7a1e7f745942?q=75&fm=jpg&w=400&fit=max",
+    "wikiURL": "https://en.wikipedia.org/?curid=218972",
+    "taxonOrder": 324,
+    "created_at": "2023-11-21T19:33:35.216Z",
+    "updated_at": "2023-11-21T19:33:35.216Z"
+  },
+  {
+    "sciName": "Anser caerulescens",
+    "comName": "Snow Goose",
+    "speciesCode": "snogoo",
+    "category": "species",
+    "taxonOrder": 252.0,
+    "order": "Anseriformes",
+    "familyCode": "anatid1",
+    "familyComName": "Ducks, Geese, and Waterfowl",
+    "familySciName": "Anatidae",
+    "birdImg": "https://images.unsplash.com/photo-1542252223-c7f5b1142f93?q=75&fm=jpg&w=400&fit=max",
+    "wikiURL": "https://en.wikipedia.org/?curid=199013"
+  }
+]

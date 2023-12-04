@@ -39,7 +39,7 @@ const Card = ({ bird }) => {
         }
     };
 
-    const img = bird.birdImg ? bird.birdImg : 'images/noBirdImg.png'
+    const img = bird.birdImg && bird.birdImg !== 'undefined' ? bird.birdImg : 'images/noBirdImg.png'
 
     return (
         <div className='card'>

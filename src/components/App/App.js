@@ -47,7 +47,7 @@ const App = () => {
   useEffect(() => {
     (async() => {
       try {
-        setAllBirds(await getAllBirds())
+        user && setAllBirds(await getAllBirds())
       } catch (error) {
         handleNetworkErrors(error)
       }

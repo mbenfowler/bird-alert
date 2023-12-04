@@ -1,0 +1,16 @@
+{
+  "id": 975,
+  "comName": "Mute Swan",
+  "sciName": "Cygnus olor",
+  "speciesCode": "mutswa",
+  "category": "species",
+  "order": "Anseriformes",
+  "familyCode": "anatid1",
+  "familyComName": "Ducks, Geese, and Waterfowl",
+  "familySciName": "Anatidae",
+  "birdImg": "https://images.unsplash.com/photo-1582730463790-3c3864de6cbf?q=75&fm=jpg&w=400&fit=max",
+  "wikiURL": "https://en.wikipedia.org/?curid=19614307",
+  "taxonOrder": 358,
+  "created_at": "2023-11-21T19:33:35.223Z",
+  "updated_at": "2023-11-21T19:33:35.223Z"
+}
