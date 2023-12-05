@@ -23,6 +23,10 @@ body,
     font-size: xx-large;
 }
 
+.fredericka {
+    font-family: 'Fredericka the Great';
+}
+
 .spinner:before {
     content: '';
     display: inline-flex;

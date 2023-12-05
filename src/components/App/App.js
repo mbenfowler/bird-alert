@@ -23,6 +23,7 @@ const App = () => {
   const [birds, setBirds] = useState([])
   const [allBirds, setAllBirds] = useState([])
   const [savedBirds, setSavedBirds] = useState([])
+  const [recentObservations, setRecentObservations] = useState([])
   const [birdAlerts, setBirdAlerts] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
   const [pageCount, setPageCount] = useState()
@@ -47,19 +48,21 @@ const App = () => {
   useEffect(() => {
     (async() => {
       try {
-        user && setAllBirds(await getAllBirds())
+        if (user) {
+          setAllBirds(await getAllBirds())
+          setRecentObservations(await getBirdObservationsByLocation(user.location))
+        }
       } catch (error) {
         handleNetworkErrors(error)
       }
     })()
   //eslint-disable-next-line
-  }, [])
+  }, [user])
 
   useEffect(() => {
     if (user && user.location) {
       (async() => {
           try {
-            const recentObservations = await getBirdObservationsByLocation(user.location)
             const savedBirdsObserved = recentObservations.filter(obs => savedBirds.find(savedBird => savedBird.speciesCode === obs.speciesCode))
             setBirdAlerts(savedBirdsObserved)
           } catch (error) {
@@ -68,7 +71,7 @@ const App = () => {
       })()
     }
   //eslint-disable-next-line
-  }, [user, user?.location, savedBirds])
+  }, [user, user?.location, savedBirds, recentObservations])
 
   useEffect(() => {
     if (user && user.location) {
@@ -113,7 +116,7 @@ const App = () => {
 
   return (
     <>
-      <BirdsContext.Provider value={{user, setUser, birds, setBirds, allBirds, savedBirds, setSavedBirds, birdAlerts, currentPage, setCurrentPage, pageCount, setIsLoaded, handleNetworkErrors}}>
+      <BirdsContext.Provider value={{user, setUser, birds, setBirds, allBirds, savedBirds, setSavedBirds, recentObservations, birdAlerts, setBirdAlerts, currentPage, setCurrentPage, pageCount, setIsLoaded, handleNetworkErrors}}>
         <Nav setNetworkError={setNetworkError}/>
         <main className="App">
             <Routes>

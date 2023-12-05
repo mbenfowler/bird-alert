@@ -46,11 +46,11 @@ const Home = ({ isLoaded }) => {
             <section id='birdsInArea'>
                 <input id='birdSearch' type="text" placeholder='Search birds by name' onChange={handleSearch}/>
                 {isLoaded && !isSearching
-                    ? <><h2>Birds in your area:</h2> <BirdsList birds={birds} /></>
+                    ? <><h2 className='fredericka'>Birds in your area:</h2> <BirdsList birds={birds} /></>
                     : isLoaded && isSearching && search.length >= 3 && searchedBirds.length > 0
-                    ? <><h2 className='note'>Note: these birds may not be common to your area</h2><BirdsList birds={searchedBirds} /></>
+                    ? <><h2 className='note fredericka'>Note: these birds may not be common to your area</h2><BirdsList birds={searchedBirds} /></>
                     : isLoaded && isSearching && search.length >= 3 && searchedBirds.length === 0
-                    ? <p>No birds found</p>
+                    ? <h3 className='fredericka'>No birds found</h3>
                     : <div className='spinner'></div>
                 }
             </section>

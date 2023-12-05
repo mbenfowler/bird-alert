@@ -5,13 +5,26 @@
   align-items: center;
 }
 
-#alertsHeaderBox {
-  height: 80%;
+.alerts-header-box {
+  padding: 2%;
   background-color: lightgray;
   position: sticky;
-  left: 0;
-  border-right: 2px black solid;
   display: flex;
   align-items: center;
   z-index: 1;
+}
+
+#alertsDontExist {
+  height: 100%;
+  justify-content: center;
+}
+
+#alertsExist {
+  height: 80%;
+  left: 0;
+  border-right: 2px black solid;
+}
+
+.alerts-header {
+  font-family: 'Fredericka the Great';
 }

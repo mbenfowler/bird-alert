@@ -3,10 +3,10 @@ import { toast } from 'react-toastify'
 import PropTypes from "prop-types"
 import './Card.css'
 import BirdsContext from "../BirdsContext/BirdsContext"
-import { postSavedBird, deleteSavedBird, isBirdSaved } from "../../apiCalls"
+import { postSavedBird, deleteSavedBird, isBirdSaved, getSavedBirds } from "../../apiCalls"
 
 const Card = ({ bird }) => {
-    const { birds, setBirds, user } = useContext(BirdsContext)
+    const { birds, setBirds, savedBirds, setSavedBirds, user, recentObservations, setBirdAlerts } = useContext(BirdsContext)
     const [isChecked, setIsChecked] = useState(false)
 
     useEffect(() => {
@@ -46,6 +46,8 @@ const Card = ({ bird }) => {
                 notify('save')
             }
 
+            setSavedBirds(await getSavedBirds(user.id))
+
             const updatedBirds = birds.map(b => {
                 if (b.speciesCode === bird.speciesCode) {
                     return { ...b, isChecked: !isChecked }
@@ -53,6 +55,8 @@ const Card = ({ bird }) => {
                 return b
             })
             setBirds(updatedBirds)
+            const savedBirdsObserved = recentObservations.filter(obs => savedBirds.find(savedBird => savedBird.speciesCode === obs.speciesCode))
+            setBirdAlerts(savedBirdsObserved)
         } catch (error) {
             console.error("API call error:", error)
         } finally {

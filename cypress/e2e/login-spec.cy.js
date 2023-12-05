@@ -10,7 +10,7 @@ describe("Login flow for a user that already has location set", () => {
       .get('#titleAlert').should('contain', 'Alert')
       .get('[href="/saved"] > .nav-img').should('be.visible')
       .get(':nth-child(2) > .nav-img').should('be.visible')
-      .get('#alertsHeader').should('contain', 'Alerts')
+      .get('.alerts-header').should('contain', 'Alerts:')
       .get('#birdAlerts > a > .card').should('be.visible')
         .and('contain', 'Canada Goose')
         .and('contain', '2023-12-01 13:49')
