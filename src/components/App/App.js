@@ -1,5 +1,5 @@
 import { useState, useEffect } from  'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, Link } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { getBirdKeysByLocation, getBirdsData, getSavedBirds, getBirdObservationsByLocation, getAllBirds } from "../../apiCalls"
@@ -48,7 +48,7 @@ const App = () => {
   useEffect(() => {
     (async() => {
       try {
-        if (user) {
+        if (user && user.location) {
           setAllBirds(await getAllBirds())
           setRecentObservations(await getBirdObservationsByLocation(user.location))
         }
@@ -57,7 +57,7 @@ const App = () => {
       }
     })()
   //eslint-disable-next-line
-  }, [user])
+  }, [user, user?.location])
 
   useEffect(() => {
     if (user && user.location) {
@@ -120,7 +120,7 @@ const App = () => {
         <Nav setNetworkError={setNetworkError}/>
         <main className="App">
             <Routes>
-              <Route path='/' element={networkError ? <Error networkError={networkError} /> : user?.location ? <Home isLoaded={isLoaded}/> : <section id='init'><p id='initText'>Go to settings and set a location</p></section>} />
+              <Route path='/' element={networkError ? <Error networkError={networkError} /> : user?.location ? <Home isLoaded={isLoaded}/> : <section id='init'><p id='initText'>Go to settings and set a location</p><Link to='/settings'><button className='navigate-button'>Go to settings</button></Link></section>} />
               <Route path='/login' element={<Login />} />
               <Route path='/saved' element={<Saved />} />
               <Route path='/settings' element={<Settings isLoaded={isLoaded}/>} />

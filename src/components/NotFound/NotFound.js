@@ -5,7 +5,7 @@ const NotFound = () => {
     return (
         <section id='notFound'>
             <p>This page doesn't exist</p>
-            <Link to='/'><button>Return home</button></Link>
+            <Link to='/'><button className='navigate-button'>Return home</button></Link>
         </section>
     )
 }

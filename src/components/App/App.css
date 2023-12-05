@@ -27,6 +27,13 @@ body,
     font-family: 'Fredericka the Great';
 }
 
+.navigate-button {
+    height: 100%;
+    width: 100px;
+    border-radius: 25px;
+    cursor: pointer;
+}
+
 .spinner:before {
     content: '';
     display: inline-flex;
