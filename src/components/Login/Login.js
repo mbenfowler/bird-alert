@@ -108,7 +108,7 @@ const Login = () => {
             <div className='user-entry'>
               <h2>email</h2>
               <input className='input email' onChange={handleChange} onKeyDown={handleEnter}></input>
-              {foundEmail && <p className='password-reset-text' onClick={handleClick}>Click here to receive a password reset email</p>}
+              {foundEmail && isUserFound && <p className='password-reset-text' onClick={handleClick}>Click here to receive a password reset email</p>}
             </div>
             {
               isUserFound === false &&
