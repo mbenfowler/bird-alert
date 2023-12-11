@@ -3,16 +3,26 @@ import { Link } from "react-router-dom"
 import { nanoid } from 'nanoid'
 import BirdsContext from "../BirdsContext/BirdsContext"
 import AlertCard from "../AlertCard/AlertCard"
+import { getExternalNotableBirds } from "../../apiCalls"
 import './BirdAlerts.css'
 
 const BirdAlerts = () => {
-    const { birdAlerts } = useContext(BirdsContext)
+    const { user, birdAlerts } = useContext(BirdsContext)
+    const [notableBirds, setNotableBirds] = useState([])
     const [alertButton, setAlertButton] = useState('star')
     const starRef = useRef(null);
     const notableRef = useRef(null);
 
     useEffect(() => {
     }, [birdAlerts])
+
+    useEffect(() => {
+      getExternalNotableBirds(user.location)
+        .then(res => {
+          setNotableBirds(res)
+        })
+        .catch(err => console.log(err))
+    }, [user.location])
 
     useEffect(() => {
       const starElement = starRef.current
@@ -28,7 +38,9 @@ const BirdAlerts = () => {
       }
     }, [alertButton])
 
-    const alerts = birdAlerts.map(alert => {
+    const alertsByType = alertButton === 'star' ? birdAlerts : notableBirds
+
+    const alerts = alertsByType.map(alert => {
       return (
         <Link key={nanoid()} to={`https://www.google.com/maps?q=${alert.lat},${alert.lng}&label=${alert.comName}`} target="_blank">
           <AlertCard alert={alert} />

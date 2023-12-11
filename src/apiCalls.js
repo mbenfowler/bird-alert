@@ -65,6 +65,16 @@ const getExternalRegions = async (state) => {
     return await handleError(res)
 }
 
+const getExternalNotableBirds = async (region) => {
+    const res = await fetch(`https://api.ebird.org/v2/data/obs/${region}/recent/notable?back=30`, {
+        headers: {
+            "X-eBirdApiToken": process.env.REACT_APP_EBIRD_API_KEY
+        }
+    })
+
+    return await handleError(res)
+}
+
 const getExternalBirdImg = async (comName) => {
     const res = await fetch(`https://nuthatch.lastelm.software/v2/birds?page=1&pageSize=25&name=${comName}&operator=AND`, {
         headers: {
@@ -232,5 +242,6 @@ export {
             postSavedBird,
             deleteSavedBird,
             getExternalRegions,
+            getExternalNotableBirds,
             getPasswordResetEmail
        }
