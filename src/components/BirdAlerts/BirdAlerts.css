@@ -50,11 +50,13 @@
   height: 50px;
   text-align: center;
   box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.4);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .button-pressed {
   box-shadow: inset 0 4px 5px 0 rgba(0, 0, 0, 0.4);
   background-color: gold;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 #star {
