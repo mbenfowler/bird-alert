@@ -18,21 +18,13 @@ const Card = ({ bird }) => {
     //eslint-disable-next-line
     }, [bird])
 
-    const resolveAfter1Sec = new Promise(resolve => setTimeout(resolve, 1000));
+    const resolveAfter1Sec = new Promise(resolve => setTimeout(resolve, 500));
     const notify = (action) => {
         toast.promise(resolveAfter1Sec, {
           success: {
             render: action === 'delete' ? 'Bird removed from watch list!' : 'Bird saved to watch list!',
             position: 'bottom-center'
           }
-        //   pending: {
-        //     render: 'Updating zip code...',
-        //     position: 'bottom-center'
-        //   },
-        //   error: {
-        //     render: 'Something went wrong...',
-        //     position: 'bottom-center'
-        //   }
         });
     }
 
@@ -72,6 +64,17 @@ const Card = ({ bird }) => {
             <div className='bird-details'>
                 <p>{bird.comName}</p>
                 <p className='sci-name'>{`(${bird.sciName})`}</p>
+                <p className='last-observed'>
+                    {bird.lastObserved
+                        ? (
+                        <>
+                            Last observed nearby: <br />
+                            {bird.lastObserved}
+                        </>
+                        )
+                        : 'No recent sightings'
+                    }
+                </p>
             </div>
             <input type="checkbox" checked={isChecked} id={bird.speciesCode} name={bird.comName} value={bird.isChecked} onChange={handleClick} />
         </div>

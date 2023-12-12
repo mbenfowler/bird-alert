@@ -1,7 +1,7 @@
 import { useContext, useState, useEffect } from 'react'
 import BirdsList from '../BirdsList/BirdsList'
 import BirdsContext from '../BirdsContext/BirdsContext'
-import { getSavedBirds } from '../../apiCalls'
+import { getSavedBirds, getExternalLastObserved } from '../../apiCalls'
 import './Saved.css'
 
 const Saved = () => {
@@ -9,6 +9,7 @@ const Saved = () => {
     const [currentPage, setCurrentPage] = useState(1)
     const [pageCount, setPageCount] = useState()
     const [chunkOfBirds, setChunkOfBirds] = useState([])
+    const [chunkOfBirdsWithLastObserved, setChunkOfBirdsWithLastObserved] = useState([])
 
     useEffect(() => {
         (async() => {
@@ -41,6 +42,17 @@ const Saved = () => {
     //eslint-disable-next-line
     }, [savedBirds, currentPage])
 
+    useEffect(() => {
+        const updatedBirds = chunkOfBirds.map(async bird => {
+            const lastObserved = await getExternalLastObserved(bird.speciesCode, user.location).then(res => res[0]?.obsDt)
+            return { ...bird, lastObserved }
+        })
+        Promise.all(updatedBirds)
+            .then(res => setChunkOfBirdsWithLastObserved(res))
+            .catch(err => console.log(err))
+    //eslint-disable-next-line
+    }, [chunkOfBirds])
+
     const handlePageChange = (e) => {
         if (e.target.innerText === '<') {
             setCurrentPage(prev => prev - 1)
@@ -54,7 +66,7 @@ const Saved = () => {
                 <h2>Birds on your watch list:</h2>
                 {savedBirds.length
                 ? <>
-                    <BirdsList birds={chunkOfBirds} />
+                    <BirdsList birds={chunkOfBirdsWithLastObserved} />
                     <div className='pagination'>
                         {currentPage !== 1 && <button className='pagination-btn' onClick={handlePageChange}>&lt;</button>}
                         <p>{`Page ${currentPage} of ${pageCount}`}</p>
