@@ -157,6 +157,8 @@ const createUser = async (email, password) => {
         method: 'POST'
     })
 
+    sendPasswordConfirmationEmail(email)
+
     return await handleError(res)
 }
 
