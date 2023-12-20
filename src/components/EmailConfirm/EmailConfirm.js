@@ -14,6 +14,7 @@ const EmailConfirm = () => {
       .then(() => setUserPatched(true))
       .catch(error => setNetworkError(error.message))
     })()
+  //eslint-disable-next-line
   }, [])
 
   const handleClick = () => {
