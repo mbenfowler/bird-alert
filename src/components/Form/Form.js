@@ -1,7 +1,7 @@
 import { useState, useContext, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { patchUser, getUser, getExternalRegions, getPasswordResetEmail } from '../../apiCalls'
+import { patchUser, getUser, getExternalRegions, sendPasswordConfirmationEmail, getPasswordResetEmail } from '../../apiCalls'
 import BirdsContext from '../BirdsContext/BirdsContext'
 import './Form.css'
 
@@ -65,7 +65,7 @@ const Form = ({ isLoaded }) => {
     const handleClick = (e) => {
         const id = e.target.id
         if (id === 'resendConfirmationEmail') {
-            // resend confirmation email
+            sendPasswordConfirmationEmail(user.email)
         } else if (id === 'sendPasswordResetEmail') {
             getPasswordResetEmail(user.email)
         }
@@ -75,7 +75,11 @@ const Form = ({ isLoaded }) => {
 
     const handleSubmit = async () => {
         setIsLoaded(false)
-        await patchUser(form)
+        const newEmail = user.email !== form.email
+        if (newEmail) {
+            sendPasswordConfirmationEmail(form.email)
+        }
+        await patchUser(user.email, {...form, confirmed: `${!newEmail}`})
             .then(async res => {
                 setUser(await getUser(form.email))
             })
@@ -91,7 +95,7 @@ const Form = ({ isLoaded }) => {
             {!isLoaded
                 ? <div className='spinner'></div>
                 : <form id='settings-form'>
-                    {!user.emailConfirmed &&
+                    {!user.email_confirmed &&
                         <>
                             <p className='email-confirmation-text'>Please confirm your email address to receive notifications</p>
                             <p className='link-text' id='resendConfirmationEmail' onClick={handleClick}>Resend confirmation email</p>

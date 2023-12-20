@@ -47,7 +47,7 @@ const PassReset = () => {
     if (newPasswordOne.length < 4) setPasswordTooShort(true)
     else if (passwordsMatch) {
       setPasswordTooShort(false)
-      await patchUser({ email, password: newPasswordOne })
+      await patchUser(email, { email, password: newPasswordOne })
       notify()
       navigate('/')
     }

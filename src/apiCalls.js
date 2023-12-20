@@ -135,13 +135,15 @@ const getAllBirds = async () => {
     return await handleError(res)
 }
 
-const patchUser = async (user) => {
+const patchUser = async (emailLookup, user) => {
     const queryParameters = new URLSearchParams({
-        email: user.email,
-        state: user.state,
-        location: user.location
+        emailLookup: emailLookup
     });
 
+    if (user.email) queryParameters.append('email', user.email)
+    if (user.state) queryParameters.append('state', user.state)
+    if (user.location) queryParameters.append('location', user.location)
+    if (user.confirmed) queryParameters.append('confirmed', user.confirmed)
     if (user.password) queryParameters.append('password', user.password)
     if (user.phone) queryParameters.append('phone', user.phone)
 
@@ -224,6 +226,11 @@ const deleteSavedBird = async (bird, id) => {
     }
 }
 
+const sendPasswordConfirmationEmail = async (email) => {
+    const res = await fetch(`${apiBaseURL}/sendPasswordConfirmationEmail?email=${email}`)
+    return await handleError(res)
+}
+
 const getPasswordResetEmail = async (email) => {
     const res = await fetch(`${apiBaseURL}/getResetPass?email=${email}`)
     return await handleError(res)
@@ -254,5 +261,6 @@ export {
             getExternalRegions,
             getExternalNotableBirds,
             getExternalLastObserved,
+            sendPasswordConfirmationEmail,
             getPasswordResetEmail
        }
