@@ -79,7 +79,7 @@ const Login = () => {
     }
 
     // might need to update toast so that it is actually dynamic based on result of api call
-    const resolveAfter1Sec = new Promise(resolve => setTimeout(resolve, 1000));
+    const resolveAfter1Sec = new Promise(resolve => setTimeout(resolve, 500));
     const notify = () => {
         toast.promise(resolveAfter1Sec, {
           success: {
