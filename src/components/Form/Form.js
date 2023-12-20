@@ -25,22 +25,23 @@ const Form = ({ isLoaded }) => {
     })
 
     // might need to update toast so that it is actually dynamic based on result of api call
-    const resolveAfter1Sec = new Promise(resolve => setTimeout(resolve, 1000));
-    const notify = () => {
-        toast.promise(resolveAfter1Sec, {
-          success: {
-            render: 'Password reset email sent!',
-            position: 'bottom-center'
-          }
-        //   pending: {
-        //     render: 'Updating zip code...',
-        //     position: 'bottom-center'
-        //   },
-        //   error: {
-        //     render: 'Something went wrong...',
-        //     position: 'bottom-center'
-        //   }
-        });
+    const resolveAfter1Sec = new Promise(resolve => setTimeout(resolve, 500));
+    const notify = (id) => {
+        if (id === 'resendConfirmationEmail') {
+            toast.promise(resolveAfter1Sec, {
+                success: {
+                    render: 'Confirmation email sent!',
+                    position: 'bottom-center'
+                }
+            });
+        } else if (id === 'sendPasswordResetEmail') {
+            toast.promise(resolveAfter1Sec, {
+                success: {
+                    render: 'Password reset email sent!',
+                    position: 'bottom-center'
+                }
+            });
+        }
     }
 
     useEffect(() => {
@@ -61,9 +62,15 @@ const Form = ({ isLoaded }) => {
 
     const navigate = useNavigate()
 
-    const handleClick = () => {
-        getPasswordResetEmail(user.email)
-        notify()
+    const handleClick = (e) => {
+        const id = e.target.id
+        if (id === 'resendConfirmationEmail') {
+            // resend confirmation email
+        } else if (id === 'sendPasswordResetEmail') {
+            getPasswordResetEmail(user.email)
+        }
+
+        notify(id)
     }
 
     const handleSubmit = async () => {
@@ -84,6 +91,12 @@ const Form = ({ isLoaded }) => {
             {!isLoaded
                 ? <div className='spinner'></div>
                 : <form id='settings-form'>
+                    {!user.emailConfirmed &&
+                        <>
+                            <p className='email-confirmation-text'>Please confirm your email address to receive notifications</p>
+                            <p className='link-text' id='resendConfirmationEmail' onClick={handleClick}>Resend confirmation email</p>
+                        </>
+                    }
                     {/* <label>
                         Name:
                         <input type="text" name='name' value={form.name} onChange={handleChange} />
@@ -91,7 +104,7 @@ const Form = ({ isLoaded }) => {
                     <label id='emailLabel'>
                         Email:
                         <input type="text" name='email' value={form.email} onChange={handleChange} />
-                        <p className='password-reset-text' onClick={handleClick}>Click here to receive a password reset email</p>
+                        <p className='password-reset-text' id='sendPasswordResetEmail' onClick={handleClick}>Click here to receive a password reset email</p>
                     </label>
                     <label>
                         State:

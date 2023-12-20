@@ -47,6 +47,20 @@
     cursor: pointer;
 }
 
+.email-confirmation-text {
+    color: white;
+    background-color: red;
+    padding: 5px;
+}
+
+.link-text {
+    font-size: 14px;
+    color: blue;
+    text-align: center;
+    cursor: pointer;
+    font-family: 'roboto';
+}
+
 @media screen and (max-width: 900px) {
     #settings-form label {
         width: 80%;

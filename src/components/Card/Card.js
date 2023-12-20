@@ -66,13 +66,12 @@ const Card = ({ bird }) => {
                 <p className='sci-name'>{`(${bird.sciName})`}</p>
                 <p className='last-observed'>
                     {bird.lastObserved
-                        ? (
+                        && (
                         <>
                             Last observed nearby: <br />
                             {bird.lastObserved}
                         </>
                         )
-                        : 'No recent sightings'
                     }
                 </p>
             </div>
