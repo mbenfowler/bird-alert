@@ -144,6 +144,8 @@ const patchUser = async (emailLookup, user) => {
     if (user.state) queryParameters.append('state', user.state)
     if (user.location) queryParameters.append('location', user.location)
     if (user.confirmed) queryParameters.append('confirmed', user.confirmed)
+    if (user.alert_digest_email_enabled) queryParameters.append('alert_digest_email_enabled', user.alert_digest_email_enabled)
+    if (user.rare_sightings_email_enabled) queryParameters.append('rare_sightings_email_enabled', user.rare_sightings_email_enabled)
     if (user.password) queryParameters.append('password', user.password)
     if (user.phone) queryParameters.append('phone', user.phone)
 
