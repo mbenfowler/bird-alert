@@ -1,6 +1,7 @@
 import { useContext, useState, useEffect } from 'react'
 import BirdsContext from '../BirdsContext/BirdsContext'
 import { patchUser } from '../../apiCalls'
+import { toast } from 'react-toastify'
 import './AlertCenter.css'
 
 const AlertCenter = ({ isLoaded }) => {
@@ -12,6 +13,16 @@ const AlertCenter = ({ isLoaded }) => {
     setAlertDigestEnabled(user.alert_digest_email_enabled)
     setUncommonSightingsEnabled(user.rare_sightings_email_enabled)
   }, [user])
+
+  const resolveAfter1Sec = new Promise(resolve => setTimeout(resolve, 500));
+  const notify = () => {
+      toast.promise(resolveAfter1Sec, {
+        success: {
+          render: 'Alert preferences updated!',
+          position: 'bottom-center'
+        }
+      });
+  }
 
   const toggleAlert = async (e) => {
     try {
@@ -26,6 +37,8 @@ const AlertCenter = ({ isLoaded }) => {
       } else if (alertType === 'rare_sightings_email_enabled') {
         setUncommonSightingsEnabled(isChecked)
       }
+
+      notify()
     } catch (error) {
       console.error(error)
     }
