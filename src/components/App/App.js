@@ -12,6 +12,7 @@ import Home from '../Home/Home';
 import Saved from '../Saved/Saved';
 import Settings from '../Settings/Settings';
 import EmailConfirm from '../EmailConfirm/EmailConfirm';
+import Unsubscribe from '../Unsubscribe/Unsubscribe';
 import PassReset from '../PassReset/PassReset';
 import NotFound from '../NotFound/NotFound';
 import BirdsContext from '../BirdsContext/BirdsContext';
@@ -126,6 +127,7 @@ const App = () => {
               <Route path='/saved' element={<Saved />} />
               <Route path='/settings' element={<Settings isLoaded={isLoaded}/>} />
               <Route path='/reset/:email' element={<PassReset />} />
+              <Route path='/unsubscribe/:email/:emailType' element={<Unsubscribe />} />
               <Route path='/confirm/:email' element={<EmailConfirm />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
