@@ -85,4 +85,4 @@ export const subscribePush = (subscription: PushSubscriptionJSON & { userAgent?:
     api<{ ok: true }>('/push/subscribe', { method: 'POST', body: subscription })
 export const unsubscribePush = (endpoint: string) => api<null>('/push/unsubscribe', { method: 'POST', body: { endpoint } })
 export const getPushStatus = (endpoint: string) => api<PushStatus>('/push/status', { params: { endpoint } })
-export const sendTestPush = () => api<{ sent: number; gone: number }>('/push/test', { method: 'POST' })
+export const sendTestPush = (endpoint?: string) => api<{ sent: number; gone: number }>('/push/test', { method: 'POST', body: endpoint ? { endpoint } : {} })

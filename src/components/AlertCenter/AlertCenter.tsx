@@ -23,7 +23,7 @@ const pushHint: Record<string, string> = {
   unsupported: 'This browser cannot receive push notifications.',
   denied: 'Notifications are blocked for this site in your browser settings.',
   off: 'Turn on to get notified on this device. On iPhone, add Bird Alert to your Home Screen first.',
-  on: 'This device will be notified. Choose what below. Android and desktop show the bird photo, a map and buttons; iPhone shows text only.',
+  on: 'This device will be notified. Choose what below. Android and Windows show the bird photo, a map and buttons; Mac shows the photo and buttons; iPhone shows text only.',
   busy: 'Updating…'
 }
 
@@ -56,7 +56,7 @@ const AlertCenter = () => {
   const sendTest = () => {
     toast.promise(push.sendTest(), {
       pending: { render: 'Sending a test notification…', position: 'bottom-center' },
-      success: { render: ({ data }) => (data && data.sent > 0 ? 'Sent! Check your notifications.' : 'No device received it; try turning push off and on.'), position: 'bottom-center' },
+      success: { render: ({ data }) => (data && data.sent > 0 ? 'Sent to this device. Check your notifications.' : 'This device did not receive it; try turning push off and on.'), position: 'bottom-center' },
       error: { render: ({ data }) => errorMessage(data), position: 'bottom-center' }
     })
   }
