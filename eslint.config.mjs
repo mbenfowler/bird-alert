@@ -9,7 +9,7 @@ import query from '@tanstack/eslint-plugin-query'
 export default tseslint.config(
   { ignores: ['dist', 'build', 'node_modules'] },
   {
-    files: ['src/**/*.{ts,tsx}', 'vite.config.ts'],
+    files: ['src/**/*.{ts,tsx}', 'vite.config.mts'],
     extends: [js.configs.recommended, ...tseslint.configs.recommended, ...query.configs['flat/recommended']],
     languageOptions: { ecmaVersion: 2020, globals: globals.browser },
     plugins: { 'react-hooks': reactHooks, 'react-refresh': reactRefresh },
