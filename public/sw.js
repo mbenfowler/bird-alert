@@ -1,27 +1,49 @@
-/* Bird Alert service worker: shows push notifications and focuses the app when one is clicked. */
+/* Bird Alert service worker: shows push notifications and routes taps to the map app or the site. */
 self.addEventListener('install', () => self.skipWaiting())
 self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()))
 
 self.addEventListener('push', (event) => {
   let data = {}
   try { data = event.data ? event.data.json() : {} } catch { data = { body: event.data && event.data.text() } }
-  const title = data.title || 'Bird Alert'
-  event.waitUntil(self.registration.showNotification(title, {
+  const options = {
     body: data.body || '',
-    icon: '/images/bird.png',
-    badge: '/images/bird.png',
+    icon: data.icon || '/images/bird.png',
+    badge: data.badge || '/images/bird.png',
     tag: data.tag || 'bird-alert',
     renotify: Boolean(data.tag),
-    data: { url: data.url || '/' }
-  }))
+    data: data.data || { url: data.url || '/' }
+  }
+  // Android and desktop browsers render these; others ignore them.
+  if (data.image) options.image = data.image
+  if (data.actions) options.actions = data.actions
+  if (data.timestamp) options.timestamp = data.timestamp
+  if (data.vibrate) options.vibrate = data.vibrate
+  event.waitUntil(self.registration.showNotification(data.title || 'Bird Alert', options))
+})
+
+// Apple devices get Apple Maps; everything else gets a Google Maps link, which Android hands to
+// whichever maps app is the default.
+const mapsUrl = ({ lat, lng, comName, locName }) => {
+  const label = encodeURIComponent(`${comName || 'Bird sighting'}${locName ? ` - ${locName}` : ''}`)
+  const apple = /iPhone|iPad|iPod|Macintosh/i.test(self.navigator.userAgent)
+  return apple
+    ? `https://maps.apple.com/?ll=${lat},${lng}&q=${label}&z=15`
+    : `https://www.google.com/maps/search/?api=1&query=${lat}%2C${lng}`
+}
+
+const openUrl = (url) => self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
+  const sameOrigin = url.startsWith(self.location.origin)
+  const existing = sameOrigin && windows.find((w) => w.url.startsWith(self.location.origin))
+  if (existing) return existing.focus().then((w) => (w && 'navigate' in w ? w.navigate(url) : w))
+  return self.clients.openWindow(url)
 })
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const url = new URL((event.notification.data && event.notification.data.url) || '/', self.location.origin).href
-  event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
-    const existing = windows.find((w) => w.url.startsWith(self.location.origin))
-    if (existing) return existing.focus().then((w) => (w && 'navigate' in w ? w.navigate(url) : w))
-    return self.clients.openWindow(url)
-  }))
+  const data = event.notification.data || {}
+  const appUrl = new URL(data.url || '/', self.location.origin).href
+  const hasLocation = typeof data.lat === 'number' && typeof data.lng === 'number'
+  // Tapping the notification itself opens the sighting on a map; the app button opens the app.
+  const target = event.action === 'app' || !hasLocation ? appUrl : mapsUrl(data)
+  event.waitUntil(openUrl(target))
 })
