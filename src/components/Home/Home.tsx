@@ -67,7 +67,7 @@ const Home = () => {
                 <BirdAlerts />
             </section>
             <section id='birdsInArea'>
-                <input id='birdSearch' type="search" placeholder='Search birds by name' value={search} onChange={(e) => setSearch(e.target.value)} />
+                <input id='birdSearch' type="search" placeholder='Search birds by name' aria-label='Search birds by name' value={search} onChange={(e) => setSearch(e.target.value)} />
                 {renderBirds()}
             </section>
             {showPagination &&

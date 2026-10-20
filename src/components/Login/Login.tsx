@@ -78,8 +78,8 @@ const Login = () => {
         <main className='login'>
           <section className='login-panel'>
             <form className='user-entry' onSubmit={submitEmail}>
-              <h2>email</h2>
-              <input className='input email' type='email' name='email' autoComplete='email' value={email} onChange={handleEmailChange} autoFocus />
+              <h2 id='loginEmailLabel'>email</h2>
+              <input className='input email' type='email' name='email' autoComplete='email' aria-labelledby='loginEmailLabel' value={email} onChange={handleEmailChange} autoFocus />
               {userExists &&
                 <button type='button' className='link-button password-reset-text' onClick={handleForgotPassword}>
                   Click here to receive a password reset email
@@ -92,8 +92,8 @@ const Login = () => {
               </div>}
             {userExists !== undefined &&
               <form className='user-entry' onSubmit={submitPassword}>
-                <h2>{userExists ? 'enter password' : 'create password'}</h2>
-                <input className='input password' type='password' name='password' autoComplete={userExists ? 'current-password' : 'new-password'} value={password} onChange={(e) => setPassword(e.target.value)} autoFocus />
+                <h2 id='loginPasswordLabel'>{userExists ? 'enter password' : 'create password'}</h2>
+                <input className='input password' type='password' name='password' autoComplete={userExists ? 'current-password' : 'new-password'} aria-labelledby='loginPasswordLabel' value={password} onChange={(e) => setPassword(e.target.value)} autoFocus />
               </form>}
             {error && <h3 className='info' role='alert'>{error}</h3>}
             {isBusy && <div className='spinner login-spinner'></div>}

@@ -15,3 +15,10 @@ export const AlertIcon = (props: SVGProps<SVGSVGElement>) => (
     <path d="M11 15h2v2h-2zm0-8h2v6h-2zm.99-5C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z" />
   </svg>
 )
+
+/** Chevron pointing down; add the `is-up` class to flip it. */
+export const ChevronIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z" />
+  </svg>
+)

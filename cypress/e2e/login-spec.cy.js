@@ -10,18 +10,37 @@ describe("Login flow for a user that already has location set", () => {
       .get('#titleAlert').should('contain', 'Alert')
       .get('[href="/saved"] > .nav-img').should('be.visible')
       .get(':nth-child(2) > .nav-img').should('be.visible')
-      .get('.alerts-header').should('contain', 'Alerts:')
-      .get('#birdAlerts > a > .card').should('be.visible')
+      .get('.alerts-header').should('contain', 'Watch list sightings')
+      .get('.alerts-count').should('contain', '1')
+      .get('.alerts-list > a > .card').should('be.visible')
         .and('contain', 'Canada Goose')
         .and('contain', '2023-12-01 13:49')
         .and('contain', "Rusty's Gainesville Yard")
-        .then(() => {
-          cy.get('#birdAlerts').children().should('have.length', 2)
-        })
+      .get('.alerts-toggle').should('have.attr', 'aria-expanded', 'true')
       .get('#birdSearch').invoke('attr', 'placeholder').should('contain', 'Search birds by name')
       .get('#birdsInArea > h2').should('contain', 'Birds in your area')
       .get('#snogoo').should('be.checked')
       .get('.pagination > p').should('contain', 'Page 1 of 2')
       .get('.pagination-btn').should('contain', '>')
+  })
+})
+
+describe("Alerts panel", () => {
+  beforeEach(() => {
+    login()
+  })
+
+  it("collapses to its bar and expands again, and switches to notable sightings", () => {
+    cy.get('.alerts-list').should('be.visible')
+    cy.get('.alerts-toggle').click()
+    cy.get('.alerts-toggle').should('have.attr', 'aria-expanded', 'false')
+    cy.get('.alerts-list').should('not.be.visible')
+    cy.get('.alerts-toggle').click()
+    cy.get('.alerts-list').should('be.visible')
+
+    cy.get('#notable').click()
+    cy.wait('@notable')
+    cy.get('.alerts-header').should('contain', 'Notable sightings')
+    cy.get('.alerts-empty').should('contain', 'No notable sightings')
   })
 })

@@ -1,90 +1,62 @@
 # Bird Alert!
 
-<b>Built With:</b>
-<br>
+[**bird-alert.vercel.app**](https://bird-alert.vercel.app/) · API lives in [bird-alert-be](https://github.com/mbenfowler/bird-alert-be)
 
-  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" />
-  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" /> 
-  <img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white" /> 
-  <img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white" />
-<img src="https://img.shields.io/badge/-cypress-%23E5E5E5?style=for-the-badge&logo=cypress&logoColor=058a5e" /> 
-
-[Bird Alert! DEPLOYED LINK](https://bird-alert.vercel.app/) <!-- LINK TO BE ADDED ONCE DEPLOYED-->
-</div>
-
-
-## Abstract: 
-Bird Alert! Is the tool every bird-enthusiast needs, from the casual back yard birder to the hardcore expert looking to finish a strong [Big Year](https://en.wikipedia.org/wiki/Big_year)! 
-Features:
-- Set your location and other details and submit
-- Back on your dashboard you will see the list of birds endemic to your current location
-- Click a checkbox on an individual bird to add it to your "Watch List"
-- Navigate to your `/saved` birds view to see a concise list of only the birds you're watching
-- Once you have observed a bird on your list, you can remove it from your watch list from either view by un-checking the box of that bird
-
-Upcoming features:
-- In-app alerts of sightings + location data for birds on your watch list
-- Accurate pictures for each bird
-- Email/text alerts if you have provided an email address or phone number in your settings
-
-## Preview of App:
+I'm a casual backyard birder, and I wanted something simpler than eBird's firehose: tell me which birds are around *my* county, let me keep a short list of the ones I care about, and ping me when one of them turns up nearby. That's Bird Alert.
 
 <div align="center">
-
-  <h2> Cell Phone Display: </h2>
-
-  <img height="300px" src="public/images/bird-alert-mobile.gif" alt='demo of app on a cell phone'> <!-- ADD phone preview here -->
-
-  <br>
-
-  <h2> Desktop Display: </h2>
-
-  <img height="300px" src="public/images/bird-alert-desktop.gif" alt='demo of app on a cell phone'> <!-- ADD phone preview here -->
-
+  <img height="300px" src="public/images/bird-alert-mobile.gif" alt="the app on a phone">
+  &nbsp;&nbsp;
+  <img height="300px" src="public/images/bird-alert-desktop.gif" alt="the app on a desktop">
 </div>
 
-## Installation Instructions
-The front end lives here; the API lives in [bird-alert-be](https://github.com/mbenfowler/bird-alert-be) and must be running on port 3001 (the dev server proxies `/api` to it, so the session cookie stays first-party).
+## What it does
 
-- Clone this repository and run `npm install`. No `.env` is needed here: the API keys live in the backend.
-- Start the API: in `bird-alert-be`, run `npm run dev`.
-- Start the app: `npm start`, then open `http://localhost:3000/`.
-- End-to-end tests stub every network call, so `npx cypress open` works without the API or keys (the dev server still has to be running).
+- **Birds in your area.** Pick your state and county in settings and the home page lists every species eBird has recorded there, five at a time, with a photo, the scientific name, and a link to Wikipedia.
+- **Watch list.** Tick a bird to watch it. Your saved birds get their own page, each showing when it was last reported near you.
+- **Alerts.** The panel at the top of the home page shows recent sightings of your watch-list birds, and a second tab shows eBird's "notable" sightings for the area. Each one links to the spot on a map.
+- **Email digests.** Opt in to a daily email when one of your birds was seen yesterday, and a separate one for uncommon sightings. Every email has a one-click unsubscribe.
+- **Search.** Look up any bird by name, even ones that aren't local.
 
-## Context: 
-- Mod 3, Week 5 Final Showcase Project: 
-  - We are current students of Turing School of Software & Design. 
-  - Turing is a 7 month program, which offers a total of 4 6-week modules. 
-  - This project was completed during the third module that the program has to offer. 
+## How it's built
 
-- A total of ~40 hours was spent on this project. 
+The front end is React with TypeScript, built by Vite. Server state goes through TanStack Query: the species list for your county and the bird records are cached in the browser for days, so a revisit draws from cache before the network answers, and flipping pages is free. Bird records are assembled once on the server from eBird taxonomy plus a photo from [Nuthatch](https://nuthatch.lastelm.software) or Wikipedia, then stored, so a bird is only ever looked up once for everyone.
 
-## Contributors: 
-- [Matt Fowler](https://github.com/mbenfowler)
+The API is a handful of Vercel serverless functions over Postgres, in the [bird-alert-be](https://github.com/mbenfowler/bird-alert-be) repo. Sessions are cookies, passwords are bcrypt, and the links in emails are signed tokens that expire. All eBird traffic goes through the API so no keys live in the browser. Two daily crons send the digests. Everything runs on free tiers.
 
-## Learning Goals:
-Use the technology you’ve been working with over the course of the module to demonstrate mastery of the following:
-- React
-- Router
-- Asynchronous JavaScript
-- End to end testing with Cypress
-- Create personas and user stories to describe your target audience.
+This started as my final project at Turing School in 2023. In 2026 I rebuilt most of it: auth, the build tooling, the data layer, and the backend, with tests around each piece. The git history has the details if you're curious.
 
-Work within constraints to deliver a product for your niche audience, which helps solve a problem unique to them.
+## Running it locally
 
-Your applications must have the following core functionality:
-- Display the data from the API in a way that applies directly to your audience
-- Ability for users to store/manipulate the data displayed in the application, such as (choose one) favoriting/unfavoriting, adding to/removing from a list, searching, commenting, etc
-- Multiple views handled by Router
-- Be deployed using Vercel, Heroku, Surge, or any other similar service
-- PropTypes has been implemented in all components with props
+You need Node 22, Postgres, and the API running next door.
 
+```bash
+# API, in bird-alert-be (see its README for the .env it needs)
+npm install && npm run migrate && npm run dev        # http://localhost:3001
 
-### Tooling
-Built with [Vite](https://vitejs.dev/) and TypeScript. Useful scripts:
+# this repo
+npm install
+npm start                                            # http://localhost:3000, proxies /api to 3001
+```
 
-- `npm start` — dev server on http://localhost:3000, proxying `/api` to the backend
-- `npm run build` — type-check and produce the production bundle in `dist/`
-- `npm run lint` / `npm run typecheck`
-- `npm test` — Vitest unit tests (`npm run test:watch` while developing)
-- `npm run test:e2e` — Cypress, headless (dev server must be running)
+No `.env` is needed here; the API holds all the keys.
+
+## Scripts
+
+| Command | What it does |
+|---|---|
+| `npm start` | Dev server with hot reload |
+| `npm run build` | Type-check, then build to `dist/` |
+| `npm run lint` / `npm run typecheck` | ESLint and `tsc` |
+| `npm test` | Vitest unit tests (`npm run test:watch` while developing) |
+| `npm run test:e2e` | Cypress, headless. Needs the dev server up; every network call is stubbed, so the API isn't required |
+
+Cypress also runs [axe](https://github.com/dequelabs/axe-core) on each main view and fails the build on serious accessibility problems. CircleCI runs lint, type-check, unit tests, the build, and the Cypress suite on every pull request.
+
+## Deploying
+
+Pushes to `main` deploy to Vercel automatically. `vercel.json` rewrites `/api/*` to the API's domain so the session cookie stays first-party.
+
+## Thanks
+
+Bird data is from the [eBird API](https://documenter.getpostman.com/view/664302/S1ENwy59), photos from Nuthatch and Wikimedia Commons, and most of the goose photos exist because Georgia has a lot of geese.
