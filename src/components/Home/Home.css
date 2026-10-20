@@ -114,6 +114,28 @@
     height: 22px;
 }
 
+.search-scope {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin: 4px 0 8px;
+    padding: 6px 12px 6px 6px;
+    border-radius: 999px;
+    color: var(--ink);
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+.search-scope:has(input:focus-visible) {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.list-note__link {
+    color: var(--focus);
+    text-decoration: underline;
+}
+
 .list-note,
 .list-end {
     margin: 12px 0;

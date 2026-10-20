@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import BirdAlerts from '../BirdAlerts/BirdAlerts'
 import BirdsList from '../BirdsList/BirdsList'
 import ErrorMessage from '../Error/ErrorMessage'
@@ -11,6 +11,10 @@ import { useInfiniteScroll } from '../../hooks/useInfiniteScroll'
 import './Home.css'
 
 const PAGE_SIZE = 12
+const REGION_ONLY_KEY = 'bird-alert-search-region-only'
+
+const readRegionOnly = () => { try { return localStorage.getItem(REGION_ONLY_KEY) === '1' } catch { return false } }
+const writeRegionOnly = (value: boolean) => { try { localStorage.setItem(REGION_ONLY_KEY, value ? '1' : '0') } catch { /* private mode etc. */ } }
 const SEARCH_DEBOUNCE_MS = 250
 
 const Home = () => {
@@ -36,15 +40,36 @@ const Home = () => {
     const isSearching = rawTerm.length > 0
     const results = useBirdSearchQuery(term)
 
+    // Search covers every bird we know about; this narrows it to the region's species list.
+    // The choice is a per-device convenience, remembered in localStorage.
+    const [regionOnly, setRegionOnly] = useState(() => readRegionOnly())
+    useEffect(() => { writeRegionOnly(regionOnly) }, [regionOnly])
+    const regionCodes = useMemo(() => new Set(codes), [codes])
+    const allResults = useMemo(() => results.data ?? [], [results.data])
+    const inRegion = useMemo(() => allResults.filter(bird => regionCodes.has(bird.speciesCode)), [allResults, regionCodes])
+    const shownResults = regionOnly ? inRegion : allResults
+
     const renderSearch = () => {
-        if (rawTerm.length < SEARCH_MIN_LENGTH) return <p className='list-note'>Keep typing to search every bird we know about.</p>
+        if (rawTerm.length < SEARCH_MIN_LENGTH) return <p className='list-note'>Keep typing to search {regionOnly ? `birds in ${regionName ?? 'your region'}` : 'every bird we know about'}.</p>
         if (results.isError) return <ErrorMessage networkError={errorMessage(results.error)} />
         if (!results.data) return <SkeletonList count={3} label='Searching…' />
-        if (!results.data.length) return <p className='list-note'>No birds match "{rawTerm}".</p>
+        if (!shownResults.length) {
+            return (
+                <p className='list-note'>
+                    {regionOnly && allResults.length
+                        ? <>No birds in {regionName ?? 'your region'} match "{rawTerm}". {allResults.length} match elsewhere: <button type='button' className='link-button list-note__link' onClick={() => setRegionOnly(false)}>show all birds</button>.</>
+                        : <>No birds match "{rawTerm}".</>}
+                </p>
+            )
+        }
         return (
             <>
-                <p className='list-note'>{results.data.length} match{results.data.length === 1 ? '' : 'es'}. These may not be common to your area.</p>
-                <BirdsList birds={results.data} />
+                <p className='list-note'>
+                    {regionOnly
+                        ? `${shownResults.length} match${shownResults.length === 1 ? '' : 'es'} in ${regionName ?? 'your region'}${allResults.length > shownResults.length ? `, ${allResults.length - shownResults.length} more elsewhere` : ''}.`
+                        : `${shownResults.length} match${shownResults.length === 1 ? '' : 'es'}. ${inRegion.length} of them ${inRegion.length === 1 ? 'is' : 'are'} in your area.`}
+                </p>
+                <BirdsList birds={shownResults} />
             </>
         )
     }
@@ -79,6 +104,10 @@ const Home = () => {
                     <input id='birdSearch' type='search' placeholder='Search birds by name' aria-label='Search birds by name' autoComplete='off' value={search} onChange={(e) => setSearch(e.target.value)} />
                     {search && <button type='button' className='search__clear' aria-label='Clear search' onClick={() => setSearch('')}><CloseIcon /></button>}
                 </div>
+                <label className='search-scope'>
+                    <input className='switch switch--small' type='checkbox' id='searchRegionOnly' checked={regionOnly} onChange={(e) => setRegionOnly(e.target.checked)} />
+                    <span>Only birds in {regionName ?? 'my region'}</span>
+                </label>
                 <h2 className='fredericka list-heading'>
                     {isSearching ? 'Search results' : <>Birds in your area: <span className='list-heading__region'>{regionLabel}</span></>}
                 </h2>
