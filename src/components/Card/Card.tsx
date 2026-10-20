@@ -1,8 +1,8 @@
-import { useState } from 'react'
 import { toast } from 'react-toastify'
 import './Card.css'
-import { useBirds } from '../BirdsContext/BirdsContext'
-import { postSavedBird, deleteSavedBird, errorMessage } from '../../apiCalls'
+import { errorMessage } from '../../apiCalls'
+import { useSavedCodes } from '../../hooks/queries'
+import { useToggleSavedMutation } from '../../hooks/mutations'
 import type { Bird } from '../../types'
 
 interface CardProps {
@@ -10,29 +10,18 @@ interface CardProps {
 }
 
 const Card = ({ bird }: CardProps) => {
-    const { savedCodes, setSavedBirds } = useBirds()
-    const [isPending, setIsPending] = useState(false)
+    const savedCodes = useSavedCodes()
+    const toggleSaved = useToggleSavedMutation()
 
     // Checked state comes straight from the watch list, so every card agrees with the saved view.
     const isChecked = savedCodes.has(bird.speciesCode)
 
-    const handleChange = async () => {
-        setIsPending(true)
-        try {
-            if (isChecked) {
-                await deleteSavedBird(bird.speciesCode)
-                setSavedBirds(prev => prev.filter(saved => saved.speciesCode !== bird.speciesCode))
-                toast.success('Bird removed from watch list!', { position: 'bottom-center' })
-            } else {
-                const saved = await postSavedBird(bird)
-                setSavedBirds(prev => (prev.some(b => b.speciesCode === saved.speciesCode) ? prev : [...prev, saved]))
-                toast.success('Bird saved to watch list!', { position: 'bottom-center' })
-            }
-        } catch (error) {
-            toast.error(errorMessage(error), { position: 'bottom-center' })
-        } finally {
-            setIsPending(false)
-        }
+    const handleChange = () => {
+        const save = !isChecked
+        toggleSaved.mutate({ bird, save }, {
+            onSuccess: () => toast.success(save ? 'Bird saved to watch list!' : 'Bird removed from watch list!', { position: 'bottom-center' }),
+            onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
+        })
     }
 
     const img = bird.birdImg && bird.birdImg !== 'undefined' ? bird.birdImg : '/images/noBirdImg.png'
@@ -52,7 +41,7 @@ const Card = ({ bird }: CardProps) => {
                     )}
                 </p>
             </div>
-            <input type="checkbox" checked={isChecked} disabled={isPending} id={bird.speciesCode} name={bird.comName} aria-label={`Watch ${bird.comName}`} onChange={handleChange} />
+            <input type="checkbox" checked={isChecked} disabled={toggleSaved.isPending} id={bird.speciesCode} name={bird.comName} aria-label={`Watch ${bird.comName}`} onChange={handleChange} />
         </div>
     )
 }

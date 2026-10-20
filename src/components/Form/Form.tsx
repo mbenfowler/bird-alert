@@ -1,9 +1,9 @@
-import { useState, useEffect, type ChangeEvent, type FormEvent } from 'react'
+import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { patchUser, getExternalRegions, resendConfirmationEmail, requestPasswordReset, errorMessage } from '../../apiCalls'
-import { useBirds, useCurrentUser } from '../BirdsContext/BirdsContext'
-import type { Region } from '../../types'
+import { resendConfirmationEmail, requestPasswordReset, errorMessage } from '../../apiCalls'
+import { useCurrentUser, useRegionsQuery } from '../../hooks/queries'
+import { usePatchUserMutation } from '../../hooks/mutations'
 import './Form.css'
 
 const STATE_CODES = [
@@ -18,9 +18,8 @@ const toastAt = { position: 'bottom-center' } as const
 
 const Form = () => {
     const user = useCurrentUser()
-    const { setUser, handleNetworkErrors } = useBirds()
-    const [regions, setRegions] = useState<Region[]>([])
-    const [isSaving, setIsSaving] = useState(false)
+    const patchUser = usePatchUserMutation()
+    const navigate = useNavigate()
     const [form, setForm] = useState({
         state:    user.state || '',
         location: user.location || '',
@@ -28,26 +27,14 @@ const Form = () => {
         phone:    user.phone || ''
     })
 
-    // Region options follow the selected state. Clearing the state clears the region too.
-    useEffect(() => {
-        if (!form.state) {
-            setRegions([])
-            setForm(prev => (prev.location ? { ...prev, location: '' } : prev))
-            return
-        }
-        let cancelled = false
-        getExternalRegions(form.state)
-            .then(result => { if (!cancelled) setRegions(result) })
-            .catch(error => { if (!cancelled) handleNetworkErrors(error) })
-        return () => { cancelled = true }
-    }, [form.state, handleNetworkErrors])
+    // Region options follow the selected state (cached for a week per state).
+    const regions = useRegionsQuery(form.state)
 
     const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target
-        setForm(prev => ({ ...prev, [name]: value }))
+        // A new state invalidates the old region.
+        setForm(prev => (name === 'state' ? { ...prev, state: value, location: '' } : { ...prev, [name]: value }))
     }
-
-    const navigate = useNavigate()
 
     const handleResendConfirmation = () => {
         toast.promise(resendConfirmationEmail(), {
@@ -65,25 +52,21 @@ const Form = () => {
         })
     }
 
-    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
-        setIsSaving(true)
-        try {
-            const updated = await patchUser(form)
-            setUser(updated)
-            if (updated.email !== user.email) {
-                toast.info('Email changed. Check your inbox for a new confirmation link.', toastAt)
-            }
-            toast.success('Settings saved!', toastAt)
-            navigate('/')
-        } catch (error) {
-            toast.error(errorMessage(error), toastAt)
-        } finally {
-            setIsSaving(false)
-        }
+        patchUser.mutate(form, {
+            onSuccess: (updated) => {
+                if (updated.email !== user.email) {
+                    toast.info('Email changed. Check your inbox for a new confirmation link.', toastAt)
+                }
+                toast.success('Settings saved!', toastAt)
+                navigate('/')
+            },
+            onError: (error) => toast.error(errorMessage(error), toastAt)
+        })
     }
 
-    if (isSaving) return <div className='spinner'></div>
+    if (patchUser.isPending) return <div className='spinner'></div>
 
     return (
         <form id='settings-form' onSubmit={handleSubmit}>
@@ -105,12 +88,13 @@ const Form = () => {
                     {STATE_CODES.map(state => <option key={state} value={state}>{state}</option>)}
                 </select>
             </label>
-            {!!regions.length &&
+            {regions.isError && <p className='passwordErrorText' role='alert'>Could not load regions: {errorMessage(regions.error)}</p>}
+            {!!regions.data?.length &&
                 <label>
                     Region:
                     <select name="location" value={form.location} onChange={handleChange}>
                         <option value="">Select your region</option>
-                        {regions.map(region => <option key={region.code} value={region.code}>{region.name} - {region.code}</option>)}
+                        {regions.data.map(region => <option key={region.code} value={region.code}>{region.name} - {region.code}</option>)}
                     </select>
                 </label>
             }

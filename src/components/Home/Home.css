@@ -57,3 +57,8 @@ h2 {
     }
 }
    
+/* Previous page stays visible, slightly dimmed, while the next one loads */
+.is-stale {
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+}

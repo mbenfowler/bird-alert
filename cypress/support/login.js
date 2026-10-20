@@ -12,14 +12,20 @@ export const TEST_USER = {
   updated_at: '2023-12-01T23:13:41.118Z'
 }
 
-// Stubs every network call the app makes on the way from /login to a loaded home page.
+/**
+ * Stubs every network call the app makes on the way from /login to a loaded home page.
+ * The watch list is a tiny in-memory fake: GET returns the current list, POST and DELETE
+ * change it, so optimistic updates and the refetch that follows them stay consistent.
+ */
 export const login = () => {
   let loggedIn = false
   const birdsByCode = {}
+  const watchList = { birds: [] }
 
   cy.fixture('birdCodes').then((codes) => {
     codes.forEach((code) => cy.fixture(code).then((bird) => { birdsByCode[code] = bird }))
   })
+  cy.fixture('savedBirds').then((saved) => { watchList.birds = saved })
 
   // Session: 401 until the stubbed login succeeds, then the user, including across full reloads.
   cy.intercept('GET', '**/api/auth/me', (req) => {
@@ -32,7 +38,20 @@ export const login = () => {
   }).as('login')
   cy.intercept('POST', '**/api/auth/logout', { statusCode: 204, body: '' }).as('logout')
 
-  cy.intercept('GET', '**/api/saved', { statusCode: 200, fixture: 'savedBirds' }).as('getSaved')
+  // Watch list fake.
+  cy.intercept('GET', '**/api/saved', (req) => {
+    req.reply({ statusCode: 200, body: watchList.birds })
+  }).as('getSaved')
+  cy.intercept('POST', '**/api/saved', (req) => {
+    const bird = birdsByCode[req.body.speciesCode]
+    if (!watchList.birds.some((b) => b.speciesCode === bird.speciesCode)) watchList.birds = [...watchList.birds, bird]
+    req.reply({ statusCode: 201, body: bird })
+  }).as('postSaved')
+  cy.intercept('DELETE', '**/api/saved?speciesCode=*', (req) => {
+    const code = new URL(req.url).searchParams.get('speciesCode')
+    watchList.birds = watchList.birds.filter((b) => b.speciesCode !== code)
+    req.reply({ statusCode: 204, body: '' })
+  }).as('deleteSaved')
 
   // Our own bird records, looked up by species code; order of the request is preserved.
   cy.intercept('GET', '**/api/birds?codes=*', (req) => {
@@ -40,10 +59,12 @@ export const login = () => {
     req.reply({ statusCode: 200, body: codes.map((code) => birdsByCode[code]).filter(Boolean) })
   }).as('getBirds')
 
-  cy.intercept('GET', 'https://api.ebird.org/v2/product/spplist/US-GA-139', { statusCode: 200, fixture: 'birdCodes' }).as('birdCodes')
-  cy.intercept('GET', 'https://api.ebird.org/v2/data/obs/US-GA-139/recent', { statusCode: 200, fixture: 'recentBirds' }).as('recentBirds')
-  cy.intercept('GET', 'https://api.ebird.org/v2/data/obs/US-GA-139/recent/notable*', { statusCode: 200, body: [] }).as('notableBirds')
-  cy.intercept('GET', 'https://api.ebird.org/v2/data/obs/US-GA-139/recent/*', { statusCode: 200, body: [] }).as('lastObserved')
+  // eBird, as proxied by the backend.
+  cy.intercept('GET', '**/api/ebird/species-list?region=US-GA-139', { statusCode: 200, fixture: 'birdCodes' }).as('speciesList')
+  cy.intercept('GET', '**/api/ebird/observations?region=US-GA-139', { statusCode: 200, fixture: 'recentBirds' }).as('observations')
+  cy.intercept('GET', '**/api/ebird/notable*', { statusCode: 200, body: [] }).as('notable')
+  cy.intercept('GET', '**/api/ebird/species-observations*', { statusCode: 200, body: [] }).as('speciesObservations')
+  cy.intercept('GET', '**/api/ebird/regions*', { statusCode: 200, body: [] }).as('regions')
 
   cy.visit('http://localhost:3000/')
   cy.get('.input').type('robinware456@gmail.com{enter}')

@@ -1,57 +1,65 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import BirdAlerts from '../BirdAlerts/BirdAlerts'
 import BirdsList from '../BirdsList/BirdsList'
-import { useBirds } from '../BirdsContext/BirdsContext'
-import { searchBirds } from '../../apiCalls'
-import type { Bird } from '../../types'
+import ErrorMessage from '../Error/ErrorMessage'
+import { errorMessage } from '../../apiCalls'
+import { birdsQueryOptions, SEARCH_MIN_LENGTH, useBirdSearchQuery, useBirdsQuery, useCurrentUser, useSpeciesListQuery } from '../../hooks/queries'
+import { useDebouncedValue } from '../../hooks/useDebouncedValue'
+import { usePageParam } from '../../hooks/usePageParam'
 import './Home.css'
 
-const SEARCH_MIN_LENGTH = 2
+const RESULTS_PER_PAGE = 5
 const SEARCH_DEBOUNCE_MS = 250
 
 const Home = () => {
-    const { birds, currentPage, setCurrentPage, pageCount, isLoaded } = useBirds()
-    const [search, setSearch] = useState('')
-    const [searchedBirds, setSearchedBirds] = useState<Bird[]>([])
-    const [isSearchLoading, setIsSearchLoading] = useState(false)
+    const user = useCurrentUser()
+    const region = user.location
+    const queryClient = useQueryClient()
 
-    const term = search.trim()
-    const isSearching = term.length > 0
-    const canSearch = term.length >= SEARCH_MIN_LENGTH
+    // The region's species list is cached for a day; pages are slices of it.
+    const speciesList = useSpeciesListQuery(region)
+    const codes = useMemo(() => speciesList.data ?? [], [speciesList.data])
+    const pageCount = Math.max(1, Math.ceil(codes.length / RESULTS_PER_PAGE))
+    const [page, setPage] = usePageParam(pageCount)
+    const pageCodes = useMemo(() => codes.slice((page - 1) * RESULTS_PER_PAGE, page * RESULTS_PER_PAGE), [codes, page])
+    const nextPageCodes = useMemo(() => codes.slice(page * RESULTS_PER_PAGE, (page + 1) * RESULTS_PER_PAGE), [codes, page])
 
-    // Debounced name search against birds we already know about.
+    const birds = useBirdsQuery(pageCodes)
+
+    // Warm the next page so flipping forward is instant.
     useEffect(() => {
-        if (!canSearch) {
-            setSearchedBirds([])
-            setIsSearchLoading(false)
-            return
-        }
-        let cancelled = false
-        setIsSearchLoading(true)
-        const timer = setTimeout(async () => {
-            try {
-                const results = await searchBirds(term)
-                if (!cancelled) setSearchedBirds(results)
-            } catch {
-                if (!cancelled) setSearchedBirds([])
-            } finally {
-                if (!cancelled) setIsSearchLoading(false)
-            }
-        }, SEARCH_DEBOUNCE_MS)
-        return () => { cancelled = true; clearTimeout(timer) }
-    }, [term, canSearch])
+        if (nextPageCodes.length) void queryClient.prefetchQuery(birdsQueryOptions(nextPageCodes))
+    }, [nextPageCodes, queryClient])
+
+    const [search, setSearch] = useState('')
+    const rawTerm = search.trim()
+    const term = useDebouncedValue(rawTerm, SEARCH_DEBOUNCE_MS)
+    const isSearching = rawTerm.length > 0
+    const results = useBirdSearchQuery(term)
 
     const renderBirds = () => {
         if (!isSearching) {
-            return isLoaded
-                ? <><h2 className='fredericka'>Birds in your area:</h2> <BirdsList birds={birds} /></>
-                : <div className='spinner'></div>
+            if (speciesList.isError) return <ErrorMessage networkError={errorMessage(speciesList.error)} />
+            if (birds.isError) return <ErrorMessage networkError={errorMessage(birds.error)} />
+            if (speciesList.isPending || (pageCodes.length > 0 && !birds.data)) return <div className='spinner'></div>
+            return (
+                <>
+                    <h2 className='fredericka'>Birds in your area:</h2>
+                    <div className={birds.isPlaceholderData ? 'is-stale' : undefined}>
+                        <BirdsList birds={birds.data ?? []} />
+                    </div>
+                </>
+            )
         }
-        if (!canSearch) return <h3 className='fredericka'>Keep typing to search</h3>
-        if (isSearchLoading) return <div className='spinner'></div>
-        if (!searchedBirds.length) return <h3 className='fredericka'>No birds found</h3>
-        return <><h2 className='note fredericka'>Note: these birds may not be common to your area</h2><BirdsList birds={searchedBirds} /></>
+        if (rawTerm.length < SEARCH_MIN_LENGTH) return <h3 className='fredericka'>Keep typing to search</h3>
+        if (results.isError) return <ErrorMessage networkError={errorMessage(results.error)} />
+        if (!results.data) return <div className='spinner'></div>
+        if (!results.data.length) return <h3 className='fredericka'>No birds found</h3>
+        return <><h2 className='note fredericka'>Note: these birds may not be common to your area</h2><BirdsList birds={results.data} /></>
     }
+
+    const showPagination = !isSearching && speciesList.isSuccess && Boolean(birds.data)
 
     return (
         <>
@@ -62,11 +70,11 @@ const Home = () => {
                 <input id='birdSearch' type="search" placeholder='Search birds by name' value={search} onChange={(e) => setSearch(e.target.value)} />
                 {renderBirds()}
             </section>
-            {isLoaded && !isSearching &&
+            {showPagination &&
                 <div className='pagination'>
-                    {currentPage !== 1 && <button className='pagination-btn' onClick={() => setCurrentPage(currentPage - 1)}>&lt;</button>}
-                    <p>{`Page ${currentPage} of ${pageCount}`}</p>
-                    {currentPage !== pageCount && <button className='pagination-btn' onClick={() => setCurrentPage(currentPage + 1)}>&gt;</button>}
+                    {page !== 1 && <button className='pagination-btn' onClick={() => setPage(page - 1)}>&lt;</button>}
+                    <p>{`Page ${page} of ${pageCount}`}</p>
+                    {page !== pageCount && <button className='pagination-btn' onClick={() => setPage(page + 1)}>&gt;</button>}
                 </div>
             }
         </>

@@ -74,3 +74,8 @@ nav a {
     color: inherit;
     text-decoration: inherit;
 }
+
+/* Hovering anywhere in the settings cluster highlights the label */
+#settings:hover #settingsText {
+    color: red;
+}

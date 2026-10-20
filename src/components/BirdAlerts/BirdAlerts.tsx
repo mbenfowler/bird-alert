@@ -1,27 +1,24 @@
-import { useEffect, useState } from 'react'
-import { useBirds, useCurrentUser } from '../BirdsContext/BirdsContext'
+import { useMemo, useState } from 'react'
 import AlertCard from '../AlertCard/AlertCard'
-import { getExternalNotableBirds } from '../../apiCalls'
-import type { Observation } from '../../types'
+import { useCurrentUser, useNotableQuery, useObservationsQuery, useSavedCodes } from '../../hooks/queries'
 import './BirdAlerts.css'
 
 type AlertType = 'star' | 'notable'
 
 const BirdAlerts = () => {
     const user = useCurrentUser()
-    const { birdAlerts } = useBirds()
-    const [notableBirds, setNotableBirds] = useState<Observation[]>([])
+    const region = user.location
     const [alertType, setAlertType] = useState<AlertType>('star')
 
-    const region = user.location
-    useEffect(() => {
-      if (!region) return
-      let cancelled = false
-      getExternalNotableBirds(region)
-        .then(res => { if (!cancelled) setNotableBirds(res) })
-        .catch(err => console.error(err))
-      return () => { cancelled = true }
-    }, [region])
+    const observations = useObservationsQuery(region)
+    const savedCodes = useSavedCodes()
+    // Notable sightings are only fetched once someone asks for them.
+    const notable = useNotableQuery(region, alertType === 'notable')
+
+    const birdAlerts = useMemo(
+      () => (observations.data ?? []).filter(obs => savedCodes.has(obs.speciesCode)),
+      [observations.data, savedCodes]
+    )
 
     if (!birdAlerts.length) {
         return (
@@ -31,11 +28,7 @@ const BirdAlerts = () => {
         )
     }
 
-    const alerts = (alertType === 'star' ? birdAlerts : notableBirds).map(alert => (
-      <a key={`${alert.subId}-${alert.speciesCode}`} href={`https://www.google.com/maps?q=${alert.lat},${alert.lng}`} target="_blank" rel="noreferrer">
-        <AlertCard alert={alert} />
-      </a>
-    ))
+    const shown = alertType === 'star' ? birdAlerts : (notable.data ?? [])
 
     return (
       <div id='birdAlerts'>
@@ -44,7 +37,12 @@ const BirdAlerts = () => {
             <h2 className='alerts-header'>Alerts:</h2>
             <div className={`material-symbols-outlined alert-icon ${alertType === 'notable' ? 'button-pressed' : ''}`} id='notable' role='button' aria-pressed={alertType === 'notable'} onClick={() => setAlertType('notable')}>crisis_alert</div>
           </div>
-          {alerts}
+          {alertType === 'notable' && notable.isPending && <div className='spinner'></div>}
+          {shown.map(alert => (
+            <a key={`${alert.subId}-${alert.speciesCode}`} href={`https://www.google.com/maps?q=${alert.lat},${alert.lng}`} target="_blank" rel="noreferrer">
+              <AlertCard alert={alert} />
+            </a>
+          ))}
       </div>
     )
 }

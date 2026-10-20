@@ -2,13 +2,15 @@ import { useEffect, useState, type FormEvent, type ChangeEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { getUserExists, login, signup, requestPasswordReset, errorMessage } from '../../apiCalls'
-import { useBirds } from '../BirdsContext/BirdsContext'
+import { useSessionQuery } from '../../hooks/queries'
+import { useSetSession } from '../../hooks/mutations'
 import './Login.css'
 
 const PASSWORD_MIN_LENGTH = 8
 
 const Login = () => {
-    const { user, setUser } = useBirds()
+    const { data: user } = useSessionQuery()
+    const setSession = useSetSession()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     // undefined until the email has been looked up; then true (log in) or false (create account)
@@ -55,7 +57,7 @@ const Login = () => {
       setError(null)
       try {
         const loggedIn = userExists ? await login(email.trim(), password) : await signup(email.trim(), password)
-        setUser(loggedIn)
+        setSession(loggedIn)
         navigate('/')
       } catch (err) {
         setError(errorMessage(err))
