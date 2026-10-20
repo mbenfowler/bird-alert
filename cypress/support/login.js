@@ -9,6 +9,7 @@ export const TEST_USER = {
   rare_sightings_email_enabled: true,
   push_watchlist_enabled: true,
   push_notable_enabled: false,
+  push_notable_batched: false,
   created_at: '2023-11-21T19:33:34.829Z',
   updated_at: '2023-12-01T23:13:41.118Z'
 }
@@ -59,6 +60,17 @@ export const login = () => {
     const codes = new URL(req.url).searchParams.get('codes').split(',')
     req.reply({ statusCode: 200, body: codes.map((code) => birdsByCode[code]).filter(Boolean) })
   }).as('getBirds')
+
+  // Name search: two geese from the region plus one from elsewhere.
+  cy.intercept('GET', '**/api/birds?q=*', (req) => {
+    const q = new URL(req.url).searchParams.get('q').toLowerCase()
+    const all = [
+      { speciesCode: 'cangoo', comName: 'Canada Goose', sciName: 'Branta canadensis' },
+      { speciesCode: 'snogoo', comName: 'Snow Goose', sciName: 'Anser caerulescens' },
+      { speciesCode: 'emgoo1', comName: 'Emperor Goose', sciName: 'Anser canagicus' }
+    ]
+    req.reply({ statusCode: 200, body: all.filter((b) => b.comName.toLowerCase().includes(q)) })
+  }).as('search')
 
   // eBird, as proxied by the backend.
   cy.intercept('GET', '**/api/ebird/species-list?region=US-GA-139', { statusCode: 200, fixture: 'birdCodes' }).as('speciesList')

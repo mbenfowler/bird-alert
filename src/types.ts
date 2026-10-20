@@ -9,6 +9,7 @@ export interface User {
   rare_sightings_email_enabled: boolean
   push_watchlist_enabled: boolean
   push_notable_enabled: boolean
+  push_notable_batched: boolean
   created_at: string
   updated_at: string
 }
@@ -24,6 +25,7 @@ export interface UserPatch {
   rare_sightings_email_enabled?: boolean
   push_watchlist_enabled?: boolean
   push_notable_enabled?: boolean
+  push_notable_batched?: boolean
 }
 
 /** A bird as stored in our database, or as assembled from eBird taxonomy plus image and wiki lookups. */

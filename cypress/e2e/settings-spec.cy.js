@@ -43,4 +43,9 @@ describe('Settings', () => {
     cy.get('#push_watchlist_enabled').should('be.disabled').and('be.checked')
     cy.get('#push_notable_enabled').should('be.disabled').and('not.be.checked')
   })
+
+  it('offers right-away or batched timing only when notable pushes are on', () => {
+    cy.get('.timing').should('be.disabled')
+    cy.get('.timing__option.is-selected').should('contain', 'Right away')
+  })
 })
