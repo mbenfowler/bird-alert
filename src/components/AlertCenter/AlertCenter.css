@@ -1,18 +1,121 @@
 .alert-center {
-  margin: 40px;
+  width: min(100%, 560px);
+  margin: 28px auto 40px;
+  padding: 0 12px;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  gap: 14px;
 }
 
 .alert-center h2 {
-  font-family: 'Fredericka the Great';
-  margin-bottom: 20px;
+  margin-bottom: 4px;
 }
 
 .notification {
-  width: 60%;
-  margin-bottom: 20px;
   display: flex;
+  align-items: center;
   justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 2px solid var(--ink);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.14);
+}
+
+.notification__text {
+  min-width: 0;
+}
+
+.notification__text label {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.notification__hint {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.notification__hint--error {
+  color: #a61b1b;
+}
+
+.notification__controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* Toggle switch drawn on a plain checkbox, so it stays a checkbox for forms, tests and screen readers. */
+.switch {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  width: 52px;
+  height: 30px;
+  margin: 0;
+  border-radius: 999px;
+  border: 2px solid var(--ink);
+  background: var(--line);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.switch::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.switch:checked {
+  background: var(--accent);
+}
+
+.switch:checked::before {
+  transform: translateX(22px);
+}
+
+.switch:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.switch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.test-push {
+  align-self: flex-start;
+  margin: -4px 0 0 16px;
+  padding: 8px 14px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.test-push:hover,
+.test-push:focus-visible {
+  background: var(--accent-soft);
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .switch, .switch::before { transition: none; }
 }
