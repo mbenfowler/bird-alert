@@ -48,6 +48,8 @@ export const usePushNotifications = () => {
       const permission = await Notification.requestPermission()
       if (permission !== 'granted') { setState(permission === 'denied' ? 'denied' : 'off'); return }
       const [{ publicKey }, registration] = await Promise.all([getPushPublicKey(), navigator.serviceWorker.ready])
+      // Make sure the newest worker handles pushes, even if this tab has been open since before a deploy.
+      await registration.update().catch(() => undefined)
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(publicKey)
@@ -79,6 +81,7 @@ export const usePushNotifications = () => {
   // Tests go to this device only, so a phone and a laptop can each be checked on their own.
   const sendTest = useCallback(async () => {
     const registration = await navigator.serviceWorker.ready
+    await registration.update().catch(() => undefined)
     const subscription = await registration.pushManager.getSubscription()
     return sendTestPush(subscription?.endpoint)
   }, [])
