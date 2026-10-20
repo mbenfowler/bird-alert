@@ -44,7 +44,7 @@ export const persistOptions: Omit<PersistQueryClientOptions, 'queryClient'> = {
   persister,
   maxAge: WEEK,
   // Bump to drop every reader's persisted cache after a breaking shape change.
-  buster: 'v2',
+  buster: 'v3',
   dehydrateOptions: {
     shouldDehydrateQuery: (query) =>
       query.state.status === 'success' && query.meta?.persist === true && !query.isStale()
