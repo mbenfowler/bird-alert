@@ -76,6 +76,4 @@ export const searchBirds = (q: string) => api<Bird[]>('/birds', { params: { q } 
 export const getSpeciesList = (region: string) => api<string[]>('/ebird/species-list', { params: { region } })
 export const getRecentObservations = (region: string) => api<Observation[]>('/ebird/observations', { params: { region } })
 export const getNotableObservations = (region: string) => api<Observation[]>('/ebird/notable', { params: { region, back: '30' } })
-export const getSpeciesObservations = (region: string, code: string) =>
-    api<Observation[]>('/ebird/species-observations', { params: { region, code, back: '30' } })
 export const getRegions = (state: string) => api<Region[]>('/ebird/regions', { params: { state } })

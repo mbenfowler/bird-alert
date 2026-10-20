@@ -1,11 +1,11 @@
 import { useMemo } from 'react'
-import { keepPreviousData, queryOptions, useQueries, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, queryOptions, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions,
-  getSavedBirds, getSpeciesList, getSpeciesObservations, searchBirds
+  getSavedBirds, getSpeciesList, searchBirds
 } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
-import type { Bird, User } from '../types'
+import type { User } from '../types'
 
 export const queryKeys = {
   session: ['session'] as const,
@@ -14,7 +14,6 @@ export const queryKeys = {
   birds: (codes: string[]) => ['birds', codes.join(',')] as const,
   observations: (region: string) => ['observations', region] as const,
   notable: (region: string) => ['notable', region] as const,
-  speciesObservations: (region: string, code: string) => ['species-observations', region, code] as const,
   regions: (state: string) => ['regions', state] as const,
   search: (term: string) => ['bird-search', term] as const
 }
@@ -114,16 +113,4 @@ export const useBirdSearchQuery = (term: string) =>
     staleTime: 5 * MINUTE,
     enabled: term.length >= SEARCH_MIN_LENGTH,
     placeholderData: keepPreviousData
-  })
-
-/** Latest nearby observation date for each bird on a page of the watch list. */
-export const useLastObservedQueries = (region: string, birds: Bird[]) =>
-  useQueries({
-    queries: birds.map(bird => ({
-      queryKey: queryKeys.speciesObservations(region, bird.speciesCode),
-      queryFn: () => getSpeciesObservations(region, bird.speciesCode),
-      staleTime: 5 * MINUTE,
-      enabled: Boolean(region),
-      select: (observations: { obsDt: string }[]) => observations[0]?.obsDt
-    }))
   })

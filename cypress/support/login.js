@@ -63,7 +63,6 @@ export const login = () => {
   cy.intercept('GET', '**/api/ebird/species-list?region=US-GA-139', { statusCode: 200, fixture: 'birdCodes' }).as('speciesList')
   cy.intercept('GET', '**/api/ebird/observations?region=US-GA-139', { statusCode: 200, fixture: 'recentBirds' }).as('observations')
   cy.intercept('GET', '**/api/ebird/notable*', { statusCode: 200, body: [] }).as('notable')
-  cy.intercept('GET', '**/api/ebird/species-observations*', { statusCode: 200, body: [] }).as('speciesObservations')
   cy.intercept('GET', '**/api/ebird/regions*', { statusCode: 200, body: [] }).as('regions')
 
   cy.visit('http://localhost:3000/')
