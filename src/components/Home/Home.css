@@ -132,7 +132,7 @@
 }
 
 .list-note__link {
-    color: var(--focus);
+    color: var(--link);
     text-decoration: underline;
 }
 

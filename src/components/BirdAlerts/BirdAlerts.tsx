@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router'
 import AlertCard from '../AlertCard/AlertCard'
-import { AlertIcon, ChevronIcon, StarIcon } from '../Icons/Icons'
+import { AlertIcon, ChevronIcon, MapIcon, StarIcon } from '../Icons/Icons'
 import { LoadingState } from '../Loading/Loading'
 import { useCurrentUser, useNotableQuery, useObservationsQuery, useSavedCodes } from '../../hooks/queries'
 import './BirdAlerts.css'
@@ -45,6 +46,7 @@ const BirdAlerts = () => {
               <span className='alerts-title'>{title}</span>
               {count !== undefined && <span key={`${alertType}-${count}`} className='alerts-count' aria-label={`${count} alerts`}>{count}</span>}
             </h2>
+            <Link className='alerts-map-link' to='/map' aria-label='Open the region map'><MapIcon /><span>Map</span></Link>
             <button type='button' className='alerts-toggle' aria-expanded={expanded} aria-controls='alertsList' onClick={() => setExpanded(open => !open)}>
               <span>{expanded ? 'Hide' : 'Show'}</span>
               <ChevronIcon className={expanded ? 'is-up' : undefined} />
@@ -61,10 +63,10 @@ const BirdAlerts = () => {
                   </p>
                 )}
                 {shown.map((alert, index) => (
-                  <a key={`${alert.subId}-${alert.speciesCode}`} style={{ '--i': index } as React.CSSProperties} href={`https://www.google.com/maps?q=${alert.lat},${alert.lng}`} target="_blank" rel="noreferrer">
+                  <Link key={`${alert.subId}-${alert.speciesCode}`} style={{ '--i': index } as React.CSSProperties} to={`/sighting/${alert.speciesCode}/${alert.subId}`}>
                     <AlertCard alert={alert} />
-                    <span className='visually-hidden'>, open the sighting location on a map (new tab)</span>
-                  </a>
+                    <span className='visually-hidden'>, open sighting details</span>
+                  </Link>
                 ))}
               </div>
             </div>

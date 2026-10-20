@@ -40,4 +40,11 @@ describe('Accessibility', () => {
     cy.get('#settings-form')
     checkA11y()
   })
+
+  it('sighting page', () => {
+    login()
+    cy.visit('http://localhost:3000/sighting/cangoo/S155544243')
+    cy.get('.sightings-map .map-pin')
+    checkA11y()
+  })
 })

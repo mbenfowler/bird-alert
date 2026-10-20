@@ -1,0 +1,23 @@
+.map-page {
+    width: min(100%, 1100px);
+    margin: 0 auto;
+    padding: 12px 12px 32px;
+}
+
+.map-page__bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.map-page__bar h1 {
+    font-size: 1.5rem;
+}
+
+.map-page__tabs {
+    display: flex;
+    gap: 6px;
+}

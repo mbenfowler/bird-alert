@@ -1,0 +1,160 @@
+.sighting {
+    width: min(100%, 900px);
+    margin: 0 auto;
+    padding: 12px 12px 32px;
+}
+
+.sighting__crumbs {
+    margin: 4px 0 10px;
+    color: var(--muted);
+    font-size: 0.95rem;
+}
+
+.sighting__crumbs a {
+    color: var(--link);
+}
+
+.sighting__hero {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 14px;
+    border: 2px solid var(--ink);
+    border-radius: 14px;
+    background: var(--surface);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+}
+
+.sighting__photo {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.sighting__title h1 {
+    font-size: 2rem;
+    line-height: 1.1;
+}
+
+.sighting__sci {
+    font-style: italic;
+    color: var(--muted);
+    margin: 2px 0 10px;
+}
+
+.sighting__meta {
+    margin: 0 0 12px;
+    line-height: 1.4;
+}
+
+.sighting__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.pill-button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 16px;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.98rem;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.pill-button--primary {
+    background: var(--accent);
+    font-weight: 600;
+}
+
+.pill-button:hover:not(:disabled) {
+    background: var(--accent-soft);
+}
+
+.pill-button--primary:hover:not(:disabled) {
+    background: var(--accent);
+    filter: brightness(1.05);
+}
+
+.pill-button:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.pill-button:disabled {
+    opacity: 0.6;
+    cursor: progress;
+}
+
+.sighting__subhead {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 22px 0 10px;
+    font-size: 1.3rem;
+    text-align: center;
+}
+
+.sighting__count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.6em;
+    height: 1.6em;
+    padding: 0 0.4em;
+    border-radius: 1em;
+    background: var(--ink);
+    color: #fff;
+    font-family: system-ui, sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.sighting__list {
+    list-style: none;
+    margin: 14px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+}
+
+.sighting__list a {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--ink);
+    text-decoration: none;
+}
+
+.sighting__list a span {
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.sighting__list .is-current a {
+    border-color: var(--ink);
+    background: var(--accent-soft);
+}
+
+@media screen and (min-width: 700px) {
+    .sighting__hero {
+        flex-direction: row;
+    }
+    .sighting__photo {
+        width: 44%;
+        max-width: 400px;
+        flex-shrink: 0;
+    }
+}
