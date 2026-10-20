@@ -1,131 +1,100 @@
 import { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { getUserExists, getIsCorrectPass, getUser, createUser, getPasswordResetEmail } from '../../apiCalls'
+import { getUserExists, login, signup, requestPasswordReset } from '../../apiCalls'
 import BirdsContext from '../BirdsContext/BirdsContext'
 import './Login.css'
 
+const PASSWORD_MIN_LENGTH = 8
+
 const Login = () => {
-    const { setUser, handleNetworkErrors } = useContext(BirdsContext)
-    const [isUserFound, setIsUserFound] = useState()
+    const { user, setUser } = useContext(BirdsContext)
     const [email, setEmail] = useState('')
-    const [foundEmail, setFoundEmail] = useState()
     const [password, setPassword] = useState('')
-    const [correctPass, setCorrectPass] = useState()
-    const [isLoaded, setIsLoaded] = useState(true)
+    // undefined until the email has been looked up; then true (log in) or false (create account)
+    const [userExists, setUserExists] = useState(undefined)
+    const [error, setError] = useState(null)
+    const [isBusy, setIsBusy] = useState(false)
 
-    const navigate = useNavigate();
+    const navigate = useNavigate()
 
+    // Already logged in? Nothing to do here.
     useEffect(() => {
-      setFoundEmail(email)
-    //eslint-disable-next-line
-    }, [isUserFound])
+      if (user) navigate('/', { replace: true })
+    }, [user, navigate])
 
-    useEffect(() => {
-      if (correctPass) {
-        (async() => {
-          setIsLoaded(false)
-          try {
-              const user = await getUser(email)
-              setUser(user)
-              navigate('/')
-          } catch (error) {
-              handleNetworkErrors(error)
-          }
-        })()
-      }
-    //eslint-disable-next-line
-    }, [correctPass])
-
-    const handleChange = (e) => {
-      const field = e.target
-      if (field.classList.contains('email')) setEmail(e.target.value)
-      else if (field.classList.contains('password')) setPassword(e.target.value)
+    const handleEmailChange = (e) => {
+      setEmail(e.target.value)
+      setUserExists(undefined)
+      setPassword('')
+      setError(null)
     }
 
-    const handleEnter = async (e) => {
-      const field = e.target
-
-      if (e.key === 'Enter') {
-        setIsLoaded(false)
-        if (field.classList.contains('email')) {
-          setCorrectPass(undefined)
-          setPassword('')
-          const passwordInput = document.querySelector('.password')
-          if (passwordInput) {
-            passwordInput.value = ''
-          }
-          await getUserExists(email)
-            .then(res => setIsUserFound(res.userExists))
-        } else if (field.classList.contains('password') && isUserFound) {
-            await getIsCorrectPass(email, password)
-              .then(res => {
-                setCorrectPass(res.isCorrectPass)
-              })
-        } else if (field.classList.contains('password') && !isUserFound) {
-          try {
-            await createUser(email, password)
-            const newUser = await getUser(email)
-            setUser(newUser)
-            navigate('/');
-          } catch (error) {
-            handleNetworkErrors(error)
-          }
-          // TODO: validations
-          // TODO: confirm email flow
-        }
-        setIsLoaded(true)
+    const submitEmail = async (e) => {
+      e.preventDefault()
+      if (!email.trim()) return
+      setIsBusy(true)
+      setError(null)
+      try {
+        const result = await getUserExists(email.trim())
+        setUserExists(result.userExists)
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        setIsBusy(false)
       }
     }
 
-    // might need to update toast so that it is actually dynamic based on result of api call
-    const resolveAfter1Sec = new Promise(resolve => setTimeout(resolve, 500));
-    const notify = () => {
-        toast.promise(resolveAfter1Sec, {
-          success: {
-            render: 'Password reset email sent!',
-            position: 'bottom-center'
-          }
-        //   pending: {
-        //     render: 'Updating zip code...',
-        //     position: 'bottom-center'
-        //   },
-        //   error: {
-        //     render: 'Something went wrong...',
-        //     position: 'bottom-center'
-        //   }
-        });
+    const submitPassword = async (e) => {
+      e.preventDefault()
+      if (!userExists && password.length < PASSWORD_MIN_LENGTH) {
+        setError(`Password must be at least ${PASSWORD_MIN_LENGTH} characters`)
+        return
+      }
+      setIsBusy(true)
+      setError(null)
+      try {
+        const loggedIn = userExists ? await login(email.trim(), password) : await signup(email.trim(), password)
+        setUser(loggedIn)
+        navigate('/')
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        setIsBusy(false)
+      }
     }
 
-    const handleClick = async () => {
-      getPasswordResetEmail(foundEmail)
-      notify()
+    const handleForgotPassword = () => {
+      toast.promise(requestPasswordReset(email.trim()), {
+        pending: { render: 'Sending password reset email...', position: 'bottom-center' },
+        success: { render: 'Password reset email sent!', position: 'bottom-center' },
+        error: { render: ({ data }) => data?.message || 'Something went wrong', position: 'bottom-center' }
+      })
     }
 
     return (
         <main className='login'>
           <section className='login-panel'>
-            <div className='user-entry'>
+            <form className='user-entry' onSubmit={submitEmail}>
               <h2>email</h2>
-              <input className='input email' onChange={handleChange} onKeyDown={handleEnter}></input>
-              {foundEmail && isUserFound && <p className='password-reset-text' onClick={handleClick}>Click here to receive a password reset email</p>}
-            </div>
-            {
-              isUserFound === false &&
+              <input className='input email' type='email' name='email' autoComplete='email' value={email} onChange={handleEmailChange} autoFocus />
+              {userExists &&
+                <button type='button' className='link-button password-reset-text' onClick={handleForgotPassword}>
+                  Click here to receive a password reset email
+                </button>}
+            </form>
+            {userExists === false &&
               <div>
                 <h3 className='info'>Email not found!</h3>
-                <p className='info'>Please make a password to continue creating an account for this email.</p>
-              </div>
-            }
-            {
-              isUserFound !== undefined &&
-              <div className='user-entry'>
-                <h2>enter password</h2>
-                <input className='input password' type='password' onChange={handleChange} onKeyDown={handleEnter}></input>
-              </div>
-            }
-            {correctPass === false && <h3 className='info'>incorrect password</h3>}
-            {isLoaded === false && <div className='spinner login-spinner'></div>}
+                <p className='info'>Please make a password (at least {PASSWORD_MIN_LENGTH} characters) to create an account for this email.</p>
+              </div>}
+            {userExists !== undefined &&
+              <form className='user-entry' onSubmit={submitPassword}>
+                <h2>{userExists ? 'enter password' : 'create password'}</h2>
+                <input className='input password' type='password' name='password' autoComplete={userExists ? 'current-password' : 'new-password'} value={password} onChange={(e) => setPassword(e.target.value)} autoFocus />
+              </form>}
+            {error && <h3 className='info' role='alert'>{error}</h3>}
+            {isBusy && <div className='spinner login-spinner'></div>}
           </section>
         </main>
     )

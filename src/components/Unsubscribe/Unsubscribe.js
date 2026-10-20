@@ -1,38 +1,36 @@
-import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
-import { patchUser } from '../../apiCalls'
+import { useState, useEffect, useRef } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { unsubscribe } from '../../apiCalls'
 
 const Unsubscribe = () => {
-  const { email, emailType } = useParams()
-  const [userPatched, setUserPatched] = useState(false)
-  const [networkError, setNetworkError] = useState(null)
+  const { token } = useParams()
+  const [status, setStatus] = useState('pending')
+  const [error, setError] = useState(null)
+  const started = useRef(false)
 
   useEffect(() => {
-    (async() => {
-      await patchUser(email, { email, [emailType]: `${false}` })
-      .then(() => setUserPatched(true))
-      .catch(error => setNetworkError(error.message))
-    })()
-  //eslint-disable-next-line
-  }, [])
-
-  const handleClick = () => {
-    window.location.replace('/login')
-  }
+    if (started.current) return
+    started.current = true
+    unsubscribe(token)
+      .then(() => setStatus('done'))
+      .catch((err) => { setError(err.message); setStatus('failed') })
+  }, [token])
 
   return (
     <section>
-      {!userPatched && !networkError && <h2>Unsubscribing...</h2>}
-      {networkError && <>
-                        <h2>Something went wrong:</h2>
-                        <p>{networkError}</p>
-                        <button onClick={handleClick}>Return home</button>
-                       </>}
-      {userPatched && <section className='confirm-section'>
-                        <h2>Successfully unsubscribed!</h2>
-                        <p>You can reenable this digest from the Alert center located within your user settings</p>
-                        <button onClick={handleClick}>Return home</button>
-                      </section>}
+      {status === 'pending' && <h2>Unsubscribing...</h2>}
+      {status === 'failed' &&
+        <>
+          <h2>Something went wrong:</h2>
+          <p>{error}</p>
+          <Link to='/'><button>Return home</button></Link>
+        </>}
+      {status === 'done' &&
+        <section className='confirm-section'>
+          <h2>Successfully unsubscribed!</h2>
+          <p>You can re-enable this digest from the Alert center within your user settings.</p>
+          <Link to='/'><button>Return home</button></Link>
+        </section>}
     </section>
   )
 }

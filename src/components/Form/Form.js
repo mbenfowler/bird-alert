@@ -1,7 +1,7 @@
 import { useState, useContext, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { patchUser, getUser, getExternalRegions, sendPasswordConfirmationEmail, getPasswordResetEmail } from '../../apiCalls'
+import { patchUser, getExternalRegions, resendConfirmationEmail, requestPasswordReset } from '../../apiCalls'
 import BirdsContext from '../BirdsContext/BirdsContext'
 import './Form.css'
 
@@ -13,127 +13,110 @@ const STATE_CODES = [
     "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
 ]
 
-const Form = ({ isLoaded }) => {
-    const { user, setBirds, setIsLoaded, setUser } = useContext(BirdsContext)
+const toastAt = { position: 'bottom-center' }
+
+const Form = () => {
+    const { user, setUser, handleNetworkErrors } = useContext(BirdsContext)
     const [regions, setRegions] = useState([])
+    const [isSaving, setIsSaving] = useState(false)
     const [form, setForm] = useState({
-        name:       `${user?.name ? user.name : ''}`,
-        state:      `${user?.state ? user.state : ''}`,
-        location:   `${user?.location ? user.location : ''}`,
-        email:      `${user?.email ? user.email : ''}`,
-        phone:      `${user?.phone ? user.phone : ''}`
+        state:    user.state || '',
+        location: user.location || '',
+        email:    user.email || '',
+        phone:    user.phone || ''
     })
 
-    // might need to update toast so that it is actually dynamic based on result of api call
-    const resolveAfter1Sec = new Promise(resolve => setTimeout(resolve, 500));
-    const notify = (id) => {
-        if (id === 'resendConfirmationEmail') {
-            toast.promise(resolveAfter1Sec, {
-                success: {
-                    render: 'Confirmation email sent!',
-                    position: 'bottom-center'
-                }
-            });
-        } else if (id === 'sendPasswordResetEmail') {
-            toast.promise(resolveAfter1Sec, {
-                success: {
-                    render: 'Password reset email sent!',
-                    position: 'bottom-center'
-                }
-            });
-        }
-    }
-
+    // Region options follow the selected state. Clearing the state clears the region too.
     useEffect(() => {
-        if (form.state.length) {
-            (async() => {
-                setRegions(await getExternalRegions(form.state))
-            })()
-        } else {
+        if (!form.state) {
             setRegions([])
-            setForm(prev => ({...prev, location: ''}))
+            setForm(prev => (prev.location ? { ...prev, location: '' } : prev))
+            return
         }
-    //eslint-disable-next-line
-    }, [form.state])
+        let cancelled = false
+        getExternalRegions(form.state)
+            .then(result => { if (!cancelled) setRegions(result) })
+            .catch(error => { if (!cancelled) handleNetworkErrors(error) })
+        return () => { cancelled = true }
+    }, [form.state, handleNetworkErrors])
 
     const handleChange = (e) => {
-        setForm(prev => ({...prev, [e.target.name]: e.target.value}))
+        setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
     }
 
     const navigate = useNavigate()
 
-    const handleClick = (e) => {
-        const id = e.target.id
-        if (id === 'resendConfirmationEmail') {
-            sendPasswordConfirmationEmail(user.email)
-        } else if (id === 'sendPasswordResetEmail') {
-            getPasswordResetEmail(user.email)
-        }
-
-        notify(id)
+    const handleResendConfirmation = () => {
+        toast.promise(resendConfirmationEmail(), {
+            pending: { render: 'Sending confirmation email...', ...toastAt },
+            success: { render: 'Confirmation email sent!', ...toastAt },
+            error: { render: ({ data }) => data?.message || 'Something went wrong', ...toastAt }
+        })
     }
 
-    const handleSubmit = async () => {
-        setIsLoaded(false)
-        const newEmail = user.email !== form.email
-        if (newEmail) {
-            sendPasswordConfirmationEmail(form.email)
-        }
-        await patchUser(user.email, {...form, confirmed: `${!newEmail}`})
-            .then(async res => {
-                setUser(await getUser(form.email))
-            })
-        if (!form.location.length) {
-            setBirds([])
-        }
-
-        navigate('/');
+    const handlePasswordReset = () => {
+        toast.promise(requestPasswordReset(user.email), {
+            pending: { render: 'Sending password reset email...', ...toastAt },
+            success: { render: 'Password reset email sent!', ...toastAt },
+            error: { render: ({ data }) => data?.message || 'Something went wrong', ...toastAt }
+        })
     }
+
+    const handleSubmit = async (e) => {
+        e.preventDefault()
+        setIsSaving(true)
+        try {
+            const updated = await patchUser(form)
+            setUser(updated)
+            if (updated.email !== user.email) {
+                toast.info('Email changed. Check your inbox for a new confirmation link.', toastAt)
+            }
+            toast.success('Settings saved!', toastAt)
+            navigate('/')
+        } catch (error) {
+            toast.error(error.message, toastAt)
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
+    if (isSaving) return <div className='spinner'></div>
 
     return (
-        <>
-            {!isLoaded
-                ? <div className='spinner'></div>
-                : <form id='settings-form'>
-                    {!user.email_confirmed &&
-                        <>
-                            <p className='email-confirmation-text'>Please confirm your email address to receive notifications</p>
-                            <p className='link-text' id='resendConfirmationEmail' onClick={handleClick}>Resend confirmation email</p>
-                        </>
-                    }
-                    {/* <label>
-                        Name:
-                        <input type="text" name='name' value={form.name} onChange={handleChange} />
-                    </label> */}
-                    <label id='emailLabel'>
-                        Email:
-                        <input type="text" name='email' value={form.email} onChange={handleChange} />
-                        <p className='password-reset-text' id='sendPasswordResetEmail' onClick={handleClick}>Click here to receive a password reset email</p>
-                    </label>
-                    <label>
-                        State:
-                        <select name="state" value={form.state} onChange={handleChange}>
-                            <option value="">Select your state</option>
-                            {STATE_CODES.map(state => <option key={state} value={state}>{state}</option>)}
-                        </select>
-                    </label>
-                        {!!regions.length &&
-                            <label>
-                                Region:
-                                <select name="location" value={form.location} onChange={handleChange}>
-                                    <option value="">Select your region</option>
-                                    {regions.map(region => <option key={region.code} value={region.code}>{region.name} - {region.code}</option>)}
-                                </select>
-                            </label>
-                        }
-                    <label>
-                        Phone #:
-                        <input type="text" name='phone' value={form.phone} onChange={handleChange} />
-                    </label>
-                    <div className='submit' onClick={handleSubmit}>Lock in details</div>
-                </form>
+        <form id='settings-form' onSubmit={handleSubmit}>
+            {!user.email_confirmed &&
+                <>
+                    <p className='email-confirmation-text'>Please confirm your email address to receive notifications</p>
+                    <button type='button' className='link-button link-text' id='resendConfirmationEmail' onClick={handleResendConfirmation}>Resend confirmation email</button>
+                </>
             }
-        </>
+            <label id='emailLabel'>
+                Email:
+                <input type="email" name='email' autoComplete='email' value={form.email} onChange={handleChange} />
+                <button type='button' className='link-button password-reset-text' id='sendPasswordResetEmail' onClick={handlePasswordReset}>Click here to receive a password reset email</button>
+            </label>
+            <label>
+                State:
+                <select name="state" value={form.state} onChange={handleChange}>
+                    <option value="">Select your state</option>
+                    {STATE_CODES.map(state => <option key={state} value={state}>{state}</option>)}
+                </select>
+            </label>
+            {!!regions.length &&
+                <label>
+                    Region:
+                    <select name="location" value={form.location} onChange={handleChange}>
+                        <option value="">Select your region</option>
+                        {regions.map(region => <option key={region.code} value={region.code}>{region.name} - {region.code}</option>)}
+                    </select>
+                </label>
+            }
+            <label>
+                Phone #:
+                <input type="tel" name='phone' autoComplete='tel' value={form.phone} onChange={handleChange} />
+            </label>
+            <button type='submit' className='submit'>Lock in details</button>
+        </form>
     )
 }
 

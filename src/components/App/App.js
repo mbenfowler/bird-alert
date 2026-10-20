@@ -1,9 +1,8 @@
-import { useState, useEffect } from  'react';
-import { Routes, Route, useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Routes, Route, useNavigate, useLocation, Link } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import { getBirdKeysByLocation, getBirdsData, getSavedBirds, getBirdObservationsByLocation, getAllBirds } from "../../apiCalls"
-// import { mockBirdKeys } from "../../mockData/birdKeys"
+import { getCurrentUser, logout as apiLogout, getBirdKeysByLocation, getBirdsData, getSavedBirds, getBirdObservationsByLocation } from "../../apiCalls"
 import './App.css';
 import Login from '../Login/Login';
 import Nav from '../Nav/Nav';
@@ -17,124 +16,144 @@ import PassReset from '../PassReset/PassReset';
 import NotFound from '../NotFound/NotFound';
 import BirdsContext from '../BirdsContext/BirdsContext';
 
+const RESULTS_PER_PAGE = 5
+
+// Routes reachable without a session. Everything else redirects to /login once we know there is no user.
+const PUBLIC_PATH_PREFIXES = ['/login', '/reset/', '/confirm/', '/unsubscribe/']
+
 const App = () => {
-  const [user, setUser] = useState(() => {
-    const storedUser = localStorage.getItem('user')
-    return storedUser ? JSON.parse(storedUser) : null
-  })
+  // undefined: still checking the session cookie. null: logged out. object: logged in.
+  const [user, setUser] = useState(undefined)
   const [birds, setBirds] = useState([])
-  const [allBirds, setAllBirds] = useState([])
   const [savedBirds, setSavedBirds] = useState([])
   const [recentObservations, setRecentObservations] = useState([])
-  const [birdAlerts, setBirdAlerts] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
-  const [pageCount, setPageCount] = useState()
+  const [pageCount, setPageCount] = useState(1)
   const [isLoaded, setIsLoaded] = useState(false)
   const [networkError, setNetworkError] = useState(null)
 
-  const RESULTS_PER_PAGE = 5
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
 
-  const navigate = useNavigate();
+  const handleNetworkErrors = useCallback((error) => setNetworkError(error.message), [])
 
+  const logout = useCallback(async () => {
+    try { await apiLogout() } catch (error) { /* the cookie is gone either way */ }
+    setUser(null)
+    setBirds([])
+    setSavedBirds([])
+    setRecentObservations([])
+    setNetworkError(null)
+  }, [])
+
+  // Restore the session on first load.
   useEffect(() => {
-    if (!user) {
-      navigate('/login')
-    } else {
-      const userToStore = { ...user, password: 'nunya' }
-      localStorage.setItem('user', JSON.stringify(userToStore))
-      setIsLoaded(true)
-    }
-  //eslint-disable-next-line
-  }, [user])
+    let cancelled = false
+    getCurrentUser()
+      .then(current => { if (!cancelled) setUser(current) })
+      .catch(() => { if (!cancelled) setUser(null) })
+    return () => { cancelled = true }
+  }, [])
 
+  // Send logged-out visitors to /login, but leave the email-link routes and 404s alone.
+  const isPublicPath = PUBLIC_PATH_PREFIXES.some(prefix => pathname.startsWith(prefix))
   useEffect(() => {
-    (async() => {
+    if (user === null && !isPublicPath && pathname !== '/login') navigate('/login', { replace: true })
+  }, [user, isPublicPath, pathname, navigate])
+
+  const userId = user?.id
+  const region = user?.location
+
+  // Start from page one whenever the region changes.
+  useEffect(() => { setCurrentPage(1) }, [region])
+
+  // Watch list and recent sightings for the region.
+  useEffect(() => {
+    if (!userId || !region) return
+    let cancelled = false
+    ;(async () => {
       try {
-        if (user && user.location) {
-          setAllBirds(await getAllBirds())
-          setRecentObservations(await getBirdObservationsByLocation(user.location))
-        }
+        const [saved, observations] = await Promise.all([getSavedBirds(), getBirdObservationsByLocation(region)])
+        if (cancelled) return
+        setSavedBirds(saved)
+        setRecentObservations(observations)
       } catch (error) {
-        handleNetworkErrors(error)
+        if (!cancelled) handleNetworkErrors(error)
       }
     })()
-  //eslint-disable-next-line
-  }, [user, user?.location])
+    return () => { cancelled = true }
+  }, [userId, region, handleNetworkErrors])
 
+  // One page of the region's species list, enriched into full bird records.
   useEffect(() => {
-    if (user && user.location) {
-      (async() => {
-          try {
-            const savedBirdsObserved = recentObservations.filter(obs => savedBirds.find(savedBird => savedBird.speciesCode === obs.speciesCode))
-            setBirdAlerts(savedBirdsObserved)
-          } catch (error) {
-              handleNetworkErrors(error)
-          }
-      })()
-    }
-  //eslint-disable-next-line
-  }, [user, user?.location, savedBirds, recentObservations])
+    if (!userId || !region) return
+    let cancelled = false
+    setIsLoaded(false)
+    ;(async () => {
+      try {
+        const keys = await getBirdKeysByLocation(region)
+        if (cancelled) return
+        setPageCount(Math.max(1, Math.ceil(keys.length / RESULTS_PER_PAGE)))
+        const start = (currentPage - 1) * RESULTS_PER_PAGE
+        const pageBirds = await getBirdsData(keys.slice(start, start + RESULTS_PER_PAGE))
+        if (cancelled) return
+        setBirds(pageBirds)
+        setIsLoaded(true)
+      } catch (error) {
+        if (!cancelled) handleNetworkErrors(error)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [userId, region, currentPage, handleNetworkErrors])
 
-  useEffect(() => {
-    if (user && user.location) {
-      (async() => {
-          try {
-              setSavedBirds(await getSavedBirds(user.id))
-              const birdKeys = await getBirdKeysByLocation(user.location)
-              const mutatableBirdKeys = [...birdKeys]
-              const splicedBirdKeys = spliceBirdKeys(mutatableBirdKeys, RESULTS_PER_PAGE)
-              const splicedBirdsData = await getBirdsData(splicedBirdKeys[currentPage - 1])
-              const checkedBirds = splicedBirdsData.map(bird => {
-                const savedBird = savedBirds.find(savedBird => savedBird && savedBird.speciesCode === bird.speciesCode)
-                if (savedBird) {
-                  return { ...bird, isChecked: true }
-                }
-                return bird
-              })
-              setBirds(checkedBirds)
-              setIsLoaded(true)
-          } catch (error) {
-              handleNetworkErrors(error)
-          }
-      })()
-    }
-  //eslint-disable-next-line
-  }, [user, user?.location, currentPage])
+  const savedCodes = useMemo(() => new Set(savedBirds.map(bird => bird.speciesCode)), [savedBirds])
+  const birdAlerts = useMemo(
+    () => recentObservations.filter(obs => savedCodes.has(obs.speciesCode)),
+    [recentObservations, savedCodes]
+  )
 
-  const handleNetworkErrors = (error) => {
-      setNetworkError(error.message)
+  const contextValue = {
+    user, setUser, logout,
+    birds, savedBirds, setSavedBirds, savedCodes,
+    recentObservations, birdAlerts,
+    currentPage, setCurrentPage, pageCount,
+    isLoaded, handleNetworkErrors
   }
 
-  const spliceBirdKeys = (arr, chunkSize) => {
-    const splicedBirdKeys = [];
-    while (arr.length > 0) {
-        const chunk = arr.splice(0, chunkSize);
-        splicedBirdKeys.push(chunk);
-    }
-
-    setPageCount(splicedBirdKeys.length)
-    return splicedBirdKeys;
+  // Gate an element on having a user. While the session is being checked, show a spinner.
+  // (A plain function rather than a component so the gated element keeps its identity across renders.)
+  const requireUser = (element) => {
+    if (user === undefined) return <div className='spinner'></div>
+    if (user === null) return null
+    return element
   }
+
+  const home = networkError
+    ? <Error networkError={networkError} />
+    : user?.location
+      ? <Home />
+      : <section id='init'>
+          <p id='initText'>Go to settings and set a location</p>
+          <Link to='/settings'><button className='navigate-button'>Go to settings</button></Link>
+        </section>
 
   return (
-    <>
-      <BirdsContext.Provider value={{user, setUser, birds, setBirds, allBirds, savedBirds, setSavedBirds, recentObservations, birdAlerts, setBirdAlerts, currentPage, setCurrentPage, pageCount, setIsLoaded, handleNetworkErrors}}>
-        <Nav setNetworkError={setNetworkError}/>
-        <main className="App">
-            <Routes>
-              <Route path='/' element={networkError ? <Error networkError={networkError} /> : user?.location ? <Home isLoaded={isLoaded}/> : <section id='init'><p id='initText'>Go to settings and set a location</p><Link to='/settings'><button className='navigate-button'>Go to settings</button></Link></section>} />
-              <Route path='/login' element={<Login />} />
-              <Route path='/saved' element={<Saved />} />
-              <Route path='/settings' element={<Settings isLoaded={isLoaded}/>} />
-              <Route path='/reset/:email' element={<PassReset />} />
-              <Route path='/unsubscribe/:email/:emailType' element={<Unsubscribe />} />
-              <Route path='/confirm/:email' element={<EmailConfirm />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <ToastContainer />
-        </main>
-      </BirdsContext.Provider>
-    </>
+    <BirdsContext.Provider value={contextValue}>
+      <Nav setNetworkError={setNetworkError}/>
+      <main className="App">
+        <Routes>
+          <Route path='/' element={requireUser(home)} />
+          <Route path='/login' element={<Login />} />
+          <Route path='/saved' element={requireUser(<Saved />)} />
+          <Route path='/settings' element={requireUser(<Settings />)} />
+          <Route path='/reset/:token' element={<PassReset />} />
+          <Route path='/unsubscribe/:token' element={<Unsubscribe />} />
+          <Route path='/confirm/:token' element={<EmailConfirm />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <ToastContainer />
+      </main>
+    </BirdsContext.Provider>
   );
 }
 

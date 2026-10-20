@@ -1,270 +1,138 @@
-const getApiBaseURL = () => {
-    if (process.env.NODE_ENV === 'development') {
-        return process.env.REACT_APP_LOCAL_API_BASE;
-    } else if (process.env.NODE_ENV === 'production') {
-        return process.env.REACT_APP_PROD_API_BASE;
-    }
-};
+// All calls to our own API go through the same-origin `/api` prefix. In development the CRA
+// dev server proxies it to the backend (see "proxy" in package.json); in production Vercel
+// rewrites it (see vercel.json). That keeps the session cookie first-party.
+const API_BASE = '/api'
 
-const apiBaseURL = getApiBaseURL();
+const EBIRD_HEADERS = { 'X-eBirdApiToken': process.env.REACT_APP_EBIRD_API_KEY }
 
-const getBirdKeysByLocation = async (region) => {
-    const res = await fetch(`https://api.ebird.org/v2/product/spplist/${region}`, {
-        headers: {
-            "X-eBirdApiToken": process.env.REACT_APP_EBIRD_API_KEY
-        }
-    })
-
-    return await handleError(res)
-}
-
-const getBirdsData = async (keys) => {
-    try {
-        const birdDataPromises = keys.map(async (key) => {
-            // if bird exists in birds table get data there, else go external
-            const thisBird = await getBird(key);
-            if (thisBird.speciesCode) {
-                return thisBird;
-            } else {
-                try {
-                    const birdData = await getExternalBirdData(key);
-                    const nuthatchData = await getExternalBirdImg(birdData[0].comName);
-                    const birdImg = nuthatchData.entities[0]?.images[0]
-                        ? `${nuthatchData.entities[0]?.images[0]}?q=75&fm=jpg&w=400&fit=max`
-                        : undefined;
-                    const wikiData = await getExternalBirdWiki(birdData[0].comName);
-                    const wikiURL = wikiData.pages[0]?.id ? `https://en.wikipedia.org/?curid=${wikiData.pages[0].id}` : undefined
-                    return { ...birdData[0], birdImg, wikiURL };
-                } catch (error) {
-                        console.error(`Error fetching external bird data for key ${key}: ${error}`);
-                        throw error;
-                }
-            }
-        });
-
-        const birdsData = await Promise.all(birdDataPromises);
-
-        return birdsData;
-    } catch (error) {
-        console.error(`Error fetching birds data: ${error}`);
-        throw error;
+export class ApiError extends Error {
+    constructor(message, status) {
+        super(message)
+        this.name = 'ApiError'
+        this.status = status
     }
 }
 
-const getExternalBirdData = async (key) => {
-    const res = await fetch(`https://api.ebird.org/v2/ref/taxonomy/ebird?species=${key}&fmt=json`)
-    return await handleError(res)
+const parseResponse = async (res) => {
+    if (res.status === 204) return null
+    const text = await res.text()
+    let data = null
+    if (text) {
+        try { data = JSON.parse(text) } catch (error) { data = null }
+    }
+    if (!res.ok) {
+        throw new ApiError(data?.error || `HTTP Error: ${res.status} ${res.statusText}`, res.status)
+    }
+    return data
 }
 
-const getExternalRegions = async (state) => {
-    const res = await fetch(`https://api.ebird.org/v2/ref/region/list/subnational2/US-${state}`, {
-        headers: {
-            "X-eBirdApiToken": process.env.REACT_APP_EBIRD_API_KEY
-        }
-    })
-    return await handleError(res)
+const api = (path, { method = 'GET', body, params } = {}) => {
+    const query = params ? `?${new URLSearchParams(params)}` : ''
+    return fetch(`${API_BASE}${path}${query}`, {
+        method,
+        credentials: 'same-origin',
+        headers: body ? { 'Content-Type': 'application/json' } : undefined,
+        body: body ? JSON.stringify(body) : undefined
+    }).then(parseResponse)
 }
 
-const getExternalNotableBirds = async (region) => {
-    const res = await fetch(`https://api.ebird.org/v2/data/obs/${region}/recent/notable?back=30`, {
-        headers: {
-            "X-eBirdApiToken": process.env.REACT_APP_EBIRD_API_KEY
-        }
-    })
+const external = (url, headers) => fetch(url, { headers }).then(parseResponse)
 
-    return await handleError(res)
-}
+// ---- auth ----
+const getCurrentUser = () => api('/auth/me')
+const getUserExists = (email) => api('/auth/exists', { params: { email } })
+const login = (email, password) => api('/auth/login', { method: 'POST', body: { email, password } })
+const signup = (email, password) => api('/auth/signup', { method: 'POST', body: { email, password } })
+const logout = () => api('/auth/logout', { method: 'POST' })
+const requestPasswordReset = (email) => api('/auth/forgot', { method: 'POST', body: { email } })
+const resetPassword = (token, password) => api('/auth/reset', { method: 'POST', body: { token, password } })
+const confirmEmail = (token) => api('/auth/confirm', { method: 'POST', body: { token } })
+const resendConfirmationEmail = () => api('/auth/resend-confirmation', { method: 'POST' })
+const unsubscribe = (token) => api('/auth/unsubscribe', { method: 'POST', body: { token } })
 
-const getExternalLastObserved = async (speciesCode, region) => {
-    const res = await fetch(`https://api.ebird.org/v2/data/obs/${region}/recent/${speciesCode}?back=30`, {
-        headers: {
-            "X-eBirdApiToken": process.env.REACT_APP_EBIRD_API_KEY
-        }
-    })
+// ---- user ----
+const patchUser = (changes) => api('/user', { method: 'PATCH', body: changes })
 
-    return await handleError(res)
-}
+// ---- watch list ----
+const getSavedBirds = () => api('/saved')
+const postSavedBird = (bird) => api('/saved', { method: 'POST', body: bird })
+const deleteSavedBird = (speciesCode) => api('/saved', { method: 'DELETE', params: { speciesCode } })
 
-const getExternalBirdImg = async (comName) => {
-    const res = await fetch(`https://nuthatch.lastelm.software/v2/birds?page=1&pageSize=25&name=${comName}&operator=AND`, {
-        headers: {
-            "API-Key": process.env.REACT_APP_NUTHATCH_API_KEY
-        }
-    })
+// ---- birds we already know about ----
+const getBirdsByCodes = (codes) => (codes.length ? api('/birds', { params: { codes: codes.join(',') } }) : Promise.resolve([]))
+const searchBirds = (q) => api('/birds', { params: { q } })
 
-    return await handleError(res)
-}
+// ---- eBird and friends ----
+const getBirdKeysByLocation = (region) =>
+    external(`https://api.ebird.org/v2/product/spplist/${encodeURIComponent(region)}`, EBIRD_HEADERS)
 
-const getExternalBirdWiki = async (comName) => {
-    const res = await fetch(`https://api.wikimedia.org/core/v1/wikipedia/en/search/page?q=${comName}&User-Agent=bird alert&limit=1`)
-    return await handleError(res)
-}
+const getBirdObservationsByLocation = (region) =>
+    external(`https://api.ebird.org/v2/data/obs/${encodeURIComponent(region)}/recent`, EBIRD_HEADERS)
 
-const getBirdObservationsByLocation = async (region) => {
-    const res = await fetch(`https://api.ebird.org/v2/data/obs/${region}/recent`, {
-        headers: {
-            "X-eBirdApiToken": process.env.REACT_APP_EBIRD_API_KEY
-        }
-    })
+const getExternalRegions = (state) =>
+    external(`https://api.ebird.org/v2/ref/region/list/subnational2/US-${encodeURIComponent(state)}`, EBIRD_HEADERS)
 
-    return await handleError(res)
-}
+const getExternalNotableBirds = (region) =>
+    external(`https://api.ebird.org/v2/data/obs/${encodeURIComponent(region)}/recent/notable?back=30`, EBIRD_HEADERS)
 
-const getUserExists = async (email) => {
-    const res = await fetch(`${apiBaseURL}/getUserExists?email=${email}`)
-    return await handleError(res)
-}
+const getExternalLastObserved = (speciesCode, region) =>
+    external(`https://api.ebird.org/v2/data/obs/${encodeURIComponent(region)}/recent/${encodeURIComponent(speciesCode)}?back=30`, EBIRD_HEADERS)
 
-const getIsCorrectPass = async (email, password) => {
-    const res = await fetch(`${apiBaseURL}/getIsCorrectPass?email=${email}&password=${password}`)
-    return await handleError(res)
-}
+const getExternalTaxonomy = (speciesCode) =>
+    external(`https://api.ebird.org/v2/ref/taxonomy/ebird?species=${encodeURIComponent(speciesCode)}&fmt=json`, EBIRD_HEADERS)
 
-const getUser = async (email) => {
-    const res = await fetch(`${apiBaseURL}/getUser?email=${email}`)
-    return await handleError(res)
-}
+const getExternalBirdImg = (comName) =>
+    external(`https://nuthatch.lastelm.software/v2/birds?${new URLSearchParams({ page: 1, pageSize: 25, name: comName, operator: 'AND' })}`,
+        { 'API-Key': process.env.REACT_APP_NUTHATCH_API_KEY })
 
-const getBird = async (speciesCode) => {
-    const res = await fetch(`${apiBaseURL}/getBird?speciesCode=${speciesCode}`)
-    return await handleError(res)
-}
+const getExternalBirdWiki = (comName) =>
+    external(`https://api.wikimedia.org/core/v1/wikipedia/en/search/page?${new URLSearchParams({ q: comName, limit: 1 })}`,
+        { 'Api-User-Agent': 'bird-alert (github.com/mbenfowler/bird-alert)' })
 
-const getAllBirds = async () => {
-    const res = await fetch(`${apiBaseURL}/getAllBirds`)
-    return await handleError(res)
-}
-
-const patchUser = async (emailLookup, user) => {
-    const queryParameters = new URLSearchParams({
-        emailLookup: emailLookup
-    });
-
-    if (user.email) queryParameters.append('email', user.email)
-    if (user.state) queryParameters.append('state', user.state)
-    if (user.location) queryParameters.append('location', user.location)
-    if (user.confirmed) queryParameters.append('confirmed', user.confirmed)
-    if (user.alert_digest_email_enabled) queryParameters.append('alert_digest_email_enabled', user.alert_digest_email_enabled)
-    if (user.rare_sightings_email_enabled) queryParameters.append('rare_sightings_email_enabled', user.rare_sightings_email_enabled)
-    if (user.password) queryParameters.append('password', user.password)
-    if (user.phone) queryParameters.append('phone', user.phone)
-
-    const res = await fetch(`${apiBaseURL}/patchUser?${queryParameters.toString()}`)
-
-    return await handleError(res, false)
-}
-
-const createUser = async (email, password) => {
-    const res = await fetch(`${apiBaseURL}/createUser?email=${email}&password=${password}`, {
-        method: 'POST'
-    })
-
-    sendPasswordConfirmationEmail(email)
-
-    return await handleError(res)
-}
-
-const getSavedBirds = async (id) => {
-    const res = await fetch(`${apiBaseURL}/getSaved?user_id=${id}`)
-    return await handleError(res)
-}
-
-
-const isBirdSaved = async (bird, id) => {
-    try {
-      const res = await fetch(`${apiBaseURL}/getSavedSpeciesCode?speciesCode=${bird.speciesCode}&user_id=${id}`)
-      if (res.ok) {
-        const data = await res.json()
-        return data
-      } else {
-        console.error("Error response:", res.status, res.statusText)
-        return false
-      }
-    } catch (error) {
-      console.error("Fetch error:", error);
-      return false;
+// Builds a bird record from eBird taxonomy plus an image and a Wikipedia link. Image and wiki
+// lookups are best-effort: a failure there should not hide the bird.
+const enrichFromExternal = async (speciesCode) => {
+    const [taxon] = await getExternalTaxonomy(speciesCode)
+    if (!taxon) throw new ApiError(`Unknown species code ${speciesCode}`, 404)
+    const [imgResult, wikiResult] = await Promise.allSettled([getExternalBirdImg(taxon.comName), getExternalBirdWiki(taxon.comName)])
+    const rawImg = imgResult.status === 'fulfilled' ? imgResult.value?.entities?.[0]?.images?.[0] : undefined
+    const wikiId = wikiResult.status === 'fulfilled' ? wikiResult.value?.pages?.[0]?.id : undefined
+    return {
+        ...taxon,
+        birdImg: rawImg ? `${rawImg}?q=75&fm=jpg&w=400&fit=max` : undefined,
+        wikiURL: wikiId ? `https://en.wikipedia.org/?curid=${wikiId}` : undefined
     }
 }
 
-const postSavedBird = async (bird, id) => {
-    const queryParameters = new URLSearchParams({
-        comName: bird.comName,
-        sciName: bird.sciName,
-        speciesCode: bird.speciesCode,
-        category: bird.category,
-        order: bird.order,
-        familyCode: bird.familyCode,
-        familyComName: bird.familyComName,
-        familySciName: bird.familySciName,
-        birdImg: bird.birdImg,
-        wikiURL: bird.wikiURL,
-        taxonOrder: bird.taxonOrder,
-        user_id: id
-    });
-
-    const res = await fetch(`${apiBaseURL}/postSaved?${queryParameters.toString()}`)
-
-    return await handleError(res)
-}
-
-const deleteSavedBird = async (bird, id) => {
-    try {
-        const queryParameters = new URLSearchParams({
-            speciesCode: bird.speciesCode,
-            user_id: id
-        });
-
-        const res = await fetch(`${apiBaseURL}/deleteSaved?${queryParameters.toString()}`)
-
-        if (!res.ok) {
-            throw new Error('Network response was not ok');
-        }
-
-        const responseBody = await res.text();
-        const data = responseBody ? JSON.parse(responseBody) : {}
-
-        return data
-    } catch(error) {
-        console.error('Error deleting saved bird:', error);
-        throw error;
-    }
-}
-
-const sendPasswordConfirmationEmail = async (email) => {
-    const res = await fetch(`${apiBaseURL}/sendPasswordConfirmationEmail?email=${email}`)
-    return await handleError(res)
-}
-
-const getPasswordResetEmail = async (email) => {
-    const res = await fetch(`${apiBaseURL}/getResetPass?email=${email}`)
-    return await handleError(res)
-}
-
-const handleError = (res, required = true) => {
-    if (res.ok && required) {
-      return res.json();
-    } else if (res.bad) {
-      throw new Error(`HTTP Error: ${res.status} ${res.statusText}`);
-    }
+// Returns full bird records for the given species codes, in the same order. Codes we have in
+// our own database are served from there; the rest are assembled from external sources.
+const getBirdsData = async (codes) => {
+    const known = await getBirdsByCodes(codes)
+    const byCode = new Map(known.map(bird => [bird.speciesCode, bird]))
+    return Promise.all(codes.map(code => byCode.get(code) || enrichFromExternal(code)))
 }
 
 export {
-            getBirdKeysByLocation,
-            getBirdsData,
-            getBirdObservationsByLocation,
-            getUserExists,
-            getIsCorrectPass,
-            getUser,
-            patchUser,
-            createUser,
-            getAllBirds,
-            getSavedBirds,
-            isBirdSaved,
-            postSavedBird,
-            deleteSavedBird,
-            getExternalRegions,
-            getExternalNotableBirds,
-            getExternalLastObserved,
-            sendPasswordConfirmationEmail,
-            getPasswordResetEmail
-       }
+    getCurrentUser,
+    getUserExists,
+    login,
+    signup,
+    logout,
+    requestPasswordReset,
+    resetPassword,
+    confirmEmail,
+    resendConfirmationEmail,
+    unsubscribe,
+    patchUser,
+    getSavedBirds,
+    postSavedBird,
+    deleteSavedBird,
+    getBirdsByCodes,
+    searchBirds,
+    getBirdKeysByLocation,
+    getBirdsData,
+    getBirdObservationsByLocation,
+    getExternalRegions,
+    getExternalNotableBirds,
+    getExternalLastObserved
+}
