@@ -1,11 +1,9 @@
 import type { Bird, Observation, Region, User, UserPatch } from './types'
 
-// All calls to our own API go through the same-origin `/api` prefix. In development Vite proxies
-// it to the backend (see vite.config.ts); in production Vercel rewrites it (see vercel.json).
-// That keeps the session cookie first-party.
+// Every request goes to the same-origin `/api` prefix. In development Vite proxies it to the
+// backend (vite.config.ts); in production Vercel rewrites it (vercel.json). The backend holds
+// the eBird and image API keys, so the browser never sees them.
 const API_BASE = '/api'
-
-const EBIRD_HEADERS = { 'X-eBirdApiToken': import.meta.env.REACT_APP_EBIRD_API_KEY }
 
 export class ApiError extends Error {
     status: number
@@ -49,9 +47,6 @@ const api = <T,>(path: string, { method = 'GET', body, params }: RequestOptions 
     }).then(res => parseResponse<T>(res))
 }
 
-const external = <T,>(url: string, headers?: Record<string, string>): Promise<T> =>
-    fetch(url, { headers }).then(res => parseResponse<T>(res))
-
 // ---- auth ----
 export const getCurrentUser = () => api<User>('/auth/me')
 export const getUserExists = (email: string) => api<{ userExists: boolean }>('/auth/exists', { params: { email } })
@@ -69,64 +64,18 @@ export const patchUser = (changes: UserPatch) => api<User>('/user', { method: 'P
 
 // ---- watch list ----
 export const getSavedBirds = () => api<Bird[]>('/saved')
-export const postSavedBird = (bird: Bird) => api<Bird>('/saved', { method: 'POST', body: bird })
+export const postSavedBird = (speciesCode: string) => api<Bird>('/saved', { method: 'POST', body: { speciesCode } })
 export const deleteSavedBird = (speciesCode: string) => api<null>('/saved', { method: 'DELETE', params: { speciesCode } })
 
-// ---- birds we already know about ----
+// ---- birds (the server resolves and stores codes it has not seen before) ----
 export const getBirdsByCodes = (codes: string[]) =>
     codes.length ? api<Bird[]>('/birds', { params: { codes: codes.join(',') } }) : Promise.resolve([] as Bird[])
 export const searchBirds = (q: string) => api<Bird[]>('/birds', { params: { q } })
 
-// ---- eBird and friends ----
-export const getBirdKeysByLocation = (region: string) =>
-    external<string[]>(`https://api.ebird.org/v2/product/spplist/${encodeURIComponent(region)}`, EBIRD_HEADERS)
-
-export const getBirdObservationsByLocation = (region: string) =>
-    external<Observation[]>(`https://api.ebird.org/v2/data/obs/${encodeURIComponent(region)}/recent`, EBIRD_HEADERS)
-
-export const getExternalRegions = (state: string) =>
-    external<Region[]>(`https://api.ebird.org/v2/ref/region/list/subnational2/US-${encodeURIComponent(state)}`, EBIRD_HEADERS)
-
-export const getExternalNotableBirds = (region: string) =>
-    external<Observation[]>(`https://api.ebird.org/v2/data/obs/${encodeURIComponent(region)}/recent/notable?back=30`, EBIRD_HEADERS)
-
-export const getExternalLastObserved = (speciesCode: string, region: string) =>
-    external<Observation[]>(`https://api.ebird.org/v2/data/obs/${encodeURIComponent(region)}/recent/${encodeURIComponent(speciesCode)}?back=30`, EBIRD_HEADERS)
-
-type Taxon = Pick<Bird, 'speciesCode' | 'comName' | 'sciName' | 'category' | 'order' | 'familyCode' | 'familyComName' | 'familySciName' | 'taxonOrder'>
-
-const getExternalTaxonomy = (speciesCode: string) =>
-    external<Taxon[]>(`https://api.ebird.org/v2/ref/taxonomy/ebird?species=${encodeURIComponent(speciesCode)}&fmt=json`, EBIRD_HEADERS)
-
-const getExternalBirdImg = (comName: string) =>
-    external<{ entities?: { images?: string[] }[] }>(
-        `https://nuthatch.lastelm.software/v2/birds?${new URLSearchParams({ page: '1', pageSize: '25', name: comName, operator: 'AND' })}`,
-        { 'API-Key': import.meta.env.REACT_APP_NUTHATCH_API_KEY })
-
-const getExternalBirdWiki = (comName: string) =>
-    external<{ pages?: { id: number }[] }>(
-        `https://api.wikimedia.org/core/v1/wikipedia/en/search/page?${new URLSearchParams({ q: comName, limit: '1' })}`,
-        { 'Api-User-Agent': 'bird-alert (github.com/mbenfowler/bird-alert)' })
-
-// Builds a bird record from eBird taxonomy plus an image and a Wikipedia link. Image and wiki
-// lookups are best-effort: a failure there should not hide the bird.
-const enrichFromExternal = async (speciesCode: string): Promise<Bird> => {
-    const [taxon] = await getExternalTaxonomy(speciesCode)
-    if (!taxon) throw new ApiError(`Unknown species code ${speciesCode}`, 404)
-    const [imgResult, wikiResult] = await Promise.allSettled([getExternalBirdImg(taxon.comName), getExternalBirdWiki(taxon.comName)])
-    const rawImg = imgResult.status === 'fulfilled' ? imgResult.value.entities?.[0]?.images?.[0] : undefined
-    const wikiId = wikiResult.status === 'fulfilled' ? wikiResult.value.pages?.[0]?.id : undefined
-    return {
-        ...taxon,
-        birdImg: rawImg ? `${rawImg}?q=75&fm=jpg&w=400&fit=max` : undefined,
-        wikiURL: wikiId ? `https://en.wikipedia.org/?curid=${wikiId}` : undefined
-    }
-}
-
-// Returns full bird records for the given species codes, in the same order. Codes we have in
-// our own database are served from there; the rest are assembled from external sources.
-export const getBirdsData = async (codes: string[]): Promise<Bird[]> => {
-    const known = await getBirdsByCodes(codes)
-    const byCode = new Map(known.map(bird => [bird.speciesCode, bird]))
-    return Promise.all(codes.map(code => byCode.get(code) ?? enrichFromExternal(code)))
-}
+// ---- eBird, proxied and cached by the backend ----
+export const getSpeciesList = (region: string) => api<string[]>('/ebird/species-list', { params: { region } })
+export const getRecentObservations = (region: string) => api<Observation[]>('/ebird/observations', { params: { region } })
+export const getNotableObservations = (region: string) => api<Observation[]>('/ebird/notable', { params: { region, back: '30' } })
+export const getSpeciesObservations = (region: string, code: string) =>
+    api<Observation[]>('/ebird/species-observations', { params: { region, code, back: '30' } })
+export const getRegions = (state: string) => api<Region[]>('/ebird/regions', { params: { state } })

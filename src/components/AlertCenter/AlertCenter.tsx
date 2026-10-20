@@ -1,7 +1,8 @@
-import { useState, type ChangeEvent } from 'react'
+import { type ChangeEvent } from 'react'
 import { toast } from 'react-toastify'
-import { useBirds, useCurrentUser } from '../BirdsContext/BirdsContext'
-import { patchUser, errorMessage } from '../../apiCalls'
+import { errorMessage } from '../../apiCalls'
+import { useCurrentUser } from '../../hooks/queries'
+import { usePatchUserMutation } from '../../hooks/mutations'
 import type { EmailPreference } from '../../types'
 import './AlertCenter.css'
 
@@ -12,22 +13,15 @@ const PREFERENCES: { field: EmailPreference; label: string }[] = [
 
 const AlertCenter = () => {
   const user = useCurrentUser()
-  const { setUser } = useBirds()
-  const [pendingField, setPendingField] = useState<EmailPreference | null>(null)
+  const patchUser = usePatchUserMutation()
+  const pendingField = patchUser.isPending ? Object.keys(patchUser.variables ?? {})[0] : null
 
-  const toggleAlert = async (e: ChangeEvent<HTMLInputElement>) => {
+  const toggleAlert = (e: ChangeEvent<HTMLInputElement>) => {
     const field = e.target.name as EmailPreference
-    const enabled = e.target.checked
-    setPendingField(field)
-    try {
-      const updated = await patchUser({ [field]: enabled })
-      setUser(updated)
-      toast.success('Alert preferences updated!', { position: 'bottom-center' })
-    } catch (error) {
-      toast.error(errorMessage(error), { position: 'bottom-center' })
-    } finally {
-      setPendingField(null)
-    }
+    patchUser.mutate({ [field]: e.target.checked }, {
+      onSuccess: () => toast.success('Alert preferences updated!', { position: 'bottom-center' }),
+      onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
+    })
   }
 
   return (

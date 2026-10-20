@@ -4,12 +4,13 @@ import tseslint from 'typescript-eslint'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import cypress from 'eslint-plugin-cypress/flat'
+import query from '@tanstack/eslint-plugin-query'
 
 export default tseslint.config(
   { ignores: ['dist', 'build', 'node_modules'] },
   {
     files: ['src/**/*.{ts,tsx}', 'vite.config.ts'],
-    extends: [js.configs.recommended, ...tseslint.configs.recommended],
+    extends: [js.configs.recommended, ...tseslint.configs.recommended, ...query.configs['flat/recommended']],
     languageOptions: { ecmaVersion: 2020, globals: globals.browser },
     plugins: { 'react-hooks': reactHooks, 'react-refresh': reactRefresh },
     rules: {
