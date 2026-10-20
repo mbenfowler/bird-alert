@@ -34,6 +34,8 @@ export const stubAuth = ({ userExists = true, user = TEST_USER, loggedIn = false
   cy.intercept('GET', '**/api/ebird/**', { statusCode: 200, body: [] })
   cy.intercept('GET', '**/api/ebird/regions*', { statusCode: 200, body: [{ code: 'US-GA-139', name: 'Hall' }, { code: 'US-GA-121', name: 'Fulton' }] }).as('regions')
   cy.intercept('GET', '**/api/saved', { statusCode: 200, body: [] }).as('getSaved')
+  cy.intercept('GET', '**/api/push/public-key', { statusCode: 200, body: { publicKey: 'BFakeKeyForTests' } }).as('pushKey')
+  cy.intercept('GET', '**/api/push/status*', { statusCode: 200, body: { subscribed: false, devices: 0 } }).as('pushStatus')
 
   return state
 }

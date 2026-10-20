@@ -1,4 +1,5 @@
 nav {
+    color: #000;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -24,6 +25,8 @@ nav div a {
 .nav-img {
     height: 45px;
     width: 45px;
+    max-width: none;
+    flex-shrink: 0;
     cursor: pointer;
 }
 

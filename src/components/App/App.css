@@ -1,3 +1,18 @@
+/* Design tokens: the app's grey canvas, white cards, black ink, gold accent. */
+:root {
+    --bg: #d3d3d3;
+    --surface: #ffffff;
+    --surface-muted: #e8e8e8;
+    --ink: #111111;
+    --muted: #4f4f4f;
+    --line: #777777;
+    --rule: #a9a9a9;
+    --accent: #ffd700;
+    --accent-soft: rgba(255, 215, 0, 0.35);
+    --accent-ink: #6b5800;
+    --focus: #1a56db;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -7,15 +22,37 @@
 html,
 body,
 #root {
-    background-color: lightgray;
+    background-color: var(--bg);
+    color: var(--ink);
+}
+
+/* Nothing may widen the page past the viewport; that is what lets phones zoom out and scroll sideways. */
+html,
+body {
+    max-width: 100%;
+    overflow-x: clip;
+}
+
+/* Anchored and focused elements scroll in below the sticky nav rather than under it. */
+html {
+    scroll-padding-top: 90px;
+}
+
+img,
+svg,
+video {
+    max-width: 100%;
 }
 
 #init {
-    background-color: lightgray;
-    height: 90%;
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    padding: 24px;
     text-align: center;
-    position: sticky;
-    top: 10%;
 }
 
 #initText {
@@ -34,21 +71,26 @@ body,
     cursor: pointer;
 }
 
+.spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
 .spinner:before {
     content: '';
-    display: inline-flex;
-    align-self: center;
-    margin: 2em;
-    padding: 2em;
-    position: relative;
-    width: 50px;
-    height: 50px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    border: 1px solid #f6f;
-    border-top-color: #0e0;
-    border-right-color: #0dd;
-    border-bottom-color: #f90;
-    animation: spinner .6s linear infinite;
+    border: 4px solid rgba(0, 0, 0, 0.12);
+    border-top-color: var(--accent);
+    animation: spinner 0.8s linear infinite;
+}
+
+.login-spinner {
+    min-height: 0;
+    padding: 10px 0;
 }
 
 @keyframes spinner {

@@ -3,28 +3,9 @@
     position: sticky;
     top: 55px;
     z-index: 2;
-    background-color: lightgray;
-    border-bottom: 4px solid darkgray;
-    color: #222;
-}
-
-#alertArea a {
-    text-decoration: none;
-    color: inherit;
-}
-
-#birdSearch {
-    width: 80%;
-    height: 50px;
-    border-radius: 10px;
-    text-align: center;
-    font-size: x-large;
-    margin: 10px;
-}
-
-#birdSearch::placeholder {
-    color: lightgray;
-    font-size: 15px;
+    background-color: var(--bg);
+    border-bottom: 4px solid var(--rule);
+    color: var(--ink);
 }
 
 #birdsInArea {
@@ -32,17 +13,128 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    padding: 0 12px 24px;
 }
 
-.pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 20px 0;
+.list-heading {
+    margin: 6px 0 10px;
 }
 
-h2 {
+/* Search field: icon on the left, clear button on the right, generous touch target. */
+.search {
+    position: relative;
+    width: min(100%, 560px);
+    margin: 14px 0 6px;
+}
+
+.search__icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    width: 22px;
+    height: 22px;
+    transform: translateY(-50%);
+    color: var(--muted);
+    pointer-events: none;
+}
+
+#birdSearch {
+    width: 100%;
+    height: 52px;
+    padding: 0 48px 0 48px;
+    border: 2px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 1.05rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+#birdSearch::placeholder {
+    color: var(--muted);
+}
+
+#birdSearch:focus {
+    outline: none;
+    border-color: var(--accent-ink);
+    box-shadow: 0 0 0 4px var(--accent-soft), 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+#birdSearch::-webkit-search-cancel-button,
+#birdSearch::-webkit-search-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.search__clear {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    width: 36px;
+    height: 36px;
+    transform: translateY(-50%);
+    display: grid;
+    place-items: center;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.search__clear:hover,
+.search__clear:focus-visible {
+    background: var(--accent-soft);
+    color: var(--ink);
+    outline: none;
+}
+
+.search__clear svg {
+    width: 22px;
+    height: 22px;
+}
+
+.list-note,
+.list-end {
+    margin: 12px 0;
+    color: var(--muted);
     text-align: center;
+    font-style: italic;
+}
+
+.list-end {
+    padding: 16px 0 8px;
+    font-style: normal;
+}
+
+.list-sentinel {
+    width: 100%;
+    height: 1px;
+}
+
+.load-more {
+    margin: 12px 0;
+    min-height: 48px;
+    padding: 0 22px;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.load-more:hover:not(:disabled) {
+    background: var(--accent-soft);
+}
+
+.load-more:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
 }
 
 .note {
@@ -50,12 +142,6 @@ h2 {
     font-size: 15px;
 }
 
-@media screen and (min-width: 900px) {
-    #birdSearch {
-        width: 50%;
-    }
-}
-   
 /* Previous page stays visible, slightly dimmed, while the next one loads */
 .is-stale {
     opacity: 0.6;

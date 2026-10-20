@@ -20,8 +20,8 @@ describe("Login flow for a user that already has location set", () => {
       .get('#birdSearch').invoke('attr', 'placeholder').should('contain', 'Search birds by name')
       .get('#birdsInArea > h2').should('contain', 'Birds in your area')
       .get('#snogoo').should('be.checked')
-      .get('.pagination > p').should('contain', 'Page 1 of 2')
-      .get('.pagination-btn').should('contain', '>')
+      .get('.birds-list .card').should('have.length', 7)
+      .get('.list-end').should('contain', "That's all 7 birds")
   })
 })
 

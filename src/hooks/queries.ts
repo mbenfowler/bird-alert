@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { keepPreviousData, queryOptions, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions,
   getSavedBirds, getSpeciesList, searchBirds
@@ -7,11 +7,19 @@ import {
 import { DAY, MINUTE, WEEK } from '../queryClient'
 import type { User } from '../types'
 
+/** Short stable fingerprint of a code list, so a changed species list gets its own cache entry. */
+export const codesKey = (codes: string[]) => {
+  let hash = 5381
+  for (const code of codes) for (let i = 0; i < code.length; i += 1) hash = ((hash * 33) ^ code.charCodeAt(i)) >>> 0
+  return `${codes.length}-${hash.toString(36)}`
+}
+
 export const queryKeys = {
   session: ['session'] as const,
   saved: ['saved'] as const,
   speciesList: (region: string) => ['species-list', region] as const,
   birds: (codes: string[]) => ['birds', codes.join(',')] as const,
+  birdPages: (region: string, codes: string[], pageSize: number) => ['bird-pages', region, codesKey(codes), pageSize] as const,
   observations: (region: string) => ['observations', region] as const,
   notable: (region: string) => ['notable', region] as const,
   regions: (state: string) => ['regions', state] as const,
@@ -113,4 +121,20 @@ export const useBirdSearchQuery = (term: string) =>
     staleTime: 5 * MINUTE,
     enabled: term.length >= SEARCH_MIN_LENGTH,
     placeholderData: keepPreviousData
+  })
+
+/**
+ * The region's birds as an endless list: each page is a slice of the cached species list, fetched
+ * once and kept for a week. Pages already loaded render instantly on a return visit.
+ */
+export const useInfiniteBirdsQuery = (region: string, codes: string[], pageSize: number) =>
+  useInfiniteQuery({
+    queryKey: queryKeys.birdPages(region, codes, pageSize),
+    queryFn: ({ pageParam }) => getBirdsByCodes(codes.slice(pageParam * pageSize, (pageParam + 1) * pageSize)),
+    initialPageParam: 0,
+    getNextPageParam: (_lastPage, pages) => (pages.length * pageSize < codes.length ? pages.length : undefined),
+    staleTime: Infinity,
+    gcTime: WEEK,
+    meta: { persist: true },
+    enabled: codes.length > 0
   })

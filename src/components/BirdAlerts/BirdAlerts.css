@@ -1,17 +1,50 @@
-/* One compact bar on top; the list of sightings below it can be hidden to give the birds the screen. */
+/* One compact bar on top; the list of sightings below it folds away to give the birds the screen. */
 #birdAlerts {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-height: 100%;
 }
 
 .alerts-bar {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 6px 10px;
-  color: #222;
+  color: var(--ink);
+}
+
+/* A thin gold line sweeps across the bar when the panel opens or closes. */
+.alerts-bar::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  transform: scaleX(0);
+  transform-origin: left;
+  opacity: 0;
+}
+
+.is-expanded .alerts-bar::after {
+  animation: alerts-sweep 0.6s ease-out;
+}
+
+.is-collapsed .alerts-bar::after {
+  animation: alerts-sweep-back 0.6s ease-out;
+}
+
+@keyframes alerts-sweep {
+  0% { transform: scaleX(0); opacity: 1; transform-origin: left; }
+  60% { transform: scaleX(1); opacity: 1; }
+  100% { transform: scaleX(1); opacity: 0; }
+}
+
+@keyframes alerts-sweep-back {
+  0% { transform: scaleX(1); opacity: 1; transform-origin: right; }
+  100% { transform: scaleX(0); opacity: 0; transform-origin: right; }
 }
 
 .alerts-tabs {
@@ -31,6 +64,10 @@
   text-align: left;
   white-space: nowrap;
   overflow: hidden;
+}
+
+.alerts-title {
+  overflow: hidden;
   text-overflow: ellipsis;
 }
 
@@ -42,11 +79,17 @@
   height: 1.6em;
   padding: 0 0.4em;
   border-radius: 1em;
-  background: #222;
+  background: var(--ink);
   color: #fff;
   font-family: system-ui, sans-serif;
   font-size: 0.8rem;
   font-weight: 600;
+  animation: count-pop 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+
+@keyframes count-pop {
+  from { transform: scale(0.6); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
 .alert-icon {
@@ -55,13 +98,13 @@
   justify-content: center;
   width: 44px;
   height: 44px;
-  background: #e8e8e8;
-  color: #222;
+  background: var(--surface-muted);
+  color: var(--ink);
   cursor: pointer;
-  border: solid #777 2px;
+  border: solid var(--line) 2px;
   border-radius: 8px;
   box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.3);
-  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .alert-icon svg {
@@ -71,13 +114,13 @@
 
 .alert-icon:hover,
 .alert-icon:focus-visible {
-  background: #f4f4f4;
+  background: var(--surface);
 }
 
 .button-pressed,
 .alert-icon.button-pressed:hover {
   box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.4);
-  background-color: gold;
+  background-color: var(--accent);
 }
 
 .alerts-toggle {
@@ -87,41 +130,57 @@
   flex-shrink: 0;
   min-height: 44px;
   padding: 0 10px;
-  border: solid #777 2px;
+  border: solid var(--line) 2px;
   border-radius: 8px;
-  background: #e8e8e8;
-  color: #222;
+  background: var(--surface-muted);
+  color: var(--ink);
   font: inherit;
   font-size: 0.95rem;
   cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
 .alerts-toggle:hover,
 .alerts-toggle:focus-visible {
-  background: #f4f4f4;
+  background: var(--surface);
 }
 
 .alerts-toggle svg {
   width: 22px;
   height: 22px;
-  transition: transform 0.2s ease;
+  transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .alerts-toggle svg.is-up {
   transform: rotate(180deg);
 }
 
-/* Keyboard users get an obvious ring on every control in the bar. */
 .alert-icon:focus-visible,
 .alerts-toggle:focus-visible {
-  outline: 3px solid #1a56db;
+  outline: 3px solid var(--focus);
   outline-offset: 2px;
+}
+
+/* Height animation without JavaScript: the grid row goes from 1fr to 0fr. */
+.alerts-collapse {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.is-collapsed .alerts-collapse {
+  grid-template-rows: 0fr;
+}
+
+.alerts-collapse__inner {
+  min-height: 0;
+  overflow: hidden;
 }
 
 .alerts-list {
   display: flex;
   gap: 8px;
-  padding: 0 10px 10px;
+  padding: 2px 10px 10px;
   overflow-x: auto;
   overflow-y: hidden;
   scroll-snap-type: x proximity;
@@ -129,25 +188,43 @@
 }
 
 .alerts-list > a {
+  text-decoration: none;
+  color: inherit;
   scroll-snap-align: start;
   flex-shrink: 0;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
-.alerts-list[hidden] {
-  display: none;
+/* Cards enter one after another when the panel opens, and drift up as it closes. */
+.is-expanded .alerts-list > a {
+  animation: alert-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 55ms);
+}
+
+.is-collapsed .alerts-list > a {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+@keyframes alert-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .alerts-empty {
   padding: 8px 4px;
-  color: #333;
+  color: var(--muted);
   font-style: italic;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .alert-icon,
-  .alerts-toggle,
-  .alerts-toggle svg {
+  .alert-icon, .alerts-toggle, .alerts-toggle svg, .alerts-collapse, .alerts-list > a {
     transition: none;
+  }
+  .is-expanded .alerts-list > a, .alerts-count, .is-expanded .alerts-bar::after, .is-collapsed .alerts-bar::after {
+    animation: none;
   }
 }
 

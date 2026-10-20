@@ -1,36 +1,29 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useMemo, useState } from 'react'
 import BirdAlerts from '../BirdAlerts/BirdAlerts'
 import BirdsList from '../BirdsList/BirdsList'
 import ErrorMessage from '../Error/ErrorMessage'
+import { LoadingState, SkeletonList } from '../Loading/Loading'
+import { SearchIcon, CloseIcon } from '../Icons/Icons'
 import { errorMessage } from '../../apiCalls'
-import { birdsQueryOptions, SEARCH_MIN_LENGTH, useBirdSearchQuery, useBirdsQuery, useCurrentUser, useSpeciesListQuery } from '../../hooks/queries'
+import { SEARCH_MIN_LENGTH, useBirdSearchQuery, useCurrentUser, useInfiniteBirdsQuery, useSpeciesListQuery } from '../../hooks/queries'
 import { useDebouncedValue } from '../../hooks/useDebouncedValue'
-import { usePageParam } from '../../hooks/usePageParam'
+import { useInfiniteScroll } from '../../hooks/useInfiniteScroll'
 import './Home.css'
 
-const RESULTS_PER_PAGE = 5
+const PAGE_SIZE = 12
 const SEARCH_DEBOUNCE_MS = 250
 
 const Home = () => {
     const user = useCurrentUser()
     const region = user.location
-    const queryClient = useQueryClient()
 
-    // The region's species list is cached for a day; pages are slices of it.
     const speciesList = useSpeciesListQuery(region)
     const codes = useMemo(() => speciesList.data ?? [], [speciesList.data])
-    const pageCount = Math.max(1, Math.ceil(codes.length / RESULTS_PER_PAGE))
-    const [page, setPage] = usePageParam(pageCount)
-    const pageCodes = useMemo(() => codes.slice((page - 1) * RESULTS_PER_PAGE, page * RESULTS_PER_PAGE), [codes, page])
-    const nextPageCodes = useMemo(() => codes.slice(page * RESULTS_PER_PAGE, (page + 1) * RESULTS_PER_PAGE), [codes, page])
+    const birdPages = useInfiniteBirdsQuery(region, codes, PAGE_SIZE)
+    const birds = useMemo(() => birdPages.data?.pages.flat() ?? [], [birdPages.data])
 
-    const birds = useBirdsQuery(pageCodes)
-
-    // Warm the next page so flipping forward is instant.
-    useEffect(() => {
-        if (nextPageCodes.length) void queryClient.prefetchQuery(birdsQueryOptions(nextPageCodes))
-    }, [nextPageCodes, queryClient])
+    const loadMore = () => { if (birdPages.hasNextPage && !birdPages.isFetchingNextPage) void birdPages.fetchNextPage() }
+    const sentinelRef = useInfiniteScroll(loadMore, Boolean(birdPages.hasNextPage) && !birdPages.isFetchingNextPage)
 
     const [search, setSearch] = useState('')
     const rawTerm = search.trim()
@@ -38,28 +31,37 @@ const Home = () => {
     const isSearching = rawTerm.length > 0
     const results = useBirdSearchQuery(term)
 
-    const renderBirds = () => {
-        if (!isSearching) {
-            if (speciesList.isError) return <ErrorMessage networkError={errorMessage(speciesList.error)} />
-            if (birds.isError) return <ErrorMessage networkError={errorMessage(birds.error)} />
-            if (speciesList.isPending || (pageCodes.length > 0 && !birds.data)) return <div className='spinner'></div>
-            return (
-                <>
-                    <h2 className='fredericka'>Birds in your area:</h2>
-                    <div className={birds.isPlaceholderData ? 'is-stale' : undefined}>
-                        <BirdsList birds={birds.data ?? []} />
-                    </div>
-                </>
-            )
-        }
-        if (rawTerm.length < SEARCH_MIN_LENGTH) return <h3 className='fredericka'>Keep typing to search</h3>
+    const renderSearch = () => {
+        if (rawTerm.length < SEARCH_MIN_LENGTH) return <p className='list-note'>Keep typing to search every bird we know about.</p>
         if (results.isError) return <ErrorMessage networkError={errorMessage(results.error)} />
-        if (!results.data) return <div className='spinner'></div>
-        if (!results.data.length) return <h3 className='fredericka'>No birds found</h3>
-        return <><h2 className='note fredericka'>Note: these birds may not be common to your area</h2><BirdsList birds={results.data} /></>
+        if (!results.data) return <SkeletonList count={3} label='Searching…' />
+        if (!results.data.length) return <p className='list-note'>No birds match "{rawTerm}".</p>
+        return (
+            <>
+                <p className='list-note'>{results.data.length} match{results.data.length === 1 ? '' : 'es'}. These may not be common to your area.</p>
+                <BirdsList birds={results.data} />
+            </>
+        )
     }
 
-    const showPagination = !isSearching && speciesList.isSuccess && Boolean(birds.data)
+    const renderBirds = () => {
+        if (speciesList.isError) return <ErrorMessage networkError={errorMessage(speciesList.error)} />
+        if (birdPages.isError) return <ErrorMessage networkError={errorMessage(birdPages.error)} />
+        if (speciesList.isPending || (codes.length > 0 && birdPages.isPending)) return <SkeletonList count={6} />
+        if (!codes.length) return <p className='list-note'>eBird has no species recorded for this region yet.</p>
+        return (
+            <>
+                <BirdsList birds={birds} />
+                {birdPages.isFetchingNextPage && <SkeletonList count={3} label='Loading more birds…' />}
+                <div ref={sentinelRef} className='list-sentinel' aria-hidden='true'></div>
+                {birdPages.hasNextPage
+                    ? <button type='button' className='load-more' onClick={loadMore} disabled={birdPages.isFetchingNextPage}>
+                        {birdPages.isFetchingNextPage ? <LoadingState variant='inline' label='Loading more birds' /> : `Show more (${birds.length} of ${codes.length})`}
+                      </button>
+                    : <p className='list-end'>That's all {codes.length} birds reported in your area.</p>}
+            </>
+        )
+    }
 
     return (
         <>
@@ -67,16 +69,14 @@ const Home = () => {
                 <BirdAlerts />
             </section>
             <section id='birdsInArea'>
-                <input id='birdSearch' type="search" placeholder='Search birds by name' aria-label='Search birds by name' value={search} onChange={(e) => setSearch(e.target.value)} />
-                {renderBirds()}
-            </section>
-            {showPagination &&
-                <div className='pagination'>
-                    {page !== 1 && <button className='pagination-btn' onClick={() => setPage(page - 1)}>&lt;</button>}
-                    <p>{`Page ${page} of ${pageCount}`}</p>
-                    {page !== pageCount && <button className='pagination-btn' onClick={() => setPage(page + 1)}>&gt;</button>}
+                <div className='search'>
+                    <SearchIcon className='search__icon' />
+                    <input id='birdSearch' type='search' placeholder='Search birds by name' aria-label='Search birds by name' autoComplete='off' value={search} onChange={(e) => setSearch(e.target.value)} />
+                    {search && <button type='button' className='search__clear' aria-label='Clear search' onClick={() => setSearch('')}><CloseIcon /></button>}
                 </div>
-            }
+                <h2 className='fredericka list-heading'>{isSearching ? 'Search results' : 'Birds in your area'}</h2>
+                {isSearching ? renderSearch() : renderBirds()}
+            </section>
         </>
     )
 }
