@@ -2,11 +2,11 @@ import './Settings.css'
 import Form from "../Form/Form"
 import AlertCenter from '../AlertCenter/AlertCenter'
 
-const Settings = ({ isLoaded }) => {
+const Settings = () => {
     return (
         <section id='userSettings'>
-            <Form isLoaded={isLoaded}/>
-            <AlertCenter isLoaded={isLoaded}/>
+            <Form />
+            <AlertCenter />
         </section>
     )
 }

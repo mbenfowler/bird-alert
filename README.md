@@ -43,13 +43,18 @@ Upcoming features:
 
 </div>
 
-## Installation Instructions 
-- Fork [this](https://github.com/mbenfowler/bird-alert) repository. 
-- Clone it to your local machine using the command: `git clone git@github.com:mbenfowler/bird-alert.git`.
-- Run the command: `cd bird-alert`
-- Run the command: `npm install`
-- Run the command: `npm start`
-- Once the modules have finished compiling, enter `http://localhost:3000/` into your browser to see the live web page. 
+## Installation Instructions
+The front end lives here; the API lives in [bird-alert-be](https://github.com/mbenfowler/bird-alert-be) and must be running on port 3001 (the dev server proxies `/api` to it, so the session cookie stays first-party).
+
+- Clone this repository and run `npm install`.
+- Create a `.env` with the two third-party keys the browser calls directly:
+  ```
+  REACT_APP_EBIRD_API_KEY=...
+  REACT_APP_NUTHATCH_API_KEY=...
+  ```
+- Start the API: in `bird-alert-be`, run `npm run dev`.
+- Start the app: `npm start`, then open `http://localhost:3000/`.
+- End-to-end tests stub every network call, so `npx cypress open` works without the API or keys (the dev server still has to be running).
 
 ## Context: 
 - Mod 3, Week 5 Final Showcase Project: 

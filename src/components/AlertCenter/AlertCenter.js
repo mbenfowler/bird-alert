@@ -1,64 +1,43 @@
-import { useContext, useState, useEffect } from 'react'
+import { useContext, useState } from 'react'
+import { toast } from 'react-toastify'
 import BirdsContext from '../BirdsContext/BirdsContext'
 import { patchUser } from '../../apiCalls'
-import { toast } from 'react-toastify'
 import './AlertCenter.css'
 
-const AlertCenter = ({ isLoaded }) => {
+const PREFERENCES = [
+  { field: 'alert_digest_email_enabled', label: 'Alert Digest (daily)' },
+  { field: 'rare_sightings_email_enabled', label: 'Uncommon Sightings' }
+]
+
+const AlertCenter = () => {
   const { user, setUser } = useContext(BirdsContext)
-  const [alertDigestEnabled, setAlertDigestEnabled] = useState(false)
-  const [uncommonSightingsEnabled, setUncommonSightingsEnabled] = useState(false)
-
-  useEffect(() => {
-    setAlertDigestEnabled(user.alert_digest_email_enabled)
-    setUncommonSightingsEnabled(user.rare_sightings_email_enabled)
-  }, [user])
-
-  const resolveAfter1Sec = new Promise(resolve => setTimeout(resolve, 500));
-  const notify = () => {
-      toast.promise(resolveAfter1Sec, {
-        success: {
-          render: 'Alert preferences updated!',
-          position: 'bottom-center'
-        }
-      });
-  }
+  const [pendingField, setPendingField] = useState(null)
 
   const toggleAlert = async (e) => {
+    const field = e.target.name
+    const enabled = e.target.checked
+    setPendingField(field)
     try {
-      const alertType = e.target.id
-      const isChecked = e.target.checked
-      const updatedUser = { [alertType]: `${isChecked}` }
-      await patchUser(user.email, updatedUser)
-      setUser({ ...user, [alertType]: isChecked })
-
-      if (alertType === 'alert_digest_email_enabled') {
-        setAlertDigestEnabled(isChecked)
-      } else if (alertType === 'rare_sightings_email_enabled') {
-        setUncommonSightingsEnabled(isChecked)
-      }
-
-      notify()
+      const updated = await patchUser({ [field]: enabled })
+      setUser(updated)
+      toast.success('Alert preferences updated!', { position: 'bottom-center' })
     } catch (error) {
-      console.error(error)
+      toast.error(error.message, { position: 'bottom-center' })
+    } finally {
+      setPendingField(null)
     }
   }
 
   return (
-    <>
-      {isLoaded &&
-      <section className="alert-center">
-        <h2>Alert center</h2>
-        <div className='notification'>
-          <label htmlFor="alert_digest_email_enabled">Alert Digest (daily)</label>
-          <input type="checkbox" id="alert_digest_email_enabled" name="alert_digest_email_enabled" checked={alertDigestEnabled} onChange={toggleAlert} />
+    <section className="alert-center">
+      <h2>Alert center</h2>
+      {PREFERENCES.map(({ field, label }) => (
+        <div className='notification' key={field}>
+          <label htmlFor={field}>{label}</label>
+          <input type="checkbox" id={field} name={field} checked={Boolean(user[field])} disabled={pendingField === field} onChange={toggleAlert} />
         </div>
-        <div className='notification'>
-          <label htmlFor="rare_sightings_email_enabled">Uncommon Sightings</label>
-          <input type="checkbox" id="rare_sightings_email_enabled" name="rare_sightings_email_enabled" checked={uncommonSightingsEnabled} onChange={toggleAlert}/>
-        </div>
-      </section>}
-    </>
+      ))}
+    </section>
   )
 }
 

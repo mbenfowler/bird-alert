@@ -1,38 +1,36 @@
-import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
-import { patchUser } from '../../apiCalls'
+import { useState, useEffect, useRef } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { confirmEmail } from '../../apiCalls'
 import './EmailConfirm.css'
 
 const EmailConfirm = () => {
-  const { email } = useParams()
-  const [userPatched, setUserPatched] = useState(false)
-  const [networkError, setNetworkError] = useState(null)
+  const { token } = useParams()
+  const [status, setStatus] = useState('pending')
+  const [error, setError] = useState(null)
+  const started = useRef(false)
 
   useEffect(() => {
-    (async() => {
-      await patchUser(email, { email, confirmed: `${true}` })
-      .then(() => setUserPatched(true))
-      .catch(error => setNetworkError(error.message))
-    })()
-  //eslint-disable-next-line
-  }, [])
-
-  const handleClick = () => {
-    window.location.replace('/login')
-  }
+    if (started.current) return
+    started.current = true
+    confirmEmail(token)
+      .then(() => setStatus('done'))
+      .catch((err) => { setError(err.message); setStatus('failed') })
+  }, [token])
 
   return (
     <section>
-      {!userPatched && !networkError && <h2>Confirming email...</h2>}
-      {networkError && <>
-                        <h2>Something went wrong:</h2>
-                        <p>{networkError}</p>
-                        <button onClick={handleClick}>Return home</button>
-                       </>}
-      {userPatched && <section className='confirm-section'>
-                        <h2>Email successfully confirmed!</h2>
-                        <button onClick={handleClick}>Login here</button>
-                      </section>}
+      {status === 'pending' && <h2>Confirming email...</h2>}
+      {status === 'failed' &&
+        <>
+          <h2>Something went wrong:</h2>
+          <p>{error}</p>
+          <Link to='/login'><button>Return home</button></Link>
+        </>}
+      {status === 'done' &&
+        <section className='confirm-section'>
+          <h2>Email successfully confirmed!</h2>
+          <Link to='/'><button>Continue</button></Link>
+        </section>}
     </section>
   )
 }
