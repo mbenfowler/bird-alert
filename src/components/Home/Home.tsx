@@ -5,7 +5,7 @@ import ErrorMessage from '../Error/ErrorMessage'
 import { LoadingState, SkeletonList } from '../Loading/Loading'
 import { SearchIcon, CloseIcon } from '../Icons/Icons'
 import { errorMessage } from '../../apiCalls'
-import { SEARCH_MIN_LENGTH, useBirdSearchQuery, useCurrentUser, useInfiniteBirdsQuery, useSpeciesListQuery } from '../../hooks/queries'
+import { SEARCH_MIN_LENGTH, useBirdSearchQuery, useCurrentUser, useInfiniteBirdsQuery, useRegionsQuery, useSpeciesListQuery } from '../../hooks/queries'
 import { useDebouncedValue } from '../../hooks/useDebouncedValue'
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll'
 import './Home.css'
@@ -16,6 +16,11 @@ const SEARCH_DEBOUNCE_MS = 250
 const Home = () => {
     const user = useCurrentUser()
     const region = user.location
+
+    // "Hall - US-GA-139": the same label the settings page shows for the chosen region.
+    const regions = useRegionsQuery(user.state)
+    const regionName = regions.data?.find(r => r.code === region)?.name
+    const regionLabel = regionName ? `${regionName} - ${region}` : region
 
     const speciesList = useSpeciesListQuery(region)
     const codes = useMemo(() => speciesList.data ?? [], [speciesList.data])
@@ -74,7 +79,9 @@ const Home = () => {
                     <input id='birdSearch' type='search' placeholder='Search birds by name' aria-label='Search birds by name' autoComplete='off' value={search} onChange={(e) => setSearch(e.target.value)} />
                     {search && <button type='button' className='search__clear' aria-label='Clear search' onClick={() => setSearch('')}><CloseIcon /></button>}
                 </div>
-                <h2 className='fredericka list-heading'>{isSearching ? 'Search results' : 'Birds in your area'}</h2>
+                <h2 className='fredericka list-heading'>
+                    {isSearching ? 'Search results' : <>Birds in your area: <span className='list-heading__region'>{regionLabel}</span></>}
+                </h2>
                 {isSearching ? renderSearch() : renderBirds()}
             </section>
         </>

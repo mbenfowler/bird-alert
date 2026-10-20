@@ -119,3 +119,68 @@
 @media (prefers-reduced-motion: reduce) {
   .switch, .switch::before { transition: none; }
 }
+
+/* The push card and its two sub-options read as one unit. */
+.notification-group {
+  display: flex;
+  flex-direction: column;
+  border: 2px solid var(--ink);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.14);
+  overflow: hidden;
+}
+
+.notification-group > .notification {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.notification-sub {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 16px 14px 28px;
+  border-top: 1px solid var(--rule);
+  background: #fafafa;
+  transition: opacity 0.2s ease;
+}
+
+.notification-sub[aria-disabled="true"] {
+  opacity: 0.5;
+}
+
+.notification-sub[aria-disabled="true"] label {
+  cursor: not-allowed;
+}
+
+.notification--sub {
+  padding: 8px 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.notification--sub .notification__text label {
+  font-size: 0.98rem;
+}
+
+.switch--small {
+  width: 44px;
+  height: 26px;
+}
+
+.switch--small::before {
+  width: 16px;
+  height: 16px;
+}
+
+.switch--small:checked::before {
+  transform: translateX(18px);
+}
+
+.notification-sub .test-push {
+  margin: 4px 0 0 0;
+}

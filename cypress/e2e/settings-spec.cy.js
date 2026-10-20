@@ -36,4 +36,11 @@ describe('Settings', () => {
     cy.get('#alert_digest_email_enabled').should('not.be.checked')
     cy.contains('Alert preferences updated!')
   })
+
+  it('keeps the push sub-options greyed out until push is on for this device', () => {
+    cy.get('#push_enabled').should('not.be.checked')
+    cy.get('.notification-sub').should('have.attr', 'aria-disabled', 'true')
+    cy.get('#push_watchlist_enabled').should('be.disabled').and('be.checked')
+    cy.get('#push_notable_enabled').should('be.disabled').and('not.be.checked')
+  })
 })
