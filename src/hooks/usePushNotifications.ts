@@ -76,7 +76,12 @@ export const usePushNotifications = () => {
     }
   }, [])
 
-  const sendTest = useCallback(() => sendTestPush(), [])
+  // Tests go to this device only, so a phone and a laptop can each be checked on their own.
+  const sendTest = useCallback(async () => {
+    const registration = await navigator.serviceWorker.ready
+    const subscription = await registration.pushManager.getSubscription()
+    return sendTestPush(subscription?.endpoint)
+  }, [])
 
   return { state, error, enable, disable, sendTest }
 }
