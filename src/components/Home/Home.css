@@ -1,12 +1,11 @@
+/* Sticky so the sightings stay in reach while scrolling the list; collapses to its bar via the toggle. */
 #alertArea {
-    height: 200px;
-    background-color: lightgray;
     position: sticky;
     top: 55px;
-    color: gray;
-    border-bottom: solid darkgray;
-    border-width: thick;
     z-index: 2;
+    background-color: lightgray;
+    border-bottom: 4px solid darkgray;
+    color: #222;
 }
 
 #alertArea a {

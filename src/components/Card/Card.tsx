@@ -48,7 +48,7 @@ const Card = ({ bird }: CardProps) => {
     return (
         <article className='card'>
             {bird.wikiURL
-                ? <a className='card-link' href={bird.wikiURL} target='_blank' rel='noreferrer' aria-label={`${bird.comName} on Wikipedia`}>{body}</a>
+                ? <a className='card-link' href={bird.wikiURL} target='_blank' rel='noreferrer'>{body}<span className='visually-hidden'>, read about this bird on Wikipedia (opens in a new tab)</span></a>
                 : <div className='card-link'>{body}</div>}
             <input type="checkbox" checked={isChecked} disabled={toggleSaved.isPending} id={bird.speciesCode} name={bird.comName} aria-label={`Watch ${bird.comName}`} onChange={handleChange} />
         </article>
