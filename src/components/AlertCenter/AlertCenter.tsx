@@ -23,7 +23,7 @@ const pushHint: Record<string, string> = {
   unsupported: 'This browser cannot receive push notifications.',
   denied: 'Notifications are blocked for this site in your browser settings.',
   off: 'Turn on to get notified on this device. On iPhone, add Bird Alert to your Home Screen first.',
-  on: 'This device will be notified. Choose what below. Android and Windows show the bird photo, a map and buttons; Mac shows the photo and buttons; iPhone shows text only.',
+  on: 'This device will be notified. Choose what below. Android and Windows show the bird photo, a map and buttons; Mac shows the app icon and buttons; iPhone shows text only.',
   busy: 'Updating…'
 }
 
