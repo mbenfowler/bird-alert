@@ -1,20 +1,21 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Routes, Route, useNavigate, useLocation, Link } from 'react-router-dom';
+import { useState, useEffect, useMemo, useCallback, type ReactElement } from 'react'
+import { Routes, Route, useNavigate, useLocation, Link } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import { getCurrentUser, logout as apiLogout, getBirdKeysByLocation, getBirdsData, getSavedBirds, getBirdObservationsByLocation } from "../../apiCalls"
-import './App.css';
-import Login from '../Login/Login';
-import Nav from '../Nav/Nav';
-import Error from '../Error/Error';
-import Home from '../Home/Home';
-import Saved from '../Saved/Saved';
-import Settings from '../Settings/Settings';
-import EmailConfirm from '../EmailConfirm/EmailConfirm';
-import Unsubscribe from '../Unsubscribe/Unsubscribe';
-import PassReset from '../PassReset/PassReset';
-import NotFound from '../NotFound/NotFound';
-import BirdsContext from '../BirdsContext/BirdsContext';
+import { getCurrentUser, logout as apiLogout, getBirdKeysByLocation, getBirdsData, getSavedBirds, getBirdObservationsByLocation, errorMessage } from '../../apiCalls'
+import type { Bird, Observation } from '../../types'
+import './App.css'
+import Login from '../Login/Login'
+import Nav from '../Nav/Nav'
+import ErrorMessage from '../Error/ErrorMessage'
+import Home from '../Home/Home'
+import Saved from '../Saved/Saved'
+import Settings from '../Settings/Settings'
+import EmailConfirm from '../EmailConfirm/EmailConfirm'
+import Unsubscribe from '../Unsubscribe/Unsubscribe'
+import PassReset from '../PassReset/PassReset'
+import NotFound from '../NotFound/NotFound'
+import BirdsContext, { type BirdsContextValue, type SessionUser } from '../BirdsContext/BirdsContext'
 
 const RESULTS_PER_PAGE = 5
 
@@ -22,23 +23,22 @@ const RESULTS_PER_PAGE = 5
 const PUBLIC_PATH_PREFIXES = ['/login', '/reset/', '/confirm/', '/unsubscribe/']
 
 const App = () => {
-  // undefined: still checking the session cookie. null: logged out. object: logged in.
-  const [user, setUser] = useState(undefined)
-  const [birds, setBirds] = useState([])
-  const [savedBirds, setSavedBirds] = useState([])
-  const [recentObservations, setRecentObservations] = useState([])
+  const [user, setUser] = useState<SessionUser>(undefined)
+  const [birds, setBirds] = useState<Bird[]>([])
+  const [savedBirds, setSavedBirds] = useState<Bird[]>([])
+  const [recentObservations, setRecentObservations] = useState<Observation[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [pageCount, setPageCount] = useState(1)
   const [isLoaded, setIsLoaded] = useState(false)
-  const [networkError, setNetworkError] = useState(null)
+  const [networkError, setNetworkError] = useState<string | null>(null)
 
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
-  const handleNetworkErrors = useCallback((error) => setNetworkError(error.message), [])
+  const handleNetworkErrors = useCallback((error: unknown) => setNetworkError(errorMessage(error)), [])
 
   const logout = useCallback(async () => {
-    try { await apiLogout() } catch (error) { /* the cookie is gone either way */ }
+    try { await apiLogout() } catch { /* the cookie is gone either way */ }
     setUser(null)
     setBirds([])
     setSavedBirds([])
@@ -58,8 +58,8 @@ const App = () => {
   // Send logged-out visitors to /login, but leave the email-link routes and 404s alone.
   const isPublicPath = PUBLIC_PATH_PREFIXES.some(prefix => pathname.startsWith(prefix))
   useEffect(() => {
-    if (user === null && !isPublicPath && pathname !== '/login') navigate('/login', { replace: true })
-  }, [user, isPublicPath, pathname, navigate])
+    if (user === null && !isPublicPath) navigate('/login', { replace: true })
+  }, [user, isPublicPath, navigate])
 
   const userId = user?.id
   const region = user?.location
@@ -112,7 +112,7 @@ const App = () => {
     [recentObservations, savedCodes]
   )
 
-  const contextValue = {
+  const contextValue: BirdsContextValue = {
     user, setUser, logout,
     birds, savedBirds, setSavedBirds, savedCodes,
     recentObservations, birdAlerts,
@@ -121,15 +121,14 @@ const App = () => {
   }
 
   // Gate an element on having a user. While the session is being checked, show a spinner.
-  // (A plain function rather than a component so the gated element keeps its identity across renders.)
-  const requireUser = (element) => {
+  const requireUser = (element: ReactElement) => {
     if (user === undefined) return <div className='spinner'></div>
     if (user === null) return null
     return element
   }
 
   const home = networkError
-    ? <Error networkError={networkError} />
+    ? <ErrorMessage networkError={networkError} />
     : user?.location
       ? <Home />
       : <section id='init'>
@@ -154,7 +153,7 @@ const App = () => {
         <ToastContainer />
       </main>
     </BirdsContext.Provider>
-  );
+  )
 }
 
-export default App;
+export default App

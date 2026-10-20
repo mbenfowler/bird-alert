@@ -1,8 +1,9 @@
-import { useState, useContext, useEffect } from 'react'
+import { useState, useEffect, type ChangeEvent, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { patchUser, getExternalRegions, resendConfirmationEmail, requestPasswordReset } from '../../apiCalls'
-import BirdsContext from '../BirdsContext/BirdsContext'
+import { patchUser, getExternalRegions, resendConfirmationEmail, requestPasswordReset, errorMessage } from '../../apiCalls'
+import { useBirds, useCurrentUser } from '../BirdsContext/BirdsContext'
+import type { Region } from '../../types'
 import './Form.css'
 
 const STATE_CODES = [
@@ -13,11 +14,12 @@ const STATE_CODES = [
     "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
 ]
 
-const toastAt = { position: 'bottom-center' }
+const toastAt = { position: 'bottom-center' } as const
 
 const Form = () => {
-    const { user, setUser, handleNetworkErrors } = useContext(BirdsContext)
-    const [regions, setRegions] = useState([])
+    const user = useCurrentUser()
+    const { setUser, handleNetworkErrors } = useBirds()
+    const [regions, setRegions] = useState<Region[]>([])
     const [isSaving, setIsSaving] = useState(false)
     const [form, setForm] = useState({
         state:    user.state || '',
@@ -40,8 +42,9 @@ const Form = () => {
         return () => { cancelled = true }
     }, [form.state, handleNetworkErrors])
 
-    const handleChange = (e) => {
-        setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
+    const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target
+        setForm(prev => ({ ...prev, [name]: value }))
     }
 
     const navigate = useNavigate()
@@ -50,7 +53,7 @@ const Form = () => {
         toast.promise(resendConfirmationEmail(), {
             pending: { render: 'Sending confirmation email...', ...toastAt },
             success: { render: 'Confirmation email sent!', ...toastAt },
-            error: { render: ({ data }) => data?.message || 'Something went wrong', ...toastAt }
+            error: { render: ({ data }) => errorMessage(data), ...toastAt }
         })
     }
 
@@ -58,11 +61,11 @@ const Form = () => {
         toast.promise(requestPasswordReset(user.email), {
             pending: { render: 'Sending password reset email...', ...toastAt },
             success: { render: 'Password reset email sent!', ...toastAt },
-            error: { render: ({ data }) => data?.message || 'Something went wrong', ...toastAt }
+            error: { render: ({ data }) => errorMessage(data), ...toastAt }
         })
     }
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         setIsSaving(true)
         try {
@@ -74,7 +77,7 @@ const Form = () => {
             toast.success('Settings saved!', toastAt)
             navigate('/')
         } catch (error) {
-            toast.error(error.message, toastAt)
+            toast.error(errorMessage(error), toastAt)
         } finally {
             setIsSaving(false)
         }
