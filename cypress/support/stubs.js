@@ -1,0 +1,39 @@
+import { TEST_USER } from './login'
+
+/**
+ * Registers stubs for the auth and user routes without logging in. Returns a mutable state object
+ * so a spec can flip `loggedIn` or inspect what the fake server holds.
+ */
+export const stubAuth = ({ userExists = true, user = TEST_USER, loggedIn = false } = {}) => {
+  const state = { loggedIn, user }
+
+  cy.intercept('GET', '**/api/auth/me', (req) => {
+    req.reply(state.loggedIn ? { statusCode: 200, body: state.user } : { statusCode: 401, body: { error: 'Not logged in' } })
+  }).as('me')
+  cy.intercept('GET', '**/api/auth/exists?*', { statusCode: 200, body: { userExists } }).as('userExists')
+  cy.intercept('POST', '**/api/auth/login', (req) => {
+    state.loggedIn = true
+    req.reply({ statusCode: 200, body: state.user })
+  }).as('login')
+  cy.intercept('POST', '**/api/auth/signup', (req) => {
+    state.loggedIn = true
+    state.user = { ...state.user, email: req.body.email, location: '', state: '', email_confirmed: false }
+    req.reply({ statusCode: 201, body: state.user })
+  }).as('signup')
+  cy.intercept('POST', '**/api/auth/logout', { statusCode: 204, body: '' }).as('logout')
+  cy.intercept('POST', '**/api/auth/forgot', { statusCode: 200, body: { ok: true } }).as('forgot')
+  cy.intercept('POST', '**/api/auth/reset', { statusCode: 200, body: { ok: true } }).as('reset')
+  cy.intercept('POST', '**/api/auth/confirm', { statusCode: 200, body: { ok: true } }).as('confirm')
+  cy.intercept('POST', '**/api/auth/resend-confirmation', { statusCode: 200, body: { ok: true } }).as('resendConfirmation')
+  cy.intercept('PATCH', '**/api/user', (req) => {
+    state.user = { ...state.user, ...req.body }
+    if (req.body.email && req.body.email !== user.email) state.user.email_confirmed = false
+    req.reply({ statusCode: 200, body: state.user })
+  }).as('patchUser')
+  // Catch-all first: Cypress gives the most recently registered matching intercept priority.
+  cy.intercept('GET', '**/api/ebird/**', { statusCode: 200, body: [] })
+  cy.intercept('GET', '**/api/ebird/regions*', { statusCode: 200, body: [{ code: 'US-GA-139', name: 'Hall' }, { code: 'US-GA-121', name: 'Fulton' }] }).as('regions')
+  cy.intercept('GET', '**/api/saved', { statusCode: 200, body: [] }).as('getSaved')
+
+  return state
+}

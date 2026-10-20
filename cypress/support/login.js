@@ -2,7 +2,6 @@ export const TEST_USER = {
   id: 1,
   username: '',
   email: 'robinware456@gmail.com',
-  phone: '555-555-5556',
   location: 'US-GA-139',
   state: 'GA',
   email_confirmed: true,

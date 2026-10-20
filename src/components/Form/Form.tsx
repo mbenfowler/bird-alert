@@ -23,8 +23,7 @@ const Form = () => {
     const [form, setForm] = useState({
         state:    user.state || '',
         location: user.location || '',
-        email:    user.email || '',
-        phone:    user.phone || ''
+        email:    user.email || ''
     })
 
     // Region options follow the selected state (cached for a week per state).
@@ -98,10 +97,6 @@ const Form = () => {
                     </select>
                 </label>
             }
-            <label>
-                Phone #:
-                <input type="tel" name='phone' autoComplete='tel' value={form.phone} onChange={handleChange} />
-            </label>
             <button type='submit' className='submit'>Lock in details</button>
         </form>
     )
