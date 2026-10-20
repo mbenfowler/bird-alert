@@ -10,7 +10,7 @@ import './AlertCenter.css'
 
 const PUSH_KINDS: { field: PushPreference; label: string; hint: string }[] = [
   { field: 'push_watchlist_enabled', label: 'Watch list sightings', hint: 'Sent as soon as the hourly check finds one.' },
-  { field: 'push_notable_enabled', label: 'Notable sightings', hint: "eBird's uncommon birds for your area. If one is also on your watch list, you get a single notification, not two." }
+  { field: 'push_notable_enabled', label: 'Notable sightings', hint: "eBird's uncommon birds for your area." }
 ]
 
 const EMAIL_PREFERENCES: { field: EmailPreference; label: string; hint: string }[] = [
