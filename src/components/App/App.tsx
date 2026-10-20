@@ -1,4 +1,4 @@
-import { useEffect, type ReactElement } from 'react'
+import { lazy, Suspense, useEffect, type ReactElement } from 'react'
 import { Routes, Route, useNavigate, useLocation, Link } from 'react-router'
 import { ToastContainer } from 'react-toastify'
 import { useSessionQuery } from '../../hooks/queries'
@@ -6,12 +6,15 @@ import './App.css'
 import Login from '../Login/Login'
 import Nav from '../Nav/Nav'
 import Home from '../Home/Home'
-import Saved from '../Saved/Saved'
-import Settings from '../Settings/Settings'
-import EmailConfirm from '../EmailConfirm/EmailConfirm'
-import Unsubscribe from '../Unsubscribe/Unsubscribe'
-import PassReset from '../PassReset/PassReset'
 import NotFound from '../NotFound/NotFound'
+import { LoadingState } from '../Loading/Loading'
+
+// Everything off the main path loads on demand, keeping the first visit light.
+const Saved = lazy(() => import('../Saved/Saved'))
+const Settings = lazy(() => import('../Settings/Settings'))
+const EmailConfirm = lazy(() => import('../EmailConfirm/EmailConfirm'))
+const Unsubscribe = lazy(() => import('../Unsubscribe/Unsubscribe'))
+const PassReset = lazy(() => import('../PassReset/PassReset'))
 
 // Routes reachable without a session. Everything else redirects to /login once we know there is no user.
 const PUBLIC_PATH_PREFIXES = ['/login', '/reset/', '/confirm/', '/unsubscribe/']
@@ -47,6 +50,7 @@ const App = () => {
     <>
       <Nav />
       <main className="App">
+        <Suspense fallback={<LoadingState />}>
         <Routes>
           <Route path='/' element={requireUser(home)} />
           <Route path='/login' element={<Login />} />
@@ -57,6 +61,7 @@ const App = () => {
           <Route path='/confirm/:token' element={<EmailConfirm />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </Suspense>
         <ToastContainer />
       </main>
     </>

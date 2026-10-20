@@ -10,6 +10,9 @@ export const TEST_USER = {
   push_watchlist_enabled: true,
   push_notable_enabled: false,
   push_notable_batched: false,
+  push_quiet_start: 22,
+  push_quiet_end: 6,
+  timezone: 'America/New_York',
   created_at: '2023-11-21T19:33:34.829Z',
   updated_at: '2023-12-01T23:13:41.118Z'
 }
@@ -77,7 +80,7 @@ export const login = () => {
   cy.intercept('GET', '**/api/ebird/observations?region=US-GA-139', { statusCode: 200, fixture: 'recentBirds' }).as('observations')
   cy.intercept('GET', '**/api/ebird/notable*', { statusCode: 200, body: [] }).as('notable')
   cy.intercept('GET', '**/api/ebird/regions*', { statusCode: 200, body: [{ code: 'US-GA-139', name: 'Hall' }] }).as('regions')
-  cy.intercept('GET', '**/api/push/status*', { statusCode: 200, body: { subscribed: false, devices: 0 } }).as('pushStatus')
+  cy.intercept('GET', '**/api/push/status*', { statusCode: 200, body: { subscribed: false, devices: 0, lastRun: { at: new Date(Date.now() - 14 * 60000).toISOString(), notified: 0 } } }).as('pushStatus')
 
   cy.visit('http://localhost:3000/')
   cy.get('.input').type('robinware456@gmail.com{enter}')

@@ -1,7 +1,7 @@
-import { type ChangeEvent } from 'react'
+import { useEffect, type ChangeEvent } from 'react'
 import { toast } from 'react-toastify'
 import { errorMessage } from '../../apiCalls'
-import { useCurrentUser } from '../../hooks/queries'
+import { useCurrentUser, usePushStatusQuery } from '../../hooks/queries'
 import { usePatchUserMutation } from '../../hooks/mutations'
 import { usePushNotifications } from '../../hooks/usePushNotifications'
 import { LoadingState } from '../Loading/Loading'
@@ -27,10 +27,36 @@ const pushHint: Record<string, string> = {
   busy: 'Updating…'
 }
 
+const HOURS = Array.from({ length: 24 }, (_, h) => ({ value: h, label: `${h % 12 || 12} ${h < 12 ? 'AM' : 'PM'}` }))
+
+const timeAgo = (iso: string) => {
+  const minutes = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60_000))
+  if (minutes < 1) return 'just now'
+  if (minutes < 60) return `${minutes} min ago`
+  const hours = Math.round(minutes / 60)
+  return hours < 48 ? `${hours} hour${hours === 1 ? '' : 's'} ago` : `${Math.round(hours / 24)} days ago`
+}
+
 const AlertCenter = () => {
   const user = useCurrentUser()
   const patchUser = usePatchUserMutation()
   const push = usePushNotifications()
+  const status = usePushStatusQuery()
+
+  // Quiet hours are judged in the user's own zone, which only the browser knows; keep it current.
+  const browserZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+  useEffect(() => {
+    if (browserZone && user.timezone !== browserZone && !patchUser.isPending) patchUser.mutate({ timezone: browserZone })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [browserZone, user.timezone])
+
+  const quietOn = user.push_quiet_start !== null && user.push_quiet_end !== null
+  const setQuiet = (changes: { push_quiet_start?: number | null; push_quiet_end?: number | null }) => {
+    patchUser.mutate(changes, {
+      onSuccess: () => toast.success('Quiet hours updated!', { position: 'bottom-center' }),
+      onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
+    })
+  }
   const pendingField = patchUser.isPending ? Object.keys(patchUser.variables ?? {})[0] : null
 
   const togglePreference = (e: ChangeEvent<HTMLInputElement>) => {
@@ -80,6 +106,14 @@ const AlertCenter = () => {
             <input className='switch' type='checkbox' id='push_enabled' name='push_enabled' checked={pushOn} disabled={pushDisabled} onChange={togglePush} />
           </div>
         </div>
+        {status.data?.lastRun && (
+          <p className='last-checked' data-testid='last-checked'>
+            Last checked {timeAgo(status.data.lastRun.at)}
+            {status.data.lastRun.notified ? ` · ${status.data.lastRun.notified} notified` : ' · nothing new'}
+            {status.data.lastRun.heldForQuietHours ? ` · ${status.data.lastRun.heldForQuietHours} waiting for quiet hours to end` : ''}
+            {status.data.devices > 1 ? ` · ${status.data.devices} devices` : ''}
+          </p>
+        )}
 
         {/* Sub-options sit greyed out until push is on for this device. */}
         <div className='notification-sub' aria-disabled={!pushOn}>
@@ -109,6 +143,33 @@ const AlertCenter = () => {
               )}
             </div>
           ))}
+          <div className='notification notification--sub'>
+            <div className='notification__text'>
+              <label htmlFor='push_quiet_enabled'>Quiet hours</label>
+              <p className='notification__hint'>
+                {quietOn ? `No pushes between ${HOURS[user.push_quiet_start!].label} and ${HOURS[user.push_quiet_end!].label}; they arrive after.` : 'Pushes can arrive at any hour.'}
+                {user.timezone ? ` Your time zone: ${user.timezone.replace('_', ' ')}.` : ''}
+              </p>
+            </div>
+            <div className='notification__controls'>
+              <input className='switch switch--small' type='checkbox' id='push_quiet_enabled' name='push_quiet_enabled' checked={quietOn} disabled={!pushOn || patchUser.isPending}
+                onChange={(e) => setQuiet(e.target.checked ? { push_quiet_start: 22, push_quiet_end: 6 } : { push_quiet_start: null, push_quiet_end: null })} />
+            </div>
+          </div>
+          {quietOn && (
+            <div className='quiet-range' aria-label='Quiet hours range'>
+              <label>From
+                <select value={user.push_quiet_start ?? 22} disabled={!pushOn || patchUser.isPending} onChange={(e) => setQuiet({ push_quiet_start: Number(e.target.value) })}>
+                  {HOURS.map(h => <option key={h.value} value={h.value}>{h.label}</option>)}
+                </select>
+              </label>
+              <label>to
+                <select value={user.push_quiet_end ?? 6} disabled={!pushOn || patchUser.isPending} onChange={(e) => setQuiet({ push_quiet_end: Number(e.target.value) })}>
+                  {HOURS.map(h => <option key={h.value} value={h.value}>{h.label}</option>)}
+                </select>
+              </label>
+            </div>
+          )}
           {pushOn && <button type='button' className='test-push' onClick={sendTest}>Send a test notification</button>}
         </div>
       </div>

@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions,
-  getSavedBirds, getSpeciesList, searchBirds
+  getSavedBirds, getSpeciesList, searchBirds, getPushStatus
 } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
 import type { User } from '../types'
@@ -23,7 +23,8 @@ export const queryKeys = {
   observations: (region: string) => ['observations', region] as const,
   notable: (region: string) => ['notable', region] as const,
   regions: (state: string) => ['regions', state] as const,
-  search: (term: string) => ['bird-search', term] as const
+  search: (term: string) => ['bird-search', term] as const,
+  pushStatus: ['push-status'] as const
 }
 
 /** The logged-in user, null when logged out, undefined while the cookie is being checked. */
@@ -137,4 +138,13 @@ export const useInfiniteBirdsQuery = (region: string, codes: string[], pageSize:
     gcTime: WEEK,
     meta: { persist: true },
     enabled: codes.length > 0
+  })
+
+/** Devices on the account and when the hourly push job last ran; refreshed each minute while shown. */
+export const usePushStatusQuery = () =>
+  useQuery({
+    queryKey: queryKeys.pushStatus,
+    queryFn: () => getPushStatus(),
+    staleTime: 30_000,
+    refetchInterval: 60_000
   })

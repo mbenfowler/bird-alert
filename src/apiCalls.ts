@@ -79,10 +79,14 @@ export const getNotableObservations = (region: string) => api<Observation[]>('/e
 export const getRegions = (state: string) => api<Region[]>('/ebird/regions', { params: { state } })
 
 // ---- web push ----
-export interface PushStatus { subscribed: boolean; devices: number }
+export interface PushStatus {
+    subscribed: boolean
+    devices: number
+    lastRun: { at: string; notified?: number; heldForQuietHours?: number } | null
+}
 export const getPushPublicKey = () => api<{ publicKey: string }>('/push/public-key')
 export const subscribePush = (subscription: PushSubscriptionJSON & { userAgent?: string }) =>
     api<{ ok: true }>('/push/subscribe', { method: 'POST', body: subscription })
 export const unsubscribePush = (endpoint: string) => api<null>('/push/unsubscribe', { method: 'POST', body: { endpoint } })
-export const getPushStatus = (endpoint: string) => api<PushStatus>('/push/status', { params: { endpoint } })
+export const getPushStatus = (endpoint?: string) => api<PushStatus>('/push/status', endpoint ? { params: { endpoint } } : {})
 export const sendTestPush = (endpoint?: string) => api<{ sent: number; gone: number }>('/push/test', { method: 'POST', body: endpoint ? { endpoint } : {} })
