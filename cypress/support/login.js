@@ -12,7 +12,8 @@ export const TEST_USER = {
   push_notable_batched: false,
   push_quiet_start: 22,
   push_quiet_end: 6,
-  timezone: 'America/New_York',
+  // Match the browser running the tests, so the Alert Center does not issue a time-zone update on its own.
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   created_at: '2023-11-21T19:33:34.829Z',
   updated_at: '2023-12-01T23:13:41.118Z'
 }
