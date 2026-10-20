@@ -61,12 +61,16 @@ export const useSpeciesListQuery = (region: string) =>
     enabled: Boolean(region)
   })
 
-/** Bird records are immutable once stored, so a fetched page never needs refetching. */
+/**
+ * Bird records are immutable once stored, so a complete page never needs refetching. A page that
+ * came back short (a code the server could not resolve, or a stale cached response) is kept only
+ * for the current session and retried next time, rather than persisted for a week.
+ */
 export const birdsQueryOptions = (codes: string[]) =>
   queryOptions({
     queryKey: queryKeys.birds(codes),
     queryFn: () => getBirdsByCodes(codes),
-    staleTime: Infinity,
+    staleTime: (query) => ((query.state.data?.length ?? 0) >= codes.length ? Infinity : 0),
     gcTime: WEEK,
     meta: { persist: true },
     enabled: codes.length > 0
