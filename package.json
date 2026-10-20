@@ -50,5 +50,8 @@
     "cypress": "^13.6.0",
     "eslint-plugin-cypress": "^2.15.1"
   },
-  "proxy": "http://localhost:3001"
+  "proxy": "http://localhost:3001",
+  "engines": {
+    "node": "22.x"
+  }
 }
