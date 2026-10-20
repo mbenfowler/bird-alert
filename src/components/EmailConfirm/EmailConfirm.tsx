@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router'
 import { confirmEmail, errorMessage } from '../../apiCalls'
 import './EmailConfirm.css'
 

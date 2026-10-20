@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter } from 'react-router'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import App from './components/App/App'
 import { queryClient, persistOptions } from './queryClient'

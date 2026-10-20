@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router'
 
 /**
  * Current page from the `?page=` search param, clamped to [1, pageCount]. Keeping it in the URL

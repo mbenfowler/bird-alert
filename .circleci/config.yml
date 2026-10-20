@@ -3,9 +3,15 @@ orbs:
   node: circleci/node@5.1.0
   cypress: cypress-io/cypress@3.2.0
 
+# Vite 8 and Cypress 15 need Node 20.19+; the orb's default executor is older, so every job runs on this image.
+executors:
+  node22:
+    docker:
+      - image: cimg/node:22.20.0-browsers
+
 jobs:
   build:
-    executor: node/default
+    executor: node22
     steps:
       - checkout
       - node/install-packages:
@@ -19,14 +25,18 @@ jobs:
       - run:
           name: Run build
           command: npm run build
-      - persist_to_workspace:
-          root: ~/project
-          paths:
-            - .
+
+  e2e:
+    executor: node22
+    steps:
+      - checkout
+      - cypress/install
+      - cypress/run-tests:
+          start-command: npm start
+          cypress-command: until curl -sf http://localhost:3000 > /dev/null; do sleep 1; done; npx cypress run --browser electron
+
 workflows:
   test_my_app:
     jobs:
-      - cypress/run: 
-          cypress-command: npx cypress run --browser electron
-          start-command: npm start
       - build
+      - e2e

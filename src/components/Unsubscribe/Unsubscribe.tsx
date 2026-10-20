@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router'
 import { unsubscribe, errorMessage } from '../../apiCalls'
 
 type Status = 'pending' | 'done' | 'failed'

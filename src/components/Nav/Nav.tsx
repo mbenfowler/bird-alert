@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router'
 import { useSessionQuery } from '../../hooks/queries'
 import { useLogoutMutation } from '../../hooks/mutations'
 import './Nav.css'

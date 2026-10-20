@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent, type ChangeEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { toast } from 'react-toastify'
 import { getUserExists, login, signup, requestPasswordReset, errorMessage } from '../../apiCalls'
 import { useSessionQuery } from '../../hooks/queries'
