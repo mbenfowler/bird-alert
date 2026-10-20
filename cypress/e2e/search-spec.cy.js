@@ -25,9 +25,14 @@ describe('Search', () => {
     cy.get('.birds-list .card').should('have.length', 1)
   })
 
-  it('remembers the region-only choice on this device', () => {
+  it('shows the scope switch only while searching, and remembers the choice on this device', () => {
+    cy.get('#searchRegionOnly').should('not.exist')
+    cy.get('#birdSearch').type('goose')
     cy.get('#searchRegionOnly').click()
     cy.reload()
-    cy.get('#searchRegionOnly', { timeout: 15000 }).should('be.checked')
+    cy.get('.birds-list .card', { timeout: 15000 })
+    cy.get('#searchRegionOnly').should('not.exist')
+    cy.get('#birdSearch').type('goose')
+    cy.get('#searchRegionOnly').should('be.checked')
   })
 })

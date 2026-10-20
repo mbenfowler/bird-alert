@@ -104,10 +104,13 @@ const Home = () => {
                     <input id='birdSearch' type='search' placeholder='Search birds by name' aria-label='Search birds by name' autoComplete='off' value={search} onChange={(e) => setSearch(e.target.value)} />
                     {search && <button type='button' className='search__clear' aria-label='Clear search' onClick={() => setSearch('')}><CloseIcon /></button>}
                 </div>
-                <label className='search-scope'>
-                    <input className='switch switch--small' type='checkbox' id='searchRegionOnly' checked={regionOnly} onChange={(e) => setRegionOnly(e.target.checked)} />
-                    <span>Only birds in {regionName ?? 'my region'}</span>
-                </label>
+                {/* The main list is always the region's birds; this scope switch only applies to a search. */}
+                {isSearching && (
+                    <label className='search-scope'>
+                        <input className='switch switch--small' type='checkbox' id='searchRegionOnly' checked={regionOnly} onChange={(e) => setRegionOnly(e.target.checked)} />
+                        <span>Only birds in {regionName ?? 'my region'}</span>
+                    </label>
+                )}
                 <h2 className='fredericka list-heading'>
                     {isSearching ? 'Search results' : <>Birds in your area: <span className='list-heading__region'>{regionLabel}</span></>}
                 </h2>
