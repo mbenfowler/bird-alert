@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions,
-  getSavedBirds, getSpeciesList, searchBirds, getPushStatus
+  getSavedBirds, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations
 } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
 import type { User } from '../types'
@@ -24,7 +24,8 @@ export const queryKeys = {
   notable: (region: string) => ['notable', region] as const,
   regions: (state: string) => ['regions', state] as const,
   search: (term: string) => ['bird-search', term] as const,
-  pushStatus: ['push-status'] as const
+  pushStatus: ['push-status'] as const,
+  speciesObservations: (region: string, code: string) => ['species-observations', region, code] as const
 }
 
 /** The logged-in user, null when logged out, undefined while the cookie is being checked. */
@@ -147,4 +148,13 @@ export const usePushStatusQuery = () =>
     queryFn: () => getPushStatus(),
     staleTime: 30_000,
     refetchInterval: 60_000
+  })
+
+/** Every reported location of one species in the region over the last 30 days. */
+export const useSpeciesObservationsQuery = (region: string, code: string) =>
+  useQuery({
+    queryKey: queryKeys.speciesObservations(region, code),
+    queryFn: () => getSpeciesObservations(region, code),
+    staleTime: 5 * MINUTE,
+    enabled: Boolean(region && code)
   })

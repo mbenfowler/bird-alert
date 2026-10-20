@@ -11,6 +11,8 @@
     --accent-soft: rgba(255, 215, 0, 0.35);
     --accent-ink: #6b5800;
     --focus: #1a56db;
+    /* Link blue dark enough to pass contrast on the grey canvas. */
+    --link: #163a99;
 }
 
 * {

@@ -76,10 +76,20 @@ export const login = () => {
     req.reply({ statusCode: 200, body: all.filter((b) => b.comName.toLowerCase().includes(q)) })
   }).as('search')
 
+  // Map tiles: a 1x1 PNG so tests never hit OpenStreetMap.
+  cy.intercept('GET', 'https://tile.openstreetmap.org/**', { fixture: 'tile.png,null' }).as('tiles')
+
   // eBird, as proxied by the backend.
   cy.intercept('GET', '**/api/ebird/species-list?region=US-GA-139', { statusCode: 200, fixture: 'birdCodes' }).as('speciesList')
   cy.intercept('GET', '**/api/ebird/observations?region=US-GA-139', { statusCode: 200, fixture: 'recentBirds' }).as('observations')
   cy.intercept('GET', '**/api/ebird/notable*', { statusCode: 200, body: [] }).as('notable')
+  // Per-species feed: only that species' rows from the fixture, as eBird would return.
+  const recent = { observations: [] }
+  cy.fixture('recentBirds').then((obs) => { recent.observations = obs })
+  cy.intercept('GET', '**/api/ebird/species-observations*', (req) => {
+    const code = new URL(req.url).searchParams.get('code')
+    req.reply({ statusCode: 200, body: recent.observations.filter((o) => o.speciesCode === code) })
+  }).as('speciesObservations')
   cy.intercept('GET', '**/api/ebird/regions*', { statusCode: 200, body: [{ code: 'US-GA-139', name: 'Hall' }] }).as('regions')
   cy.intercept('GET', '**/api/push/status*', { statusCode: 200, body: { subscribed: false, devices: 0, lastRun: { at: new Date(Date.now() - 14 * 60000).toISOString(), notified: 0 } } }).as('pushStatus')
 

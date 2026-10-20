@@ -1,0 +1,62 @@
+.sightings-map {
+    width: 100%;
+    border: 2px solid var(--ink);
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--surface-muted);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+}
+
+.sightings-map .leaflet-container {
+    font: inherit;
+}
+
+/* CSS pin: a round head on a short tail; the highlighted one is gold and larger. */
+.map-pin {
+    position: relative;
+}
+
+.map-pin__head {
+    position: absolute;
+    left: 3px;
+    top: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #d62828;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.map-pin__tail {
+    position: absolute;
+    left: 10px;
+    top: 18px;
+    width: 0;
+    height: 0;
+    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
+    border-top: 14px solid #d62828;
+    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3));
+}
+
+.map-pin--highlight .map-pin__head {
+    background: var(--accent);
+    border-color: var(--ink);
+    transform: scale(1.25);
+    transform-origin: center;
+}
+
+.map-pin--highlight .map-pin__tail {
+    border-top-color: var(--ink);
+}
+
+.leaflet-popup-content-wrapper {
+    border-radius: 10px;
+    border: 2px solid var(--ink);
+}
+
+.leaflet-popup-content {
+    margin: 10px 14px;
+    line-height: 1.4;
+}

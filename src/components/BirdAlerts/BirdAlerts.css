@@ -123,6 +123,32 @@
   background-color: var(--accent);
 }
 
+.alerts-map-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 0 10px;
+  border: solid var(--line) 2px;
+  border-radius: 8px;
+  background: var(--surface-muted);
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.alerts-map-link svg {
+  width: 22px;
+  height: 22px;
+}
+
+.alerts-map-link:hover,
+.alerts-map-link:focus-visible {
+  background: var(--surface);
+  outline: none;
+}
+
 .alerts-toggle {
   display: inline-flex;
   align-items: center;
@@ -235,6 +261,7 @@
 
 /* Phones: hide the toggle's word to keep the bar on one line. */
 @media screen and (max-width: 480px) {
+  .alerts-map-link span,
   .alerts-toggle span {
     position: absolute;
     width: 1px;

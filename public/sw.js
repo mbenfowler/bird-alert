@@ -47,9 +47,9 @@ self.addEventListener('notificationclick', (event) => {
   const data = event.notification.data || {}
   const appUrl = new URL(data.url || '/', self.location.origin).href
   const hasLocation = typeof data.lat === 'number' && typeof data.lng === 'number'
-  // Tap: the sighting on a map. 'View on eBird': the checklist. 'Open app': the site.
-  let target = hasLocation ? mapsUrl(data) : appUrl
+  // Tap: the sighting page in the app. 'Open map': the maps app. 'View on eBird': the checklist.
+  let target = appUrl
+  if (event.action === 'map' && hasLocation) target = mapsUrl(data)
   if (event.action === 'ebird' && data.ebirdUrl) target = data.ebirdUrl
-  if (event.action === 'app' || (!hasLocation && !data.ebirdUrl)) target = appUrl
   event.waitUntil(openUrl(target))
 })
