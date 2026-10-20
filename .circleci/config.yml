@@ -3,9 +3,14 @@ orbs:
   node: circleci/node@5.1.0
   cypress: cypress-io/cypress@3.2.0
 
+executors:
+  node22:
+    docker:
+      - image: cimg/node:22.20
+
 jobs:
   build:
-    executor: node/default
+    executor: node22
     steps:
       - checkout
       - node/install-packages:
@@ -26,7 +31,8 @@ jobs:
 workflows:
   test_my_app:
     jobs:
-      - cypress/run: 
+      - cypress/run:
+          node-version: '22.20.0'
           cypress-command: npx cypress run --browser electron
           start-command: npm start
       - build

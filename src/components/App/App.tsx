@@ -1,7 +1,6 @@
 import { useEffect, type ReactElement } from 'react'
-import { Routes, Route, useNavigate, useLocation, Link } from 'react-router-dom'
+import { Routes, Route, useNavigate, useLocation, Link } from 'react-router'
 import { ToastContainer } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
 import { useSessionQuery } from '../../hooks/queries'
 import './App.css'
 import Login from '../Login/Login'

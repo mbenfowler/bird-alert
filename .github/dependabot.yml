@@ -7,3 +7,10 @@ updates:
     groups:
       all-dependencies:
         patterns: ["*"]
+    ignore:
+      # Runtime is Node 22; keep the types on the same major.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # cypress-axe caps the Cypress peer range; bump both together by hand.
+      - dependency-name: "cypress"
+        update-types: ["version-update:semver-major"]
