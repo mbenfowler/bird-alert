@@ -18,6 +18,24 @@
 
 .list-heading {
     margin: 6px 0 10px;
+    text-align: center;
+}
+
+/* On phones the region drops to its own smaller line so the heading never wraps mid-phrase. */
+.list-heading__region {
+    white-space: nowrap;
+}
+
+@media screen and (max-width: 600px) {
+    .list-heading__region {
+        display: block;
+        margin-top: 2px;
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 0.62em;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        color: var(--muted);
+    }
 }
 
 /* Search field: icon on the left, clear button on the right, generous touch target. */

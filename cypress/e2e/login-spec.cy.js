@@ -19,6 +19,7 @@ describe("Login flow for a user that already has location set", () => {
       .get('.alerts-toggle').should('have.attr', 'aria-expanded', 'true')
       .get('#birdSearch').invoke('attr', 'placeholder').should('contain', 'Search birds by name')
       .get('#birdsInArea > h2').should('contain', 'Birds in your area')
+      .get('.list-heading__region').should('contain', 'Hall - US-GA-139')
       .get('#snogoo').should('be.checked')
       .get('.birds-list .card').should('have.length', 7)
       .get('.list-end').should('contain', "That's all 7 birds")

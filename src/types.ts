@@ -7,11 +7,14 @@ export interface User {
   email_confirmed: boolean
   alert_digest_email_enabled: boolean
   rare_sightings_email_enabled: boolean
+  push_watchlist_enabled: boolean
+  push_notable_enabled: boolean
   created_at: string
   updated_at: string
 }
 
 export type EmailPreference = 'alert_digest_email_enabled' | 'rare_sightings_email_enabled'
+export type PushPreference = 'push_watchlist_enabled' | 'push_notable_enabled'
 
 export interface UserPatch {
   email?: string
@@ -19,6 +22,8 @@ export interface UserPatch {
   location?: string
   alert_digest_email_enabled?: boolean
   rare_sightings_email_enabled?: boolean
+  push_watchlist_enabled?: boolean
+  push_notable_enabled?: boolean
 }
 
 /** A bird as stored in our database, or as assembled from eBird taxonomy plus image and wiki lookups. */
