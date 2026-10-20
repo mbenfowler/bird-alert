@@ -2,7 +2,6 @@ export interface User {
   id: number
   username: string
   email: string
-  phone: string
   location: string
   state: string
   email_confirmed: boolean
@@ -18,7 +17,6 @@ export interface UserPatch {
   email?: string
   state?: string
   location?: string
-  phone?: string
   alert_digest_email_enabled?: boolean
   rare_sightings_email_enabled?: boolean
 }
