@@ -1,19 +1,19 @@
-import { useContext, useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent, type ChangeEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { getUserExists, login, signup, requestPasswordReset } from '../../apiCalls'
-import BirdsContext from '../BirdsContext/BirdsContext'
+import { getUserExists, login, signup, requestPasswordReset, errorMessage } from '../../apiCalls'
+import { useBirds } from '../BirdsContext/BirdsContext'
 import './Login.css'
 
 const PASSWORD_MIN_LENGTH = 8
 
 const Login = () => {
-    const { user, setUser } = useContext(BirdsContext)
+    const { user, setUser } = useBirds()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     // undefined until the email has been looked up; then true (log in) or false (create account)
-    const [userExists, setUserExists] = useState(undefined)
-    const [error, setError] = useState(null)
+    const [userExists, setUserExists] = useState<boolean | undefined>(undefined)
+    const [error, setError] = useState<string | null>(null)
     const [isBusy, setIsBusy] = useState(false)
 
     const navigate = useNavigate()
@@ -23,14 +23,14 @@ const Login = () => {
       if (user) navigate('/', { replace: true })
     }, [user, navigate])
 
-    const handleEmailChange = (e) => {
+    const handleEmailChange = (e: ChangeEvent<HTMLInputElement>) => {
       setEmail(e.target.value)
       setUserExists(undefined)
       setPassword('')
       setError(null)
     }
 
-    const submitEmail = async (e) => {
+    const submitEmail = async (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault()
       if (!email.trim()) return
       setIsBusy(true)
@@ -39,13 +39,13 @@ const Login = () => {
         const result = await getUserExists(email.trim())
         setUserExists(result.userExists)
       } catch (err) {
-        setError(err.message)
+        setError(errorMessage(err))
       } finally {
         setIsBusy(false)
       }
     }
 
-    const submitPassword = async (e) => {
+    const submitPassword = async (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault()
       if (!userExists && password.length < PASSWORD_MIN_LENGTH) {
         setError(`Password must be at least ${PASSWORD_MIN_LENGTH} characters`)
@@ -58,7 +58,7 @@ const Login = () => {
         setUser(loggedIn)
         navigate('/')
       } catch (err) {
-        setError(err.message)
+        setError(errorMessage(err))
       } finally {
         setIsBusy(false)
       }
@@ -68,7 +68,7 @@ const Login = () => {
       toast.promise(requestPasswordReset(email.trim()), {
         pending: { render: 'Sending password reset email...', position: 'bottom-center' },
         success: { render: 'Password reset email sent!', position: 'bottom-center' },
-        error: { render: ({ data }) => data?.message || 'Something went wrong', position: 'bottom-center' }
+        error: { render: ({ data }) => errorMessage(data), position: 'bottom-center' }
       })
     }
 

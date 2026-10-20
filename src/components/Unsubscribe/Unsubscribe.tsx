@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { unsubscribe } from '../../apiCalls'
+import { unsubscribe, errorMessage } from '../../apiCalls'
+
+type Status = 'pending' | 'done' | 'failed'
 
 const Unsubscribe = () => {
-  const { token } = useParams()
-  const [status, setStatus] = useState('pending')
-  const [error, setError] = useState(null)
+  const { token = '' } = useParams<{ token: string }>()
+  const [status, setStatus] = useState<Status>('pending')
+  const [error, setError] = useState<string | null>(null)
   const started = useRef(false)
 
   useEffect(() => {
@@ -13,7 +15,7 @@ const Unsubscribe = () => {
     started.current = true
     unsubscribe(token)
       .then(() => setStatus('done'))
-      .catch((err) => { setError(err.message); setStatus('failed') })
+      .catch((err) => { setError(errorMessage(err)); setStatus('failed') })
   }, [token])
 
   return (

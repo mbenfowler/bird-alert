@@ -1,12 +1,16 @@
-import { useContext, useState } from "react"
+import { useState } from 'react'
 import { toast } from 'react-toastify'
-import PropTypes from "prop-types"
 import './Card.css'
-import BirdsContext from "../BirdsContext/BirdsContext"
-import { postSavedBird, deleteSavedBird } from "../../apiCalls"
+import { useBirds } from '../BirdsContext/BirdsContext'
+import { postSavedBird, deleteSavedBird, errorMessage } from '../../apiCalls'
+import type { Bird } from '../../types'
 
-const Card = ({ bird }) => {
-    const { savedCodes, setSavedBirds } = useContext(BirdsContext)
+interface CardProps {
+    bird: Bird
+}
+
+const Card = ({ bird }: CardProps) => {
+    const { savedCodes, setSavedBirds } = useBirds()
     const [isPending, setIsPending] = useState(false)
 
     // Checked state comes straight from the watch list, so every card agrees with the saved view.
@@ -25,13 +29,13 @@ const Card = ({ bird }) => {
                 toast.success('Bird saved to watch list!', { position: 'bottom-center' })
             }
         } catch (error) {
-            toast.error(error.message, { position: 'bottom-center' })
+            toast.error(errorMessage(error), { position: 'bottom-center' })
         } finally {
             setIsPending(false)
         }
     }
 
-    const img = bird.birdImg && bird.birdImg !== 'undefined' ? bird.birdImg : 'images/noBirdImg.png'
+    const img = bird.birdImg && bird.birdImg !== 'undefined' ? bird.birdImg : '/images/noBirdImg.png'
 
     return (
         <div className='card'>
@@ -54,14 +58,3 @@ const Card = ({ bird }) => {
 }
 
 export default Card
-
-Card.propTypes = {
-    bird: PropTypes.shape({
-        speciesCode: PropTypes.string.isRequired,
-        comName: PropTypes.string.isRequired,
-        sciName: PropTypes.string.isRequired,
-        birdImg: PropTypes.string,
-        wikiURL: PropTypes.string,
-        lastObserved: PropTypes.string
-    }).isRequired
-}

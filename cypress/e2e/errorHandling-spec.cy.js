@@ -40,7 +40,7 @@ describe("Error handling", () => {
         afterEach(() => {
             cy.get('#notFound > p').should('contain', "This page doesn't exist")
             cy.get('#notFound button').click()
-            .url().should('eq', 'http://localhost:3000/')
+            cy.url().should('eq', 'http://localhost:3000/')
         })
     })
 })

@@ -4,7 +4,7 @@
 <br>
 
   <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" />
-  <img src="https://img.shields.io/badge/JavaScript-323330?style=for-the-badge&logo=javascript&logoColor=F7DF1E" /> 
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" /> 
   <img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white" /> 
   <img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white" />
 <img src="https://img.shields.io/badge/-cypress-%23E5E5E5?style=for-the-badge&logo=cypress&logoColor=058a5e" /> 
@@ -85,7 +85,10 @@ Your applications must have the following core functionality:
 - PropTypes has been implemented in all components with props
 
 
-### Getting Started with Create React App
+### Tooling
+Built with [Vite](https://vitejs.dev/) and TypeScript. Useful scripts:
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
-
+- `npm start` — dev server on http://localhost:3000, proxying `/api` to the backend
+- `npm run build` — type-check and produce the production bundle in `dist/`
+- `npm run lint` / `npm run typecheck`
+- `npm run test:e2e` — Cypress, headless (dev server must be running)

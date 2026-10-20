@@ -1,15 +1,17 @@
-import { useContext, useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import BirdsList from '../BirdsList/BirdsList'
-import BirdsContext from '../BirdsContext/BirdsContext'
+import { useBirds, useCurrentUser } from '../BirdsContext/BirdsContext'
 import { getSavedBirds, getExternalLastObserved } from '../../apiCalls'
+import type { Bird } from '../../types'
 import './Saved.css'
 
 const RESULTS_PER_PAGE = 5
 
 const Saved = () => {
-    const { user, savedBirds, setSavedBirds, handleNetworkErrors } = useContext(BirdsContext)
+    const user = useCurrentUser()
+    const { savedBirds, setSavedBirds, handleNetworkErrors } = useBirds()
     const [requestedPage, setRequestedPage] = useState(1)
-    const [birdsWithLastObserved, setBirdsWithLastObserved] = useState([])
+    const [birdsWithLastObserved, setBirdsWithLastObserved] = useState<Bird[]>([])
 
     // Refresh the watch list when the view opens.
     useEffect(() => {
@@ -30,20 +32,21 @@ const Saved = () => {
     }, [savedBirds, currentPage])
 
     // Decorate the visible page with each bird's latest nearby sighting.
+    const region = user.location
     useEffect(() => {
         let cancelled = false
         setBirdsWithLastObserved(pageBirds)
-        if (!user?.location || !pageBirds.length) return
-        Promise.all(pageBirds.map(async bird => {
+        if (!region || !pageBirds.length) return
+        Promise.all(pageBirds.map(async (bird): Promise<Bird> => {
             try {
-                const observations = await getExternalLastObserved(bird.speciesCode, user.location)
+                const observations = await getExternalLastObserved(bird.speciesCode, region)
                 return { ...bird, lastObserved: observations[0]?.obsDt }
-            } catch (error) {
+            } catch {
                 return bird
             }
         })).then(result => { if (!cancelled) setBirdsWithLastObserved(result) })
         return () => { cancelled = true }
-    }, [pageBirds, user?.location])
+    }, [pageBirds, region])
 
     return (
         <section id='birdsInArea'>

@@ -1,22 +1,27 @@
-import { useEffect, useContext, useState } from "react"
-import BirdsContext from "../BirdsContext/BirdsContext"
-import AlertCard from "../AlertCard/AlertCard"
-import { getExternalNotableBirds } from "../../apiCalls"
+import { useEffect, useState } from 'react'
+import { useBirds, useCurrentUser } from '../BirdsContext/BirdsContext'
+import AlertCard from '../AlertCard/AlertCard'
+import { getExternalNotableBirds } from '../../apiCalls'
+import type { Observation } from '../../types'
 import './BirdAlerts.css'
 
-const BirdAlerts = () => {
-    const { user, birdAlerts } = useContext(BirdsContext)
-    const [notableBirds, setNotableBirds] = useState([])
-    const [alertType, setAlertType] = useState('star')
+type AlertType = 'star' | 'notable'
 
+const BirdAlerts = () => {
+    const user = useCurrentUser()
+    const { birdAlerts } = useBirds()
+    const [notableBirds, setNotableBirds] = useState<Observation[]>([])
+    const [alertType, setAlertType] = useState<AlertType>('star')
+
+    const region = user.location
     useEffect(() => {
-      if (!user?.location) return
+      if (!region) return
       let cancelled = false
-      getExternalNotableBirds(user.location)
+      getExternalNotableBirds(region)
         .then(res => { if (!cancelled) setNotableBirds(res) })
         .catch(err => console.error(err))
       return () => { cancelled = true }
-    }, [user?.location])
+    }, [region])
 
     if (!birdAlerts.length) {
         return (

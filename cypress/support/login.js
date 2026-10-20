@@ -46,6 +46,7 @@ export const login = () => {
   cy.intercept('GET', 'https://api.ebird.org/v2/data/obs/US-GA-139/recent/*', { statusCode: 200, body: [] }).as('lastObserved')
 
   cy.visit('http://localhost:3000/')
-  cy.get('.input').type('robinware456@gmail.com').type('{enter}')
-    .get(':nth-child(2) > .input', { timeout: 10000 }).should('be.visible').type('1234').type('{enter}')
+  cy.get('.input').type('robinware456@gmail.com{enter}')
+  cy.get(':nth-child(2) > .input', { timeout: 10000 }).should('be.visible')
+  cy.get(':nth-child(2) > .input').type('1234{enter}')
 }

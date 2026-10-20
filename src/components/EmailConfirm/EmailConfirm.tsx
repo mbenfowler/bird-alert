@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { confirmEmail } from '../../apiCalls'
+import { confirmEmail, errorMessage } from '../../apiCalls'
 import './EmailConfirm.css'
 
+type Status = 'pending' | 'done' | 'failed'
+
 const EmailConfirm = () => {
-  const { token } = useParams()
-  const [status, setStatus] = useState('pending')
-  const [error, setError] = useState(null)
+  const { token = '' } = useParams<{ token: string }>()
+  const [status, setStatus] = useState<Status>('pending')
+  const [error, setError] = useState<string | null>(null)
   const started = useRef(false)
 
   useEffect(() => {
@@ -14,7 +16,7 @@ const EmailConfirm = () => {
     started.current = true
     confirmEmail(token)
       .then(() => setStatus('done'))
-      .catch((err) => { setError(err.message); setStatus('failed') })
+      .catch((err) => { setError(errorMessage(err)); setStatus('failed') })
   }, [token])
 
   return (

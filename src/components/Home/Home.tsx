@@ -1,17 +1,18 @@
-import { useContext, useState, useEffect } from "react"
-import BirdAlerts from "../BirdAlerts/BirdAlerts"
-import BirdsList from "../BirdsList/BirdsList"
-import BirdsContext from "../BirdsContext/BirdsContext"
-import { searchBirds } from "../../apiCalls"
+import { useState, useEffect } from 'react'
+import BirdAlerts from '../BirdAlerts/BirdAlerts'
+import BirdsList from '../BirdsList/BirdsList'
+import { useBirds } from '../BirdsContext/BirdsContext'
+import { searchBirds } from '../../apiCalls'
+import type { Bird } from '../../types'
 import './Home.css'
 
 const SEARCH_MIN_LENGTH = 2
 const SEARCH_DEBOUNCE_MS = 250
 
 const Home = () => {
-    const { birds, currentPage, setCurrentPage, pageCount, isLoaded } = useContext(BirdsContext)
+    const { birds, currentPage, setCurrentPage, pageCount, isLoaded } = useBirds()
     const [search, setSearch] = useState('')
-    const [searchedBirds, setSearchedBirds] = useState([])
+    const [searchedBirds, setSearchedBirds] = useState<Bird[]>([])
     const [isSearchLoading, setIsSearchLoading] = useState(false)
 
     const term = search.trim()
@@ -31,7 +32,7 @@ const Home = () => {
             try {
                 const results = await searchBirds(term)
                 if (!cancelled) setSearchedBirds(results)
-            } catch (error) {
+            } catch {
                 if (!cancelled) setSearchedBirds([])
             } finally {
                 if (!cancelled) setIsSearchLoading(false)

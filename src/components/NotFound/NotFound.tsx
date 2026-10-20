@@ -1,0 +1,11 @@
+import { Link } from 'react-router-dom'
+import './NotFound.css'
+
+const NotFound = () => (
+    <section id='notFound'>
+        <p>This page doesn't exist</p>
+        <Link to='/'><button className='navigate-button'>Return home</button></Link>
+    </section>
+)
+
+export default NotFound

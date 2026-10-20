@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { resetPassword } from '../../apiCalls'
+import { resetPassword, errorMessage } from '../../apiCalls'
 import './PassReset.css'
 
 const PASSWORD_MIN_LENGTH = 8
@@ -9,17 +9,17 @@ const PASSWORD_MIN_LENGTH = 8
 const PassReset = () => {
   const [passwordOne, setPasswordOne] = useState('')
   const [passwordTwo, setPasswordTwo] = useState('')
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<string | null>(null)
   const [isBusy, setIsBusy] = useState(false)
 
-  const { token } = useParams()
+  const { token = '' } = useParams<{ token: string }>()
   const navigate = useNavigate()
 
   const tooShort = passwordOne.length > 0 && passwordOne.length < PASSWORD_MIN_LENGTH
   const mismatch = passwordTwo.length > 0 && passwordOne !== passwordTwo
   const canSubmit = passwordOne.length >= PASSWORD_MIN_LENGTH && passwordOne === passwordTwo && !isBusy
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!canSubmit) return
     setIsBusy(true)
@@ -29,7 +29,7 @@ const PassReset = () => {
       toast.success('Password has been reset! Please log in.', { position: 'bottom-center' })
       navigate('/login')
     } catch (err) {
-      setError(err.message)
+      setError(errorMessage(err))
     } finally {
       setIsBusy(false)
     }
