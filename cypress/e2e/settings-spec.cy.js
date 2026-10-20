@@ -48,4 +48,10 @@ describe('Settings', () => {
     cy.get('.timing').should('be.disabled')
     cy.get('.timing__option.is-selected').should('contain', 'Right away')
   })
+
+  it('shows when the hourly check last ran and the quiet-hours window', () => {
+    cy.get('[data-testid="last-checked"]').should('contain', 'Last checked 14 min ago').and('contain', 'nothing new')
+    cy.get('#push_quiet_enabled').should('be.checked').and('be.disabled')
+    cy.contains('No pushes between 10 PM and 6 AM')
+  })
 })

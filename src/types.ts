@@ -10,6 +10,9 @@ export interface User {
   push_watchlist_enabled: boolean
   push_notable_enabled: boolean
   push_notable_batched: boolean
+  push_quiet_start: number | null
+  push_quiet_end: number | null
+  timezone: string | null
   created_at: string
   updated_at: string
 }
@@ -26,6 +29,9 @@ export interface UserPatch {
   push_watchlist_enabled?: boolean
   push_notable_enabled?: boolean
   push_notable_batched?: boolean
+  push_quiet_start?: number | null
+  push_quiet_end?: number | null
+  timezone?: string
 }
 
 /** A bird as stored in our database, or as assembled from eBird taxonomy plus image and wiki lookups. */
