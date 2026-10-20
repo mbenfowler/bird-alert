@@ -11,6 +11,12 @@ jobs:
       - node/install-packages:
           pkg-manager: npm
       - run:
+          name: Lint and type-check
+          command: npm run lint && npm run typecheck
+      - run:
+          name: Unit tests
+          command: npm test
+      - run:
           name: Run build
           command: npm run build
       - persist_to_workspace:

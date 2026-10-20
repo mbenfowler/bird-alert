@@ -86,4 +86,5 @@ Built with [Vite](https://vitejs.dev/) and TypeScript. Useful scripts:
 - `npm start` — dev server on http://localhost:3000, proxying `/api` to the backend
 - `npm run build` — type-check and produce the production bundle in `dist/`
 - `npm run lint` / `npm run typecheck`
+- `npm test` — Vitest unit tests (`npm run test:watch` while developing)
 - `npm run test:e2e` — Cypress, headless (dev server must be running)

@@ -43,7 +43,12 @@
 }
 
 .alert-icon {
-  font-size: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
   border: solid gray 2px;
   border-radius: 5px;
   width: 100%;
@@ -65,4 +70,9 @@
 
 #notable {
   padding: 4px;
+}
+
+.alert-icon svg {
+  width: 34px;
+  height: 34px;
 }

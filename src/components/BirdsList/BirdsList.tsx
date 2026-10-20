@@ -8,11 +8,7 @@ interface BirdsListProps {
 
 const BirdsList = ({ birds }: BirdsListProps) => (
     <section className='birds-list'>
-        {birds.map(bird => (
-            <a key={bird.speciesCode} href={bird.wikiURL || undefined} target="_blank" rel="noreferrer">
-                <Card bird={bird} />
-            </a>
-        ))}
+        {birds.map(bird => <Card key={bird.speciesCode} bird={bird} />)}
     </section>
 )
 
