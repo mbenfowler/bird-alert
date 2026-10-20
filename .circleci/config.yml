@@ -32,7 +32,9 @@ workflows:
   test_my_app:
     jobs:
       - cypress/run:
-          node-version: '22.20.0'
+          executor:
+            name: cypress/default
+            node-version: '22.20.0'
           cypress-command: npx cypress run --browser electron
           start-command: npm start
       - build
