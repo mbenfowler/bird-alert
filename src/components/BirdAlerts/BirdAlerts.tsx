@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import AlertCard from '../AlertCard/AlertCard'
+import { AlertIcon, StarIcon } from '../Icons/Icons'
 import { useCurrentUser, useNotableQuery, useObservationsQuery, useSavedCodes } from '../../hooks/queries'
 import './BirdAlerts.css'
 
@@ -33,9 +34,9 @@ const BirdAlerts = () => {
     return (
       <div id='birdAlerts'>
           <div className='alerts-header-box' id='alertsExist'>
-            <div className={`material-symbols-outlined alert-icon ${alertType === 'star' ? 'button-pressed' : ''}`} id='star' role='button' aria-pressed={alertType === 'star'} onClick={() => setAlertType('star')}>grade</div>
+            <button type='button' className={`alert-icon ${alertType === 'star' ? 'button-pressed' : ''}`} id='star' aria-pressed={alertType === 'star'} aria-label='Sightings of birds on your watch list' title='Your watch list' onClick={() => setAlertType('star')}><StarIcon /></button>
             <h2 className='alerts-header'>Alerts:</h2>
-            <div className={`material-symbols-outlined alert-icon ${alertType === 'notable' ? 'button-pressed' : ''}`} id='notable' role='button' aria-pressed={alertType === 'notable'} onClick={() => setAlertType('notable')}>crisis_alert</div>
+            <button type='button' className={`alert-icon ${alertType === 'notable' ? 'button-pressed' : ''}`} id='notable' aria-pressed={alertType === 'notable'} aria-label='Notable sightings in your area' title='Notable sightings' onClick={() => setAlertType('notable')}><AlertIcon /></button>
           </div>
           {alertType === 'notable' && notable.isPending && <div className='spinner'></div>}
           {shown.map(alert => (

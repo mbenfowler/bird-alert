@@ -26,8 +26,8 @@ const Card = ({ bird }: CardProps) => {
 
     const img = bird.birdImg && bird.birdImg !== 'undefined' ? bird.birdImg : '/images/noBirdImg.png'
 
-    return (
-        <div className='card'>
+    const body = (
+        <>
             <img className='bird-img' src={img} alt={`a ${bird.comName}`} loading='lazy' width='200' height='150' />
             <div className='bird-details'>
                 <p>{bird.comName}</p>
@@ -41,8 +41,17 @@ const Card = ({ bird }: CardProps) => {
                     )}
                 </p>
             </div>
+        </>
+    )
+
+    // The link wraps only the picture and names, so the checkbox is never nested inside an anchor.
+    return (
+        <article className='card'>
+            {bird.wikiURL
+                ? <a className='card-link' href={bird.wikiURL} target='_blank' rel='noreferrer' aria-label={`${bird.comName} on Wikipedia`}>{body}</a>
+                : <div className='card-link'>{body}</div>}
             <input type="checkbox" checked={isChecked} disabled={toggleSaved.isPending} id={bird.speciesCode} name={bird.comName} aria-label={`Watch ${bird.comName}`} onChange={handleChange} />
-        </div>
+        </article>
     )
 }
 
