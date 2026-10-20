@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import BirdsList from '../BirdsList/BirdsList'
 import ErrorMessage from '../Error/ErrorMessage'
 import { errorMessage } from '../../apiCalls'
-import { useCurrentUser, useLastObservedQueries, useSavedBirdsQuery } from '../../hooks/queries'
+import { useCurrentUser, useObservationsQuery, useSavedBirdsQuery } from '../../hooks/queries'
 import { usePageParam } from '../../hooks/usePageParam'
 import './Saved.css'
 
@@ -21,9 +21,15 @@ const Saved = () => {
         [savedBirds, page]
     )
 
-    // Decorate the visible page with each bird's latest nearby sighting.
-    const lastObserved = useLastObservedQueries(user.location, pageBirds)
-    const birdsWithLastObserved = pageBirds.map((bird, index) => ({ ...bird, lastObserved: lastObserved[index]?.data }))
+    // Latest nearby sighting per species, from the region observations the home page already caches.
+    // eBird returns them newest first, so the first match per species wins.
+    const observations = useObservationsQuery(user.location)
+    const latestByCode = useMemo(() => {
+        const map = new Map<string, string>()
+        for (const obs of observations.data ?? []) if (!map.has(obs.speciesCode)) map.set(obs.speciesCode, obs.obsDt)
+        return map
+    }, [observations.data])
+    const birdsWithLastObserved = pageBirds.map(bird => ({ ...bird, lastObserved: latestByCode.get(bird.speciesCode) }))
 
     if (saved.isError) return <ErrorMessage networkError={errorMessage(saved.error)} />
     if (saved.isPending) return <div className='spinner'></div>
