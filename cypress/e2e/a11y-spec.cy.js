@@ -39,7 +39,9 @@ describe('Accessibility', () => {
   it('saved list', () => {
     login()
     cy.get('[href="/saved"] > .nav-img').click()
-    cy.get('.birds-list .card', { timeout: 15000 })
+    // The saved page is lazy-loaded; the home page also has .birds-list .card, so wait for its own heading.
+    cy.contains('.list-heading', 'Birds on your watch list', { timeout: 15000 })
+    cy.get('.birds-list .card')
     checkA11y()
   })
 
