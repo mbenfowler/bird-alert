@@ -22,10 +22,11 @@ describe('Sighting page and region map', () => {
   it('shows the region map with watch-list pins and switches to notable', () => {
     cy.get('.alerts-map-link').click()
     cy.url().should('include', '/map')
-    cy.get('.map-page__bar h1').should('contain', 'Recent sightings in Hall')
+    cy.get('.map-page__bar h1').should('contain', 'Watch list sightings in Hall')
     cy.get('.sightings-map .map-pin').should('have.length', 1)
     cy.get('.map-page__tabs button[aria-label="Notable sightings"]').click()
     cy.wait('@notable')
+    cy.get('.map-page__bar h1').should('contain', 'Notable sightings in Hall')
     cy.contains('No notable sightings reported in the last month.')
   })
 })
