@@ -9,7 +9,7 @@ import type { EmailPreference, PushPreference } from '../../types'
 import './AlertCenter.css'
 
 const PUSH_KINDS: { field: PushPreference; label: string; hint: string }[] = [
-  { field: 'push_watchlist_enabled', label: 'Watch list sightings', hint: 'Sent as soon as the hourly check finds one.' },
+  { field: 'push_watchlist_enabled', label: 'Watch list sightings', hint: 'One notification an hour listing every bird of yours reported since the last check.' },
   { field: 'push_notable_enabled', label: 'Notable sightings', hint: "eBird's uncommon birds for your area." },
   { field: 'push_first_of_season', label: 'First of the season', hint: 'The first report of a migrant returning to your area, once per species each season.' }
 ]
