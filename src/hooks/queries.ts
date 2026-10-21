@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions,
-  getSavedBirds, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations
+  getSavedBirds, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality
 } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
 import type { User } from '../types'
@@ -25,7 +25,9 @@ export const queryKeys = {
   regions: (state: string) => ['regions', state] as const,
   search: (term: string) => ['bird-search', term] as const,
   pushStatus: ['push-status'] as const,
-  speciesObservations: (region: string, code: string) => ['species-observations', region, code] as const
+  speciesObservations: (region: string, code: string) => ['species-observations', region, code] as const,
+  arrivals: (region: string) => ['arrivals', region] as const,
+  seasonality: (region: string, code: string) => ['seasonality', region, code] as const
 }
 
 /** The logged-in user, null when logged out, undefined while the cookie is being checked. */
@@ -156,5 +158,27 @@ export const useSpeciesObservationsQuery = (region: string, code: string) =>
     queryKey: queryKeys.speciesObservations(region, code),
     queryFn: () => getSpeciesObservations(region, code),
     staleTime: 5 * MINUTE,
+    enabled: Boolean(region && code)
+  })
+
+/** Species due about now that have not shown up yet; the answer only moves with the day's reports. */
+export const useArrivalsQuery = (region: string, enabled = true) =>
+  useQuery({
+    queryKey: queryKeys.arrivals(region),
+    queryFn: () => getArrivals(region),
+    staleTime: 30 * MINUTE,
+    gcTime: DAY,
+    meta: { persist: true },
+    enabled: Boolean(region) && enabled
+  })
+
+/** A species' year in the region, by month; history only grows, so a day is plenty. */
+export const useSeasonalityQuery = (region: string, code: string) =>
+  useQuery({
+    queryKey: queryKeys.seasonality(region, code),
+    queryFn: () => getSeasonality(region, code),
+    staleTime: DAY,
+    gcTime: WEEK,
+    meta: { persist: true },
     enabled: Boolean(region && code)
   })

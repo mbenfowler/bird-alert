@@ -1,0 +1,16 @@
+{
+  "months": [
+    { "month": 1, "reported": 28, "covered": 31 },
+    { "month": 2, "reported": 25, "covered": 28 },
+    { "month": 3, "reported": 20, "covered": 31 },
+    { "month": 4, "reported": 6, "covered": 30 },
+    { "month": 5, "reported": 0, "covered": 31 },
+    { "month": 6, "reported": 0, "covered": 30 },
+    { "month": 7, "reported": 0, "covered": 31 },
+    { "month": 8, "reported": 0, "covered": 31 },
+    { "month": 9, "reported": 2, "covered": 30 },
+    { "month": 10, "reported": 15, "covered": 20 },
+    { "month": 11, "reported": 0, "covered": 0 },
+    { "month": 12, "reported": 0, "covered": 0 }
+  ]
+}

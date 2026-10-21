@@ -10,12 +10,14 @@ import './AlertCenter.css'
 
 const PUSH_KINDS: { field: PushPreference; label: string; hint: string }[] = [
   { field: 'push_watchlist_enabled', label: 'Watch list sightings', hint: 'Sent as soon as the hourly check finds one.' },
-  { field: 'push_notable_enabled', label: 'Notable sightings', hint: "eBird's uncommon birds for your area." }
+  { field: 'push_notable_enabled', label: 'Notable sightings', hint: "eBird's uncommon birds for your area." },
+  { field: 'push_first_of_season', label: 'First of the season', hint: 'The first report of a migrant returning to your area, once per species each season.' }
 ]
 
 const EMAIL_PREFERENCES: { field: EmailPreference; label: string; hint: string }[] = [
   { field: 'alert_digest_email_enabled', label: 'Daily email digest', hint: 'One email a morning when a bird on your watch list was seen nearby.' },
-  { field: 'rare_sightings_email_enabled', label: 'Uncommon sightings email', hint: "eBird's notable sightings for your area, once a day." }
+  { field: 'rare_sightings_email_enabled', label: 'Uncommon sightings email', hint: "eBird's notable sightings for your area, once a day." },
+  { field: 'migration_email_enabled', label: 'Weekly migration email', hint: 'Sundays: who arrived this week, who moved on, and who to expect next.' }
 ]
 
 const pushHint: Record<string, string> = {

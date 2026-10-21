@@ -40,3 +40,12 @@ export const MapIcon = (props: SVGProps<SVGSVGElement>) => (
     <path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5M10 5.47l4 1.4v11.66l-4-1.4z" />
   </svg>
 )
+
+/** Three birds on the wing, used for the arriving-soon feed. */
+export const MigrationIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} fill='none' stroke='currentColor' strokeWidth={2.2} strokeLinecap='round' strokeLinejoin='round' {...props}>
+    <path d="M2.5 14.5 6.5 11l4 3.5" />
+    <path d="M9 9.5 13 6l4 3.5" />
+    <path d="M13.5 18.5l4-3.5 4 3.5" />
+  </svg>
+)

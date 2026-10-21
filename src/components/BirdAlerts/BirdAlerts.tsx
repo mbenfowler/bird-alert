@@ -1,16 +1,20 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import AlertCard from '../AlertCard/AlertCard'
-import { AlertIcon, ChevronIcon, MapIcon, StarIcon } from '../Icons/Icons'
+import ArrivalCard from '../ArrivalCard/ArrivalCard'
+import { AlertIcon, ChevronIcon, MapIcon, MigrationIcon, StarIcon } from '../Icons/Icons'
 import { LoadingState } from '../Loading/Loading'
-import { useCurrentUser, useNotableQuery, useObservationsQuery, useSavedCodes } from '../../hooks/queries'
+import { useArrivalsQuery, useCurrentUser, useNotableQuery, useObservationsQuery, useRegionsQuery, useSavedCodes } from '../../hooks/queries'
 import './BirdAlerts.css'
 
-type AlertType = 'star' | 'notable'
+type AlertType = 'star' | 'notable' | 'arriving'
+
+const TITLES: Record<AlertType, string> = { star: 'Watch list sightings', notable: 'Notable sightings', arriving: 'Arriving soon' }
 
 /**
  * Recent sightings panel. Expanded on every visit; the user can collapse it to a one-line bar to
- * give the bird list the screen. Two tabs: birds on the watch list, and eBird's notable sightings.
+ * give the bird list the screen. Three tabs: birds on the watch list, eBird's notable sightings,
+ * and species due back about now that have not been reported yet.
  */
 const BirdAlerts = () => {
     const user = useCurrentUser()
@@ -20,18 +24,26 @@ const BirdAlerts = () => {
 
     const observations = useObservationsQuery(region)
     const savedCodes = useSavedCodes()
-    // Notable sightings are only fetched once someone opens that tab.
+    // The other feeds are only fetched once someone opens their tab.
     const notable = useNotableQuery(region, alertType === 'notable')
+    const arriving = useArrivalsQuery(region, alertType === 'arriving')
+    const regions = useRegionsQuery(user.state)
+    const regionName = regions.data?.find(r => r.code === region)?.name ?? 'your county'
 
     const birdAlerts = useMemo(
       () => (observations.data ?? []).filter(obs => savedCodes.has(obs.speciesCode)),
       [observations.data, savedCodes]
     )
 
-    const shown = alertType === 'star' ? birdAlerts : (notable.data ?? [])
-    const isLoading = alertType === 'star' ? observations.isPending : notable.isPending
-    const count = alertType === 'star' ? birdAlerts.length : notable.data?.length
-    const title = alertType === 'star' ? 'Watch list sightings' : 'Notable sightings'
+    const shown = alertType === 'star' ? birdAlerts : alertType === 'notable' ? (notable.data ?? []) : []
+    const arrivals = alertType === 'arriving' ? (arriving.data?.arrivals ?? []) : []
+    const isLoading = alertType === 'star' ? observations.isPending : alertType === 'notable' ? notable.isPending : arriving.isPending
+    const count = alertType === 'star' ? birdAlerts.length : alertType === 'notable' ? notable.data?.length : arriving.data?.arrivals?.length
+    const title = TITLES[alertType]
+    const emptyText = alertType === 'star' ? 'No birds from your watch list have been reported nearby in the last two weeks.'
+      : alertType === 'notable' ? 'No notable sightings reported nearby in the last month.'
+      : arriving.data?.learning ? `Still learning the seasons for ${regionName}; check back in a day or two.`
+      : 'Everything that was around this time last year has already been reported.'
 
     const pick = (type: AlertType) => { setAlertType(type); setExpanded(true) }
 
@@ -41,6 +53,7 @@ const BirdAlerts = () => {
             <div className='alerts-tabs' role='group' aria-label='Alert type'>
               <button type='button' className={`alert-icon ${alertType === 'star' ? 'button-pressed' : ''}`} id='star' aria-pressed={alertType === 'star'} aria-label='Sightings of birds on your watch list' title='Your watch list' onClick={() => pick('star')}><StarIcon /></button>
               <button type='button' className={`alert-icon ${alertType === 'notable' ? 'button-pressed' : ''}`} id='notable' aria-pressed={alertType === 'notable'} aria-label='Notable sightings in your area' title='Notable sightings' onClick={() => pick('notable')}><AlertIcon /></button>
+              <button type='button' className={`alert-icon ${alertType === 'arriving' ? 'button-pressed' : ''}`} id='arriving' aria-pressed={alertType === 'arriving'} aria-label='Birds arriving soon in your area' title='Arriving soon' onClick={() => pick('arriving')}><MigrationIcon /></button>
             </div>
             <h2 id='alertsHeading' className='alerts-header'>
               <span className='alerts-title'>{title}</span>
@@ -57,18 +70,25 @@ const BirdAlerts = () => {
             <div className='alerts-collapse__inner'>
               <div id='alertsList' className='alerts-list'>
                 {isLoading && <LoadingState variant='inline' label='Loading sightings' />}
-                {!isLoading && !shown.length && (
-                  <p className='alerts-empty'>
-                    {alertType === 'star' ? 'No birds from your watch list have been reported nearby in the last two weeks.' : 'No notable sightings reported nearby in the last month.'}
-                  </p>
-                )}
+                {!isLoading && !shown.length && !arrivals.length && <p className='alerts-empty'>{emptyText}</p>}
                 {shown.map((alert, index) => (
                   <Link key={`${alert.subId}-${alert.speciesCode}`} style={{ '--i': index } as React.CSSProperties} to={`/sighting/${alert.speciesCode}/${alert.subId}`}>
                     <AlertCard alert={alert} />
                     <span className='visually-hidden'>, open sighting details</span>
                   </Link>
                 ))}
+                {arrivals.map((arrival, index) => (
+                  <div key={arrival.speciesCode} className='alerts-item' style={{ '--i': index } as React.CSSProperties}>
+                    <ArrivalCard arrival={arrival} />
+                  </div>
+                ))}
               </div>
+              {alertType === 'arriving' && !isLoading && (
+                <p className='alerts-note'>
+                  Judged by eBird reports from this time last year.{' '}
+                  <a href={`https://dashboard.birdcast.info/region/${encodeURIComponent(region)}`} target='_blank' rel='noreferrer'>Tonight's migration radar for {regionName}</a>
+                </p>
+              )}
             </div>
           </div>
       </section>
