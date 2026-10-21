@@ -21,3 +21,52 @@
     display: flex;
     gap: 6px;
 }
+
+.map-page__intro {
+    margin: 0 0 8px;
+    color: var(--muted);
+    font-size: 0.98rem;
+}
+
+/* Labelled segmented control for the two feeds. */
+.map-page__tabs {
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    overflow: hidden;
+    background: var(--surface);
+    gap: 0;
+}
+
+.feed-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 0 16px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.98rem;
+    cursor: pointer;
+}
+
+.feed-tab + .feed-tab {
+    border-left: 2px solid var(--ink);
+}
+
+.feed-tab svg {
+    width: 20px;
+    height: 20px;
+}
+
+.feed-tab.is-selected {
+    background: var(--accent);
+    color: var(--ink);
+    font-weight: 600;
+}
+
+.feed-tab:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: -3px;
+}

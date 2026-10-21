@@ -55,10 +55,17 @@ const MapPage = () => {
         {code
           ? <Link className='pill-button' to='/map'>All sightings</Link>
           : <div className='map-page__tabs' role='group' aria-label='Which sightings to show'>
-              <button type='button' className={`alert-icon ${feed === 'watchlist' ? 'button-pressed' : ''}`} aria-pressed={feed === 'watchlist'} aria-label='Watch list sightings' title='Watch list' onClick={() => setFeed('watchlist')}><StarIcon /></button>
-              <button type='button' className={`alert-icon ${feed === 'notable' ? 'button-pressed' : ''}`} aria-pressed={feed === 'notable'} aria-label='Notable sightings' title='Notable' onClick={() => setFeed('notable')}><AlertIcon /></button>
+              <button type='button' className={`feed-tab ${feed === 'watchlist' ? 'is-selected' : ''}`} aria-pressed={feed === 'watchlist'} onClick={() => setFeed('watchlist')}><StarIcon /><span>Watch list</span></button>
+              <button type='button' className={`feed-tab ${feed === 'notable' ? 'is-selected' : ''}`} aria-pressed={feed === 'notable'} onClick={() => setFeed('notable')}><AlertIcon /><span>Notable</span></button>
             </div>}
       </header>
+      <p className='map-page__intro'>
+        {code
+          ? 'Every place this species has been reported in your region in the last 30 days.'
+          : feed === 'watchlist'
+            ? 'Birds on your watch list reported in your region in the last two weeks.'
+            : "Birds eBird flags as notable for your region, reported in the last month: uncommon species or unusual numbers."}
+      </p>
       {active.isError && <ErrorMessage networkError={errorMessage(active.error)} />}
       {active.isPending && <LoadingState label='Loading sightings…' />}
       {!active.isPending && !active.isError && (
