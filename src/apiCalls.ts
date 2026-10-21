@@ -1,4 +1,4 @@
-import type { Bird, Observation, Region, User, UserPatch } from './types'
+import type { Arrivals, Bird, Observation, Region, SeasonMonth, User, UserPatch } from './types'
 
 // Every request goes to the same-origin `/api` prefix. In development Vite proxies it to the
 // backend (vite.config.ts); in production Vercel rewrites it (vercel.json). The backend holds
@@ -79,6 +79,8 @@ export const getNotableObservations = (region: string) => api<Observation[]>('/e
 export const getSpeciesObservations = (region: string, code: string) =>
     api<Observation[]>('/ebird/species-observations', { params: { region, code, back: '30' } })
 export const getRegions = (state: string) => api<Region[]>('/ebird/regions', { params: { state } })
+export const getArrivals = (region: string) => api<Arrivals>('/ebird/arriving', { params: { region } })
+export const getSeasonality = (region: string, code: string) => api<{ months: SeasonMonth[] }>('/ebird/seasonality', { params: { region, code } })
 
 // ---- web push ----
 export interface PushStatus {

@@ -218,7 +218,8 @@
   mask-image: linear-gradient(to right, transparent, #000 20px, #000 calc(100% - 20px), transparent);
 }
 
-.alerts-list > a {
+.alerts-list > a,
+.alerts-list > .alerts-item {
   text-decoration: none;
   color: inherit;
   scroll-snap-align: start;
@@ -229,12 +230,14 @@
 }
 
 /* Cards enter one after another when the panel opens, and drift up as it closes. */
-.is-expanded .alerts-list > a {
+.is-expanded .alerts-list > a,
+.is-expanded .alerts-list > .alerts-item {
   animation: alert-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   animation-delay: calc(var(--i, 0) * 55ms);
 }
 
-.is-collapsed .alerts-list > a {
+.is-collapsed .alerts-list > a,
+.is-collapsed .alerts-list > .alerts-item {
   opacity: 0;
   transform: translateY(-10px);
 }
@@ -250,11 +253,23 @@
   font-style: italic;
 }
 
+/* Where the arriving-soon list comes from, and the night's radar for the county. */
+.alerts-note {
+  margin: 0;
+  padding: 0 20px 10px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.alerts-note a {
+  color: var(--link);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .alert-icon, .alerts-toggle, .alerts-toggle svg, .alerts-collapse, .alerts-list > a {
+  .alert-icon, .alerts-toggle, .alerts-toggle svg, .alerts-collapse, .alerts-list > a, .alerts-list > .alerts-item {
     transition: none;
   }
-  .is-expanded .alerts-list > a, .alerts-count, .is-expanded .alerts-bar::after, .is-collapsed .alerts-bar::after {
+  .is-expanded .alerts-list > a, .is-expanded .alerts-list > .alerts-item, .alerts-count, .is-expanded .alerts-bar::after, .is-collapsed .alerts-bar::after {
     animation: none;
   }
 }

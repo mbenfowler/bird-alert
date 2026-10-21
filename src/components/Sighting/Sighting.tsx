@@ -2,10 +2,11 @@ import { useMemo } from 'react'
 import { Link, useParams } from 'react-router'
 import { toast } from 'react-toastify'
 import SightingsMap, { type MapPoint } from '../SightingsMap/SightingsMap'
+import SeasonStrip from '../SeasonStrip/SeasonStrip'
 import ErrorMessage from '../Error/ErrorMessage'
 import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
-import { useBirdsQuery, useCurrentUser, useSavedCodes, useSpeciesObservationsQuery } from '../../hooks/queries'
+import { useBirdsQuery, useCurrentUser, useRegionsQuery, useSavedCodes, useSeasonalityQuery, useSpeciesObservationsQuery } from '../../hooks/queries'
 import { useToggleSavedMutation } from '../../hooks/mutations'
 import type { Observation } from '../../types'
 import './Sighting.css'
@@ -36,6 +37,9 @@ const Sighting = () => {
   const observations = useSpeciesObservationsQuery(region, code)
   const savedCodes = useSavedCodes()
   const toggleSaved = useToggleSavedMutation()
+  const seasonality = useSeasonalityQuery(region, code)
+  const regions = useRegionsQuery(user.state)
+  const regionName = regions.data?.find(r => r.code === region)?.name ?? 'your county'
 
   const all = useMemo(() => observations.data ?? [], [observations.data])
   const current = useMemo(() => all.find(o => o.subId === subId) ?? all[0], [all, subId])
@@ -86,6 +90,13 @@ const Sighting = () => {
           </div>
         </div>
       </header>
+
+      {seasonality.data?.months && (
+        <>
+          <h2 className='fredericka sighting__subhead'>When {name} is around</h2>
+          <SeasonStrip months={seasonality.data.months} name={name} regionName={regionName} />
+        </>
+      )}
 
       <h2 className='fredericka sighting__subhead'>
         Where {name} has been reported in the last 30 days

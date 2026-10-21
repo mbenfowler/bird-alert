@@ -1,0 +1,27 @@
+{
+  "arrivals": [
+    {
+      "speciesCode": "tunswa",
+      "comName": "Tundra Swan",
+      "sciName": "Cygnus columbianus",
+      "birdImg": "https://images.unsplash.com/photo-1600948836101-f9ffda59d250?q=75&fm=jpg&w=400&fit=max",
+      "wikiURL": "https://en.wikipedia.org/?curid=191456",
+      "daysLastYear": 9,
+      "windowDays": 15,
+      "firstLastYear": "2025-10-12",
+      "migrant": true
+    },
+    {
+      "speciesCode": "buwtea",
+      "comName": "Blue-winged Teal",
+      "sciName": "Spatula discors",
+      "birdImg": null,
+      "wikiURL": "https://en.wikipedia.org/?curid=237071",
+      "daysLastYear": 4,
+      "windowDays": 15,
+      "firstLastYear": "2025-10-19",
+      "migrant": true
+    }
+  ],
+  "learning": false
+}

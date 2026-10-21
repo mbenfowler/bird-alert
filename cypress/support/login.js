@@ -10,6 +10,8 @@ export const TEST_USER = {
   push_watchlist_enabled: true,
   push_notable_enabled: false,
   push_notable_batched: false,
+  push_first_of_season: false,
+  migration_email_enabled: false,
   push_quiet_start: 22,
   push_quiet_end: 6,
   // Match the browser running the tests, so the Alert Center does not issue a time-zone update on its own.
@@ -90,6 +92,8 @@ export const login = () => {
     const code = new URL(req.url).searchParams.get('code')
     req.reply({ statusCode: 200, body: recent.observations.filter((o) => o.speciesCode === code) })
   }).as('speciesObservations')
+  cy.intercept('GET', '**/api/ebird/arriving*', { statusCode: 200, fixture: 'arrivals' }).as('arriving')
+  cy.intercept('GET', '**/api/ebird/seasonality*', { statusCode: 200, fixture: 'seasonality' }).as('seasonality')
   cy.intercept('GET', '**/api/ebird/regions*', { statusCode: 200, body: [{ code: 'US-GA-139', name: 'Hall' }] }).as('regions')
   cy.intercept('GET', '**/api/push/status*', { statusCode: 200, body: { subscribed: false, devices: 0, lastRun: { at: new Date(Date.now() - 14 * 60000).toISOString(), notified: 0 } } }).as('pushStatus')
 

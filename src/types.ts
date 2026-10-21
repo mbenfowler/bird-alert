@@ -10,6 +10,8 @@ export interface User {
   push_watchlist_enabled: boolean
   push_notable_enabled: boolean
   push_notable_batched: boolean
+  push_first_of_season: boolean
+  migration_email_enabled: boolean
   push_quiet_start: number | null
   push_quiet_end: number | null
   timezone: string | null
@@ -17,8 +19,8 @@ export interface User {
   updated_at: string
 }
 
-export type EmailPreference = 'alert_digest_email_enabled' | 'rare_sightings_email_enabled'
-export type PushPreference = 'push_watchlist_enabled' | 'push_notable_enabled'
+export type EmailPreference = 'alert_digest_email_enabled' | 'rare_sightings_email_enabled' | 'migration_email_enabled'
+export type PushPreference = 'push_watchlist_enabled' | 'push_notable_enabled' | 'push_first_of_season'
 
 export interface UserPatch {
   email?: string
@@ -29,6 +31,8 @@ export interface UserPatch {
   push_watchlist_enabled?: boolean
   push_notable_enabled?: boolean
   push_notable_batched?: boolean
+  push_first_of_season?: boolean
+  migration_email_enabled?: boolean
   push_quiet_start?: number | null
   push_quiet_end?: number | null
   timezone?: string
@@ -72,4 +76,32 @@ export interface Observation {
 export interface Region {
   code: string
   name: string
+}
+
+/** A species expected about now, judged by this time last year, that has not been reported in the last two weeks. */
+export interface Arrival {
+  speciesCode: string
+  comName: string
+  sciName: string
+  birdImg?: string | null
+  wikiURL?: string | null
+  /** Days it was reported on, out of `windowDays`, in the two weeks around today's date last year. */
+  daysLastYear: number
+  windowDays: number
+  /** Its earliest report around this date last year. */
+  firstLastYear: string | null
+  migrant: boolean
+}
+
+export interface Arrivals {
+  arrivals: Arrival[]
+  /** True while the region's history is too thin to tell migrants from under-reported residents. */
+  learning: boolean
+}
+
+/** One month of a species' year in the region: days with a report, out of days on file. */
+export interface SeasonMonth {
+  month: number
+  reported: number
+  covered: number
 }

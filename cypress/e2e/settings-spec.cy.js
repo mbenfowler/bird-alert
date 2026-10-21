@@ -54,4 +54,13 @@ describe('Settings', () => {
     cy.get('#push_quiet_enabled').should('be.checked').and('be.disabled')
     cy.contains('No pushes between 10 PM and 6 AM')
   })
+
+  it('offers first-of-season pushes and the weekly migration email', () => {
+    cy.get('#push_first_of_season').should('be.disabled').and('not.be.checked')
+    cy.contains('The first report of a migrant returning to your area')
+    cy.get('#migration_email_enabled').should('not.be.checked')
+    cy.get('#migration_email_enabled').click()
+    cy.wait('@patchUser').its('request.body').should('deep.equal', { migration_email_enabled: true })
+    cy.get('#migration_email_enabled').should('be.checked')
+  })
 })
