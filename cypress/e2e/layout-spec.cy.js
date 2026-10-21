@@ -24,6 +24,7 @@ describe('Phone-width layout', () => {
     assertNoHorizontalOverflow()
     cy.get('#rosgoo').should('be.visible')
     cy.get('[href="/saved"] > .nav-img').click()
+    cy.contains('.list-heading', 'Birds on your watch list', { timeout: 15000 })
     cy.get('.birds-list .card')
     assertNoHorizontalOverflow()
     cy.visit('http://localhost:3000/settings')
