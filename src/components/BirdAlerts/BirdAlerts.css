@@ -274,8 +274,17 @@
   }
 }
 
-/* Phones: hide the toggle's word to keep the bar on one line. */
+/* Phones: the buttons share one row and the title takes a full row beneath them, so it is never
+   truncated. The Map and Hide words give way to their icons. */
 @media screen and (max-width: 480px) {
+  .alerts-bar {
+    flex-wrap: wrap;
+    row-gap: 2px;
+    padding-bottom: 4px;
+  }
+  .alerts-map-link {
+    margin-left: auto;
+  }
   .alerts-map-link span,
   .alerts-toggle span {
     position: absolute;
@@ -285,6 +294,8 @@
     clip: rect(0 0 0 0);
   }
   .alerts-header {
+    order: 3;
+    flex-basis: 100%;
     font-size: 1.1rem;
   }
 }

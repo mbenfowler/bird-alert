@@ -36,4 +36,16 @@ describe('Phone-width layout', () => {
     cy.get('.sightings-map')
     assertNoHorizontalOverflow()
   })
+
+  it('shows every alerts tab title in full', () => {
+    login()
+    cy.get('.birds-list .card')
+    for (const [tab, title] of [['star', 'Watch list sightings'], ['notable', 'Notable sightings'], ['arriving', 'Arriving soon']]) {
+      cy.get(`#${tab}`).click()
+      cy.get('.alerts-title').should('have.text', title).then(($el) => {
+        expect($el[0].scrollWidth, `${title} fits`).to.be.at.most($el[0].clientWidth)
+      })
+    }
+    assertNoHorizontalOverflow()
+  })
 })
