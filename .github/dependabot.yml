@@ -4,9 +4,11 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # Routine bumps arrive as one small PR; majors come one at a time for a deliberate upgrade.
     groups:
-      all-dependencies:
+      minor-and-patch:
         patterns: ["*"]
+        update-types: ["minor", "patch"]
     ignore:
       # Runtime is Node 22; keep the types on the same major.
       - dependency-name: "@types/node"
