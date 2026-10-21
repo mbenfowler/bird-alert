@@ -51,7 +51,9 @@ const MapPage = () => {
   return (
     <section className='map-page'>
       <header className='map-page__bar'>
-        <h1 className='fredericka'>{code ? `${speciesName ?? code} in ${regionName}` : `Recent sightings in ${regionName}`}</h1>
+        <h1 className='fredericka'>
+          {code ? `${speciesName ?? code} in ${regionName}` : `${feed === 'watchlist' ? 'Watch list' : 'Notable'} sightings in ${regionName}`}
+        </h1>
         {code
           ? <Link className='pill-button' to='/map'>All sightings</Link>
           : <div className='map-page__tabs' role='group' aria-label='Which sightings to show'>
