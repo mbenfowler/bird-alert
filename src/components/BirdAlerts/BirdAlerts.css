@@ -229,6 +229,25 @@
   transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
+/* Every card in the row is the same fixed width whatever its type (this outranks the generic .card
+   rule, which is full-width for the main list). On phones a card is narrower than the screen, so
+   the next card's edge shows and the row reads as something to scroll. */
+.alerts-list > a > .card,
+.alerts-list > .alerts-item > .card {
+  width: 280px;
+  min-width: 280px;
+  max-width: 280px;
+}
+
+@media screen and (max-width: 480px) {
+  .alerts-list > a > .card,
+  .alerts-list > .alerts-item > .card {
+    width: 76vw;
+    min-width: 76vw;
+    max-width: 76vw;
+  }
+}
+
 /* Cards enter one after another when the panel opens, and drift up as it closes. */
 .is-expanded .alerts-list > a,
 .is-expanded .alerts-list > .alerts-item {
