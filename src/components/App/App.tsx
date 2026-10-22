@@ -40,26 +40,45 @@ const App = () => {
   useEffect(() => { navigateRef.current = navigate }, [navigate])
 
   const isPublicPath = PUBLIC_PATH_PREFIXES.some(prefix => pathname.startsWith(prefix))
-  // Diagnostic: what the browser thinks is under the finger for taps near the gear (top-right 96px),
-  // at pointerdown, touchstart and click, with the visual viewport's zoom and pan.
+  // Diagnostic: the whole life of a tap near the gear (top-right 96px): start, how it ends (end,
+  // cancel, click or nothing), how long it lasted, how far it moved, and whether any handler
+  // called preventDefault on it. iOS turns a touch into a click only if none of those go wrong.
   useEffect(() => {
     if (!user) return
     const describe = (el: Element | null) => el ? `${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''}${el.className && typeof el.className === 'string' ? '.' + el.className.split(' ').filter(Boolean).slice(0, 2).join('.') : ''}` : null
-    const probe = (event: Event) => {
-      const point = event instanceof MouseEvent ? event : event instanceof TouchEvent ? event.touches[0] ?? event.changedTouches[0] : null
-      if (!point) return
-      const { clientX: x, clientY: y } = point
-      if (x < window.innerWidth - 96 || y > 96) return
-      const vv = window.visualViewport
-      void postPushTrace({
-        event: 'tap-probe', source: 'app', type: event.type, x: Math.round(x), y: Math.round(y),
-        target: describe(event.target as Element), under: describe(document.elementFromPoint(x, y)),
-        active: describe(document.activeElement), scale: vv ? Number(vv.scale.toFixed(2)) : null, vvTop: vv ? Math.round(vv.offsetTop) : null, vvLeft: vv ? Math.round(vv.offsetLeft) : null,
-        scrollY: Math.round(window.scrollY), path: window.location.pathname
-      })
+    let start: { x: number; y: number; at: number; moved: number } | null = null
+    const pointOf = (event: Event) => event instanceof MouseEvent ? event : event instanceof TouchEvent ? (event.touches[0] ?? event.changedTouches[0]) : null
+    const nearGear = (x: number, y: number) => x >= window.innerWidth - 96 && y <= 96
+    const report = (event: Event, extra: Record<string, unknown> = {}) => {
+      const p = pointOf(event)
+      void postPushTrace({ event: 'tap-probe', source: 'app', type: event.type, x: p ? Math.round(p.clientX) : null, y: p ? Math.round(p.clientY) : null,
+        target: describe(event.target as Element), prevented: event.defaultPrevented, cancelable: event.cancelable,
+        sinceStart: start ? Math.round(performance.now() - start.at) : null, moved: start ? Math.round(start.moved) : null, path: window.location.pathname, ...extra })
     }
-    for (const type of ['pointerdown', 'touchstart', 'click']) document.addEventListener(type, probe, true)
-    return () => { for (const type of ['pointerdown', 'touchstart', 'click']) document.removeEventListener(type, probe, true) }
+    const onStart = (event: Event) => {
+      const p = pointOf(event)
+      if (!p || !nearGear(p.clientX, p.clientY)) { start = null; return }
+      start = { x: p.clientX, y: p.clientY, at: performance.now(), moved: 0 }
+      report(event, { under: describe(document.elementFromPoint(p.clientX, p.clientY)), active: describe(document.activeElement), scrollY: Math.round(window.scrollY) })
+    }
+    const onMove = (event: Event) => {
+      const p = pointOf(event)
+      if (start && p) start.moved = Math.max(start.moved, Math.hypot(p.clientX - start.x, p.clientY - start.y))
+    }
+    const onEnd = (event: Event) => {
+      if (!start) return
+      report(event, { under: (() => { const p = pointOf(event); return p ? describe(document.elementFromPoint(p.clientX, p.clientY)) : null })() })
+      if (event.type === 'click' || event.type === 'touchcancel' || event.type === 'pointercancel') start = null
+    }
+    // Bubble phase on window, so defaultPrevented reflects every other handler.
+    window.addEventListener('touchstart', onStart)
+    window.addEventListener('touchmove', onMove, { passive: true })
+    for (const type of ['touchend', 'touchcancel', 'pointerup', 'pointercancel', 'click']) window.addEventListener(type, onEnd)
+    return () => {
+      window.removeEventListener('touchstart', onStart)
+      window.removeEventListener('touchmove', onMove)
+      for (const type of ['touchend', 'touchcancel', 'pointerup', 'pointercancel', 'click']) window.removeEventListener(type, onEnd)
+    }
   }, [user])
 
   // Diagnostic: every route change with how it happened (PUSH from code, POP from history/back,
