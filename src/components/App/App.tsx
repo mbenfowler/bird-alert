@@ -35,6 +35,20 @@ const App = () => {
     if (user === null && !isPublicPath) navigate('/login', { replace: true })
   }, [user, isPublicPath, navigate])
 
+  // A tapped notification reaches an already-open app as a message from the service worker, because
+  // iOS Home Screen apps ignore the worker's own navigate(). Only same-origin targets are followed.
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return
+    const onMessage = (event: MessageEvent) => {
+      const data = event.data as { type?: unknown; url?: unknown } | null
+      if (!data || data.type !== 'open' || typeof data.url !== 'string') return
+      const target = new URL(data.url, window.location.origin)
+      if (target.origin === window.location.origin) navigate(target.pathname + target.search)
+    }
+    navigator.serviceWorker.addEventListener('message', onMessage)
+    return () => navigator.serviceWorker.removeEventListener('message', onMessage)
+  }, [navigate])
+
   // Gate an element on having a user. While the session is being checked, show a spinner.
   const requireUser = (element: ReactElement) => {
     if (user === undefined) return <div className='spinner'></div>
