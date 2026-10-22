@@ -105,3 +105,13 @@ export interface SeasonMonth {
   reported: number
   covered: number
 }
+
+/** The latest push the server sent this user, and what became of it (see notificationHandoff.ts). */
+export interface PendingPush {
+  title: string
+  url: string
+  sentAt: string
+  tappedAt: string | null
+  offeredAt: string | null
+  openedAt: string | null
+}

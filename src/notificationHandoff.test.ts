@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { HANDOFF_CACHE, LATEST_PUSH_KEY, PENDING_OPEN_KEY, samePath, takeLatestPush, takePendingOpen } from './notificationHandoff'
+import { HANDOFF_CACHE, LATEST_PUSH_KEY, PENDING_OPEN_KEY, decidePending, pollInterval, samePath, takeLatestPush, takePendingOpen } from './notificationHandoff'
 
 // A minimal Cache API: one named cache holding Response objects by key.
 const store = new Map<string, Response>()
@@ -47,5 +47,34 @@ describe('notification hand-off', () => {
   it('is quiet without the Cache API', async () => {
     vi.stubGlobal('caches', undefined)
     expect(await takePendingOpen()).toBeNull()
+  })
+})
+
+describe('server hand-off decisions', () => {
+  const now = Date.parse('2026-10-22T15:36:10Z')
+  const base = { url: '/sightings?s=a:S1', sentAt: '2026-10-22T15:36:00Z', tappedAt: null, offeredAt: null, openedAt: null }
+
+  it('offers a fresh, unoffered push as a toast', () => {
+    expect(decidePending(base, now)).toBe('offer')
+  })
+
+  it('follows a tap that the app has not yet opened, even after the toast', () => {
+    expect(decidePending({ ...base, offeredAt: '2026-10-22T15:36:05Z', tappedAt: '2026-10-22T15:38:00Z' }, now + 2 * 60_000)).toBe('open')
+  })
+
+  it('does nothing once opened, when too old, or when there is no push', () => {
+    expect(decidePending({ ...base, tappedAt: '2026-10-22T15:36:05Z', openedAt: '2026-10-22T15:36:06Z' }, now)).toBeNull()
+    expect(decidePending(base, now + 6 * 60_000)).toBeNull()
+    expect(decidePending(null, now)).toBeNull()
+  })
+
+  it('does not offer a toast for a push more than two minutes old', () => {
+    expect(decidePending(base, now + 3 * 60_000)).toBeNull()
+  })
+
+  it('polls quickly while a recent push is unopened, slowly otherwise', () => {
+    expect(pollInterval(base, now)).toBe(2_000)
+    expect(pollInterval({ ...base, openedAt: '2026-10-22T15:36:06Z' }, now)).toBe(10_000)
+    expect(pollInterval(null, now)).toBe(10_000)
   })
 })
