@@ -1,72 +1,81 @@
-#settings-form {
+/* The details card: same shell as the alert-center rows, fields stacked, one primary button. */
+.settings-card {
+    width: min(100%, 560px);
+    margin: 28px auto 0;
+    padding: 18px 16px 16px;
+    box-sizing: border-box;
     display: flex;
-    align-items: center;
     flex-direction: column;
+    gap: 12px;
+    border: 2px solid var(--ink);
+    border-radius: 14px;
+    background: var(--surface);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.14);
+}
+
+.settings-card h2 {
+    margin: 0 0 2px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.field__label {
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.settings-card input,
+.settings-card select {
     width: 100%;
+    min-height: 44px;
+    padding: 0 12px;
+    box-sizing: border-box;
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--ink);
+    font: inherit;
+    font-size: 1rem;
 }
 
-#settings-form label {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    width: 40%;
-    padding: 2%;
-    font-family: 'Fredericka the Great';
+.settings-card input {
+    -webkit-appearance: none;
+    appearance: none;
 }
 
-#settings-form select,
-#settings-form input {
-    height: 40px;
-    padding: 10px;
-    border-radius: 5px;
-    border: 1px solid darkgray;
+.settings-card input:focus-visible,
+.settings-card select:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
 }
 
-#emailLabel {
-    display: flex;
-    flex-direction: column;
+.settings-card__warning {
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #fde8e8;
+    color: #a61b1b;
+    font-size: 0.95rem;
 }
 
-.password-reset-text {
-    font-size: 14px;
-    color: blue;
-    text-align: center;
+.settings-card .link-text,
+.settings-card .password-reset-text {
+    align-self: flex-start;
+    margin-top: -4px;
+    padding: 0;
+    color: var(--link);
+    font: inherit;
+    font-size: 0.9rem;
+    text-decoration: underline;
     cursor: pointer;
-    font-family: 'roboto';
 }
 
-.submit {
-    width: 30%;
-    align-self: center;
+.settings-card__actions {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 50px;
-    background-color: white;
-    border-radius: 25px;
-    cursor: pointer;
-}
-
-.email-confirmation-text {
-    color: white;
-    background-color: red;
-    padding: 5px;
-}
-
-.link-text {
-    font-size: 14px;
-    color: blue;
-    text-align: center;
-    cursor: pointer;
-    font-family: 'roboto';
-}
-
-@media screen and (max-width: 900px) {
-    #settings-form label {
-        width: 80%;
-    }
-
-    .submit {
-        width: 50%;
-    }
+    justify-content: flex-end;
+    margin-top: 4px;
 }
