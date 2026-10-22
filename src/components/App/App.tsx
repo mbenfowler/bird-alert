@@ -1,11 +1,11 @@
 import { lazy, Suspense, useEffect, useRef, type ReactElement } from 'react'
 import { Routes, Route, useNavigate, useLocation, Link } from 'react-router'
-import { CHANNEL, decidePending, pollInterval, samePath, takeLatestPush, takePendingOpen, type LatestPush, type PendingTrigger } from '../../notificationHandoff'
+import { CHANNEL, decidePending, pollInterval, samePath, takePendingOpen, type LatestPush, type PendingTrigger } from '../../notificationHandoff'
 import { ackPendingPush, getPendingPush, postPushTrace } from '../../apiCalls'
 import type { PendingPush } from '../../types'
 
 // Which build is running, for the notification trace.
-const APP_BUILD = '2026-10-22.7'
+const APP_BUILD = '2026-10-22.8'
 import { toast, ToastContainer } from 'react-toastify'
 import { useSessionQuery } from '../../hooks/queries'
 import './App.css'
@@ -70,15 +70,15 @@ const App = () => {
       // On iPhone the system banner is a dead end while the app is open, so this toast is the way in; give it time.
       toast(`${push.title} · tap to view`, { toastId: push.path, position: 'top-center', autoClose: 20000, closeOnClick: true, onClick: () => navigateRef.current(push.path) })
     }
+    // The worker's own records and messages are instant where they work (desktop); the toast itself
+    // comes only from the server, so it can never race a navigation to the same page.
     const check = () => {
       if (document.visibilityState !== 'visible') return
-      void takePendingOpen().then((path) => { go(path, 'poll'); return takeLatestPush() }).then((push) => offer(push, 'poll'))
+      void takePendingOpen().then((path) => go(path, 'poll'))
     }
     const onMessage = (event: MessageEvent) => {
-      const data = event.data as { type?: unknown; url?: unknown; title?: unknown } | null
-      if (!data) return
-      if (data.type === 'open') { void takePendingOpen(); go(samePath(data.url), 'message') }
-      if (data.type === 'push' && typeof data.title === 'string') { const path = samePath(data.url); if (path) { void takeLatestPush(); offer({ title: data.title, path }, 'message') } }
+      const data = event.data as { type?: unknown; url?: unknown } | null
+      if (data && data.type === 'open') { void takePendingOpen(); go(samePath(data.url), 'message') }
     }
     // The server knows about every push it sent and every tap the worker reported, which is the
     // only route that reaches an open iPhone app. Polled while visible: quickly after a push.
