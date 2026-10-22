@@ -68,20 +68,21 @@ const Form = () => {
     if (patchUser.isPending) return <div className='spinner'></div>
 
     return (
-        <form id='settings-form' onSubmit={handleSubmit}>
+        <form id='settings-form' className='settings-card' onSubmit={handleSubmit}>
+            <h2 className='fredericka'>Your details</h2>
             {!user.email_confirmed &&
-                <>
-                    <p className='email-confirmation-text'>Please confirm your email address to receive notifications</p>
+                <p className='settings-card__warning' role='status'>
+                    Please confirm your email address to receive notifications.{' '}
                     <button type='button' className='link-button link-text' id='resendConfirmationEmail' onClick={handleResendConfirmation}>Resend confirmation email</button>
-                </>
+                </p>
             }
-            <label id='emailLabel'>
-                Email:
+            <label className='field' id='emailLabel'>
+                <span className='field__label'>Email</span>
                 <input type="email" name='email' autoComplete='email' value={form.email} onChange={handleChange} />
-                <button type='button' className='link-button password-reset-text' id='sendPasswordResetEmail' onClick={handlePasswordReset}>Click here to receive a password reset email</button>
             </label>
-            <label>
-                State:
+            <button type='button' className='link-button password-reset-text' id='sendPasswordResetEmail' onClick={handlePasswordReset}>Send me a password reset email</button>
+            <label className='field'>
+                <span className='field__label'>State</span>
                 <select name="state" value={form.state} onChange={handleChange}>
                     <option value="">Select your state</option>
                     {STATE_CODES.map(state => <option key={state} value={state}>{state}</option>)}
@@ -89,15 +90,17 @@ const Form = () => {
             </label>
             {regions.isError && <p className='passwordErrorText' role='alert'>Could not load regions: {errorMessage(regions.error)}</p>}
             {!!regions.data?.length &&
-                <label>
-                    Region:
+                <label className='field'>
+                    <span className='field__label'>County</span>
                     <select name="location" value={form.location} onChange={handleChange}>
-                        <option value="">Select your region</option>
+                        <option value="">Select your county</option>
                         {regions.data.map(region => <option key={region.code} value={region.code}>{region.name} - {region.code}</option>)}
                     </select>
                 </label>
             }
-            <button type='submit' className='submit'>Lock in details</button>
+            <div className='settings-card__actions'>
+                <button type='submit' className='pill-button pill-button--primary'>Lock in details</button>
+            </div>
         </form>
     )
 }

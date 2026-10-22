@@ -45,8 +45,13 @@ nav .text-link {
     overflow-x: clip;
 }
 
-#settings:hover {
-    animation: action-hover 0.25s ease-in forwards;
+/* The gear reveals Settings / Logout on hover. On touch screens a tap would only trigger the hover
+   and shift the link under the finger, so there the gear is a plain link and Logout lives on the
+   settings page instead. */
+@media (hover: hover) and (pointer: fine) {
+    #settings:hover {
+        animation: action-hover 0.25s ease-in forwards;
+    }
 }
 
 @keyframes action-hover {

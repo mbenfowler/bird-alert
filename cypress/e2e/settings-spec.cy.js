@@ -14,7 +14,7 @@ describe('Settings', () => {
     cy.wait('@regions')
     cy.get('select[name="location"]').should('have.value', '')
     cy.get('select[name="location"]').select('US-GA-121')
-    cy.get('button.submit').click()
+    cy.get('#settings-form button[type="submit"]').click()
 
     cy.wait('@patchUser').its('request.body').should('deep.include', { state: 'CA', location: 'US-GA-121' })
     cy.url().should('eq', 'http://localhost:3000/')
@@ -24,7 +24,7 @@ describe('Settings', () => {
   it('warns that a changed email needs confirming again', () => {
     cy.get('input[name="email"]').clear()
     cy.get('input[name="email"]').type('newaddress@example.com')
-    cy.get('button.submit').click()
+    cy.get('#settings-form button[type="submit"]').click()
     cy.wait('@patchUser').its('request.body.email').should('eq', 'newaddress@example.com')
     cy.contains('Email changed. Check your inbox for a new confirmation link.')
   })

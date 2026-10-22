@@ -178,3 +178,47 @@ button#confirmPasswordReset {
   cursor: not-allowed;
 }
 
+
+/* Pill buttons, shared by the sighting page, the settings form and the settings footer. */
+.pill-button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 16px;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    -webkit-text-fill-color: var(--ink);
+    -webkit-appearance: none;
+    appearance: none;
+    font: inherit;
+    font-size: 0.98rem;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.pill-button--primary {
+    background: var(--accent);
+    font-weight: 600;
+}
+
+.pill-button:hover:not(:disabled) {
+    background: var(--accent-soft);
+}
+
+.pill-button--primary:hover:not(:disabled) {
+    background: var(--accent);
+    filter: brightness(1.05);
+}
+
+.pill-button:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.pill-button:disabled {
+    opacity: 0.6;
+    cursor: progress;
+}
+
