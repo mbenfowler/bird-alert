@@ -5,7 +5,7 @@ import { ackPendingPush, getPendingPush, postPushTrace } from '../../apiCalls'
 import type { PendingPush } from '../../types'
 
 // Which build is running, for the notification trace.
-const APP_BUILD = '2026-10-22.5'
+const APP_BUILD = '2026-10-22.6'
 import { toast, ToastContainer } from 'react-toastify'
 import { useSessionQuery } from '../../hooks/queries'
 import './App.css'
@@ -54,17 +54,25 @@ const App = () => {
     const note = (event: string, detail: Record<string, unknown> = {}) => {
       void postPushTrace({ event, source: 'app', bundle: APP_BUILD, controller: navigator.serviceWorker?.controller?.scriptURL ?? null, visibility: document.visibilityState, path: window.location.pathname, ...detail })
     }
-    const go = (path: string | null, via: string) => { if (path && !cancelled) { note('app-open', { via, target: path }); navigateRef.current(path) } }
+    // A target is followed once, and never offered as a toast when the app is already there or on its way.
+    let lastOpened: string | null = null
+    const here = () => window.location.pathname + window.location.search
+    const go = (path: string | null, via: string) => {
+      if (!path || cancelled || path === lastOpened) return
+      lastOpened = path
+      note('app-open', { via, target: path })
+      navigateRef.current(path)
+    }
     const offer = (push: LatestPush | null, via: string) => {
       if (!push || cancelled || document.visibilityState !== 'visible') return
+      if (push.path === lastOpened || push.path === here()) return
       note('app-toast', { via, target: push.path })
       // On iPhone the system banner is a dead end while the app is open, so this toast is the way in; give it time.
       toast(`${push.title} · tap to view`, { toastId: push.path, position: 'top-center', autoClose: 20000, closeOnClick: true, onClick: () => navigateRef.current(push.path) })
     }
     const check = () => {
       if (document.visibilityState !== 'visible') return
-      void takePendingOpen().then((path) => go(path, 'poll'))
-      void takeLatestPush().then((push) => offer(push, 'poll'))
+      void takePendingOpen().then((path) => { go(path, 'poll'); return takeLatestPush() }).then((push) => offer(push, 'poll'))
     }
     const onMessage = (event: MessageEvent) => {
       const data = event.data as { type?: unknown; url?: unknown; title?: unknown } | null
