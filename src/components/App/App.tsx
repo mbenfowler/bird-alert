@@ -46,19 +46,26 @@ const App = () => {
   useEffect(() => {
     if (!user) return
     const describe = (el: Element | null) => el ? `${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''}${el.className && typeof el.className === 'string' ? '.' + el.className.split(' ').filter(Boolean).slice(0, 2).join('.') : ''}` : null
-    let start: { x: number; y: number; at: number; moved: number } | null = null
+    let start: { x: number; y: number; at: number; moved: number; mutations: number } | null = null
+    // Activity while a finger is down: DOM mutations and running animations, which make iOS re-check a pending tap.
+    const observer = new MutationObserver((records) => { if (start) start.mutations += records.length })
+    observer.observe(document.documentElement, { subtree: true, childList: true, attributes: true, characterData: true })
+    const runningAnimations = () => {
+      const list = typeof document.getAnimations === 'function' ? document.getAnimations() : []
+      return { animations: list.length, running: list.slice(0, 6).map((a) => { const effect = a.effect as KeyframeEffect | null; const name = (a as CSSAnimation).animationName ?? (a as CSSTransition).transitionProperty ?? a.id; return `${describe(effect?.target as Element | null)}:${name}:${a.playState}` }) }
+    }
     const pointOf = (event: Event) => event instanceof MouseEvent ? event : event instanceof TouchEvent ? (event.touches[0] ?? event.changedTouches[0]) : null
     const nearGear = (x: number, y: number) => x >= window.innerWidth - 96 && y <= 96
     const report = (event: Event, extra: Record<string, unknown> = {}) => {
       const p = pointOf(event)
       void postPushTrace({ event: 'tap-probe', source: 'app', type: event.type, x: p ? Math.round(p.clientX) : null, y: p ? Math.round(p.clientY) : null,
         target: describe(event.target as Element), prevented: event.defaultPrevented, cancelable: event.cancelable,
-        sinceStart: start ? Math.round(performance.now() - start.at) : null, moved: start ? Math.round(start.moved) : null, path: window.location.pathname, ...extra })
+        sinceStart: start ? Math.round(performance.now() - start.at) : null, moved: start ? Math.round(start.moved) : null, mutations: start ? start.mutations : null, path: window.location.pathname, ...runningAnimations(), ...extra })
     }
     const onStart = (event: Event) => {
       const p = pointOf(event)
       if (!p || !nearGear(p.clientX, p.clientY)) { start = null; return }
-      start = { x: p.clientX, y: p.clientY, at: performance.now(), moved: 0 }
+      start = { x: p.clientX, y: p.clientY, at: performance.now(), moved: 0, mutations: 0 }
       const safeTop = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-top')) || 0
       report(event, { under: describe(document.elementFromPoint(p.clientX, p.clientY)), active: describe(document.activeElement), scrollY: Math.round(window.scrollY),
         inner: [window.innerWidth, window.innerHeight], screen: [window.screen.width, window.screen.height], outer: [window.outerWidth, window.outerHeight],
@@ -78,6 +85,7 @@ const App = () => {
     window.addEventListener('touchmove', onMove, { passive: true })
     for (const type of ['touchend', 'touchcancel', 'pointerup', 'pointercancel', 'click']) window.addEventListener(type, onEnd)
     return () => {
+      observer.disconnect()
       window.removeEventListener('touchstart', onStart)
       window.removeEventListener('touchmove', onMove)
       for (const type of ['touchend', 'touchcancel', 'pointerup', 'pointercancel', 'click']) window.removeEventListener(type, onEnd)
