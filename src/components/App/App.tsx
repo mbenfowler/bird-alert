@@ -40,6 +40,28 @@ const App = () => {
   useEffect(() => { navigateRef.current = navigate }, [navigate])
 
   const isPublicPath = PUBLIC_PATH_PREFIXES.some(prefix => pathname.startsWith(prefix))
+  // Diagnostic: what the browser thinks is under the finger for taps near the gear (top-right 96px),
+  // at pointerdown, touchstart and click, with the visual viewport's zoom and pan.
+  useEffect(() => {
+    if (!user) return
+    const describe = (el: Element | null) => el ? `${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''}${el.className && typeof el.className === 'string' ? '.' + el.className.split(' ').filter(Boolean).slice(0, 2).join('.') : ''}` : null
+    const probe = (event: Event) => {
+      const point = event instanceof MouseEvent ? event : event instanceof TouchEvent ? event.touches[0] ?? event.changedTouches[0] : null
+      if (!point) return
+      const { clientX: x, clientY: y } = point
+      if (x < window.innerWidth - 96 || y > 96) return
+      const vv = window.visualViewport
+      void postPushTrace({
+        event: 'tap-probe', source: 'app', type: event.type, x: Math.round(x), y: Math.round(y),
+        target: describe(event.target as Element), under: describe(document.elementFromPoint(x, y)),
+        active: describe(document.activeElement), scale: vv ? Number(vv.scale.toFixed(2)) : null, vvTop: vv ? Math.round(vv.offsetTop) : null, vvLeft: vv ? Math.round(vv.offsetLeft) : null,
+        scrollY: Math.round(window.scrollY), path: window.location.pathname
+      })
+    }
+    for (const type of ['pointerdown', 'touchstart', 'click']) document.addEventListener(type, probe, true)
+    return () => { for (const type of ['pointerdown', 'touchstart', 'click']) document.removeEventListener(type, probe, true) }
+  }, [user])
+
   // Diagnostic: every route change with how it happened (PUSH from code, POP from history/back,
   // REPLACE), to see what follows a gear tap that seems to go nowhere on phones.
   const navigationType = useNavigationType()
