@@ -40,6 +40,8 @@ const App = () => {
   useEffect(() => { navigateRef.current = navigate }, [navigate])
 
   const isPublicPath = PUBLIC_PATH_PREFIXES.some(prefix => pathname.startsWith(prefix))
+  // Diagnostic: arrivals on the settings route, to pair with gear taps that seem to go nowhere on phones.
+  useEffect(() => { if (pathname === '/settings' && user) void postPushTrace({ event: 'route-settings', source: 'app', path: pathname }) }, [pathname, user])
   useEffect(() => {
     if (user === null && !isPublicPath) navigate('/login', { replace: true })
   }, [user, isPublicPath, navigate])
