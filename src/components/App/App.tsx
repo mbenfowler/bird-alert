@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, type ReactElement } from 'react'
-import { Routes, Route, useNavigate, useLocation, Link } from 'react-router'
+import { Routes, Route, useNavigate, useLocation, useNavigationType, Link } from 'react-router'
 import { CHANNEL, decidePending, pollInterval, samePath, takePendingOpen, type LatestPush, type PendingTrigger } from '../../notificationHandoff'
 import { ackPendingPush, getPendingPush, postPushTrace } from '../../apiCalls'
 import type { PendingPush } from '../../types'
@@ -40,8 +40,15 @@ const App = () => {
   useEffect(() => { navigateRef.current = navigate }, [navigate])
 
   const isPublicPath = PUBLIC_PATH_PREFIXES.some(prefix => pathname.startsWith(prefix))
-  // Diagnostic: arrivals on the settings route, to pair with gear taps that seem to go nowhere on phones.
-  useEffect(() => { if (pathname === '/settings' && user) void postPushTrace({ event: 'route-settings', source: 'app', path: pathname }) }, [pathname, user])
+  // Diagnostic: every route change with how it happened (PUSH from code, POP from history/back,
+  // REPLACE), to see what follows a gear tap that seems to go nowhere on phones.
+  const navigationType = useNavigationType()
+  const previousPath = useRef<string | null>(null)
+  useEffect(() => {
+    const from = previousPath.current
+    previousPath.current = pathname
+    if (user && from !== pathname) void postPushTrace({ event: 'route', source: 'app', path: pathname, from, type: navigationType, visibility: document.visibilityState, scrollY: Math.round(window.scrollY) })
+  }, [pathname, navigationType, user])
   useEffect(() => {
     if (user === null && !isPublicPath) navigate('/login', { replace: true })
   }, [user, isPublicPath, navigate])
