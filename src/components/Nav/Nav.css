@@ -22,6 +22,12 @@ nav div a {
     align-items: center;
 }
 
+/* The two words of the wordmark are set in different fonts; sharing a baseline keeps them level
+   whichever font ends up drawing "Alert!". */
+nav .text-link {
+    align-items: baseline;
+}
+
 .nav-img {
     height: 45px;
     width: 45px;
