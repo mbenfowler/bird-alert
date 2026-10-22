@@ -1,11 +1,11 @@
 import { useEffect, type ChangeEvent } from 'react'
 import { toast } from 'react-toastify'
-import { errorMessage } from '../../apiCalls'
+import { errorMessage, sendEmailPreview } from '../../apiCalls'
 import { useCurrentUser, usePushStatusQuery } from '../../hooks/queries'
 import { usePatchUserMutation } from '../../hooks/mutations'
 import { usePushNotifications } from '../../hooks/usePushNotifications'
 import { LoadingState } from '../Loading/Loading'
-import type { EmailPreference, PushPreference } from '../../types'
+import type { EmailPreference, EmailPreviewKind, EmailPreviewResult, PushPreference } from '../../types'
 import './AlertCenter.css'
 
 const PUSH_KINDS: { field: PushPreference; label: string; hint: string }[] = [
@@ -14,10 +14,10 @@ const PUSH_KINDS: { field: PushPreference; label: string; hint: string }[] = [
   { field: 'push_first_of_season', label: 'First of the season', hint: 'The first report of a migrant returning to your area, once per species each season.' }
 ]
 
-const EMAIL_PREFERENCES: { field: EmailPreference; label: string; hint: string }[] = [
-  { field: 'alert_digest_email_enabled', label: 'Daily email digest', hint: 'One email a morning when a bird on your watch list was seen nearby.' },
-  { field: 'rare_sightings_email_enabled', label: 'Uncommon sightings email', hint: "eBird's notable sightings for your area, once a day." },
-  { field: 'migration_email_enabled', label: 'Weekly migration email', hint: 'Sundays: who arrived this week, who moved on, and who to expect next.' }
+const EMAIL_PREFERENCES: { field: EmailPreference; label: string; hint: string; preview: EmailPreviewKind; nothing: string }[] = [
+  { field: 'alert_digest_email_enabled', label: 'Daily email digest', hint: 'One email a morning when a bird on your watch list was seen nearby.', preview: 'watchlist', nothing: 'none of your watch-list birds were reported nearby in the last day.' },
+  { field: 'rare_sightings_email_enabled', label: 'Uncommon sightings email', hint: "eBird's notable sightings for your area, once a day.", preview: 'rare', nothing: 'no notable sightings nearby in the last day.' },
+  { field: 'migration_email_enabled', label: 'Weekly migration email', hint: 'Sundays: who arrived this week, who moved on, and who to expect next.', preview: 'migration', nothing: 'no migration news for your county yet.' }
 ]
 
 const pushHint: Record<string, string> = {
@@ -85,6 +85,21 @@ const AlertCenter = () => {
     toast.promise(push.sendTest(), {
       pending: { render: 'Sending a test notification…', position: 'bottom-center' },
       success: { render: ({ data }) => (data && data.sent > 0 ? 'Sent to this device. Check your notifications.' : 'This device did not receive it; try turning push off and on.'), position: 'bottom-center' },
+      error: { render: ({ data }) => errorMessage(data), position: 'bottom-center' }
+    })
+  }
+
+  // "Send me this now": the real email, today, regardless of the schedule, so it can be seen before opting in.
+  const previewEmail = (kind: EmailPreviewKind, nothing: string) => {
+    toast.promise(sendEmailPreview(kind), {
+      pending: { render: 'Sending…', position: 'bottom-center' },
+      success: {
+        render: ({ data }: { data: EmailPreviewResult }) => data.sent ? `Sent to ${user.email}. Check your inbox.`
+          : data.reason === 'nothing' ? `Nothing to send right now: ${nothing}`
+          : data.reason === 'unconfirmed' ? 'Confirm your email address first; the confirmation link is in your inbox.'
+          : 'Set your county in settings first.',
+        position: 'bottom-center'
+      },
       error: { render: ({ data }) => errorMessage(data), position: 'bottom-center' }
     })
   }
@@ -176,11 +191,12 @@ const AlertCenter = () => {
         </div>
       </div>
 
-      {EMAIL_PREFERENCES.map(({ field, label, hint }) => (
+      {EMAIL_PREFERENCES.map(({ field, label, hint, preview, nothing }) => (
         <div className='notification' key={field}>
           <div className='notification__text'>
             <label htmlFor={field}>{label}</label>
             <p className='notification__hint'>{hint}</p>
+            <button type='button' className='test-push test-push--inline' data-preview={preview} onClick={() => previewEmail(preview, nothing)}>Send me this now</button>
           </div>
           <div className='notification__controls'>
             <input className='switch' type="checkbox" id={field} name={field} checked={Boolean(user[field])} disabled={pendingField === field} onChange={togglePreference} />

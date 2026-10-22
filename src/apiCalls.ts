@@ -1,4 +1,4 @@
-import type { PendingPush, Arrivals, Bird, Observation, Region, SeasonMonth, User, UserPatch } from './types'
+import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, Observation, Region, SeasonMonth, User, UserPatch } from './types'
 
 // Every request goes to the same-origin `/api` prefix. In development Vite proxies it to the
 // backend (vite.config.ts); in production Vercel rewrites it (vercel.json). The backend holds
@@ -102,3 +102,6 @@ export const postPushTrace = (detail: Record<string, unknown>) =>
 export const getPendingPush = () => api<{ push: PendingPush | null }>('/push/pending')
 export const ackPendingPush = (ack: { offered?: boolean; opened?: boolean }) =>
   fetch(`${API_BASE}/push/ack`, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ack) }).catch(() => undefined)
+
+/** Sends one of the email digests to the signed-in user right now, so they can see what it looks like. */
+export const sendEmailPreview = (kind: EmailPreviewKind) => api<EmailPreviewResult>('/mailPreview', { method: 'POST', body: { kind } })
