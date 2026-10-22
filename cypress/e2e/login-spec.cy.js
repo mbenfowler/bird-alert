@@ -8,7 +8,7 @@ describe("Login flow for a user that already has location set", () => {
   it("should be able to login with correct email and password", () => {
       cy.get('#titleBird').should('contain', 'Bird')
       .get('#titleAlert').should('contain', 'Alert')
-      .get('[href="/saved"] > .nav-img').should('be.visible')
+      .get('[href="/saved"]').should('be.visible')
       .get(':nth-child(2) > .nav-img').should('be.visible')
       .get('.alerts-header').should('contain', 'Watch list sightings')
       .get('.alerts-count').should('contain', '1')
