@@ -59,7 +59,10 @@ const App = () => {
       const p = pointOf(event)
       if (!p || !nearGear(p.clientX, p.clientY)) { start = null; return }
       start = { x: p.clientX, y: p.clientY, at: performance.now(), moved: 0 }
-      report(event, { under: describe(document.elementFromPoint(p.clientX, p.clientY)), active: describe(document.activeElement), scrollY: Math.round(window.scrollY) })
+      const safeTop = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-top')) || 0
+      report(event, { under: describe(document.elementFromPoint(p.clientX, p.clientY)), active: describe(document.activeElement), scrollY: Math.round(window.scrollY),
+        inner: [window.innerWidth, window.innerHeight], screen: [window.screen.width, window.screen.height], outer: [window.outerWidth, window.outerHeight],
+        standalone: Boolean((navigator as Navigator & { standalone?: boolean }).standalone), safeTop, screenY: Math.round(p.clientY + (window.screenTop || 0)) })
     }
     const onMove = (event: Event) => {
       const p = pointOf(event)

@@ -1,5 +1,6 @@
 /* Design tokens: the app's grey canvas, white cards, black ink, gold accent. */
 :root {
+    --safe-top: env(safe-area-inset-top, 0px);
     --bg: #d3d3d3;
     --surface: #ffffff;
     --surface-muted: #e8e8e8;
