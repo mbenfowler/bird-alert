@@ -17,6 +17,7 @@ const Unsubscribe = lazy(() => import('../Unsubscribe/Unsubscribe'))
 const PassReset = lazy(() => import('../PassReset/PassReset'))
 const Sighting = lazy(() => import('../Sighting/Sighting'))
 const MapPage = lazy(() => import('../MapPage/MapPage'))
+const AlertSightings = lazy(() => import('../AlertSightings/AlertSightings'))
 
 // Routes reachable without a session. Everything else redirects to /login once we know there is no user.
 const PUBLIC_PATH_PREFIXES = ['/login', '/reset/', '/confirm/', '/unsubscribe/']
@@ -60,6 +61,7 @@ const App = () => {
           <Route path='/settings' element={requireUser(<Settings />)} />
           <Route path='/map' element={requireUser(<MapPage />)} />
           <Route path='/sighting/:code/:subId' element={requireUser(<Sighting />)} />
+          <Route path='/sightings' element={requireUser(<AlertSightings />)} />
           <Route path='/reset/:token' element={<PassReset />} />
           <Route path='/unsubscribe/:token' element={<Unsubscribe />} />
           <Route path='/confirm/:token' element={<EmailConfirm />} />

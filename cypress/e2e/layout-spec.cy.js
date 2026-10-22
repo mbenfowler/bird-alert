@@ -36,6 +36,9 @@ describe('Phone-width layout', () => {
     cy.visit('http://localhost:3000/map')
     cy.get('.sightings-map')
     assertNoHorizontalOverflow()
+    cy.visit('http://localhost:3000/sightings?s=cangoo:S155544243,tuftit:S155544243')
+    cy.get('.alert-sightings__table')
+    assertNoHorizontalOverflow()
   })
 
   it('shows every alerts tab title in full', () => {
