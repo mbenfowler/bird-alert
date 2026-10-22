@@ -224,6 +224,12 @@ button#confirmPasswordReset {
 }
 
 
+/* iOS holds every tap for ~350ms to see if a double tap follows, whenever it thinks a page can be
+   zoomed by double-tapping. Nothing here wants that: taps are taps. */
+html, body {
+    touch-action: manipulation;
+}
+
 /* Temporary diagnostics (see src/experiments.ts): each class disables one feature of the home page. */
 html.x-nosticky #alertArea { position: static; }
 html.x-noscroller .alerts-list { overflow-x: hidden; }
