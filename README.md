@@ -16,7 +16,7 @@ I'm a casual backyard birder, and I wanted something simpler than eBird's fireho
 - **Watch list.** Tick a bird to watch it. Your saved birds get their own page, each showing when it was last reported near you.
 - **Alerts.** The panel at the top of the home page shows recent sightings of your watch-list birds, and a second tab shows eBird's "notable" sightings for the area. Each one links to the spot on a map.
 - **Arriving soon.** A third tab lists the species that were around your county this time last year but haven't been reported yet, judged from a year of eBird's daily reports, with a one-tap watch toggle and a link to the night's BirdCast radar for the county. Each sighting page shows which months of the year the species is around.
-- **Push notifications.** Turn them on per device and choose watch-list sightings, notable sightings, the first report of a returning migrant each season, or all three, with quiet hours in your own time zone.
+- **Push notifications.** Turn them on per device and choose watch-list sightings, notable sightings, the first report of a returning migrant each season, or all three, with quiet hours in your own time zone. Watch-list birds arrive together once an hour; tapping opens a page with every one of them pinned on a map and listed beneath. Notable and first-of-season birds get their own notification with a map button.
 - **Email digests.** Opt in to a daily email when one of your birds was seen yesterday, a separate one for uncommon sightings, and a Sunday migration summary: who arrived this week, who moved on, and who to expect next. Every email has a one-click unsubscribe.
 - **Search.** Look up any bird by name, even ones that aren't local.
 

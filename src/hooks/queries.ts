@@ -27,7 +27,8 @@ export const queryKeys = {
   pushStatus: ['push-status'] as const,
   speciesObservations: (region: string, code: string) => ['species-observations', region, code] as const,
   arrivals: (region: string) => ['arrivals', region] as const,
-  seasonality: (region: string, code: string) => ['seasonality', region, code] as const
+  seasonality: (region: string, code: string) => ['seasonality', region, code] as const,
+  sightings: (region: string, ids: string) => ['sightings', region, ids] as const
 }
 
 /** The logged-in user, null when logged out, undefined while the cookie is being checked. */
@@ -181,4 +182,36 @@ export const useSeasonalityQuery = (region: string, code: string) =>
     gcTime: WEEK,
     meta: { persist: true },
     enabled: Boolean(region && code)
+  })
+
+/** One sighting a push notification pointed at: a species and the checklist it was reported on. */
+export interface SightingRef { code: string; subId: string }
+
+/** Parses 'cangoo:S1,snogoo:S2' as it appears in a notification's link. Malformed parts are dropped. */
+export const parseSightingRefs = (value: string | null): SightingRef[] =>
+  (value ?? '').split(',').map((part) => {
+    const [code, subId] = part.split(':')
+    return code && subId && /^[a-z0-9]+$/i.test(code) && /^[A-Z0-9]+$/i.test(subId) ? { code, subId } : null
+  }).filter((ref): ref is SightingRef => ref !== null)
+
+/**
+ * The observations behind a watch-list notification. eBird's species feed lists every report of a
+ * species in the last 30 days, so each checklist id is looked up there; if a report has since
+ * dropped out, the species' newest report stands in so the bird is still on the map.
+ */
+export const useSightingsQuery = (region: string, refs: SightingRef[]) =>
+  useQuery({
+    queryKey: queryKeys.sightings(region, refs.map((r) => `${r.code}:${r.subId}`).join(',')),
+    queryFn: async () => {
+      const codes = [...new Set(refs.map((r) => r.code))]
+      const feeds = await Promise.all(codes.map((code) => getSpeciesObservations(region, code)))
+      const byCode = new Map(codes.map((code, i) => [code, feeds[i]]))
+      return refs.flatMap((ref) => {
+        const feed = byCode.get(ref.code) ?? []
+        const exact = feed.filter((o) => o.subId === ref.subId)
+        return exact.length ? exact : feed.slice(0, 1)
+      })
+    },
+    staleTime: 5 * MINUTE,
+    enabled: Boolean(region) && refs.length > 0
   })

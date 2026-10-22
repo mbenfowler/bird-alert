@@ -52,6 +52,13 @@ describe('Accessibility', () => {
     checkA11y()
   })
 
+  it('watch list sightings page', () => {
+    login()
+    cy.visit('http://localhost:3000/sightings?s=cangoo:S155544243,tuftit:S155544243')
+    cy.get('.alert-sightings__table tbody tr').should('have.length', 2)
+    checkA11y()
+  })
+
   it('sighting page', () => {
     login()
     cy.visit('http://localhost:3000/sighting/cangoo/S155544243')
