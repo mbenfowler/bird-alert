@@ -35,11 +35,16 @@ const mapsUrl = ({ lat, lng, comName, locName }) => {
     : `https://www.google.com/maps/search/?api=1&query=${lat}%2C${lng}`
 }
 
-const openUrl = (url) => self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
+// An open app window is reused. iOS Home Screen apps ignore WindowClient.navigate(), so the page is
+// also told where to go and routes itself; where navigate() works it simply lands on the same URL.
+const openUrl = (url) => self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (windows) => {
   const sameOrigin = url.startsWith(self.location.origin)
   const existing = sameOrigin && windows.find((w) => w.url.startsWith(self.location.origin))
-  if (existing) return existing.focus().then((w) => (w && 'navigate' in w ? w.navigate(url) : w))
-  return self.clients.openWindow(url)
+  if (!existing) return self.clients.openWindow(url)
+  const client = (await existing.focus().catch(() => null)) || existing
+  client.postMessage({ type: 'open', url })
+  if ('navigate' in client) await client.navigate(url).catch(() => undefined)
+  return client
 })
 
 self.addEventListener('notificationclick', (event) => {

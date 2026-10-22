@@ -40,6 +40,26 @@
     filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3));
 }
 
+.map-pin__count {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: 600 11px/1 system-ui, sans-serif;
+    color: #fff;
+}
+
+.map-pin--highlight .map-pin__count {
+    color: var(--ink);
+}
+
+.map-popup__item {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--line);
+}
+
 .map-pin--highlight .map-pin__head {
     background: var(--accent);
     border-color: var(--ink);
