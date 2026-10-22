@@ -20,6 +20,7 @@ nav div {
 nav div a {
     display: flex;
     align-items: center;
+    touch-action: manipulation;
 }
 
 /* The two words of the wordmark are set in different fonts; sharing a baseline keeps them level
@@ -42,13 +43,32 @@ nav .text-link {
     height: 45px;
     width: 45px;
     justify-content: flex-end;
-    overflow-x: clip;
+}
+
+/* The gear link is the touch target, not the picture inside it, and a tap is never a candidate
+   for double-tap zoom. */
+.nav-gear {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 45px;
+    height: 45px;
+    flex-shrink: 0;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.15);
+}
+
+.nav-gear .nav-img {
+    pointer-events: none;
 }
 
 /* The gear reveals Settings / Logout on hover. On touch screens a tap would only trigger the hover
    and shift the link under the finger, so there the gear is a plain link and Logout lives on the
    settings page instead. */
 @media (hover: hover) and (pointer: fine) {
+    #settings {
+        overflow-x: clip;
+    }
     #settings:hover {
         animation: action-hover 0.25s ease-in forwards;
     }
