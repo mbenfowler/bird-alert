@@ -67,9 +67,14 @@ const App = () => {
       if (!p || !nearGear(p.clientX, p.clientY)) { start = null; return }
       start = { x: p.clientX, y: p.clientY, at: performance.now(), moved: 0, mutations: 0 }
       const safeTop = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-top')) || 0
+      // Anything laid out past the right edge of the viewport (outside the horizontal alerts row) makes iOS
+      // treat the page as zoomable, which brings the double-tap delay with it.
+      const wide = [...document.querySelectorAll('body *')].filter((el) => !el.closest('.alerts-list') && el.getBoundingClientRect().right > window.innerWidth + 0.5 && getComputedStyle(el).position !== 'fixed')
+        .slice(0, 5).map((el) => `${describe(el)}@${Math.round(el.getBoundingClientRect().right)}`)
       report(event, { under: describe(document.elementFromPoint(p.clientX, p.clientY)), active: describe(document.activeElement), scrollY: Math.round(window.scrollY),
         inner: [window.innerWidth, window.innerHeight], screen: [window.screen.width, window.screen.height], outer: [window.outerWidth, window.outerHeight],
-        standalone: Boolean((navigator as Navigator & { standalone?: boolean }).standalone), safeTop, screenY: Math.round(p.clientY + (window.screenTop || 0)) })
+        standalone: Boolean((navigator as Navigator & { standalone?: boolean }).standalone), safeTop,
+        docWidth: [document.documentElement.scrollWidth, document.body.scrollWidth], vvWidth: window.visualViewport ? Math.round(window.visualViewport.width) : null, wide })
     }
     const onMove = (event: Event) => {
       const p = pointOf(event)
