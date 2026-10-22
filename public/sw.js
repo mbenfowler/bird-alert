@@ -22,7 +22,11 @@ self.addEventListener('push', (event) => {
   if (data.actions) options.actions = data.actions
   if (data.timestamp) options.timestamp = data.timestamp
   if (data.vibrate) options.vibrate = data.vibrate
-  event.waitUntil(self.registration.showNotification(data.title || 'Bird Alert', options))
+  // An open page is told as well, so it can offer the same tap in-app while it is in the foreground.
+  const title = data.title || 'Bird Alert'
+  const url = options.data && options.data.url
+  broadcast({ type: 'push', title, url })
+  event.waitUntil(Promise.all([self.registration.showNotification(title, options), record('/latest-push', { title, url })]))
 })
 
 // Apple devices get Apple Maps; everything else gets a Google Maps link, which Android hands to
@@ -38,10 +42,15 @@ const mapsUrl = ({ lat, lng, comName, locName }) => {
 // Where a tap should land is recorded before anything else, so the page can claim it when it starts
 // or comes back to the foreground (see src/pendingOpen.ts). iOS Home Screen apps neither navigate an
 // existing window nor reliably deliver a message to a suspended one, so no single path is trusted.
-const PENDING_OPEN_CACHE = 'bird-alert-pending-open'
-const rememberTarget = (url) => caches.open(PENDING_OPEN_CACHE)
-  .then((cache) => cache.put('/pending-open', new Response(JSON.stringify({ url, at: Date.now() }), { headers: { 'Content-Type': 'application/json' } })))
+const HANDOFF_CACHE = 'bird-alert-pending-open'
+const CHANNEL = 'bird-alert-notifications'
+const record = (key, value) => caches.open(HANDOFF_CACHE)
+  .then((cache) => cache.put(key, new Response(JSON.stringify({ ...value, at: Date.now() }), { headers: { 'Content-Type': 'application/json' } })))
   .catch(() => undefined)
+const broadcast = (message) => {
+  try { const channel = new BroadcastChannel(CHANNEL); channel.postMessage(message); channel.close() } catch { /* no BroadcastChannel here */ }
+}
+const rememberTarget = (url) => { broadcast({ type: 'open', url }); return record('/pending-open', { url }) }
 
 const openUrl = (url) => self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (windows) => {
   const sameOrigin = url.startsWith(self.location.origin)

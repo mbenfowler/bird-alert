@@ -1,0 +1,54 @@
+/**
+ * Hand-off from the service worker to the page for push notifications. The worker records what it
+ * showed and where a tap should land in the Cache API, and also broadcasts them; the page claims
+ * them when it starts, comes to the foreground, hears the broadcast, or on a short poll while
+ * visible. iOS Home Screen apps neither navigate an existing window nor reliably deliver the
+ * worker's message, so no single path is trusted.
+ */
+export const HANDOFF_CACHE = 'bird-alert-pending-open'
+export const PENDING_OPEN_KEY = '/pending-open'
+export const LATEST_PUSH_KEY = '/latest-push'
+export const CHANNEL = 'bird-alert-notifications'
+const OPEN_MAX_AGE_MS = 5 * 60_000
+const PUSH_MAX_AGE_MS = 60_000
+
+/** A same-origin path for a URL, or null when it points elsewhere. */
+export const samePath = (url: unknown): string | null => {
+  if (typeof url !== 'string') return null
+  try {
+    const target = new URL(url, window.location.origin)
+    return target.origin === window.location.origin ? target.pathname + target.search : null
+  } catch {
+    return null
+  }
+}
+
+const take = async (key: string): Promise<Record<string, unknown> | null> => {
+  if (typeof caches === 'undefined') return null
+  try {
+    const cache = await caches.open(HANDOFF_CACHE)
+    const response = await cache.match(key)
+    if (!response) return null
+    await cache.delete(key)
+    return (await response.json()) as Record<string, unknown>
+  } catch {
+    return null
+  }
+}
+
+/** Where a tapped notification should land, removed so it is followed once. Null if none or stale. */
+export const takePendingOpen = async (): Promise<string | null> => {
+  const record = await take(PENDING_OPEN_KEY)
+  if (!record || typeof record.at !== 'number' || Date.now() - record.at > OPEN_MAX_AGE_MS) return null
+  return samePath(record.url)
+}
+
+export interface LatestPush { title: string; path: string }
+
+/** The notification shown moments ago, removed so it is announced in-app once. Null if none or stale. */
+export const takeLatestPush = async (): Promise<LatestPush | null> => {
+  const record = await take(LATEST_PUSH_KEY)
+  if (!record || typeof record.at !== 'number' || Date.now() - record.at > PUSH_MAX_AGE_MS) return null
+  const path = samePath(record.url)
+  return path && typeof record.title === 'string' ? { title: record.title, path } : null
+}

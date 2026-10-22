@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, type ReactElement } from 'react'
 import { Routes, Route, useNavigate, useLocation, Link } from 'react-router'
-import { takePendingOpen } from '../../pendingOpen'
-import { ToastContainer } from 'react-toastify'
+import { CHANNEL, samePath, takeLatestPush, takePendingOpen, type LatestPush } from '../../notificationHandoff'
+import { toast, ToastContainer } from 'react-toastify'
 import { useSessionQuery } from '../../hooks/queries'
 import './App.css'
 import Login from '../Login/Login'
@@ -36,28 +36,41 @@ const App = () => {
     if (user === null && !isPublicPath) navigate('/login', { replace: true })
   }, [user, isPublicPath, navigate])
 
-  // Where a tapped notification should land. The service worker records the target and also messages
-  // an open window; the page follows it on start, on return to the foreground, or on the message,
-  // whichever happens first. iOS Home Screen apps ignore the worker's own navigate().
+  // Push notifications hand off to the page through src/notificationHandoff.ts. The page follows a
+  // tap's target on start, on return to the foreground, on a broadcast, or on a short poll while
+  // visible, whichever comes first; a push shown while the app is open is also offered as a toast.
   useEffect(() => {
     let cancelled = false
-    const follow = () => { void takePendingOpen().then((path) => { if (path && !cancelled) navigate(path) }) }
-    const onVisible = () => { if (document.visibilityState === 'visible') follow() }
-    const onMessage = (event: MessageEvent) => {
-      const data = event.data as { type?: unknown; url?: unknown } | null
-      if (!data || data.type !== 'open' || typeof data.url !== 'string') return
-      const target = new URL(data.url, window.location.origin)
-      if (target.origin === window.location.origin) { void takePendingOpen(); navigate(target.pathname + target.search) }
+    const go = (path: string | null) => { if (path && !cancelled) navigate(path) }
+    const offer = (push: LatestPush | null) => {
+      if (!push || cancelled || document.visibilityState !== 'visible') return
+      toast(`${push.title} · tap to view`, { toastId: push.path, position: 'top-center', autoClose: 10000, onClick: () => navigate(push.path) })
     }
-    follow()
-    document.addEventListener('visibilitychange', onVisible)
-    window.addEventListener('pageshow', follow)
+    const check = () => {
+      if (document.visibilityState !== 'visible') return
+      void takePendingOpen().then(go)
+      void takeLatestPush().then(offer)
+    }
+    const onMessage = (event: MessageEvent) => {
+      const data = event.data as { type?: unknown; url?: unknown; title?: unknown } | null
+      if (!data) return
+      if (data.type === 'open') { void takePendingOpen(); go(samePath(data.url)) }
+      if (data.type === 'push' && typeof data.title === 'string') { const path = samePath(data.url); if (path) { void takeLatestPush(); offer({ title: data.title, path }) } }
+    }
+    check()
+    const timer = window.setInterval(check, 1500)
+    document.addEventListener('visibilitychange', check)
+    window.addEventListener('pageshow', check)
     navigator.serviceWorker?.addEventListener('message', onMessage)
+    let channel: BroadcastChannel | null = null
+    try { channel = new BroadcastChannel(CHANNEL); channel.onmessage = onMessage } catch { channel = null }
     return () => {
       cancelled = true
-      document.removeEventListener('visibilitychange', onVisible)
-      window.removeEventListener('pageshow', follow)
+      window.clearInterval(timer)
+      document.removeEventListener('visibilitychange', check)
+      window.removeEventListener('pageshow', check)
       navigator.serviceWorker?.removeEventListener('message', onMessage)
+      channel?.close()
     }
   }, [navigate])
 
