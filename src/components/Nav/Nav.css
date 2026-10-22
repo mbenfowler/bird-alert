@@ -69,8 +69,25 @@ nav div a {
     font-family: 'Fredericka the Great';
 }
 
+/* "Alert!" is set in Bungee Spice, a COLRv1 colour font. Safari (so every iPhone) cannot draw
+   COLRv1 and renders its glyphs as nothing, so the default is plain Bungee with a gradient fill
+   in the same oranges, and the colour font is used only where the browser says it can draw it. */
 #titleAlert {
-    font-family: 'Bungee Spice';
+    font-family: 'Bungee', 'Bungee Spice', sans-serif;
+    background: linear-gradient(180deg, #ffd95c 0%, #ff8f24 48%, #d9341a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: #ff8c1a;
+}
+
+@supports font-tech(color-COLRv1) {
+    #titleAlert {
+        font-family: 'Bungee Spice', 'Bungee', sans-serif;
+        background: none;
+        -webkit-text-fill-color: initial;
+        color: inherit;
+    }
 }
 
 nav a {
