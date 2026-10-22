@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import SightingsMap, { type MapPoint } from '../SightingsMap/SightingsMap'
 import ErrorMessage from '../Error/ErrorMessage'
@@ -22,14 +22,18 @@ const AlertSightings = () => {
   const regionName = regions.data?.find(r => r.code === region)?.name ?? 'your county'
 
   const rows = useMemo(() => sightings.data ?? [], [sightings.data])
+  // Tapping a pin, or a row, highlights that place on both the map and the table.
+  const [selectedPlace, setSelectedPlace] = useState<string | null>(null)
+  const placeOf = (o: { lat: number; lng: number }) => `${o.lat},${o.lng}`
   const points = useMemo<MapPoint[]>(() => rows.map(o => ({
     id: `${o.speciesCode}-${o.subId}-${o.lat}-${o.lng}`,
     lat: o.lat,
     lng: o.lng,
     title: o.comName,
     subtitle: `${o.locName} · ${formatObsDt(o.obsDt)}`,
-    href: `/sighting/${o.speciesCode}/${o.subId}`
-  })), [rows])
+    href: `/sighting/${o.speciesCode}/${o.subId}`,
+    highlight: selectedPlace === `${o.lat},${o.lng}`
+  })), [rows, selectedPlace])
   const missing = refs.length - new Set(rows.map(o => o.speciesCode)).size
 
   return (
@@ -49,14 +53,16 @@ const AlertSightings = () => {
           </p>
           {rows.length > 0 && (
             <>
-              <SightingsMap points={points} height='min(45vh, 340px)' ariaLabel={`Map of these watch list sightings in ${regionName}`} />
+              <SightingsMap points={points} height='min(45vh, 340px)' ariaLabel={`Map of these watch list sightings in ${regionName}`}
+                onPinClick={(hit) => setSelectedPlace(hit[0] ? `${hit[0].lat},${hit[0].lng}` : null)} />
               <table className='alert-sightings__table'>
                 <thead>
                   <tr><th scope='col'>Bird</th><th scope='col'>When</th><th scope='col'>Seen</th></tr>
                 </thead>
                 <tbody>
                   {rows.map(o => (
-                    <tr key={`${o.speciesCode}-${o.subId}-${o.lat}-${o.lng}`}>
+                    <tr key={`${o.speciesCode}-${o.subId}-${o.lat}-${o.lng}`} className={selectedPlace === placeOf(o) ? 'is-selected' : undefined}
+                      aria-selected={selectedPlace === placeOf(o)} onClick={() => setSelectedPlace(placeOf(o))}>
                       <td>
                         <Link to={`/sighting/${o.speciesCode}/${o.subId}`}>{o.comName}</Link>
                         <span className='alert-sightings__where'>{o.locName}</span>

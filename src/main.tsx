@@ -18,6 +18,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 // The service worker only handles push notifications; it never intercepts fetches.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch((error) => console.error('Service worker registration failed:', error))
+    // Ask for a fresh worker on every launch; iOS Home Screen apps otherwise hold an old one for days.
+    navigator.serviceWorker.register('/sw.js')
+      .then((registration) => registration.update().catch(() => undefined))
+      .catch((error) => console.error('Service worker registration failed:', error))
   })
 }
