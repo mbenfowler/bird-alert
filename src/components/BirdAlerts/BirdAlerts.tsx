@@ -36,13 +36,16 @@ const BirdAlerts = () => {
     )
 
     const shown = alertType === 'star' ? birdAlerts : alertType === 'notable' ? (notable.data ?? []) : []
-    const arrivals = alertType === 'arriving' ? (arriving.data?.arrivals ?? []) : []
+    // While a county's history is too thin to tell migrants from residents, the feed is every species
+    // from this week last year; that list is not shown, only the note that we are still learning.
+    const learning = Boolean(arriving.data?.learning)
+    const arrivals = alertType === 'arriving' && !learning ? (arriving.data?.arrivals ?? []) : []
     const isLoading = alertType === 'star' ? observations.isPending : alertType === 'notable' ? notable.isPending : arriving.isPending
-    const count = alertType === 'star' ? birdAlerts.length : alertType === 'notable' ? notable.data?.length : arriving.data?.arrivals?.length
+    const count = alertType === 'star' ? birdAlerts.length : alertType === 'notable' ? notable.data?.length : arriving.data ? arrivals.length : undefined
     const title = TITLES[alertType]
     const emptyText = alertType === 'star' ? 'No birds from your watch list have been reported nearby in the last two weeks.'
       : alertType === 'notable' ? 'No notable sightings reported nearby in the last month.'
-      : arriving.data?.learning ? `Still learning the seasons for ${regionName}; check back in a day or two.`
+      : learning ? `Still learning the seasons for ${regionName}; check back in a day or two.`
       : 'Everything that was around this time last year has already been reported.'
 
     const pick = (type: AlertType) => { setAlertType(type); setExpanded(true) }

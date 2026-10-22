@@ -55,6 +55,18 @@ describe('Settings', () => {
     cy.contains('No pushes between 10 PM and 6 AM')
   })
 
+  it('sends an email digest now on request and says when there is nothing to send', () => {
+    cy.intercept('POST', '**/api/mailPreview', (req) => {
+      req.reply({ statusCode: 200, body: req.body.kind === 'migration' ? { sent: true, items: 7 } : { sent: false, reason: 'nothing' } })
+    }).as('mailPreview')
+    cy.get('button[data-preview="migration"]').click()
+    cy.wait('@mailPreview').its('request.body').should('deep.equal', { kind: 'migration' })
+    cy.contains('Sent to robinware456@gmail.com')
+    cy.get('button[data-preview="rare"]').click()
+    cy.wait('@mailPreview')
+    cy.contains('Nothing to send right now: no notable sightings nearby in the last day.')
+  })
+
   it('offers first-of-season pushes and the weekly migration email', () => {
     cy.get('#push_first_of_season').should('be.disabled').and('not.be.checked')
     cy.contains('The first report of a migrant returning to your area')

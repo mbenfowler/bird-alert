@@ -26,6 +26,17 @@ describe('Migration season', () => {
     cy.contains('Bird saved to watch list!')
   })
 
+  it('shows only the learning note while a county has too little history', () => {
+    cy.fixture('arrivals').then((feed) => {
+      cy.intercept('GET', '**/api/ebird/arriving*', { statusCode: 200, body: { ...feed, learning: true } }).as('arrivingLearning')
+    })
+    cy.get('#arriving').click()
+    cy.wait('@arrivingLearning')
+    cy.get('.arrival-card').should('not.exist')
+    cy.get('.alerts-count').should('contain', '0')
+    cy.contains('.alerts-empty', 'Still learning the seasons for Hall')
+  })
+
   it('keeps the other tabs as they were', () => {
     cy.get('#arriving').click()
     cy.get('#star').click()

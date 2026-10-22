@@ -5,7 +5,7 @@ import { ackPendingPush, getPendingPush, postPushTrace } from '../../apiCalls'
 import type { PendingPush } from '../../types'
 
 // Which build is running, for the notification trace.
-const APP_BUILD = '2026-10-22.8'
+const APP_BUILD = '2026-10-22.9'
 import { toast, ToastContainer } from 'react-toastify'
 import { useSessionQuery } from '../../hooks/queries'
 import './App.css'
@@ -98,7 +98,6 @@ const App = () => {
     // Launch, return from the background, and window focus all count as the app being brought forward.
     const onVisible = () => { if (document.visibilityState === 'visible') void askServer('foreground', 'visible') }
     const onFocus = () => { void askServer('foreground', 'focus') }
-    note('app-start', { caches: typeof caches !== 'undefined', broadcast: typeof BroadcastChannel !== 'undefined' })
     check()
     void askServer('foreground', 'start')
     document.addEventListener('visibilitychange', onVisible)

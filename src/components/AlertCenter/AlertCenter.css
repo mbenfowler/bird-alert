@@ -219,3 +219,11 @@
   outline: 3px solid var(--focus);
   outline-offset: 1px;
 }
+
+/* The email preview button sits under its hint, smaller than the push test button. */
+.test-push--inline {
+    margin-top: 8px;
+    min-height: 36px;
+    padding: 0 12px;
+    font-size: 0.9rem;
+}

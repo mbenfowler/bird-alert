@@ -115,3 +115,6 @@ export interface PendingPush {
   offeredAt: string | null
   openedAt: string | null
 }
+
+export type EmailPreviewKind = 'watchlist' | 'rare' | 'migration'
+export type EmailPreviewResult = { sent: true; items: number } | { sent: false; reason: 'nothing' | 'unconfirmed' | 'location' }
