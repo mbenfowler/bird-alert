@@ -18,6 +18,9 @@ describe('Watch list sightings page', () => {
     cy.get('.leaflet-popup').should('contain', 'Canada Goose').and('contain', 'Tufted Titmouse')
     cy.get('.leaflet-popup a').contains('Details').should('have.length', 1)
     cy.get('.leaflet-popup .map-popup__item').should('have.length', 1)
+    // Tapping the pin highlights it and every row at that place.
+    cy.get('.sightings-map .map-pin--highlight').should('have.length', 1)
+    cy.get('.alert-sightings__table tbody tr.is-selected').should('have.length', 2)
     cy.get('.alert-sightings__table tbody tr').should('have.length', 2)
     cy.get('.alert-sightings__table tbody tr').first()
       .should('contain', 'Canada Goose')

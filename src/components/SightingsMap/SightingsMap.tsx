@@ -22,6 +22,8 @@ interface SightingsMapProps {
   center?: [number, number]
   height?: number | string
   ariaLabel: string
+  /** Called with every point under a tapped pin, so the page can highlight what it stands for. */
+  onPinClick?: (points: MapPoint[]) => void
 }
 
 // Pins are drawn with CSS so no image assets have to be resolved by the bundler. Several sightings
@@ -49,24 +51,29 @@ const groupByPlace = (points: MapPoint[]): PinGroup[] => {
   return [...groups.values()]
 }
 
+/** Frames the pins once per set of places; a change of highlight only pans, it never re-zooms. */
 const FitToPoints = ({ points }: { points: MapPoint[] }) => {
   const map = useMap()
+  const places = points.map(p => `${p.lat},${p.lng}`).join('|')
+  const highlighted = points.find(p => p.highlight)
+  const highlightKey = highlighted ? `${highlighted.lat},${highlighted.lng}` : ''
   useEffect(() => {
     if (!points.length) return
-    const highlighted = points.find(p => p.highlight)
     if (points.length === 1) {
       map.setView([points[0].lat, points[0].lng], 13)
       return
     }
-    const bounds = L.latLngBounds(points.map(p => [p.lat, p.lng] as [number, number]))
-    map.fitBounds(bounds, { padding: [36, 36], maxZoom: 14 })
-    if (highlighted) map.panInside([highlighted.lat, highlighted.lng], { padding: [36, 36] })
-  }, [map, points])
+    map.fitBounds(L.latLngBounds(points.map(p => [p.lat, p.lng] as [number, number])), { padding: [36, 36], maxZoom: 14 })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, places])
+  useEffect(() => {
+    if (highlightKey) map.panInside(highlightKey.split(',').map(Number) as [number, number], { padding: [36, 36] })
+  }, [map, highlightKey])
   return null
 }
 
 /** OpenStreetMap with a pin per sighting; the highlighted pin is the one being looked at. */
-const SightingsMap = ({ points, center = [39.8, -98.6], height = 360, ariaLabel }: SightingsMapProps) => {
+const SightingsMap = ({ points, center = [39.8, -98.6], height = 360, ariaLabel, onPinClick }: SightingsMapProps) => {
   const initial = useMemo<[number, number]>(() => (points[0] ? [points[0].lat, points[0].lng] : center), [points, center])
   const groups = useMemo(() => groupByPlace(points).sort((a, b) => Number(a.highlight) - Number(b.highlight)), [points])
   return (
@@ -79,6 +86,7 @@ const SightingsMap = ({ points, center = [39.8, -98.6], height = 360, ariaLabel 
         <FitToPoints points={points} />
         {groups.map(group => (
           <Marker key={group.id} position={[group.lat, group.lng]} icon={pinIcon(group.highlight, group.points.length)} zIndexOffset={group.highlight ? 1000 : 0}
+            eventHandlers={onPinClick ? { click: () => onPinClick(group.points) } : undefined}
             title={group.points.map(p => (p.subtitle ? `${p.title}, ${p.subtitle}` : p.title)).join('; ')} alt={group.points.map(p => p.title).join(', ')}>
             <Popup>
               {group.points.map((point, index) => (

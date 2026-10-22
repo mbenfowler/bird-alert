@@ -35,16 +35,26 @@ const mapsUrl = ({ lat, lng, comName, locName }) => {
     : `https://www.google.com/maps/search/?api=1&query=${lat}%2C${lng}`
 }
 
-// An open app window is reused. iOS Home Screen apps ignore WindowClient.navigate(), so the page is
-// also told where to go and routes itself; where navigate() works it simply lands on the same URL.
+// Where a tap should land is recorded before anything else, so the page can claim it when it starts
+// or comes back to the foreground (see src/pendingOpen.ts). iOS Home Screen apps neither navigate an
+// existing window nor reliably deliver a message to a suspended one, so no single path is trusted.
+const PENDING_OPEN_CACHE = 'bird-alert-pending-open'
+const rememberTarget = (url) => caches.open(PENDING_OPEN_CACHE)
+  .then((cache) => cache.put('/pending-open', new Response(JSON.stringify({ url, at: Date.now() }), { headers: { 'Content-Type': 'application/json' } })))
+  .catch(() => undefined)
+
 const openUrl = (url) => self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (windows) => {
   const sameOrigin = url.startsWith(self.location.origin)
   const existing = sameOrigin && windows.find((w) => w.url.startsWith(self.location.origin))
+  if (sameOrigin) await rememberTarget(url)
   if (!existing) return self.clients.openWindow(url)
   const client = (await existing.focus().catch(() => null)) || existing
   client.postMessage({ type: 'open', url })
-  if ('navigate' in client) await client.navigate(url).catch(() => undefined)
-  return client
+  if ('navigate' in client) {
+    const navigated = await client.navigate(url).then(() => true).catch(() => false)
+    if (navigated) return client
+  }
+  return self.clients.openWindow(url).catch(() => client)
 })
 
 self.addEventListener('notificationclick', (event) => {

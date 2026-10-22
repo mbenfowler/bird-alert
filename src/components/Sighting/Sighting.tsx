@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { toast } from 'react-toastify'
 import SightingsMap, { type MapPoint } from '../SightingsMap/SightingsMap'
 import SeasonStrip from '../SeasonStrip/SeasonStrip'
@@ -24,6 +24,7 @@ const Sighting = () => {
   const { code = '', subId = '' } = useParams<{ code: string; subId: string }>()
   const user = useCurrentUser()
   const region = user.location
+  const navigate = useNavigate()
 
   const birds = useBirdsQuery(code ? [code] : [])
   const bird = birds.data?.[0]
@@ -96,7 +97,8 @@ const Sighting = () => {
         <span className='sighting__count'>{all.length}</span>
       </h2>
       {all.length
-        ? <SightingsMap points={points} height='min(60vh, 460px)' ariaLabel={`Map of recent ${name} sightings in your region`} />
+        ? <SightingsMap points={points} height='min(60vh, 460px)' ariaLabel={`Map of recent ${name} sightings in your region`}
+            onPinClick={(hit) => { if (hit[0]?.href) navigate(hit[0].href, { replace: true }) }} />
         : <p className='list-note'>No reports of this species in your region in the last 30 days.</p>}
 
       {all.length > 1 && (

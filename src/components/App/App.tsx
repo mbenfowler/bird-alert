@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, type ReactElement } from 'react'
 import { Routes, Route, useNavigate, useLocation, Link } from 'react-router'
+import { takePendingOpen } from '../../pendingOpen'
 import { ToastContainer } from 'react-toastify'
 import { useSessionQuery } from '../../hooks/queries'
 import './App.css'
@@ -35,18 +36,29 @@ const App = () => {
     if (user === null && !isPublicPath) navigate('/login', { replace: true })
   }, [user, isPublicPath, navigate])
 
-  // A tapped notification reaches an already-open app as a message from the service worker, because
-  // iOS Home Screen apps ignore the worker's own navigate(). Only same-origin targets are followed.
+  // Where a tapped notification should land. The service worker records the target and also messages
+  // an open window; the page follows it on start, on return to the foreground, or on the message,
+  // whichever happens first. iOS Home Screen apps ignore the worker's own navigate().
   useEffect(() => {
-    if (!('serviceWorker' in navigator)) return
+    let cancelled = false
+    const follow = () => { void takePendingOpen().then((path) => { if (path && !cancelled) navigate(path) }) }
+    const onVisible = () => { if (document.visibilityState === 'visible') follow() }
     const onMessage = (event: MessageEvent) => {
       const data = event.data as { type?: unknown; url?: unknown } | null
       if (!data || data.type !== 'open' || typeof data.url !== 'string') return
       const target = new URL(data.url, window.location.origin)
-      if (target.origin === window.location.origin) navigate(target.pathname + target.search)
+      if (target.origin === window.location.origin) { void takePendingOpen(); navigate(target.pathname + target.search) }
     }
-    navigator.serviceWorker.addEventListener('message', onMessage)
-    return () => navigator.serviceWorker.removeEventListener('message', onMessage)
+    follow()
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('pageshow', follow)
+    navigator.serviceWorker?.addEventListener('message', onMessage)
+    return () => {
+      cancelled = true
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('pageshow', follow)
+      navigator.serviceWorker?.removeEventListener('message', onMessage)
+    }
   }, [navigate])
 
   // Gate an element on having a user. While the session is being checked, show a spinner.
