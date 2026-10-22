@@ -1,10 +1,11 @@
 import { lazy, Suspense, useEffect, type ReactElement } from 'react'
 import { Routes, Route, useNavigate, useLocation, Link } from 'react-router'
-import { CHANNEL, samePath, takeLatestPush, takePendingOpen, type LatestPush } from '../../notificationHandoff'
-import { postPushTrace } from '../../apiCalls'
+import { CHANNEL, decidePending, pollInterval, samePath, takeLatestPush, takePendingOpen, type LatestPush } from '../../notificationHandoff'
+import { ackPendingPush, getPendingPush, postPushTrace } from '../../apiCalls'
+import type { PendingPush } from '../../types'
 
 // Which build is running, for the notification trace.
-const APP_BUILD = '2026-10-22.3'
+const APP_BUILD = '2026-10-22.4'
 import { toast, ToastContainer } from 'react-toastify'
 import { useSessionQuery } from '../../hooks/queries'
 import './App.css'
@@ -65,8 +66,25 @@ const App = () => {
       if (data.type === 'open') { void takePendingOpen(); go(samePath(data.url), 'message') }
       if (data.type === 'push' && typeof data.title === 'string') { const path = samePath(data.url); if (path) { void takeLatestPush(); offer({ title: data.title, path }, 'message') } }
     }
+    // The server knows about every push it sent and every tap the worker reported, which is the
+    // only route that reaches an open iPhone app. Polled while visible: quickly after a push.
+    let serverTimer: number | undefined
+    const askServer = async () => {
+      if (cancelled || !user || document.visibilityState !== 'visible') return
+      let push: PendingPush | null
+      try { push = (await getPendingPush()).push } catch { push = null }
+      if (cancelled) return
+      const decision = decidePending(push)
+      if (decision === 'open' && push) { void ackPendingPush({ opened: true }); go(samePath(push.url), 'server') }
+      else if (decision === 'offer' && push) { const path = samePath(push.url); if (path) { void ackPendingPush({ offered: true }); offer({ title: push.title, path }, 'server') } }
+      window.clearTimeout(serverTimer)
+      serverTimer = window.setTimeout(() => { void askServer() }, pollInterval(push))
+    }
+    const onVisible = () => { if (document.visibilityState === 'visible') void askServer() }
     note('app-start', { caches: typeof caches !== 'undefined', broadcast: typeof BroadcastChannel !== 'undefined' })
     check()
+    void askServer()
+    document.addEventListener('visibilitychange', onVisible)
     const timer = window.setInterval(check, 1500)
     document.addEventListener('visibilitychange', check)
     window.addEventListener('pageshow', check)
@@ -76,6 +94,8 @@ const App = () => {
     return () => {
       cancelled = true
       window.clearInterval(timer)
+      window.clearTimeout(serverTimer)
+      document.removeEventListener('visibilitychange', onVisible)
       document.removeEventListener('visibilitychange', check)
       window.removeEventListener('pageshow', check)
       navigator.serviceWorker?.removeEventListener('message', onMessage)

@@ -1,5 +1,5 @@
 /* Bird Alert service worker: shows push notifications and routes taps to the map app or the site. */
-const SW_VERSION = '2026-10-22.3'
+const SW_VERSION = '2026-10-22.4'
 
 // What this worker does with each notification is reported to the server (same-origin, with the
 // session cookie), so a tap that goes nowhere on a phone can be read back. Best effort, never awaited alone.
@@ -87,17 +87,27 @@ const openUrl = (url) => self.clients.matchAll({ type: 'window', includeUncontro
   return report
 })
 
+// On iPhone the push context cannot reach the open app at all, so a tap is handed over through the
+// server: the app polls /api/push/pending and follows a tapped push.
+const reportTap = (url) => fetch('/api/push/tap', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ url })
+}).catch(() => undefined)
+
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
   const data = event.notification.data || {}
+  const started = trace('notificationclick-start', { action: event.action || '', url: data.url || null })
   const appUrl = new URL(data.url || '/', self.location.origin).href
   const hasLocation = typeof data.lat === 'number' && typeof data.lng === 'number'
   // Tap: the sighting page in the app. 'Open map': the maps app. 'View on eBird': the checklist.
   let target = appUrl
   if (event.action === 'map' && hasLocation) target = mapsUrl(data)
   if (event.action === 'ebird' && data.ebirdUrl) target = data.ebirdUrl
-  event.waitUntil(openUrl(target).then(
+  const tapped = target.startsWith(self.location.origin) ? reportTap(target) : Promise.resolve()
+  event.waitUntil(Promise.all([started, tapped, openUrl(target).then(
     (report) => trace('notificationclick', { action: event.action || '', ...report }),
     (error) => trace('notificationclick', { action: event.action || '', url: target, error: error && error.message })
-  ))
+  )]))
 })

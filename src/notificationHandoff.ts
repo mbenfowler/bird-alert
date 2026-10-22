@@ -52,3 +52,17 @@ export const takeLatestPush = async (): Promise<LatestPush | null> => {
   const path = samePath(record.url)
   return path && typeof record.title === 'string' ? { title: record.title, path } : null
 }
+
+/** What the app should do with the server's latest push: follow a tap, offer a toast, or nothing. */
+export const decidePending = (push: { url: string; sentAt: string; tappedAt: string | null; offeredAt: string | null; openedAt: string | null } | null, now = Date.now()): 'open' | 'offer' | null => {
+  if (!push) return null
+  const age = now - Date.parse(push.sentAt)
+  if (!Number.isFinite(age) || age > OPEN_MAX_AGE_MS) return null
+  if (push.tappedAt && !push.openedAt) return 'open'
+  if (!push.offeredAt && !push.openedAt && age <= PUSH_MAX_AGE_MS * 2) return 'offer'
+  return null
+}
+
+/** Poll the server quickly while a recent push may still be tapped, slowly otherwise. */
+export const pollInterval = (push: { sentAt: string; openedAt: string | null } | null, now = Date.now()) =>
+  push && !push.openedAt && now - Date.parse(push.sentAt) <= OPEN_MAX_AGE_MS ? 2_000 : 10_000

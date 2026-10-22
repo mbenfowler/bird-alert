@@ -96,6 +96,8 @@ export const login = () => {
   cy.intercept('GET', '**/api/ebird/seasonality*', { statusCode: 200, fixture: 'seasonality' }).as('seasonality')
   cy.intercept('GET', '**/api/ebird/regions*', { statusCode: 200, body: [{ code: 'US-GA-139', name: 'Hall' }] }).as('regions')
   cy.intercept('POST', '**/api/push/trace', { statusCode: 204, body: '' }).as('pushTrace')
+  cy.intercept('GET', '**/api/push/pending', { statusCode: 200, body: { push: null } }).as('pushPending')
+  cy.intercept('POST', '**/api/push/ack', { statusCode: 204, body: '' }).as('pushAck')
   cy.intercept('GET', '**/api/push/status*', { statusCode: 200, body: { subscribed: false, devices: 0, lastRun: { at: new Date(Date.now() - 14 * 60000).toISOString(), notified: 0 } } }).as('pushStatus')
 
   cy.visit('http://localhost:3000/')
