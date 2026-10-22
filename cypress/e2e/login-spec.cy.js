@@ -14,7 +14,7 @@ describe("Login flow for a user that already has location set", () => {
       .get('.alerts-count').should('contain', '1')
       .get('.alerts-list > a > .card').should('be.visible')
         .and('contain', 'Canada Goose')
-        .and('contain', '2023-12-01 13:49')
+        .and('contain', 'Dec 1, 1:49 PM')
         .and('contain', "Rusty's Gainesville Yard")
       .get('.alerts-toggle').should('have.attr', 'aria-expanded', 'true')
       .get('#birdSearch').invoke('attr', 'placeholder').should('contain', 'Search birds by name')
