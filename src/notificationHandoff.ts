@@ -9,7 +9,7 @@ export const HANDOFF_CACHE = 'bird-alert-pending-open'
 export const PENDING_OPEN_KEY = '/pending-open'
 export const LATEST_PUSH_KEY = '/latest-push'
 export const CHANNEL = 'bird-alert-notifications'
-const OPEN_MAX_AGE_MS = 5 * 60_000
+const OPEN_MAX_AGE_MS = 10 * 60_000
 const PUSH_MAX_AGE_MS = 60_000
 
 /** A same-origin path for a URL, or null when it points elsewhere. */
@@ -53,13 +53,21 @@ export const takeLatestPush = async (): Promise<LatestPush | null> => {
   return path && typeof record.title === 'string' ? { title: record.title, path } : null
 }
 
-/** What the app should do with the server's latest push: follow a tap, offer a toast, or nothing. */
-export const decidePending = (push: { url: string; sentAt: string; tappedAt: string | null; offeredAt: string | null; openedAt: string | null } | null, now = Date.now()): 'open' | 'offer' | null => {
+export type PendingTrigger = 'poll' | 'foreground'
+
+/**
+ * What the app should do with the server's latest push. On a poll: follow a tap, offer a toast, or
+ * nothing. When the app was just launched or brought to the foreground: go straight to any recent
+ * push nobody has opened yet, because on iPhone that is all a banner tap does to an app in the
+ * background, and someone opening the app minutes after an alert most likely came for it.
+ */
+export const decidePending = (push: { url: string; sentAt: string; tappedAt: string | null; offeredAt: string | null; openedAt: string | null } | null, now = Date.now(), trigger: PendingTrigger = 'poll'): 'open' | 'offer' | null => {
   if (!push) return null
   const age = now - Date.parse(push.sentAt)
   if (!Number.isFinite(age) || age > OPEN_MAX_AGE_MS) return null
-  if (push.tappedAt && !push.openedAt) return 'open'
-  if (!push.offeredAt && !push.openedAt && age <= PUSH_MAX_AGE_MS * 2) return 'offer'
+  if (push.openedAt) return null
+  if (push.tappedAt || trigger === 'foreground') return 'open'
+  if (!push.offeredAt && age <= PUSH_MAX_AGE_MS * 2) return 'offer'
   return null
 }
 
