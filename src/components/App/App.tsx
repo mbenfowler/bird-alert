@@ -1,6 +1,10 @@
 import { lazy, Suspense, useEffect, type ReactElement } from 'react'
 import { Routes, Route, useNavigate, useLocation, Link } from 'react-router'
 import { CHANNEL, samePath, takeLatestPush, takePendingOpen, type LatestPush } from '../../notificationHandoff'
+import { postPushTrace } from '../../apiCalls'
+
+// Which build is running, for the notification trace.
+const APP_BUILD = '2026-10-22.3'
 import { toast, ToastContainer } from 'react-toastify'
 import { useSessionQuery } from '../../hooks/queries'
 import './App.css'
@@ -41,22 +45,27 @@ const App = () => {
   // visible, whichever comes first; a push shown while the app is open is also offered as a toast.
   useEffect(() => {
     let cancelled = false
-    const go = (path: string | null) => { if (path && !cancelled) navigate(path) }
-    const offer = (push: LatestPush | null) => {
+    const note = (event: string, detail: Record<string, unknown> = {}) => {
+      if (user) void postPushTrace({ event, source: 'app', bundle: APP_BUILD, controller: navigator.serviceWorker?.controller?.scriptURL ?? null, visibility: document.visibilityState, path: window.location.pathname, ...detail })
+    }
+    const go = (path: string | null, via: string) => { if (path && !cancelled) { note('app-open', { via, target: path }); navigate(path) } }
+    const offer = (push: LatestPush | null, via: string) => {
       if (!push || cancelled || document.visibilityState !== 'visible') return
+      note('app-toast', { via, target: push.path })
       toast(`${push.title} · tap to view`, { toastId: push.path, position: 'top-center', autoClose: 10000, onClick: () => navigate(push.path) })
     }
     const check = () => {
       if (document.visibilityState !== 'visible') return
-      void takePendingOpen().then(go)
-      void takeLatestPush().then(offer)
+      void takePendingOpen().then((path) => go(path, 'poll'))
+      void takeLatestPush().then((push) => offer(push, 'poll'))
     }
     const onMessage = (event: MessageEvent) => {
       const data = event.data as { type?: unknown; url?: unknown; title?: unknown } | null
       if (!data) return
-      if (data.type === 'open') { void takePendingOpen(); go(samePath(data.url)) }
-      if (data.type === 'push' && typeof data.title === 'string') { const path = samePath(data.url); if (path) { void takeLatestPush(); offer({ title: data.title, path }) } }
+      if (data.type === 'open') { void takePendingOpen(); go(samePath(data.url), 'message') }
+      if (data.type === 'push' && typeof data.title === 'string') { const path = samePath(data.url); if (path) { void takeLatestPush(); offer({ title: data.title, path }, 'message') } }
     }
+    note('app-start', { caches: typeof caches !== 'undefined', broadcast: typeof BroadcastChannel !== 'undefined' })
     check()
     const timer = window.setInterval(check, 1500)
     document.addEventListener('visibilitychange', check)
@@ -72,7 +81,7 @@ const App = () => {
       navigator.serviceWorker?.removeEventListener('message', onMessage)
       channel?.close()
     }
-  }, [navigate])
+  }, [navigate, user])
 
   // Gate an element on having a user. While the session is being checked, show a spinner.
   const requireUser = (element: ReactElement) => {

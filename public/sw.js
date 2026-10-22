@@ -1,6 +1,16 @@
 /* Bird Alert service worker: shows push notifications and routes taps to the map app or the site. */
+const SW_VERSION = '2026-10-22.3'
+
+// What this worker does with each notification is reported to the server (same-origin, with the
+// session cookie), so a tap that goes nowhere on a phone can be read back. Best effort, never awaited alone.
+const trace = (event, detail = {}) => fetch('/api/push/trace', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ event, version: SW_VERSION, ua: self.navigator.userAgent, ...detail })
+}).catch(() => undefined)
+
 self.addEventListener('install', () => self.skipWaiting())
-self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()))
+self.addEventListener('activate', (event) => event.waitUntil(Promise.all([self.clients.claim(), trace('activate')])))
 
 // Only these platforms render a large picture and a useful-sized icon. Elsewhere (macOS shows a
 // thumbnail too small to read, iOS shows nothing custom) the recognisable app logo is better.
@@ -26,7 +36,12 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'Bird Alert'
   const url = options.data && options.data.url
   broadcast({ type: 'push', title, url })
-  event.waitUntil(Promise.all([self.registration.showNotification(title, options), record('/latest-push', { title, url })]))
+  event.waitUntil(Promise.all([
+    self.registration.showNotification(title, options),
+    record('/latest-push', { title, url }).then(() => true, () => false)
+      .then((recorded) => self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+        .then((windows) => trace('push', { title, url, recorded, windows: windows.map((w) => ({ url: w.url, visibility: w.visibilityState, focused: w.focused })) })))
+  ]))
 })
 
 // Apple devices get Apple Maps; everything else gets a Google Maps link, which Android hands to
@@ -55,15 +70,21 @@ const rememberTarget = (url) => { broadcast({ type: 'open', url }); return recor
 const openUrl = (url) => self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (windows) => {
   const sameOrigin = url.startsWith(self.location.origin)
   const existing = sameOrigin && windows.find((w) => w.url.startsWith(self.location.origin))
-  if (sameOrigin) await rememberTarget(url)
-  if (!existing) return self.clients.openWindow(url)
-  const client = (await existing.focus().catch(() => null)) || existing
-  client.postMessage({ type: 'open', url })
-  if ('navigate' in client) {
-    const navigated = await client.navigate(url).then(() => true).catch(() => false)
-    if (navigated) return client
+  const report = { url, windows: windows.map((w) => ({ url: w.url, visibility: w.visibilityState, focused: w.focused })), steps: [] }
+  const step = (name, outcome) => report.steps.push(`${name}:${outcome}`)
+  if (sameOrigin) step('remember', await rememberTarget(url).then(() => 'ok', (e) => `fail ${e && e.message}`))
+  if (!existing) {
+    step('openWindow', await self.clients.openWindow(url).then((w) => (w ? 'window' : 'null'), (e) => `fail ${e && e.message}`))
+    return report
   }
-  return self.clients.openWindow(url).catch(() => client)
+  const client = (await existing.focus().then((w) => { step('focus', w ? 'ok' : 'null'); return w }, (e) => { step('focus', `fail ${e && e.message}`); return null })) || existing
+  try { client.postMessage({ type: 'open', url }); step('postMessage', 'ok') } catch (e) { step('postMessage', `fail ${e && e.message}`) }
+  if ('navigate' in client) {
+    const navigated = await client.navigate(url).then(() => true, (e) => { step('navigate', `fail ${e && e.message}`); return false })
+    if (navigated) { step('navigate', 'ok'); return report }
+  } else step('navigate', 'unsupported')
+  step('openWindow', await self.clients.openWindow(url).then((w) => (w ? 'window' : 'null'), (e) => `fail ${e && e.message}`))
+  return report
 })
 
 self.addEventListener('notificationclick', (event) => {
@@ -75,5 +96,8 @@ self.addEventListener('notificationclick', (event) => {
   let target = appUrl
   if (event.action === 'map' && hasLocation) target = mapsUrl(data)
   if (event.action === 'ebird' && data.ebirdUrl) target = data.ebirdUrl
-  event.waitUntil(openUrl(target))
+  event.waitUntil(openUrl(target).then(
+    (report) => trace('notificationclick', { action: event.action || '', ...report }),
+    (error) => trace('notificationclick', { action: event.action || '', url: target, error: error && error.message })
+  ))
 })

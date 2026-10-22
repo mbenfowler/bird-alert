@@ -94,3 +94,7 @@ export const subscribePush = (subscription: PushSubscriptionJSON & { userAgent?:
 export const unsubscribePush = (endpoint: string) => api<null>('/push/unsubscribe', { method: 'POST', body: { endpoint } })
 export const getPushStatus = (endpoint?: string) => api<PushStatus>('/push/status', endpoint ? { params: { endpoint } } : {})
 export const sendTestPush = (endpoint?: string) => api<{ sent: number; gone: number }>('/push/test', { method: 'POST', body: endpoint ? { endpoint } : {} })
+
+/** Best-effort note of what the app did with a notification, for reading back from the server. */
+export const postPushTrace = (detail: Record<string, unknown>) =>
+  fetch(`${API_BASE}/push/trace`, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(detail) }).catch(() => undefined)
