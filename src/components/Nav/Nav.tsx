@@ -20,7 +20,9 @@ const Nav = () => {
             <Link className='text-link' to={user ? '/' : '/login'}><span id='titleBird'>Bird </span><span id='titleAlert'>Alert!</span></Link>
             {user &&
                 <div>
-                    <Link to='/saved'><img className='nav-img' src='/images/bird.ico' alt='saved birds'/></Link>
+                    {/* The icons are backgrounds on the links, not <img> elements: on iOS an image inside a link
+                        carries drag and preview gestures that were swallowing most taps on these two. */}
+                    <Link to='/saved' className='nav-icon nav-icon--saved' aria-label='Saved birds' draggable={false}><span className='nav-img' aria-hidden='true' /></Link>
                     <div id='settings'>
                         {/* The hover menu exists only where hovering does. On touch screens it was hidden by a clip
                             under the gear, and iOS then dropped most taps on the gear; Log out lives on the settings page. */}
@@ -29,8 +31,8 @@ const Nav = () => {
                                 <Link to='/settings'><p id='settingsText'>Settings</p></Link>
                                 <button type='button' className='link-button' onClick={handleLogout} disabled={logoutMutation.isPending}><p>Logout</p></button>
                             </div>}
-                        <Link to='/settings' className='nav-gear' aria-label='Settings' onClick={(e) => { void postPushTrace({ event: 'nav-gear-click', source: 'app', path: window.location.pathname, pointer: (e.nativeEvent as PointerEvent).pointerType ?? null, target: (e.target as HTMLElement).tagName }) }}>
-                            <img className='nav-img' src='/images/settings.png' alt=''/>
+                        <Link to='/settings' className='nav-icon nav-icon--settings' aria-label='Settings' draggable={false} onClick={(e) => { void postPushTrace({ event: 'nav-gear-click', source: 'app', path: window.location.pathname, pointer: (e.nativeEvent as PointerEvent).pointerType ?? null, target: (e.target as HTMLElement).tagName }) }}>
+                            <span className='nav-img' aria-hidden='true' />
                         </Link>
                     </div>
                 </div>

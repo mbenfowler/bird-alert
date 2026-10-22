@@ -29,12 +29,40 @@ nav .text-link {
     align-items: baseline;
 }
 
-.nav-img {
-    height: 45px;
+/* Icon links: a fixed box whose icon is a background, so the link itself is what the finger hits. */
+.nav-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 45px;
-    max-width: none;
+    height: 45px;
     flex-shrink: 0;
     cursor: pointer;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-drag: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.15);
+}
+
+.nav-img {
+    display: block;
+    height: 45px;
+    width: 45px;
+    flex-shrink: 0;
+    pointer-events: none;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.nav-icon--saved .nav-img {
+    background-image: url('/images/bird.ico');
+}
+
+.nav-icon--settings .nav-img {
+    background-image: url('/images/settings.png');
 }
 
 #settings {
@@ -45,22 +73,6 @@ nav .text-link {
     justify-content: flex-end;
 }
 
-/* The gear link is the touch target, not the picture inside it, and a tap is never a candidate
-   for double-tap zoom. */
-.nav-gear {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 45px;
-    height: 45px;
-    flex-shrink: 0;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.15);
-}
-
-.nav-gear .nav-img {
-    pointer-events: none;
-}
 
 /* The gear reveals Settings / Logout on hover. On touch screens a tap would only trigger the hover
    and shift the link under the finger, so there the gear is a plain link and Logout lives on the
