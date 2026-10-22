@@ -1,11 +1,11 @@
 import { lazy, Suspense, useEffect, useRef, type ReactElement } from 'react'
 import { Routes, Route, useNavigate, useLocation, Link } from 'react-router'
-import { CHANNEL, decidePending, pollInterval, samePath, takeLatestPush, takePendingOpen, type LatestPush } from '../../notificationHandoff'
+import { CHANNEL, decidePending, pollInterval, samePath, takeLatestPush, takePendingOpen, type LatestPush, type PendingTrigger } from '../../notificationHandoff'
 import { ackPendingPush, getPendingPush, postPushTrace } from '../../apiCalls'
 import type { PendingPush } from '../../types'
 
 // Which build is running, for the notification trace.
-const APP_BUILD = '2026-10-22.6'
+const APP_BUILD = '2026-10-22.7'
 import { toast, ToastContainer } from 'react-toastify'
 import { useSessionQuery } from '../../hooks/queries'
 import './App.css'
@@ -83,22 +83,26 @@ const App = () => {
     // The server knows about every push it sent and every tap the worker reported, which is the
     // only route that reaches an open iPhone app. Polled while visible: quickly after a push.
     let serverTimer: number | undefined
-    const askServer = async () => {
+    const askServer = async (trigger: PendingTrigger, via: string = trigger) => {
       if (cancelled || document.visibilityState !== 'visible') return
       let push: PendingPush | null
       try { push = (await getPendingPush()).push } catch { push = null }
       if (cancelled) return
-      const decision = decidePending(push)
-      if (decision === 'open' && push) { void ackPendingPush({ opened: true }); go(samePath(push.url), 'server') }
+      const decision = decidePending(push, Date.now(), trigger)
+      if (trigger === 'foreground' && push && !push.openedAt) note('app-foreground', { via, decision })
+      if (decision === 'open' && push) { void ackPendingPush({ opened: true }); go(samePath(push.url), `server-${via}`) }
       else if (decision === 'offer' && push) { const path = samePath(push.url); if (path) { void ackPendingPush({ offered: true }); offer({ title: push.title, path }, 'server') } }
       window.clearTimeout(serverTimer)
-      serverTimer = window.setTimeout(() => { void askServer() }, pollInterval(push))
+      serverTimer = window.setTimeout(() => { void askServer('poll') }, pollInterval(push))
     }
-    const onVisible = () => { if (document.visibilityState === 'visible') void askServer() }
+    // Launch, return from the background, and window focus all count as the app being brought forward.
+    const onVisible = () => { if (document.visibilityState === 'visible') void askServer('foreground', 'visible') }
+    const onFocus = () => { void askServer('foreground', 'focus') }
     note('app-start', { caches: typeof caches !== 'undefined', broadcast: typeof BroadcastChannel !== 'undefined' })
     check()
-    void askServer()
+    void askServer('foreground', 'start')
     document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onFocus)
     const timer = window.setInterval(check, 1500)
     document.addEventListener('visibilitychange', check)
     window.addEventListener('pageshow', check)
@@ -110,6 +114,7 @@ const App = () => {
       window.clearInterval(timer)
       window.clearTimeout(serverTimer)
       document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onFocus)
       document.removeEventListener('visibilitychange', check)
       window.removeEventListener('pageshow', check)
       navigator.serviceWorker?.removeEventListener('message', onMessage)

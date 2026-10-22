@@ -32,7 +32,7 @@ describe('notification hand-off', () => {
   })
 
   it('ignores a stale or foreign target', async () => {
-    put(PENDING_OPEN_KEY, { url: '/map', at: Date.now() - 6 * 60_000 })
+    put(PENDING_OPEN_KEY, { url: '/map', at: Date.now() - 11 * 60_000 })
     expect(await takePendingOpen()).toBeNull()
     put(PENDING_OPEN_KEY, { url: 'https://evil.example/', at: Date.now() })
     expect(await takePendingOpen()).toBeNull()
@@ -64,12 +64,19 @@ describe('server hand-off decisions', () => {
 
   it('does nothing once opened, when too old, or when there is no push', () => {
     expect(decidePending({ ...base, tappedAt: '2026-10-22T15:36:05Z', openedAt: '2026-10-22T15:36:06Z' }, now)).toBeNull()
-    expect(decidePending(base, now + 6 * 60_000)).toBeNull()
+    expect(decidePending(base, now + 11 * 60_000)).toBeNull()
     expect(decidePending(null, now)).toBeNull()
   })
 
   it('does not offer a toast for a push more than two minutes old', () => {
     expect(decidePending(base, now + 3 * 60_000)).toBeNull()
+  })
+
+  it('goes straight to a recent unopened push when the app comes to the foreground', () => {
+    expect(decidePending(base, now, 'foreground')).toBe('open')
+    expect(decidePending({ ...base, offeredAt: '2026-10-22T15:36:05Z' }, now + 8 * 60_000, 'foreground')).toBe('open')
+    expect(decidePending({ ...base, openedAt: '2026-10-22T15:36:06Z' }, now, 'foreground')).toBeNull()
+    expect(decidePending(base, now + 11 * 60_000, 'foreground')).toBeNull()
   })
 
   it('polls quickly while a recent push is unopened, slowly otherwise', () => {
