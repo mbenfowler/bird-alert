@@ -223,3 +223,13 @@ button#confirmPasswordReset {
     cursor: progress;
 }
 
+
+/* Temporary diagnostics (see src/experiments.ts): each class disables one feature of the home page. */
+html.x-nosticky #alertArea { position: static; }
+html.x-noscroller .alerts-list { overflow-x: hidden; }
+html.x-nomask .alerts-list { -webkit-mask-image: none; mask-image: none; }
+html.x-noanim #alertArea *, html.x-noanim #alertArea *::after, html.x-noanim #alertArea *::before { animation: none !important; transition: none !important; }
+html.x-navtop nav { z-index: 20; }
+html.x-nobmc #bmc-wbtn, html.x-nobmc iframe[id^="bmc"], html.x-nobmc [id^="bmc-"] { display: none !important; }
+.diagnostics { margin-top: 0; gap: 10px; }
+.diagnostics .notification--sub { padding: 10px 12px; }
