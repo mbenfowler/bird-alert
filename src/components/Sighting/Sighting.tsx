@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router'
 import { toast } from 'react-toastify'
 import SightingsMap, { type MapPoint } from '../SightingsMap/SightingsMap'
 import SeasonStrip from '../SeasonStrip/SeasonStrip'
+import SoundButton from '../SoundButton/SoundButton'
 import ErrorMessage from '../Error/ErrorMessage'
 import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
@@ -116,6 +117,7 @@ const Sighting = () => {
             {all.length ? `Reported ${all.length === 1 ? 'once' : `${all.length} times`} in ${regionName} in the last 30 days.` : `No reports in ${regionName} in the last 30 days.`}
           </p>
           <div className='sighting__actions'>
+            {bird && <SoundButton code={code} name={name} variant='pill' />}
             {bird && <button type='button' className='pill-button' onClick={watch} disabled={toggleSaved.isPending} aria-pressed={isWatched}>{isWatched ? '★ On your watch list' : '☆ Add to watch list'}</button>}
             {bird?.wikiURL && <a className='pill-button' href={bird.wikiURL} target='_blank' rel='noreferrer'>Wikipedia</a>}
           </div>

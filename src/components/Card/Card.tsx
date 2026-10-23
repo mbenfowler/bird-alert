@@ -4,6 +4,7 @@ import { errorMessage } from '../../apiCalls'
 import { useSavedCodes } from '../../hooks/queries'
 import { useToggleSavedMutation } from '../../hooks/mutations'
 import type { Bird } from '../../types'
+import SoundButton from '../SoundButton/SoundButton'
 
 interface CardProps {
     bird: Bird
@@ -51,6 +52,7 @@ const Card = ({ bird }: CardProps) => {
                 ? <a className='card-link' href={bird.wikiURL} target='_blank' rel='noreferrer'>{body}<span className='visually-hidden'>, read about this bird on Wikipedia (opens in a new tab)</span></a>
                 : <div className='card-link'>{body}</div>}
             <input type="checkbox" checked={isChecked} disabled={toggleSaved.isPending} id={bird.speciesCode} name={bird.comName} aria-label={`Watch ${bird.comName}`} onChange={handleChange} />
+            <SoundButton code={bird.speciesCode} name={bird.comName} className='card-sound' />
         </article>
     )
 }
