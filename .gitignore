@@ -31,3 +31,7 @@ yarn-error.log*
 # cypress artifacts
 /cypress/screenshots
 /cypress/videos
+
+# playwright artifacts
+/test-results
+/playwright-report
