@@ -88,7 +88,8 @@ const SightingsMap = ({ points, center = [39.8, -98.6], height = 360, ariaLabel,
           <Marker key={group.id} position={[group.lat, group.lng]} icon={pinIcon(group.highlight, group.points.length)} zIndexOffset={group.highlight ? 1000 : 0}
             eventHandlers={onPinClick ? { click: () => onPinClick(group.points) } : undefined}
             title={group.points.map(p => (p.subtitle ? `${p.title}, ${p.subtitle}` : p.title)).join('; ')} alt={group.points.map(p => p.title).join(', ')}>
-            <Popup>
+            {/* A pin with many reports gets a popup that scrolls rather than one taller than the map. */}
+            <Popup maxHeight={220}>
               {group.points.map((point, index) => (
                 <div key={point.id} className={index ? 'map-popup__item' : undefined}>
                   <strong>{point.title}</strong>

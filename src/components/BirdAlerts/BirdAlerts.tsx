@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import AlertCard from '../AlertCard/AlertCard'
 import ArrivalCard from '../ArrivalCard/ArrivalCard'
@@ -21,6 +21,9 @@ const BirdAlerts = () => {
     const region = user.location
     const [alertType, setAlertType] = useState<AlertType>('star')
     const [expanded, setExpanded] = useState(true)
+    // Each tab's row starts at its first card, however far the previous one was scrolled.
+    const listRef = useRef<HTMLDivElement>(null)
+    useEffect(() => { listRef.current?.scrollTo({ left: 0 }) }, [alertType])
 
     const observations = useObservationsQuery(region)
     const savedCodes = useSavedCodes()
@@ -71,7 +74,7 @@ const BirdAlerts = () => {
           {/* Height animates through grid rows; cards slide in one after another; collapsed content is inert. */}
           <div className='alerts-collapse' aria-hidden={!expanded} inert={!expanded}>
             <div className='alerts-collapse__inner'>
-              <div id='alertsList' className='alerts-list'>
+              <div id='alertsList' className='alerts-list' ref={listRef}>
                 {isLoading && <LoadingState variant='inline' label='Loading sightings' />}
                 {!isLoading && !shown.length && !arrivals.length && <p className='alerts-empty'>{emptyText}</p>}
                 {shown.map((alert, index) => (

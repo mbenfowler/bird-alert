@@ -18,6 +18,19 @@ describe('Phone-width layout', () => {
     assertNoHorizontalOverflow()
   })
 
+  it('a new page starts at the top and each alert tab starts at its first card', () => {
+    login()
+    cy.get('.birds-list .card').should('have.length', 7)
+    cy.get('#alertsList').scrollTo('right', { ensureScrollable: false })
+    cy.get('#notable').click()
+    cy.get('#alertsList').should(($list) => expect($list[0].scrollLeft, 'alerts row scroll').to.eq(0))
+    cy.scrollTo('bottom', { ensureScrollable: false })
+    cy.window().its('scrollY').should('be.gt', 0)
+    cy.get('[href="/saved"]').click()
+    cy.contains('.list-heading', 'Birds on your watch list', { timeout: 15000 })
+    cy.window().its('scrollY').should('eq', 0)
+  })
+
   it('home, saved and settings do not overflow and the watch toggle is reachable', () => {
     login()
     cy.get('.birds-list .card').should('have.length', 7)
