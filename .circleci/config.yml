@@ -35,8 +35,31 @@ jobs:
           start-command: npm start
           cypress-command: until curl -sf http://localhost:3000 > /dev/null; do sleep 1; done; npx cypress run --browser electron
 
+  # Safari's engine. Playwright's WebKit build on the same image; the system libraries it needs are
+  # installed with apt, which this image allows without a password.
+  webkit:
+    executor: node22
+    steps:
+      - checkout
+      - node/install-packages:
+          pkg-manager: npm
+      - run:
+          name: Install WebKit
+          command: sudo -E env "PATH=$PATH" npx playwright install --with-deps webkit
+      - run:
+          name: Start the dev server
+          command: npm start
+          background: true
+      - run:
+          name: WebKit layout suite
+          command: until curl -sf http://localhost:3000 > /dev/null; do sleep 1; done; npx playwright test
+      - store_artifacts:
+          path: test-results
+          when: on_fail
+
 workflows:
   test_my_app:
     jobs:
       - build
       - e2e
+      - webkit
