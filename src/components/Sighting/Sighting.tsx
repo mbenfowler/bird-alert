@@ -118,13 +118,13 @@ const Sighting = () => {
           <p className='sighting__blurb'>
             {all.length ? `Reported ${all.length === 1 ? 'once' : `${all.length} times`} in ${regionName} in the last 30 days.` : `No reports in ${regionName} in the last 30 days.`}
           </p>
+          {/* The recording's credit, which its license asks for, above the buttons so the row never moves. */}
+          {(sound.state === 'playing' || sound.state === 'paused') && <p className='sighting__credit'><SoundCredit sound={sound.sound} /></p>}
           <div className='sighting__actions'>
             {bird && <SoundPill state={sound.state} name={name} onToggle={() => { void sound.toggle() }} />}
             {bird && <button type='button' className='pill-button' onClick={watch} disabled={toggleSaved.isPending} aria-pressed={isWatched}>{isWatched ? '★ On your watch list' : '☆ Add to watch list'}</button>}
             {bird?.wikiURL && <a className='pill-button' href={bird.wikiURL} target='_blank' rel='noreferrer'>Wikipedia</a>}
           </div>
-          {/* The recording's credit, which its license asks for, on a line of its own so the buttons never move. */}
-          {(sound.state === 'playing' || sound.state === 'paused') && <p className='sighting__credit'><SoundCredit sound={sound.sound} /></p>}
         </div>
         {seasonality.data?.months && (
           <div className='sighting__season'>
