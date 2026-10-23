@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { toast } from 'react-toastify'
 import SightingsMap, { type MapPoint } from '../SightingsMap/SightingsMap'
@@ -19,7 +19,14 @@ const mapsHref = (o: Observation) => {
     : `https://www.google.com/maps/search/?api=1&query=${o.lat}%2C${o.lng}`
 }
 
-/** One sighting in full: the bird, where and when, every recent location of the species, links out. */
+/**
+ * One species. The bird card leads; below it, a frame exactly one screen tall holds the map of
+ * every report in the last 30 days, the chosen one described beneath it, and the list of those
+ * reports. Scrolling the page past the card docks the frame under the bar; from then on the list
+ * scrolls by itself, and pulling down at its top brings the card back. Choosing from the list or
+ * the map swaps the selection in place. Portrait phones stack map over list; wider screens put
+ * the list beside the map.
+ */
 const Sighting = () => {
   const { code = '', subId = '' } = useParams<{ code: string; subId: string }>()
   const user = useCurrentUser()
@@ -43,9 +50,42 @@ const Sighting = () => {
     lng: o.lng,
     title: o.locName,
     subtitle: `${formatObsDt(o.obsDt)}${o.howMany ? ` · ${o.howMany} seen` : ''}`,
-    href: `/sighting/${code}/${o.subId}`,
+    // No Details link in the popup: the chosen report is already described under the map.
     highlight: current ? o.subId === current.subId && o.lat === current.lat && o.lng === current.lng : false
-  })), [all, current, code])
+  })), [all, current])
+
+  // The frame is docked once the page has scrolled it up under the bar. Until then the list does
+  // not scroll on its own, so a swipe on it moves the page (and docks the frame) rather than the
+  // list; once docked, the list scrolls, and at its top a pull chains back to the page.
+  const frameRef = useRef<HTMLDivElement>(null)
+  const [docked, setDocked] = useState(false)
+  useEffect(() => {
+    const update = () => {
+      const frame = frameRef.current
+      if (!frame) return
+      const bar = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-height')) || 55
+      const gap = Number.parseFloat(getComputedStyle(frame).getPropertyValue('--dock-gap')) || 0
+      setDocked(frame.getBoundingClientRect().top <= bar + gap + 1)
+    }
+    update()
+    window.addEventListener('scroll', update, { passive: true })
+    window.addEventListener('resize', update)
+    return () => { window.removeEventListener('scroll', update); window.removeEventListener('resize', update) }
+  }, [all.length])
+
+  // The list is its own scroller; a fade at its foot says there is more below (iOS hides scrollbars).
+  const listRef = useRef<HTMLDivElement>(null)
+  const [more, setMore] = useState(false)
+  useEffect(() => {
+    const el = listRef.current
+    if (!el) return
+    const update = () => setMore(el.scrollTop + el.clientHeight < el.scrollHeight - 4)
+    update()
+    el.addEventListener('scroll', update, { passive: true })
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(update)
+    observer?.observe(el)
+    return () => { el.removeEventListener('scroll', update); observer?.disconnect() }
+  }, [all.length, seasonality.data])
 
   if (observations.isError) return <ErrorMessage networkError={errorMessage(observations.error)} />
   if (observations.isPending || birds.isPending) return <LoadingState label='Loading sighting…' />
@@ -61,6 +101,8 @@ const Sighting = () => {
   }
   const img = bird?.birdImg && bird.birdImg !== 'undefined' ? bird.birdImg : '/images/noBirdImg.png'
   const ebirdHref = current?.subId ? `https://ebird.org/checklist/${current.subId}` : `https://ebird.org/species/${code}`
+  // Selecting swaps the report in place; the browser's Back still leaves the page, not the selection.
+  const select = (o: Observation) => navigate(`/sighting/${code}/${o.subId}`, { replace: true })
 
   return (
     <section className='sighting'>
@@ -70,49 +112,66 @@ const Sighting = () => {
         <div className='sighting__title'>
           <h1 className='fredericka'>{name}</h1>
           {bird?.sciName && <p className='sighting__sci'>{bird.sciName}</p>}
-          {current
-            ? <p className='sighting__meta'>
-                <strong>{current.locName}</strong><br />
-                {formatObsDt(current.obsDt)}{current.howMany ? ` · ${current.howMany} seen` : ''}
-              </p>
-            : <p className='sighting__meta'>This report is older than 30 days, so its details are no longer in eBird's recent feed.</p>}
+          <p className='sighting__blurb'>
+            {all.length ? `Reported ${all.length === 1 ? 'once' : `${all.length} times`} in ${regionName} in the last 30 days.` : `No reports in ${regionName} in the last 30 days.`}
+          </p>
           <div className='sighting__actions'>
-            {current && <a className='pill-button pill-button--primary' href={mapsHref(current)} target='_blank' rel='noreferrer'>Open in Maps</a>}
-            <a className='pill-button' href={ebirdHref} target='_blank' rel='noreferrer'>View on eBird</a>
-            {bird && <button type='button' className='pill-button' onClick={watch} disabled={toggleSaved.isPending}>{isWatched ? '★ On your watch list' : '☆ Add to watch list'}</button>}
+            {bird && <button type='button' className='pill-button' onClick={watch} disabled={toggleSaved.isPending} aria-pressed={isWatched}>{isWatched ? '★ On your watch list' : '☆ Add to watch list'}</button>}
             {bird?.wikiURL && <a className='pill-button' href={bird.wikiURL} target='_blank' rel='noreferrer'>Wikipedia</a>}
           </div>
         </div>
+        {seasonality.data?.months && (
+          <div className='sighting__season'>
+            <h2 className='fredericka sighting__season-head'>When {name} is around</h2>
+            <SeasonStrip months={seasonality.data.months} name={name} regionName={regionName} />
+          </div>
+        )}
       </header>
 
-      {seasonality.data?.months && (
-        <>
-          <h2 className='fredericka sighting__subhead'>When {name} is around</h2>
-          <SeasonStrip months={seasonality.data.months} name={name} regionName={regionName} />
-        </>
-      )}
+      <div className={`sighting__frame ${docked ? 'is-docked' : ''}`} ref={frameRef}>
+        <div className='sighting__map'>
+          {all.length
+            ? <SightingsMap points={points} height='100%' ariaLabel={`Map of recent ${name} sightings in your region`} openHighlighted
+                onPinClick={(hit) => { const o = all.find(x => `${x.subId}-${x.lat}-${x.lng}` === hit[0]?.id); if (o) select(o) }} />
+            : <p className='list-note sighting__nomap'>No reports of this species in your region in the last 30 days.</p>}
+          <div className='sighting__pick'>
+            {current
+              ? <p className='sighting__meta'>
+                  <strong>{current.locName}</strong>
+                  <span>{formatObsDt(current.obsDt)}{current.howMany ? ` · ${current.howMany} seen` : ''}</span>
+                </p>
+              : <p className='sighting__meta'><span>This report is older than 30 days, so its details are no longer in eBird's recent feed.</span></p>}
+            <div className='sighting__actions'>
+              {current && <a className='pill-button pill-button--primary pill-button--small' href={mapsHref(current)} target='_blank' rel='noreferrer'>Open in Maps</a>}
+              <a className='pill-button pill-button--small' href={ebirdHref} target='_blank' rel='noreferrer'>View on eBird</a>
+            </div>
+          </div>
+        </div>
 
-      <h2 className='fredericka sighting__subhead'>
-        Where {name} has been reported in the last 30 days
-        <span className='sighting__count'>{all.length}</span>
-      </h2>
-      {all.length
-        ? <SightingsMap points={points} height='min(60vh, 460px)' ariaLabel={`Map of recent ${name} sightings in your region`}
-            onPinClick={(hit) => { if (hit[0]?.href) navigate(hit[0].href, { replace: true }) }} />
-        : <p className='list-note'>No reports of this species in your region in the last 30 days.</p>}
-
-      {all.length > 1 && (
-        <ol className='sighting__list'>
-          {all.map(o => (
-            <li key={`${o.subId}-${o.lat}-${o.lng}`} className={current && o.subId === current.subId ? 'is-current' : undefined}>
-              <Link to={`/sighting/${code}/${o.subId}`}>
-                <strong>{o.locName}</strong>
-                <span>{formatObsDt(o.obsDt)}{o.howMany ? ` · ${o.howMany} seen` : ''}</span>
-              </Link>
-            </li>
-          ))}
-        </ol>
-      )}
+        <div className={`sighting__list-col ${more ? 'has-more' : ''}`}>
+          <div className='sighting__scroll' ref={listRef}>
+            <h2 className='fredericka sighting__subhead'>
+              Reported in the last 30 days
+              <span className='sighting__count'>{all.length}</span>
+            </h2>
+            {all.length > 0 && (
+              <ol className='sighting__list'>
+                {all.map(o => {
+                  const selected = Boolean(current && o.subId === current.subId)
+                  return (
+                    <li key={`${o.subId}-${o.lat}-${o.lng}`} className={selected ? 'is-current' : undefined}>
+                      <button type='button' onClick={() => select(o)} aria-current={selected ? 'true' : undefined}>
+                        <strong>{o.locName}</strong>
+                        <span>{formatObsDt(o.obsDt)}{o.howMany ? ` · ${o.howMany} seen` : ''}</span>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ol>
+            )}
+          </div>
+        </div>
+      </div>
     </section>
   )
 }

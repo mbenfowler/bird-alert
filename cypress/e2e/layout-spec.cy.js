@@ -43,8 +43,18 @@ describe('Phone-width layout', () => {
     cy.visit('http://localhost:3000/settings')
     cy.get('#settings-form')
     assertNoHorizontalOverflow()
-    cy.visit('http://localhost:3000/sighting/cangoo/S155544243')
+    // A species page with real-world place names: long, unbreakable, with no-wrap times beside them.
+    cy.fixture('recentBirds').then((obs) => {
+      const first = obs.find((o) => o.subId === 'S155544243')
+      const long = { ...first, subId: 'S155544998', locName: 'Lake Lanier--Olympic Rowing Venue (Clarks Bridge Park, north shore boat ramp)', howMany: 1200 }
+      cy.intercept('GET', '**/api/ebird/species-observations*', { statusCode: 200, body: [long, first] }).as('longNames')
+    })
+    cy.visit('http://localhost:3000/sighting/cangoo/S155544998')
     cy.get('.sighting__title h1')
+    cy.get('.sighting__meta').should('contain', 'Olympic Rowing')
+    assertNoHorizontalOverflow()
+    cy.get('.sighting__frame').then(($f) => expect($f[0].getBoundingClientRect().right, 'frame right edge').to.be.at.most(390))
+    cy.scrollTo('bottom')
     assertNoHorizontalOverflow()
     cy.visit('http://localhost:3000/map')
     cy.get('.sightings-map')

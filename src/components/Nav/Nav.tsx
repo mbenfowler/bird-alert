@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useSessionQuery } from '../../hooks/queries'
 import { useLogoutMutation } from '../../hooks/mutations'
@@ -14,8 +15,21 @@ const Nav = () => {
         logoutMutation.mutate(undefined, { onSettled: () => navigate('/login') })
     }
 
+    // Pages that fill exactly one screen size themselves under the bar through --nav-height.
+    const navRef = useRef<HTMLElement>(null)
+    useEffect(() => {
+        const nav = navRef.current
+        if (!nav) return
+        const publish = () => document.documentElement.style.setProperty('--nav-height', `${nav.offsetHeight}px`)
+        publish()
+        if (typeof ResizeObserver === 'undefined') return
+        const observer = new ResizeObserver(publish)
+        observer.observe(nav)
+        return () => observer.disconnect()
+    }, [])
+
     return (
-        <nav>
+        <nav ref={navRef}>
             <Link className='text-link' to={user ? '/' : '/login'}><span id='titleBird'>Bird </span><span id='titleAlert'>Alert!</span></Link>
             {user &&
                 <div>
