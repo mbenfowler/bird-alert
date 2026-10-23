@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, type RefObject } from 'react'
 import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { Link } from 'react-router'
@@ -74,18 +74,32 @@ const FitToPoints = ({ points }: { points: MapPoint[] }) => {
   return null
 }
 
+/** Opens the highlighted pin's popup once the map has stopped moving, so its auto-pan starts from the settled view. */
+const OpenHighlighted = ({ id, markers }: { id: string; markers: RefObject<Map<string, L.Marker>> }) => {
+  const map = useMap()
+  useEffect(() => {
+    if (!id) return
+    let done = false
+    const open = () => {
+      if (done) return
+      done = true
+      map.off('moveend', open)
+      markers.current?.get(id)?.openPopup()
+    }
+    // A fit or pan started in the same render ends with moveend; if none was started, go after a beat.
+    map.once('moveend', open)
+    const timer = window.setTimeout(open, 320)
+    return () => { done = true; map.off('moveend', open); window.clearTimeout(timer) }
+  }, [map, id, markers])
+  return null
+}
+
 /** OpenStreetMap with a pin per sighting; the highlighted pin is the one being looked at. */
 const SightingsMap = ({ points, center = [39.8, -98.6], height = 360, ariaLabel, onPinClick, openHighlighted = false }: SightingsMapProps) => {
   const initial = useMemo<[number, number]>(() => (points[0] ? [points[0].lat, points[0].lng] : center), [points, center])
   const groups = useMemo(() => groupByPlace(points).sort((a, b) => Number(a.highlight) - Number(b.highlight)), [points])
   const markers = useRef(new Map<string, L.Marker>())
   const highlightedId = groups.find(g => g.highlight)?.id ?? ''
-  useEffect(() => {
-    if (!openHighlighted || !highlightedId) return
-    // After the pan settles, so the popup's own auto-pan does not fight it.
-    const timer = window.setTimeout(() => markers.current.get(highlightedId)?.openPopup(), 60)
-    return () => window.clearTimeout(timer)
-  }, [openHighlighted, highlightedId])
   return (
     <div className='sightings-map' style={{ height }} role='region' aria-label={ariaLabel}>
       <MapContainer center={initial} zoom={points.length ? 12 : 4} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
@@ -94,6 +108,7 @@ const SightingsMap = ({ points, center = [39.8, -98.6], height = 360, ariaLabel,
           url='https://tile.openstreetmap.org/{z}/{x}/{y}.png'
         />
         <FitToPoints points={points} />
+        {openHighlighted && <OpenHighlighted id={highlightedId} markers={markers} />}
         {groups.map(group => (
           <Marker key={group.id} position={[group.lat, group.lng]} icon={pinIcon(group.highlight, group.points.length)} zIndexOffset={group.highlight ? 1000 : 0}
             ref={(marker) => { if (marker) markers.current.set(group.id, marker); else markers.current.delete(group.id) }}

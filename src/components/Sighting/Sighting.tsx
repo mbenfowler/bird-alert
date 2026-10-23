@@ -50,9 +50,9 @@ const Sighting = () => {
     lng: o.lng,
     title: o.locName,
     subtitle: `${formatObsDt(o.obsDt)}${o.howMany ? ` · ${o.howMany} seen` : ''}`,
-    href: `/sighting/${code}/${o.subId}`,
+    // No Details link in the popup: the chosen report is already described under the map.
     highlight: current ? o.subId === current.subId && o.lat === current.lat && o.lng === current.lng : false
-  })), [all, current, code])
+  })), [all, current])
 
   // The frame is docked once the page has scrolled it up under the bar. Until then the list does
   // not scroll on its own, so a swipe on it moves the page (and docks the frame) rather than the
@@ -119,6 +119,12 @@ const Sighting = () => {
             {bird?.wikiURL && <a className='pill-button' href={bird.wikiURL} target='_blank' rel='noreferrer'>Wikipedia</a>}
           </div>
         </div>
+        {seasonality.data?.months && (
+          <div className='sighting__season'>
+            <h2 className='fredericka sighting__season-head'>When {name} is around</h2>
+            <SeasonStrip months={seasonality.data.months} name={name} regionName={regionName} />
+          </div>
+        )}
       </header>
 
       <div className={`sighting__frame ${docked ? 'is-docked' : ''}`} ref={frameRef}>
@@ -143,12 +149,6 @@ const Sighting = () => {
 
         <div className={`sighting__list-col ${more ? 'has-more' : ''}`}>
           <div className='sighting__scroll' ref={listRef}>
-            {seasonality.data?.months && (
-              <>
-                <h2 className='fredericka sighting__subhead'>When {name} is around</h2>
-                <SeasonStrip months={seasonality.data.months} name={name} regionName={regionName} />
-              </>
-            )}
             <h2 className='fredericka sighting__subhead'>
               Reported in the last 30 days
               <span className='sighting__count'>{all.length}</span>
