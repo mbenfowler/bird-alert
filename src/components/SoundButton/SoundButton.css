@@ -1,8 +1,4 @@
 /* Round play button, matched to the card's watch-list star. */
-.sound--round {
-    display: inline-block;
-}
-
 .sound__round {
     width: 38px;
     height: 38px;
@@ -79,17 +75,13 @@
     color: var(--link);
 }
 
-/* On a card the credit floats to the left of the button, inside the card's bottom edge. */
-.sound-credit--float {
-    position: absolute;
-    right: 44px;
-    bottom: 12px;
-    max-width: calc(100% - 60px);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    background: var(--surface);
-    padding: 1px 6px;
-    border-radius: 6px;
+/* On a card the credit is the last line of the text block and may wrap. */
+.card-sound-credit {
+    display: block;
+    margin-top: 6px;
+    white-space: normal;
+    font-size: 0.7rem;
+    line-height: 1.3;
 }
 
 @media (prefers-reduced-motion: reduce) {

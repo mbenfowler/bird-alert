@@ -24,9 +24,17 @@ export const useBirdSound = (code: string, name: string) => {
   const [sound, setSound] = useState<BirdSound | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
+  // Leaving the page releases the audio quietly: handlers come off first, because clearing the
+  // source fires an error event that would otherwise read as a failed playback.
   useEffect(() => () => {
     const audio = audioRef.current
-    if (audio) { audio.pause(); audio.src = ''; if (current?.audio === audio) current = null }
+    if (!audio) return
+    audio.onended = null
+    audio.onerror = null
+    audio.pause()
+    audio.removeAttribute('src')
+    audio.load()
+    if (current?.audio === audio) current = null
   }, [])
 
   const load = useCallback(async () => {

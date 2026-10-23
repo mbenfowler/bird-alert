@@ -1,4 +1,4 @@
-import { useBirdSound } from '../../hooks/useBirdSound'
+import { useBirdSound, type SoundState } from '../../hooks/useBirdSound'
 import type { BirdSound } from '../../types'
 import './SoundButton.css'
 
@@ -18,40 +18,37 @@ export const SoundCredit = ({ sound, className }: { sound: BirdSound | null; cla
   )
 }
 
-interface SoundButtonProps {
-  code: string
-  name: string
-  /** `round`: an icon in a circle (cards). `pill`: a labelled pill with the credit beside it (species page). */
-  variant?: 'round' | 'pill'
-  className?: string
+const labelFor = (state: SoundState, name: string) =>
+  state === 'none' ? `No recording of ${name} available` : state === 'playing' ? `Pause the ${name} recording` : `Hear a ${name}`
+
+const iconFor = (state: SoundState) => state === 'none' ? <MuteIcon /> : state === 'playing' ? <PauseIcon /> : <PlayIcon />
+
+interface SoundToggleProps { state: SoundState; name: string; onToggle: () => void; className?: string }
+
+/** The round play/pause button on its own, for a page that places the credit itself (cards). */
+export const SoundToggle = ({ state, name, onToggle, className }: SoundToggleProps) => {
+  const label = labelFor(state, name)
+  return (
+    <button type='button' className={`sound__round ${className ?? ''}`} onClick={onToggle} aria-label={label} aria-pressed={state === 'playing'} aria-busy={state === 'loading'} disabled={state === 'none'} data-state={state} title={label}>
+      {iconFor(state)}
+    </button>
+  )
 }
 
-/** Plays the species' representative recording; nothing is fetched until it is tapped. */
-const SoundButton = ({ code, name, variant = 'round', className }: SoundButtonProps) => {
+interface SoundButtonProps { code: string; name: string; className?: string }
+
+/** "Hear it" pill with the credit beside it while the recording plays (species page). */
+const SoundButton = ({ code, name, className }: SoundButtonProps) => {
   const { state, sound, toggle } = useBirdSound(code, name)
   const playing = state === 'playing'
-  const label = state === 'none' ? `No recording of ${name} available`
-    : playing ? `Pause the ${name} recording` : `Hear a ${name}`
-  const icon = state === 'none' ? <MuteIcon /> : playing ? <PauseIcon /> : <PlayIcon />
-
-  if (variant === 'pill') {
-    return (
-      <span className={`sound sound--pill ${className ?? ''}`}>
-        <button type='button' className='pill-button sound__pill' onClick={() => { void toggle() }} aria-pressed={playing} aria-busy={state === 'loading'} disabled={state === 'none'} data-state={state}>
-          {icon}
-          <span>{state === 'none' ? 'No recording' : playing ? 'Playing…' : state === 'loading' ? 'Loading…' : 'Hear it'}</span>
-          <span className='visually-hidden'>{state === 'none' ? ` of ${name}` : playing ? `, pause the ${name} recording` : `: a ${name} recording`}</span>
-        </button>
-        {(playing || state === 'paused') && <SoundCredit sound={sound} />}
-      </span>
-    )
-  }
   return (
-    <span className={`sound sound--round ${className ?? ''}`}>
-      <button type='button' className='sound__round' onClick={() => { void toggle() }} aria-label={label} aria-pressed={playing} aria-busy={state === 'loading'} disabled={state === 'none'} data-state={state} title={label}>
-        {icon}
+    <span className={`sound sound--pill ${className ?? ''}`}>
+      <button type='button' className='pill-button sound__pill' onClick={() => { void toggle() }} aria-pressed={playing} aria-busy={state === 'loading'} disabled={state === 'none'} data-state={state}>
+        {iconFor(state)}
+        <span>{state === 'none' ? 'No recording' : playing ? 'Playing…' : state === 'loading' ? 'Loading…' : 'Hear it'}</span>
+        <span className='visually-hidden'>{state === 'none' ? ` of ${name}` : playing ? `, pause the ${name} recording` : `: a ${name} recording`}</span>
       </button>
-      {(playing || state === 'paused') && <SoundCredit sound={sound} className='sound-credit--float' />}
+      {(playing || state === 'paused') && <SoundCredit sound={sound} />}
     </span>
   )
 }

@@ -117,7 +117,7 @@ const Sighting = () => {
             {all.length ? `Reported ${all.length === 1 ? 'once' : `${all.length} times`} in ${regionName} in the last 30 days.` : `No reports in ${regionName} in the last 30 days.`}
           </p>
           <div className='sighting__actions'>
-            {bird && <SoundButton code={code} name={name} variant='pill' />}
+            {bird && <SoundButton code={code} name={name} />}
             {bird && <button type='button' className='pill-button' onClick={watch} disabled={toggleSaved.isPending} aria-pressed={isWatched}>{isWatched ? '★ On your watch list' : '☆ Add to watch list'}</button>}
             {bird?.wikiURL && <a className='pill-button' href={bird.wikiURL} target='_blank' rel='noreferrer'>Wikipedia</a>}
           </div>
