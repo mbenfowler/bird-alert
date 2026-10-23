@@ -64,7 +64,8 @@ const Sighting = () => {
       const frame = frameRef.current
       if (!frame) return
       const bar = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-height')) || 55
-      setDocked(frame.getBoundingClientRect().top <= bar + 1)
+      const gap = Number.parseFloat(getComputedStyle(frame).getPropertyValue('--dock-gap')) || 0
+      setDocked(frame.getBoundingClientRect().top <= bar + gap + 1)
     }
     update()
     window.addEventListener('scroll', update, { passive: true })

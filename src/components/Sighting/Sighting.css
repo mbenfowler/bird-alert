@@ -101,12 +101,14 @@
 /* The one-screen frame. Its list only scrolls once the frame is docked, so a swipe on the list
    before then scrolls the page up to the dock instead. */
 .sighting__frame {
-    height: calc(100dvh - var(--nav-height, 55px) - 12px);
+    /* One screen tall, less a small gap so the docked frame sits just under the bar rather than against it. */
+    --dock-gap: 10px;
+    height: calc(100dvh - var(--nav-height, 55px) - var(--dock-gap) - 12px);
     min-height: 420px;
     display: grid;
     /* minmax(0, …) tracks: a long place name must not widen the frame past the screen. */
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(180px, 40%) minmax(0, 1fr);
+    grid-template-rows: minmax(220px, 48%) minmax(0, 1fr);
     grid-template-areas: "map" "list";
     gap: 10px;
 }
