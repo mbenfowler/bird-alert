@@ -1,5 +1,10 @@
 .sightings-map {
     width: 100%;
+    /* Leaflet stacks its panes with z-indexes in the hundreds. Contained here, so the map never
+       rides over the sticky header as the page scrolls. */
+    position: relative;
+    z-index: 0;
+    isolation: isolate;
     border: 2px solid var(--ink);
     border-radius: 14px;
     overflow: hidden;

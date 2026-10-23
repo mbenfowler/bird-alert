@@ -1,5 +1,7 @@
-import { lazy, Suspense, useEffect, useRef, type ReactElement } from 'react'
-import { Routes, Route, useNavigate, useLocation, Link } from 'react-router'
+import { Suspense, useEffect, useRef, type ReactElement } from 'react'
+import { lazyWithReload as lazy } from '../../lazyRetry'
+import RouteError from '../RouteError/RouteError'
+import { Routes, Route, useNavigate, useLocation, useNavigationType, Link } from 'react-router'
 import { CHANNEL, decidePending, pollInterval, samePath, takePendingOpen, type LatestPush, type PendingTrigger } from '../../notificationHandoff'
 import { ackPendingPush, getPendingPush, postPushTrace } from '../../apiCalls'
 import type { PendingPush } from '../../types'
@@ -40,6 +42,12 @@ const App = () => {
   useEffect(() => { navigateRef.current = navigate }, [navigate])
 
   const isPublicPath = PUBLIC_PATH_PREFIXES.some(prefix => pathname.startsWith(prefix))
+  // A new page starts at the top. Back/forward (POP) and in-place swaps (REPLACE, used when a pin
+  // on a sighting's map picks another report) keep the reader where they were.
+  const navigationType = useNavigationType()
+  useEffect(() => {
+    if (navigationType === 'PUSH') window.scrollTo(0, 0)
+  }, [pathname, navigationType])
   useEffect(() => {
     if (user === null && !isPublicPath) navigate('/login', { replace: true })
   }, [user, isPublicPath, navigate])
@@ -139,6 +147,7 @@ const App = () => {
     <>
       <Nav />
       <main className="App">
+        <RouteError resetKey={pathname}>
         <Suspense fallback={<LoadingState />}>
         <Routes>
           <Route path='/' element={requireUser(home)} />
@@ -154,6 +163,7 @@ const App = () => {
           <Route path="*" element={<NotFound />} />
         </Routes>
         </Suspense>
+        </RouteError>
         <ToastContainer />
       </main>
     </>
