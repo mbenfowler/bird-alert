@@ -1,4 +1,4 @@
-import { useBirdSound, type SoundState } from '../../hooks/useBirdSound'
+import type { SoundState } from '../../hooks/useBirdSound'
 import type { BirdSound } from '../../types'
 import './SoundButton.css'
 
@@ -35,22 +35,16 @@ export const SoundToggle = ({ state, name, onToggle, className }: SoundTogglePro
   )
 }
 
-interface SoundButtonProps { code: string; name: string; className?: string }
+interface SoundPillProps { state: SoundState; name: string; onToggle: () => void; className?: string }
 
-/** "Hear it" pill with the credit beside it while the recording plays (species page). */
-const SoundButton = ({ code, name, className }: SoundButtonProps) => {
-  const { state, sound, toggle } = useBirdSound(code, name)
+/** "Hear it" as a labelled pill; the page places the credit where it suits (species page). */
+export const SoundPill = ({ state, name, onToggle, className }: SoundPillProps) => {
   const playing = state === 'playing'
   return (
-    <span className={`sound sound--pill ${className ?? ''}`}>
-      <button type='button' className='pill-button sound__pill' onClick={() => { void toggle() }} aria-pressed={playing} aria-busy={state === 'loading'} disabled={state === 'none'} data-state={state}>
-        {iconFor(state)}
-        <span>{state === 'none' ? 'No recording' : playing ? 'Playing…' : state === 'loading' ? 'Loading…' : 'Hear it'}</span>
-        <span className='visually-hidden'>{state === 'none' ? ` of ${name}` : playing ? `, pause the ${name} recording` : `: a ${name} recording`}</span>
-      </button>
-      {(playing || state === 'paused') && <SoundCredit sound={sound} />}
-    </span>
+    <button type='button' className={`pill-button sound__pill ${className ?? ''}`} onClick={onToggle} aria-pressed={playing} aria-busy={state === 'loading'} disabled={state === 'none'} data-state={state}>
+      {iconFor(state)}
+      <span>{state === 'none' ? 'No recording' : playing ? 'Playing…' : state === 'loading' ? 'Loading…' : 'Hear it'}</span>
+      <span className='visually-hidden'>{state === 'none' ? ` of ${name}` : playing ? `, pause the ${name} recording` : `: a ${name} recording`}</span>
+    </button>
   )
 }
-
-export default SoundButton

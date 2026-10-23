@@ -93,6 +93,15 @@
     line-height: 1.4;
 }
 
+.sighting__credit {
+    margin: 8px 0 0;
+    min-width: 0;
+}
+
+.sighting__credit .sound-credit {
+    white-space: normal;
+}
+
 .pill-button--small {
     padding: 4px 12px;
     font-size: 0.85rem;

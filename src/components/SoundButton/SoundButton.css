@@ -57,13 +57,6 @@
     outline-offset: 2px;
 }
 
-.sound--pill {
-    display: inline-flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 6px 10px;
-}
-
 /* The credit: small, quiet, with the XC number linking to the recording's page. */
 .sound-credit {
     font-size: 0.75rem;
