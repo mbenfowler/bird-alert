@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
 import { toast } from 'react-toastify'
 import SightingsMap, { type MapPoint } from '../SightingsMap/SightingsMap'
 import SeasonStrip from '../SeasonStrip/SeasonStrip'
+import { SoundCredit, SoundPill } from '../SoundButton/SoundButton'
+import { useBirdSound } from '../../hooks/useBirdSound'
 import ErrorMessage from '../Error/ErrorMessage'
 import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
@@ -39,6 +41,7 @@ const Sighting = () => {
   const savedCodes = useSavedCodes()
   const toggleSaved = useToggleSavedMutation()
   const seasonality = useSeasonalityQuery(region, code)
+  const sound = useBirdSound(code, bird?.comName ?? code)
   const regions = useRegionsQuery(user.state)
   const regionName = regions.data?.find(r => r.code === region)?.name ?? 'your county'
 
@@ -106,7 +109,6 @@ const Sighting = () => {
 
   return (
     <section className='sighting'>
-      <p className='sighting__crumbs'><Link to='/'>Home</Link> · <Link to='/map'>Region map</Link></p>
       <header className='sighting__hero'>
         <img className='sighting__photo' src={img} alt={`a ${name}`} />
         <div className='sighting__title'>
@@ -115,7 +117,10 @@ const Sighting = () => {
           <p className='sighting__blurb'>
             {all.length ? `Reported ${all.length === 1 ? 'once' : `${all.length} times`} in ${regionName} in the last 30 days.` : `No reports in ${regionName} in the last 30 days.`}
           </p>
+          {/* The recording's credit, which its license asks for, above the buttons so the row never moves. */}
+          {(sound.state === 'playing' || sound.state === 'paused') && <p className='sighting__credit'><SoundCredit sound={sound.sound} /></p>}
           <div className='sighting__actions'>
+            {bird && <SoundPill state={sound.state} name={name} onToggle={() => { void sound.toggle() }} />}
             {bird && <button type='button' className='pill-button' onClick={watch} disabled={toggleSaved.isPending} aria-pressed={isWatched}>{isWatched ? '★ On your watch list' : '☆ Add to watch list'}</button>}
             {bird?.wikiURL && <a className='pill-button' href={bird.wikiURL} target='_blank' rel='noreferrer'>Wikipedia</a>}
           </div>

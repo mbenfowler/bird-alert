@@ -38,7 +38,6 @@ const AlertSightings = () => {
 
   return (
     <section className='alert-sightings'>
-      <p className='alert-sightings__crumbs'><Link to='/'>Home</Link> · <Link to='/map'>Region map</Link></p>
       <h1 className='fredericka'>Watch list sightings</h1>
       {!refs.length && <p className='list-note'>This link did not name any sightings. <Link to='/'>See today's alerts on the home page.</Link></p>}
       {sightings.isError && <ErrorMessage networkError={errorMessage(sightings.error)} />}

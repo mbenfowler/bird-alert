@@ -118,3 +118,19 @@ export interface PendingPush {
 
 export type EmailPreviewKind = 'watchlist' | 'rare' | 'migration'
 export type EmailPreviewResult = { sent: true; items: number } | { sent: false; reason: 'nothing' | 'unconfirmed' | 'location' }
+
+/** One representative xeno-canto recording for a species, as /api/sound answers. */
+export interface BirdSound {
+  speciesCode: string
+  found: boolean
+  xcId?: number
+  url?: string
+  page?: string
+  type?: string | null
+  quality?: string | null
+  length?: number | null
+  recordist?: string | null
+  license?: string | null
+  licenseName?: string
+  country?: string | null
+}

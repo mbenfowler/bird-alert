@@ -1,4 +1,4 @@
-import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, Observation, Region, SeasonMonth, User, UserPatch } from './types'
+import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, SeasonMonth, User, UserPatch } from './types'
 
 // Every request goes to the same-origin `/api` prefix. In development Vite proxies it to the
 // backend (vite.config.ts); in production Vercel rewrites it (vercel.json). The backend holds
@@ -105,3 +105,6 @@ export const ackPendingPush = (ack: { offered?: boolean; opened?: boolean }) =>
 
 /** Sends one of the email digests to the signed-in user right now, so they can see what it looks like. */
 export const sendEmailPreview = (kind: EmailPreviewKind) => api<EmailPreviewResult>('/mailPreview', { method: 'POST', body: { kind } })
+
+/** One representative recording of the species from xeno-canto, or `found: false`. */
+export const getBirdSound = (code: string) => api<BirdSound>('/sound', { params: { code } })

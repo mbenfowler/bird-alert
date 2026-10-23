@@ -1,0 +1,82 @@
+/* Round play button, matched to the card's watch-list star. */
+.sound__round {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--ink);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.18s ease, transform 0.18s ease;
+}
+
+.sound__round svg,
+.sound__pill svg {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+}
+
+.sound__pill svg {
+    width: 18px;
+    height: 18px;
+    margin-right: 4px;
+    vertical-align: -4px;
+}
+
+.sound__round:hover:not(:disabled) {
+    transform: scale(1.06);
+}
+
+.sound__round[data-state="playing"],
+.sound__pill[data-state="playing"] {
+    background: var(--accent);
+    border-color: var(--accent-ink);
+    color: var(--accent-ink);
+}
+
+.sound__round[data-state="loading"],
+.sound__pill[data-state="loading"] {
+    cursor: progress;
+    opacity: 0.7;
+}
+
+.sound__round:disabled,
+.sound__pill:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.sound__round:focus-visible,
+.sound__pill:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}
+
+/* The credit: small, quiet, with the XC number linking to the recording's page. */
+.sound-credit {
+    font-size: 0.75rem;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.sound-credit a {
+    color: var(--link);
+}
+
+/* On a card the credit is the last line of the text block and may wrap. */
+.card-sound-credit {
+    display: block;
+    margin-top: 6px;
+    white-space: normal;
+    font-size: 0.7rem;
+    line-height: 1.3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sound__round { transition: none; }
+}
