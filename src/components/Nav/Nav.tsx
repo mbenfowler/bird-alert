@@ -1,7 +1,6 @@
 import { Link, useNavigate } from 'react-router'
 import { useSessionQuery } from '../../hooks/queries'
 import { useLogoutMutation } from '../../hooks/mutations'
-import { postPushTrace } from '../../apiCalls'
 import './Nav.css'
 
 const canHover = typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches
@@ -31,7 +30,7 @@ const Nav = () => {
                                 <Link to='/settings'><p id='settingsText'>Settings</p></Link>
                                 <button type='button' className='link-button' onClick={handleLogout} disabled={logoutMutation.isPending}><p>Logout</p></button>
                             </div>}
-                        <Link to='/settings' className='nav-icon nav-icon--settings' aria-label='Settings' draggable={false} onClick={(e) => { void postPushTrace({ event: 'nav-gear-click', source: 'app', path: window.location.pathname, pointer: (e.nativeEvent as PointerEvent).pointerType ?? null, target: (e.target as HTMLElement).tagName }) }}>
+                        <Link to='/settings' className='nav-icon nav-icon--settings' aria-label='Settings' draggable={false}>
                             <span className='nav-img' aria-hidden='true' />
                         </Link>
                     </div>
