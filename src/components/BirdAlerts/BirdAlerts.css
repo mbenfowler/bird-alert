@@ -246,11 +246,15 @@
   }
 }
 
-/* Cards enter one after another when the panel opens, and drift up as it closes. */
+/* Cards enter one after another when the panel opens, and drift up as it closes. Only the first
+   few stagger: the rest are off the edge of the row anyway, and a row of 60 cards each fading in
+   55ms after the last keeps something becoming visible for four seconds, during which iOS
+   cancels taps elsewhere on the page (it reads a tap that coincides with content appearing as a
+   hover that revealed it, and sends no click). */
 .is-expanded .alerts-list > a,
 .is-expanded .alerts-list > .alerts-item {
   animation: alert-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  animation-delay: calc(var(--i, 0) * 55ms);
+  animation-delay: calc(min(var(--i, 0), 5) * 55ms);
 }
 
 .is-collapsed .alerts-list > a,
