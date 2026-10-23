@@ -104,6 +104,8 @@
     height: calc(100dvh - var(--nav-height, 55px) - 12px);
     min-height: 420px;
     display: grid;
+    /* minmax(0, …) tracks: a long place name must not widen the frame past the screen. */
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(180px, 40%) minmax(0, 1fr);
     grid-template-areas: "map" "list";
     gap: 10px;
@@ -113,6 +115,7 @@
 .sighting__map {
     grid-area: map;
     min-height: 0;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -135,6 +138,7 @@
 
 /* The chosen report: place and when on one line, links out on the next. */
 .sighting__pick {
+    min-width: 0;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -177,6 +181,7 @@
     grid-area: list;
     position: relative;
     min-height: 0;
+    min-width: 0;
 }
 
 .sighting__scroll {
@@ -236,7 +241,12 @@
     margin: 0;
     padding: 0;
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 8px;
+}
+
+.sighting__list li {
+    min-width: 0;
 }
 
 .sighting__list button {
@@ -256,11 +266,13 @@
 }
 
 .sighting__list button strong {
+    flex: 1 1 auto;
     min-width: 0;
     overflow-wrap: anywhere;
 }
 
 .sighting__list button span {
+    flex: none;
     color: var(--muted);
     white-space: nowrap;
     font-size: 0.9rem;
