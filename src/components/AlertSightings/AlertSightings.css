@@ -4,16 +4,6 @@
     padding: 12px 12px 32px;
 }
 
-.alert-sightings__crumbs {
-    margin: 4px 0 10px;
-    color: var(--muted);
-    font-size: 0.95rem;
-}
-
-.alert-sightings__crumbs a {
-    color: var(--link);
-}
-
 .alert-sightings h1 {
     font-size: 1.6rem;
     margin-bottom: 4px;

@@ -8,16 +8,6 @@
     box-sizing: border-box;
 }
 
-.sighting__crumbs {
-    margin: 4px 0 10px;
-    color: var(--muted);
-    font-size: 0.95rem;
-}
-
-.sighting__crumbs a {
-    color: var(--link);
-}
-
 /* Photo, names and actions, then the season chart as a flat inset panel; on wide screens the photo
    sits to the left of both. */
 .sighting__hero {
@@ -49,6 +39,7 @@
 .sighting__season {
     grid-area: season;
     min-width: 0;
+    max-width: 560px;
     padding: 10px 12px 8px;
     border-radius: 10px;
     background: var(--surface-muted);

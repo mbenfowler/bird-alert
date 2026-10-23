@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
 import { toast } from 'react-toastify'
 import SightingsMap, { type MapPoint } from '../SightingsMap/SightingsMap'
 import SeasonStrip from '../SeasonStrip/SeasonStrip'
@@ -109,7 +109,6 @@ const Sighting = () => {
 
   return (
     <section className='sighting'>
-      <p className='sighting__crumbs'><Link to='/'>Home</Link> · <Link to='/map'>Region map</Link></p>
       <header className='sighting__hero'>
         <img className='sighting__photo' src={img} alt={`a ${name}`} />
         <div className='sighting__title'>
