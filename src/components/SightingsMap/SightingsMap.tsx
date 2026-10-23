@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { Link } from 'react-router'
@@ -24,6 +24,8 @@ interface SightingsMapProps {
   ariaLabel: string
   /** Called with every point under a tapped pin, so the page can highlight what it stands for. */
   onPinClick?: (points: MapPoint[]) => void
+  /** Open the highlighted pin's popup whenever the highlight moves (a page that selects from a list). */
+  openHighlighted?: boolean
 }
 
 // Pins are drawn with CSS so no image assets have to be resolved by the bundler. Several sightings
@@ -73,9 +75,17 @@ const FitToPoints = ({ points }: { points: MapPoint[] }) => {
 }
 
 /** OpenStreetMap with a pin per sighting; the highlighted pin is the one being looked at. */
-const SightingsMap = ({ points, center = [39.8, -98.6], height = 360, ariaLabel, onPinClick }: SightingsMapProps) => {
+const SightingsMap = ({ points, center = [39.8, -98.6], height = 360, ariaLabel, onPinClick, openHighlighted = false }: SightingsMapProps) => {
   const initial = useMemo<[number, number]>(() => (points[0] ? [points[0].lat, points[0].lng] : center), [points, center])
   const groups = useMemo(() => groupByPlace(points).sort((a, b) => Number(a.highlight) - Number(b.highlight)), [points])
+  const markers = useRef(new Map<string, L.Marker>())
+  const highlightedId = groups.find(g => g.highlight)?.id ?? ''
+  useEffect(() => {
+    if (!openHighlighted || !highlightedId) return
+    // After the pan settles, so the popup's own auto-pan does not fight it.
+    const timer = window.setTimeout(() => markers.current.get(highlightedId)?.openPopup(), 60)
+    return () => window.clearTimeout(timer)
+  }, [openHighlighted, highlightedId])
   return (
     <div className='sightings-map' style={{ height }} role='region' aria-label={ariaLabel}>
       <MapContainer center={initial} zoom={points.length ? 12 : 4} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
@@ -86,6 +96,7 @@ const SightingsMap = ({ points, center = [39.8, -98.6], height = 360, ariaLabel,
         <FitToPoints points={points} />
         {groups.map(group => (
           <Marker key={group.id} position={[group.lat, group.lng]} icon={pinIcon(group.highlight, group.points.length)} zIndexOffset={group.highlight ? 1000 : 0}
+            ref={(marker) => { if (marker) markers.current.set(group.id, marker); else markers.current.delete(group.id) }}
             eventHandlers={onPinClick ? { click: () => onPinClick(group.points) } : undefined}
             title={group.points.map(p => (p.subtitle ? `${p.title}, ${p.subtitle}` : p.title)).join('; ')} alt={group.points.map(p => p.title).join(', ')}>
             {/* A pin with many reports gets a popup that scrolls rather than one taller than the map. */}

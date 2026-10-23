@@ -19,6 +19,36 @@ describe('Sighting page and region map', () => {
     cy.get('button.pill-button').should('contain', 'On your watch list')
   })
 
+  it('choosing another report from the list swaps the selection without moving the page', () => {
+    // Two reports at two places, so there is something to choose between. Later intercepts win.
+    cy.fixture('recentBirds').then((obs) => {
+      const first = obs.find((o) => o.subId === 'S155544243')
+      const second = { ...first, subId: 'S155544999', locName: 'Lake Lanier Olympic Park', obsDt: '2023-11-28 09:10', lat: first.lat + 0.03, lng: first.lng - 0.02, howMany: 4 }
+      cy.intercept('GET', '**/api/ebird/species-observations*', { statusCode: 200, body: [first, second] }).as('twoReports')
+    })
+    cy.visit('http://localhost:3000/sighting/cangoo/S155544243')
+    cy.get('.sighting__list li').should('have.length', 2)
+    // Scrolling past the bird card docks the frame under the bar; only then does the list scroll by itself.
+    cy.get('.sighting__frame').should('not.have.class', 'is-docked')
+    cy.scrollTo('bottom')
+    cy.get('.sighting__frame').should('have.class', 'is-docked')
+    cy.window().then((win) => {
+      const docked = win.scrollY
+      cy.get('.sighting__list li').eq(1).find('button').invoke('text').then((label) => {
+        cy.get('.sighting__list li').eq(1).find('button').click({ scrollBehavior: false })
+        cy.get('.sighting__list li.is-current button').should('have.text', label)
+        cy.get('.sighting__meta strong').invoke('text').then((place) => {
+          expect(label).to.include(place)
+          cy.get('.leaflet-popup').should('contain', place)
+        })
+      })
+      cy.url().should('include', '/sighting/cangoo/S155544999')
+      cy.window().its('scrollY').should('eq', docked)
+    })
+    cy.go('back')
+    cy.url().should('not.include', '/sighting/')
+  })
+
   it('shows the region map with watch-list pins and switches to notable', () => {
     cy.get('.alerts-map-link').click()
     cy.url().should('include', '/map')
