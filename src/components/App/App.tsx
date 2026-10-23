@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, type ReactElement } from 'react'
-import { Routes, Route, useNavigate, useLocation, useNavigationType, Link } from 'react-router'
+import { Routes, Route, useNavigate, useLocation, Link } from 'react-router'
 import { CHANNEL, decidePending, pollInterval, samePath, takePendingOpen, type LatestPush, type PendingTrigger } from '../../notificationHandoff'
 import { ackPendingPush, getPendingPush, postPushTrace } from '../../apiCalls'
 import type { PendingPush } from '../../types'
@@ -40,72 +40,6 @@ const App = () => {
   useEffect(() => { navigateRef.current = navigate }, [navigate])
 
   const isPublicPath = PUBLIC_PATH_PREFIXES.some(prefix => pathname.startsWith(prefix))
-  // Diagnostic: the whole life of a tap near the gear (top-right 96px): start, how it ends (end,
-  // cancel, click or nothing), how long it lasted, how far it moved, and whether any handler
-  // called preventDefault on it. iOS turns a touch into a click only if none of those go wrong.
-  useEffect(() => {
-    if (!user) return
-    const describe = (el: Element | null) => el ? `${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''}${el.className && typeof el.className === 'string' ? '.' + el.className.split(' ').filter(Boolean).slice(0, 2).join('.') : ''}` : null
-    let start: { x: number; y: number; at: number; moved: number; mutations: number } | null = null
-    // Activity while a finger is down: DOM mutations and running animations, which make iOS re-check a pending tap.
-    const observer = new MutationObserver((records) => { if (start) start.mutations += records.length })
-    observer.observe(document.documentElement, { subtree: true, childList: true, attributes: true, characterData: true })
-    const runningAnimations = () => {
-      const list = typeof document.getAnimations === 'function' ? document.getAnimations() : []
-      return { animations: list.length, running: list.slice(0, 6).map((a) => { const effect = a.effect as KeyframeEffect | null; const name = (a as CSSAnimation).animationName ?? (a as CSSTransition).transitionProperty ?? a.id; return `${describe(effect?.target as Element | null)}:${name}:${a.playState}` }) }
-    }
-    const pointOf = (event: Event) => event instanceof MouseEvent ? event : event instanceof TouchEvent ? (event.touches[0] ?? event.changedTouches[0]) : null
-    const nearGear = (x: number, y: number) => x >= window.innerWidth - 96 && y <= 96
-    const report = (event: Event, extra: Record<string, unknown> = {}) => {
-      const p = pointOf(event)
-      void postPushTrace({ event: 'tap-probe', source: 'app', type: event.type, x: p ? Math.round(p.clientX) : null, y: p ? Math.round(p.clientY) : null,
-        target: describe(event.target as Element), prevented: event.defaultPrevented, cancelable: event.cancelable,
-        sinceStart: start ? Math.round(performance.now() - start.at) : null, moved: start ? Math.round(start.moved) : null, mutations: start ? start.mutations : null, path: window.location.pathname, ...runningAnimations(), ...extra })
-    }
-    const onStart = (event: Event) => {
-      const p = pointOf(event)
-      if (!p || !nearGear(p.clientX, p.clientY)) { start = null; return }
-      start = { x: p.clientX, y: p.clientY, at: performance.now(), moved: 0, mutations: 0 }
-      const safeTop = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-top')) || 0
-      // Anything laid out past the right edge of the viewport (outside the horizontal alerts row) makes iOS
-      // treat the page as zoomable, which brings the double-tap delay with it.
-      const wide = [...document.querySelectorAll('body *')].filter((el) => !el.closest('.alerts-list') && el.getBoundingClientRect().right > window.innerWidth + 0.5 && getComputedStyle(el).position !== 'fixed')
-        .slice(0, 5).map((el) => `${describe(el)}@${Math.round(el.getBoundingClientRect().right)}`)
-      report(event, { under: describe(document.elementFromPoint(p.clientX, p.clientY)), active: describe(document.activeElement), scrollY: Math.round(window.scrollY),
-        inner: [window.innerWidth, window.innerHeight], screen: [window.screen.width, window.screen.height], outer: [window.outerWidth, window.outerHeight],
-        standalone: Boolean((navigator as Navigator & { standalone?: boolean }).standalone), safeTop,
-        docWidth: [document.documentElement.scrollWidth, document.body.scrollWidth], vvWidth: window.visualViewport ? Math.round(window.visualViewport.width) : null, wide })
-    }
-    const onMove = (event: Event) => {
-      const p = pointOf(event)
-      if (start && p) start.moved = Math.max(start.moved, Math.hypot(p.clientX - start.x, p.clientY - start.y))
-    }
-    const onEnd = (event: Event) => {
-      if (!start) return
-      report(event, { under: (() => { const p = pointOf(event); return p ? describe(document.elementFromPoint(p.clientX, p.clientY)) : null })() })
-      if (event.type === 'click' || event.type === 'touchcancel' || event.type === 'pointercancel') start = null
-    }
-    // Bubble phase on window, so defaultPrevented reflects every other handler.
-    window.addEventListener('touchstart', onStart)
-    window.addEventListener('touchmove', onMove, { passive: true })
-    for (const type of ['touchend', 'touchcancel', 'pointerup', 'pointercancel', 'click']) window.addEventListener(type, onEnd)
-    return () => {
-      observer.disconnect()
-      window.removeEventListener('touchstart', onStart)
-      window.removeEventListener('touchmove', onMove)
-      for (const type of ['touchend', 'touchcancel', 'pointerup', 'pointercancel', 'click']) window.removeEventListener(type, onEnd)
-    }
-  }, [user])
-
-  // Diagnostic: every route change with how it happened (PUSH from code, POP from history/back,
-  // REPLACE), to see what follows a gear tap that seems to go nowhere on phones.
-  const navigationType = useNavigationType()
-  const previousPath = useRef<string | null>(null)
-  useEffect(() => {
-    const from = previousPath.current
-    previousPath.current = pathname
-    if (user && from !== pathname) void postPushTrace({ event: 'route', source: 'app', path: pathname, from, type: navigationType, visibility: document.visibilityState, scrollY: Math.round(window.scrollY) })
-  }, [pathname, navigationType, user])
   useEffect(() => {
     if (user === null && !isPublicPath) navigate('/login', { replace: true })
   }, [user, isPublicPath, navigate])
