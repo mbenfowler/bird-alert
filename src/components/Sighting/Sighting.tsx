@@ -131,6 +131,16 @@ const Sighting = () => {
             <SeasonStrip months={seasonality.data.months} name={name} regionName={regionName} />
           </div>
         )}
+        {bird?.tips && (
+          <div className='sighting__tips'>
+            <h2 className='fredericka sighting__season-head'>Where to look</h2>
+            <dl className='sighting__tips-list'>
+              <div><dt>Habitat</dt><dd>{bird.tips.habitat}</dd></div>
+              <div><dt>How to find it</dt><dd>{bird.tips.look}</dd></div>
+              <div><dt>Best time</dt><dd>{bird.tips.time}</dd></div>
+            </dl>
+          </div>
+        )}
       </header>
 
       <div className={`sighting__frame ${docked ? 'is-docked' : ''}`} ref={frameRef}>

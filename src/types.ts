@@ -39,6 +39,13 @@ export interface UserPatch {
 }
 
 /** A bird as stored in our database, or as assembled from eBird taxonomy plus image and wiki lookups. */
+/** Where a species lives, how to find it, and the time of day that pays. */
+export interface BirdTips {
+  habitat: string
+  look: string
+  time: string
+}
+
 export interface Bird {
   id?: number
   speciesCode: string
@@ -54,6 +61,8 @@ export interface Bird {
   taxonOrder?: number | null
   /** Set on the saved view only: most recent nearby observation date. */
   lastObserved?: string
+  /** Field craft for the species, from the API; null for species we have none for. */
+  tips?: BirdTips | null
 }
 
 /** One row from eBird's recent observations endpoints. */

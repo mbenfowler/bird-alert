@@ -17,6 +17,7 @@ describe('Sighting page and region map', () => {
     cy.get('a.pill-button').contains('View on eBird').should('have.attr', 'href', 'https://ebird.org/checklist/S155544243')
     cy.get('a.pill-button').contains('Open in Maps').should('have.attr', 'target', '_blank')
     cy.get('button.pill-button').should('contain', 'On your watch list')
+    cy.get('.sighting__tips').should('contain', 'Where to look').and('contain', 'V formations').and('contain', 'Any time')
   })
 
   it('choosing another report from the list swaps the selection without moving the page', () => {

@@ -9,6 +9,10 @@
     "familyComName": "Ducks, Geese, and Waterfowl",
     "familySciName": "Anatidae",
     "birdImg": "https://images.unsplash.com/photo-1513209395699-7a1e7f745942?q=75&fm=jpg&w=400&fit=max",
-    "wikiURL": "https://en.wikipedia.org/?curid=218972"
+    "wikiURL": "https://en.wikipedia.org/?curid=218972",
+    "tips": {
+        "habitat": "Lakes, ponds, golf courses, parks and fields; everywhere there is grass near water.",
+        "look": "Unmissable on lawns and shorelines; flocks fly in V formations between roost water and feeding fields.",
+        "time": "Any time"
+    }
 }
-
