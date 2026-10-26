@@ -92,6 +92,7 @@ describe('Where to go', () => {
     }).as('placeSearch')
     cy.intercept('GET', '**/api/ebird/drive*', { minutes: 31, miles: 22.4, legs: [{ minutes: 31, miles: 22.4 }], geometry: [[34.2995, -83.9214], [34.5296831, -83.960756]] }).as('drive')
     cy.visit('http://localhost:3000/go')
+    cy.wait('@whereToGo').its('request.url').should('not.include', 'from=')
     cy.get('.go__route-head').should('have.text', 'A morning route')
     cy.contains('button', 'Edit route').click()
     // Editing shows the route on the map and offers the list's places not on it yet (none here).
