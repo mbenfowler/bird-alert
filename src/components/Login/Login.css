@@ -48,3 +48,32 @@
   width: 30px;
   height: 30px;
 }
+
+/* Forgotten password: a small question and a real button, in the app's pill style, so it reads as
+   something to tap rather than a line of the page. */
+.login-forgot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px 10px;
+    margin-top: 10px;
+    font-family: system-ui, sans-serif;
+    font-size: 0.9rem;
+    color: var(--muted);
+}
+
+.login-forgot__button {
+    min-height: 36px;
+    padding: 0 14px;
+    font-family: system-ui, sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    border-color: var(--link);
+    color: var(--link);
+    -webkit-text-fill-color: var(--link);
+}
+
+.login-forgot__button:hover {
+    background: var(--surface-muted);
+}

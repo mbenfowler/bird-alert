@@ -95,9 +95,17 @@ nav .text-link {
     }
 }
 
+/* The Settings / Logout labels exist only on wide screens with a real pointer, revealed on hover.
+   Everywhere else they are not shown at all; the gear goes to settings, Log out lives there. */
 #settingsActions {
-    display: flex;
+    display: none;
     flex-direction: column;
+}
+
+@media (hover: hover) and (pointer: fine) and (min-width: 700px) {
+    #settingsActions {
+        display: flex;
+    }
 }
 
 #settingsActions {
