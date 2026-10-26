@@ -81,4 +81,91 @@ describe('Where to go', () => {
     cy.get('.sightings-map.is-focused').should('not.exist')
     cy.get('.go__places li.is-current').should('contain', 'Lake Lanier Olympic Park')
   })
+
+  it('the route can be edited: remove, add from search, reorder, start point, and back to suggested', () => {
+    const yahoola = { kind: 'hotspot', locId: 'L22341308', name: 'Yahoola Creek Park', county: 'US-GA-187', lat: 34.5296831, lng: -83.960756, species: 74, checklists: 32, latest: '2026-08-15' }
+    cy.intercept('GET', '**/api/ebird/place-search*', (req) => {
+      const addresses = req.query.addresses === '1'
+      req.reply(String(req.query.q).toLowerCase().startsWith('gaines')
+        ? { hotspots: [], addresses: addresses ? [{ kind: 'address', name: 'Gainesville, Georgia', lat: 34.2979, lng: -83.8241 }] : [] }
+        : { hotspots: [yahoola], addresses: [] })
+    }).as('placeSearch')
+    cy.intercept('GET', '**/api/ebird/drive*', { minutes: 31, miles: 22.4, legs: [{ minutes: 31, miles: 22.4 }], geometry: [[34.2995, -83.9214], [34.5296831, -83.960756]] }).as('drive')
+    cy.visit('http://localhost:3000/go')
+    cy.wait('@whereToGo').its('request.url').should('not.include', 'from=')
+    cy.get('.go__route-head').should('have.text', 'A morning route')
+    cy.contains('button', 'Edit route').click()
+    // Editing shows the route on the map and offers the list's places not on it yet (none here).
+    cy.get('.sightings-map.has-route').should('exist')
+    cy.get('.go__stops > li').should('have.length', 2)
+    cy.get('[aria-label="Remove Rusty\'s Gainesville Yard"]').click()
+    cy.get('.go__route-head').should('have.text', 'Your route')
+    cy.get('.go__stops > li').should('have.length', 1)
+    cy.get('.go__add input').type('yahoola')
+    cy.wait('@placeSearch').its('request.url').should('include', 'state=GA').and('include', 'q=yahoola').and('not.include', 'addresses')
+    cy.get('.go__add .place-search__results button').should('have.length', 1).and('contain', 'Yahoola Creek Park').and('contain', '74 species all time').click()
+    cy.get('.go__stops > li').should('have.length', 2).eq(1).should('contain', 'Yahoola Creek Park').and('contain', '74 species all time')
+    cy.wait('@drive').its('request.url').should('include', 'points=34.29950%2C-83.92140%3B34.52968%2C-83.96076')
+    cy.get('.go__stops > li').eq(1).find('.go__leg').should('have.text', '↓ 31 min drive · 22.4 mi')
+    cy.get('.go__covers').should('contain', '31 minutes of driving').and('contain', 'aren’t counted')
+    // Up and down arrows reorder.
+    cy.get('[aria-label="Move Yahoola Creek Park up"]').click()
+    cy.get('.go__stops > li').first().should('contain', 'Yahoola Creek Park')
+    cy.get('[aria-label="Move Yahoola Creek Park up"]').should('be.disabled')
+    // A start: towns and addresses come on Enter.
+    cy.contains('.go__start button', 'Set').click()
+    cy.get('.go__start-picker input').type('gainesville{enter}')
+    cy.wait('@placeSearch').its('request.url').should('include', 'addresses=1')
+    cy.get('.go__start-picker .place-search__results button').should('contain', 'Gainesville, Georgia').click()
+    cy.get('.go__start').should('contain', 'Gainesville, Georgia')
+    cy.wait('@whereToGo').its('request.url').should('include', 'from=34.30%2C-83.82')
+    cy.contains('button', 'Done').click()
+    cy.get('.go__route a.pill-button').should('have.attr', 'href').and('include', 'origin=34.2979%2C-83.8241').and('include', 'destination=34.2995%2C-83.9214')
+    cy.get('.sightings-map .map-stop--start').should('have.length', 1)
+    // Kept across a reload, and undone by going back to the suggestion.
+    cy.reload()
+    cy.get('.go__route-head').should('have.text', 'Your route')
+    cy.get('.go__stops > li').first().should('contain', 'Yahoola Creek Park')
+    cy.contains('button', 'Edit route').click()
+    cy.contains('button', 'Back to suggested').click()
+    cy.get('.go__route-head').should('have.text', 'A morning route')
+    cy.get('.go__stops > li').should('have.length', 2).first().should('contain', 'Lake Lanier Olympic Park')
+    cy.get('.go__start').should('contain', 'Gainesville, Georgia')
+  })
+
+  it('a place in the list goes on the route, or comes off it, with one tap', () => {
+    cy.visit('http://localhost:3000/go')
+    cy.get('.go__places li').first().find('.go__quick-add').should('not.exist') // a private yard is not a stop
+    const button = () => cy.get('.go__places li').eq(1).find('.go__quick-add')
+    button().should('have.text', '✓ On route').and('have.attr', 'aria-pressed', 'true').click()
+    cy.get('.go__route-head').should('have.text', 'Your route')
+    cy.get('.go__stops > li').should('have.length', 1).and('not.contain', 'Lake Lanier Olympic Park')
+    button().should('have.text', '+ Add to route').click()
+    cy.get('.go__stops > li').should('have.length', 2).last().should('contain', 'Lake Lanier Olympic Park')
+  })
+
+  it('public land goes on the route from its own button, and a mouse resting on it previews it as the next stop', () => {
+    cy.visit('http://localhost:3000/go')
+    cy.get('.go__places li').first().find('.nearby__ask').click()
+    const entry = (n) => cy.get('.go__places li').first().find('.nearby__list > li').eq(n)
+    entry(0).should('contain', 'Little River Park')
+    // Resting the mouse: a ghost third stop on the map and in the route card; moving off clears it.
+    cy.get('.sightings-map .map-stop--preview').should('not.exist')
+    entry(0).trigger('pointerover', { pointerType: 'mouse' })
+    cy.get('.sightings-map .map-stop--preview').should('have.length', 1).and('have.text', '3')
+    cy.get('.sightings-map .map-route--preview').should('exist')
+    cy.get('.go__stop.is-preview').should('contain', 'Little River Park').and('contain', 'Preview')
+    entry(0).trigger('pointerout', { pointerType: 'mouse', relatedTarget: document.body })
+    cy.get('.sightings-map .map-stop--preview').should('not.exist')
+    cy.get('.go__stop.is-preview').should('not.exist')
+    // The button puts it on the route for good, and takes it off again.
+    entry(0).find('.nearby__route').should('have.attr', 'aria-pressed', 'false').click()
+    entry(0).find('.nearby__route').should('have.attr', 'aria-pressed', 'true')
+    cy.get('.go__route-head').should('have.text', 'Your route')
+    cy.get('.go__stops > li').should('have.length', 3).last().should('contain', 'Little River Park').and('contain', "Public land near Rusty's Gainesville Yard")
+    entry(2).find('.nearby__route').click()
+    cy.get('.go__stops > li').should('have.length', 4).last().should('contain', 'Wahoo Park').and('contain', 'not an eBird hotspot')
+    entry(0).find('.nearby__route').click()
+    cy.get('.go__stops > li').should('have.length', 3).and('not.contain', 'Little River Park')
+  })
 })

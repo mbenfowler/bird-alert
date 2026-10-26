@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions,
-  getSavedBirds, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getNearbyPublic } from '../apiCalls'
+  getSavedBirds, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getNearbyPublic, getPlaceSearch, getDrive } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
 import type { User } from '../types'
 
@@ -29,7 +29,9 @@ export const queryKeys = {
   seasonality: (region: string, code: string) => ['seasonality', region, code] as const,
   sightings: (region: string, ids: string) => ['sightings', region, ids] as const,
   whereToFind: (region: string, code: string) => ['where-to-find', region, code] as const,
-  whereToGo: (region: string, codes: string[]) => ['where-to-go', region, codesKey(codes)] as const,
+  whereToGo: (region: string, codes: string[], from?: { lat: number; lng: number } | null) => ['where-to-go', region, codesKey(codes), from ? `${from.lat.toFixed(2)},${from.lng.toFixed(2)}` : ''] as const,
+  placeSearch: (state: string, q: string, addresses: boolean) => ['place-search', state, q.trim().toLowerCase(), addresses] as const,
+  drive: (points: { lat: number; lng: number }[]) => ['drive', points.map(p => `${p.lat.toFixed(4)},${p.lng.toFixed(4)}`).join(';')] as const,
   nearby: (lat: number, lng: number) => ['nearby', lat.toFixed(3), lng.toFixed(3)] as const
 }
 
@@ -228,12 +230,34 @@ export const useWhereToFindQuery = (region: string, code: string) =>
   })
 
 /** Where to go for the whole watch list. Fresh every ten minutes; nothing until the list is known. */
-export const useWhereToGoQuery = (region: string, codes: string[]) =>
+export const useWhereToGoQuery = (region: string, codes: string[], from?: { lat: number; lng: number } | null) =>
   useQuery({
-    queryKey: queryKeys.whereToGo(region, codes),
-    queryFn: () => getWhereToGo(region, codes),
+    queryKey: queryKeys.whereToGo(region, codes, from),
+    queryFn: () => getWhereToGo(region, codes, from),
     staleTime: 10 * MINUTE,
+    // A new starting point keeps the old route up while the new one comes in.
+    placeholderData: keepPreviousData,
     enabled: Boolean(region) && codes.length > 0
+  })
+
+/** Places by name for a route: hotspots as you type, addresses once submitted. */
+export const usePlaceSearchQuery = (state: string, q: string, addresses: boolean) =>
+  useQuery({
+    queryKey: queryKeys.placeSearch(state, q, addresses),
+    queryFn: () => getPlaceSearch(state, q.trim(), addresses),
+    staleTime: DAY,
+    placeholderData: keepPreviousData,
+    enabled: Boolean(state) && q.trim().length >= 2
+  })
+
+/** The drive through a route of the person's own making; nothing until it has two points. */
+export const useDriveQuery = (points: { lat: number; lng: number }[], enabled = true) =>
+  useQuery({
+    queryKey: queryKeys.drive(points),
+    queryFn: () => getDrive(points),
+    staleTime: DAY,
+    placeholderData: keepPreviousData,
+    enabled: enabled && points.length >= 2 && points.length <= 10
   })
 
 /** Public land near a point; only once asked for (`enabled`), and kept for a day. */

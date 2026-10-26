@@ -201,7 +201,7 @@ export interface WhereToGo {
   asOf: string
   species: { speciesCode: string; comName: string; class: PersistenceClass; bestTime: WhereToFind['bestTime']; places: number; best: { locId: string; locName: string | null; chance: number } | null }[]
   places: GoPlace[]
-  route: { stops: GoStop[]; covers: number; url: string | null; drive?: Drive | null }
+  route: { stops: GoStop[]; covers: number; url: string | null; drive?: Drive | null; origin?: { lat: number; lng: number } | null }
 }
 
 /** Public land near a point: eBird hotspots with their all-time effort, and parks eBird does not list. */
@@ -209,4 +209,8 @@ export interface WhereToGo {
 export interface Drive { minutes: number; miles: number; geometry: [number, number][]; legs?: { minutes: number; miles: number }[] }
 export interface NearbyHotspot { locId: string; name: string; lat: number; lng: number; miles: number; checklists: number | null; species: number | null; latest: string | null; lightlyBirded: boolean; drive?: Drive | null }
 export interface NearbyPark { name: string; lat: number; lng: number; miles: number; type?: string; drive?: Drive | null }
+/** A stop or start found by name: an eBird hotspot anywhere in the state, or a town or address. */
+export interface FoundHotspot { kind: 'hotspot'; locId: string; name: string; county: string | null; lat: number; lng: number; species: number | null; checklists: number | null; latest: string | null }
+export interface FoundAddress { kind: 'address'; name: string; lat: number; lng: number }
+export interface PlaceSearch { hotspots: FoundHotspot[]; addresses: FoundAddress[] }
 export interface NearbyPublic { hotspots: NearbyHotspot[]; parks: NearbyPark[]; fetchedAt?: string }

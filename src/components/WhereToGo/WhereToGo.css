@@ -50,7 +50,7 @@
     gap: 4px;
 }
 
-.go__stops button {
+.go__stop-main {
     width: 100%;
     display: flex;
     align-items: center;
@@ -126,6 +126,164 @@
 .go__route .pill-button {
     display: inline-flex;
     justify-content: center;
+}
+
+/* Editing the route: a handle, the stop, then up, down and remove. */
+.go__stop-row {
+    display: flex;
+    align-items: stretch;
+    gap: 4px;
+}
+
+.go__stop-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.go__stop.is-dragging .go__stop-main {
+    border-color: var(--accent-ink);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.go__drag {
+    flex: none;
+    width: 28px;
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+    cursor: grab;
+    touch-action: none; /* a drag on the handle moves the stop, not the page */
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.go__drag:active {
+    cursor: grabbing;
+}
+
+.go__drag svg {
+    width: 20px;
+    height: 20px;
+}
+
+.go__stop-tools {
+    flex: none;
+    display: flex;
+    align-items: center;
+}
+
+.go__icon-button {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: none;
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.go__icon-button svg {
+    width: 20px;
+    height: 20px;
+}
+
+.go__icon-button svg.is-up {
+    transform: rotate(180deg);
+}
+
+.go__icon-button:hover:not(:disabled),
+.go__icon-button:focus-visible {
+    background: var(--accent-soft);
+    outline: none;
+}
+
+.go__icon-button:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.go__link-button {
+    padding: 4px 6px;
+    border: none;
+    background: none;
+    color: var(--link);
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* Where the day starts, above the first stop. */
+.go__start {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 10px 6px;
+}
+
+.go__start-dot {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    margin: 0 2px;
+    border-radius: 50%;
+    border: 7px solid var(--ink);
+    background: var(--surface);
+}
+
+.go__start-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.go__start-label {
+    color: var(--muted);
+    font-family: system-ui, sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.go__start-text strong {
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.go__start-picker {
+    display: grid;
+    gap: 8px;
+    margin: 0 0 10px;
+}
+
+.go__start-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.go__btn-icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 6px;
+}
+
+.go__add {
+    margin: 0 0 10px;
+}
+
+.go__hint {
+    margin: 0 0 8px;
+    color: var(--muted);
+    font-size: 0.88rem;
+    text-align: center;
 }
 
 /* The one-screen frame: map over list on phones, side by side when wide. */
@@ -326,4 +484,61 @@
         grid-template-areas: "map list";
         column-gap: 14px;
     }
+}
+
+/* Editing: the route sits in the list's column beside the map and scrolls on its own; its buttons
+   stay in reach at the foot of the column however long the route grows. */
+.is-editing-route .go__scroll {
+    overflow-y: auto;
+    padding-bottom: 0;
+}
+
+.go__scroll .go__route.is-editing {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 0;
+}
+
+.go__route.is-editing .go__route-actions {
+    position: sticky;
+    bottom: 0;
+    margin: auto -12px 0;
+    padding: 10px 12px 12px;
+    background: var(--surface-muted);
+    border-top: 1px solid var(--line);
+    border-radius: 0 0 10px 10px;
+}
+
+/* Quick add: puts a place on the end of the route, or takes it off again. */
+.go__quick-add {
+    align-self: flex-start;
+    min-height: 34px;
+    padding: 0 12px;
+    font-family: system-ui, sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.go__quick-add.is-on {
+    border-color: var(--accent-ink);
+    background: var(--accent-soft);
+}
+
+.go__quick-add:disabled {
+    cursor: not-allowed;
+}
+
+/* A place under the mouse, shown as the next stop until the mouse moves on. */
+.go__stop.is-preview .go__stop-main {
+    border-style: dashed;
+    border-color: #1a56db;
+    background: transparent;
+    cursor: default;
+}
+
+.go__stop.is-preview .go__stop-n {
+    background: transparent;
+    border: 2px dashed #1a56db;
+    color: #1a56db;
 }
