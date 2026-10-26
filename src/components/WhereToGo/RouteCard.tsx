@@ -103,6 +103,7 @@ const RouteCard = (props: RouteCardProps) => {
   }
 
   const unscored = stops.some(s => !s.locId || !byId.has(s.locId))
+  const firstBest = stops[0]?.locId ? byId.get(stops[0].locId)?.bestTime ?? null : null
 
   return (
     <div className={`go__route ${editing ? 'is-editing' : ''}`}>
@@ -170,6 +171,7 @@ const RouteCard = (props: RouteCardProps) => {
         <p className='go__covers'>
           Together these cover about {birdsWord(covers)} of your {speciesCount}.
           {drive ? ` ${drive.minutes} minutes of driving, ${drive.miles} miles.` : ''}
+          {firstBest ? ` Start at ${stops[0].name}, best ${firstBest}.` : ''}
           {unscored ? ' Stops from outside your list’s places aren’t counted.' : ''}
         </p>
       )}
