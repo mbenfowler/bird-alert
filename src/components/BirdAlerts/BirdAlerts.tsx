@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import AlertCard from '../AlertCard/AlertCard'
 import ArrivalCard from '../ArrivalCard/ArrivalCard'
-import { AlertIcon, ChevronIcon, MapIcon, MigrationIcon, StarIcon } from '../Icons/Icons'
+import { AlertIcon, ChevronIcon, CompassIcon, MapIcon, MigrationIcon, StarIcon } from '../Icons/Icons'
 import { LoadingState } from '../Loading/Loading'
 import { useArrivalsQuery, useCurrentUser, useNotableQuery, useObservationsQuery, useRegionsQuery, useSavedCodes } from '../../hooks/queries'
 import './BirdAlerts.css'
@@ -65,6 +65,7 @@ const BirdAlerts = () => {
               <span className='alerts-title'>{title}</span>
               {count !== undefined && <span key={`${alertType}-${count}`} className='alerts-count' aria-label={`${count} alerts`}>{count}</span>}
             </h2>
+            <Link className='alerts-map-link' to='/go' aria-label='Where to go for your watch list'><CompassIcon /><span>Go</span></Link>
             <Link className='alerts-map-link' to='/map' aria-label='Open the region map'><MapIcon /><span>Map</span></Link>
             <button type='button' className='alerts-toggle' aria-expanded={expanded} aria-controls='alertsList' onClick={() => setExpanded(open => !open)}>
               <span>{expanded ? 'Hide' : 'Show'}</span>

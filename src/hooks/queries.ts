@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions,
-  getSavedBirds, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind } from '../apiCalls'
+  getSavedBirds, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
 import type { User } from '../types'
 
@@ -28,7 +28,8 @@ export const queryKeys = {
   arrivals: (region: string) => ['arrivals', region] as const,
   seasonality: (region: string, code: string) => ['seasonality', region, code] as const,
   sightings: (region: string, ids: string) => ['sightings', region, ids] as const,
-  whereToFind: (region: string, code: string) => ['where-to-find', region, code] as const
+  whereToFind: (region: string, code: string) => ['where-to-find', region, code] as const,
+  whereToGo: (region: string, codes: string[]) => ['where-to-go', region, codesKey(codes)] as const
 }
 
 /** The logged-in user, null when logged out, undefined while the cookie is being checked. */
@@ -223,4 +224,13 @@ export const useWhereToFindQuery = (region: string, code: string) =>
     queryFn: () => getWhereToFind(region, code),
     staleTime: 10 * MINUTE,
     enabled: Boolean(region && code)
+  })
+
+/** Where to go for the whole watch list. Fresh every ten minutes; nothing until the list is known. */
+export const useWhereToGoQuery = (region: string, codes: string[]) =>
+  useQuery({
+    queryKey: queryKeys.whereToGo(region, codes),
+    queryFn: () => getWhereToGo(region, codes),
+    staleTime: 10 * MINUTE,
+    enabled: Boolean(region) && codes.length > 0
   })

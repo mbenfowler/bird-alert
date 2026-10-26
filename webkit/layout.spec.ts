@@ -50,6 +50,15 @@ for (const size of SIZES) {
       expect(await page.locator('.sighting__list').evaluate((el) => el.getBoundingClientRect().right)).toBeLessThanOrEqual(size.width)
     })
 
+    test('where to go page, before and after docking', async ({ page }) => {
+      await page.goto('/go')
+      await expect(page.locator('.go__places li').first()).toBeVisible()
+      await expectNoOverflow(page)
+      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
+      await expect(page.locator('.go__frame')).toHaveClass(/is-docked/)
+      await expectNoOverflow(page)
+    })
+
     test('watch-list sightings page', async ({ page }) => {
       await page.goto('/sightings?s=cangoo:S155544243,cangoo:S155544998')
       await expect(page.locator('.alert-sightings__table')).toBeVisible()

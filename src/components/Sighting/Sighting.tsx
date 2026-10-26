@@ -12,6 +12,7 @@ import { useBirdsQuery, useCurrentUser, useRegionsQuery, useSavedCodes, useSeaso
 import { useToggleSavedMutation } from '../../hooks/mutations'
 import type { Observation, Place, PersistenceClass, WhereToFind } from '../../types'
 import { formatObsDt } from '../../format'
+import { article, chanceStyle } from '../../chance'
 import './Sighting.css'
 
 const mapsHref = (o: Observation) => {
@@ -30,31 +31,6 @@ const CLASS_LABEL: Record<PersistenceClass, string> = {
 
 const ago = (daysAgo: number) => daysAgo === 0 ? 'today' : daysAgo === 1 ? 'yesterday' : `${daysAgo} days ago`
 
-/**
- * The band chip's colour runs with the chance: dark green at the top, through yellow around the
- * middle, to grey at zero. Text flips to white once the background is dark enough.
- */
-const bandStyle = (chance: number | undefined) => {
-  if (chance === undefined) return undefined
-  const t = Math.max(0, Math.min(100, chance)) / 100
-  let hue: number, sat: number, light: number
-  if (t >= 0.5) {
-    const u = (t - 0.5) / 0.5
-    hue = 50 + u * 90
-    sat = 85 - u * 30
-    light = 46 - u * 18
-  } else {
-    const u = t / 0.5
-    hue = 50
-    sat = u * 85
-    light = 62 - u * 16
-  }
-  const background = `hsl(${Math.round(hue)}, ${Math.round(sat)}%, ${Math.round(light)}%)`
-  const border = `hsl(${Math.round(hue)}, ${Math.round(sat)}%, ${Math.max(12, Math.round(light - 18))}%)`
-  return { background, borderColor: border, color: light < 40 ? '#fff' : 'var(--ink)' }
-}
-
-const article = (n: number) => (n === 8 || n === 11 || n === 18 || (n >= 80 && n <= 89)) ? 'an' : 'a'
 
 /** The sentence under a place: the chance and when to go (the place's own hours, else the species'). */
 const chanceLine = (place: Place, speciesTime: string | null) => {
@@ -247,7 +223,7 @@ const Sighting = () => {
                       <li key={place.locId} className={selected ? 'is-current' : undefined}>
                         <button type='button' onClick={() => { if (report) select(report) }} aria-current={selected ? 'true' : undefined} disabled={!report}>
                           <span className='place__head'>
-                            <span className={`band band--${place.band.toLowerCase().replace(' ', '-')}`} style={bandStyle(place.chance)}>{place.band}</span>
+                            <span className={`band band--${place.band.toLowerCase().replace(' ', '-')}`} style={chanceStyle(place.chance)}>{place.band}</span>
                             <strong>{place.locName ?? place.locId}</strong>
                             {place.isHotspot === false && <span className='place__private' title='A personal location, not a public hotspot'>private</span>}
                             {(place.merged?.length ?? 0) > 0 && <span className='place__private' title={`Includes nearby personal locations: ${place.merged!.map(m => m.locName ?? m.locId).join(', ')}`}>+{place.merged!.length} nearby</span>}

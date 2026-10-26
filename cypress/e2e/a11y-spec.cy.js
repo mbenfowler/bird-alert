@@ -59,6 +59,13 @@ describe('Accessibility', () => {
     checkA11y()
   })
 
+  it('where to go page', () => {
+    login()
+    cy.visit('http://localhost:3000/go')
+    cy.get('.go__places li').should('have.length', 2)
+    checkA11y()
+  })
+
   it('sighting page', () => {
     login()
     cy.visit('http://localhost:3000/sighting/cangoo/S155544243')
