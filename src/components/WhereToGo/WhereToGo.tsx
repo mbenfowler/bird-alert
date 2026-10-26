@@ -6,7 +6,7 @@ import ErrorMessage from '../Error/ErrorMessage'
 import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
 import { useCurrentUser, useNearbyPublicQuery, useRegionsQuery, useSavedCodes, useSpeciesListQuery, useWhereToGoQuery } from '../../hooks/queries'
-import { closeOnOutside, focusFor } from '../../mapFocus'
+import { focusFor } from '../../mapFocus'
 import { chanceColour } from '../../chance'
 import type { GoPlace } from '../../types'
 import './WhereToGo.css'
@@ -53,10 +53,7 @@ const WhereToGo = () => {
   const focus = useMemo(() => nearbyPlace && nearbyPlace.lat !== null && nearbyPlace.lng !== null && nearby.data
     ? { ...focusFor({ lat: nearbyPlace.lat, lng: nearbyPlace.lng, label: nearbyPlace.locName ?? nearbyPlace.locId }, nearby.data), activeId: activeNearby, onTargetClick: (id: string) => setActiveNearby(current => current === id ? null : id) }
     : null, [nearbyPlace, nearby.data, activeNearby])
-  useEffect(() => {
-    if (!openNearby) return
-    return closeOnOutside(() => { setOpenNearby(null); setActiveNearby(null) })
-  }, [openNearby])
+  const closeNearby = () => { setOpenNearby(null); setActiveNearby(null) }
 
   // Docking, as on the species page: the list scrolls by itself only once the frame is under the bar.
   const frameRef = useRef<HTMLDivElement>(null)
@@ -138,7 +135,7 @@ const WhereToGo = () => {
         <div className='go__map'>
           {points.length
             ? <SightingsMap points={points} focus={focus} route={focus ? null : routeOnMap} height='100%' ariaLabel={`Map of places for your watch list in ${regionName}`} openHighlighted={!focus}
-                onPinClick={(hit) => { const p = places.find(x => x.locId === hit[0]?.id); if (p) select(p) }} />
+                onPinClick={(hit) => { const p = places.find(x => x.locId === hit[0]?.id); if (!p) return; if (openNearby && p.locId !== openNearby) closeNearby(); select(p) }} />
             : <p className='list-note go__nomap'>None of these places have coordinates yet.</p>}
         </div>
         <div className='go__list-col'>
@@ -164,7 +161,7 @@ const WhereToGo = () => {
                     <NearbyPublic placeName={place.locName ?? place.locId} open={openNearby === place.locId}
                       onOpen={() => { setOpenNearby(place.locId); setActiveNearby(null); setSelected(place.locId) }}
                       data={openNearby === place.locId ? nearby.data : undefined} isPending={openNearby === place.locId && nearby.isPending} isError={openNearby === place.locId && nearby.isError}
-                      activeId={activeNearby} onPick={(id) => setActiveNearby(current => current === id ? null : id)} />
+                      activeId={activeNearby} onPick={(id) => setActiveNearby(current => current === id ? null : id)} onClose={closeNearby} />
                   )}
                 </li>
               ))}

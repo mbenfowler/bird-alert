@@ -66,11 +66,19 @@ describe('Where to go', () => {
     row().find('li.is-active').should('contain', 'Little River Park')
     cy.get('.go__places li.is-current').should('contain', "Rusty's Gainesville Yard")
     cy.get('.go__places li').eq(1).find('.nearby__ask').should('not.exist')
-    // Tapping outside the list and the map closes it and the map goes back to all the pins.
+    // A stray tap elsewhere does not end it; the Back button does, and the map goes back to all the pins.
     cy.get('.go__title').click()
+    cy.get('.nearby__list').should('exist')
+    cy.get('.nearby__close').click()
     cy.get('.nearby__list').should('not.exist')
     cy.get('.sightings-map.is-focused').should('not.exist')
     cy.get('.sightings-map .map-pin--public').should('have.length', 0)
     row().find('.nearby__ask').should('exist')
+    // So does tapping another place's pin, which also selects that place.
+    row().find('.nearby__ask').click()
+    cy.get('.sightings-map.is-focused').should('exist')
+    cy.get('.sightings-map .map-pin:not(.map-pin--public):not(.map-pin--highlight)').first().click({ force: true })
+    cy.get('.sightings-map.is-focused').should('not.exist')
+    cy.get('.go__places li.is-current').should('contain', 'Lake Lanier Olympic Park')
   })
 })

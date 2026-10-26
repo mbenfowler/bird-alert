@@ -14,14 +14,3 @@ export const focusFor = (origin: { lat: number; lng: number; label: string }, ne
     ]
   }
 }
-
-/** Closes a focus when the pointer goes down outside the list and the map. */
-export const closeOnOutside = (onClose: () => void) => {
-  const handler = (event: PointerEvent) => {
-    const el = event.target as Element | null
-    if (el && (el.closest('.nearby') || el.closest('.sightings-map') || el.closest('.leaflet-container'))) return
-    onClose()
-  }
-  document.addEventListener('pointerdown', handler)
-  return () => document.removeEventListener('pointerdown', handler)
-}

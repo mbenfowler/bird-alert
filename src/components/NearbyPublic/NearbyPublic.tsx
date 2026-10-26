@@ -28,6 +28,8 @@ interface NearbyPublicProps {
   /** The entry being looked at, lit on the map too; the number button picks it. */
   activeId?: string | null
   onPick?: (id: string) => void
+  /** Ends the look-around: the map goes back to all the pins. */
+  onClose: () => void
 }
 
 /**
@@ -35,7 +37,7 @@ interface NearbyPublicProps {
  * been birded (little effort is a sneaky pick), parks eBird does not list, and the drive to each.
  * The page owns the open state so it can focus the map on the same places.
  */
-const NearbyPublic = ({ placeName, open, onOpen, data, isPending, isError, activeId = null, onPick }: NearbyPublicProps) => {
+const NearbyPublic = ({ placeName, open, onOpen, data, isPending, isError, activeId = null, onPick, onClose }: NearbyPublicProps) => {
   if (!open) {
     return (
       <div className='nearby'>
@@ -47,6 +49,10 @@ const NearbyPublic = ({ placeName, open, onOpen, data, isPending, isError, activ
   const parks: NearbyPark[] = data?.parks ?? []
   return (
     <div className='nearby is-open'>
+      <div className='nearby__head'>
+        <strong>Public land near {placeName}</strong>
+        <button type='button' className='nearby__close' onClick={onClose}>Back to all pins</button>
+      </div>
       {isPending ? <LoadingState variant='inline' label='Looking for public land nearby' />
         : isError ? <p className='nearby__note'>Could not look up public land near {placeName} right now.</p>
         : !hotspots.length && !parks.length ? <p className='nearby__note'>No public land within a few miles of {placeName} is on file.</p>
@@ -76,7 +82,7 @@ const NearbyPublic = ({ placeName, open, onOpen, data, isPending, isError, activ
             ))}
           </ul>
         )}
-      <p className='nearby__hint'>The numbers match the pins on the map; tap a number or a pin to light up that road. Tap anywhere outside this list to go back.</p>
+      <p className='nearby__hint'>The numbers match the pins on the map; tap a number or a pin to light up that road. Tapping any other place's pin goes back to all the pins.</p>
     </div>
   )
 }

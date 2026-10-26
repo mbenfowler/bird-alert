@@ -166,8 +166,9 @@ const SightingsMap = ({ points, focus = null, route = null, center = [39.8, -98.
           const base = t.kind === 'park' ? '#6b5800' : '#0f7b3a'
           return (
             <span key={t.id}>
-              <Polyline className={`map-road map-road--casing ${active ? 'is-active' : ''}`} positions={path} pathOptions={{ color: active ? '#111' : '#fff', weight: active ? 10 : 7, opacity: stepBack ? 0.3 : 0.85 }} />
-              <Polyline className={`map-road ${byRoad ? '' : 'map-road--straight'} ${active ? 'is-active' : ''}`} positions={path}
+              {/* Keyed on the state: Leaflet applies a path's class only when it is created. */}
+              <Polyline key={`casing-${active}-${stepBack}`} className={`map-road map-road--casing ${active ? 'is-active' : ''}`} positions={path} pathOptions={{ color: active ? '#111' : '#fff', weight: active ? 10 : 7, opacity: stepBack ? 0.3 : 0.85 }} />
+              <Polyline key={`road-${active}-${stepBack}`} className={`map-road ${byRoad ? '' : 'map-road--straight'} ${active ? 'is-active' : ''}`} positions={path}
                 pathOptions={{ color: active ? '#ffd700' : base, weight: active ? 6 : 4, opacity: stepBack ? 0.35 : 0.95, dashArray: byRoad ? undefined : '6 8' }}
                 eventHandlers={focus.onTargetClick ? { click: () => focus.onTargetClick!(t.id) } : undefined} />
               {/* Quiet by default: the name and the drive appear when this pin is tapped; the tap also lights its road. */}

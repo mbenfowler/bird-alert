@@ -135,3 +135,30 @@
     outline: 3px solid var(--focus);
     outline-offset: 2px;
 }
+
+/* The open panel's head: what this is, and the way back. */
+.nearby__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.nearby__head strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-size: 0.9rem;
+}
+
+.nearby__close {
+    flex: none;
+    padding: 4px 10px;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+}

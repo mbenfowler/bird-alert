@@ -10,7 +10,7 @@ import ErrorMessage from '../Error/ErrorMessage'
 import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
 import { useBirdsQuery, useCurrentUser, useNearbyPublicQuery, useRegionsQuery, useSavedCodes, useSeasonalityQuery, useSpeciesObservationsQuery, useWhereToFindQuery } from '../../hooks/queries'
-import { closeOnOutside, focusFor } from '../../mapFocus'
+import { focusFor } from '../../mapFocus'
 import { useToggleSavedMutation } from '../../hooks/mutations'
 import type { Observation, Place, PersistenceClass, WhereToFind } from '../../types'
 import { formatObsDt } from '../../format'
@@ -100,10 +100,7 @@ const Sighting = () => {
   const focus = useMemo(() => nearbyPlace && nearbyPlace.lat !== null && nearbyPlace.lng !== null && nearby.data
     ? { ...focusFor({ lat: nearbyPlace.lat, lng: nearbyPlace.lng, label: nearbyPlace.locName ?? nearbyPlace.locId }, nearby.data), activeId: activeNearby, onTargetClick: (id: string) => setActiveNearby(current => current === id ? null : id) }
     : null, [nearbyPlace, nearby.data, activeNearby])
-  useEffect(() => {
-    if (!openNearby) return
-    return closeOnOutside(() => { setOpenNearby(null); setActiveNearby(null) })
-  }, [openNearby])
+  const closeNearby = () => { setOpenNearby(null); setActiveNearby(null) }
 
   // The frame is docked once the page has scrolled it up under the bar. Until then the list does
   // not scroll on its own, so a swipe on it moves the page (and docks the frame) rather than the
@@ -199,7 +196,7 @@ const Sighting = () => {
         <div className='sighting__map'>
           {all.length
             ? <SightingsMap points={points} focus={focus} height='100%' ariaLabel={`Map of recent ${name} sightings in your region`} openHighlighted={!focus}
-                onPinClick={(hit) => { const o = all.find(x => `${x.subId}-${x.lat}-${x.lng}` === hit[0]?.id); if (o) select(o) }} />
+                onPinClick={(hit) => { const o = all.find(x => `${x.subId}-${x.lat}-${x.lng}` === hit[0]?.id); if (!o) return; if (openNearby && !(nearbyPlace && (o.subId === nearbyPlace.lastSeen.subId || o.locId === nearbyPlace.locId))) closeNearby(); select(o) }} />
             : <p className='list-note sighting__nomap'>No reports of this species in your region in the last 30 days.</p>}
           <div className='sighting__pick'>
             {current
@@ -250,7 +247,7 @@ const Sighting = () => {
                           <NearbyPublic placeName={place.locName ?? place.locId} open={openNearby === place.locId}
                             onOpen={() => { setOpenNearby(place.locId); setActiveNearby(null); const r = reportAt(place); if (r) select(r) }}
                             data={openNearby === place.locId ? nearby.data : undefined} isPending={openNearby === place.locId && nearby.isPending} isError={openNearby === place.locId && nearby.isError}
-                      activeId={activeNearby} onPick={(id) => setActiveNearby(current => current === id ? null : id)} />
+                      activeId={activeNearby} onPick={(id) => setActiveNearby(current => current === id ? null : id)} onClose={closeNearby} />
                         )}
                       </li>
                     )
