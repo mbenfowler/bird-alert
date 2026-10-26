@@ -81,9 +81,10 @@ const Login = () => {
               <h2 id='loginEmailLabel'>email</h2>
               <input className='input email' type='email' name='email' autoComplete='email' aria-labelledby='loginEmailLabel' value={email} onChange={handleEmailChange} autoFocus />
               {userExists &&
-                <button type='button' className='link-button password-reset-text' onClick={handleForgotPassword}>
-                  Click here to receive a password reset email
-                </button>}
+                <div className='login-forgot'>
+                  <span>Forgot your password?</span>
+                  <button type='button' className='pill-button login-forgot__button' onClick={handleForgotPassword}>Email me a reset link</button>
+                </div>}
             </form>
             {userExists === false &&
               <div>

@@ -23,6 +23,22 @@ describe('Phone-width layout', () => {
     })
   })
 
+  it('on a phone the Settings and Logout labels are not shown over the icons', () => {
+    login()
+    cy.get('.birds-list .card', { timeout: 15000 })
+    cy.get('#settingsActions').should('not.be.visible')
+    cy.get('.nav-icon--settings').should('be.visible')
+  })
+
+  it('the forgotten-password link is a clear button once the email is known', () => {
+    stubAuth()
+    cy.visit('http://localhost:3000/')
+    cy.get('.input.email').type('robinware456@gmail.com{enter}')
+    cy.get('.login-forgot').should('contain', 'Forgot your password?')
+    cy.get('.login-forgot__button').should('be.visible').and('have.text', 'Email me a reset link').click()
+    cy.wait('@forgot')
+  })
+
   it('login does not overflow', () => {
     stubAuth()
     cy.visit('http://localhost:3000/')
