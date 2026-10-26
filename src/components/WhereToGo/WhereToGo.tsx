@@ -5,9 +5,11 @@ import NearbyPublic from '../NearbyPublic/NearbyPublic'
 import ErrorMessage from '../Error/ErrorMessage'
 import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
-import { useCurrentUser, useNearbyPublicQuery, useRegionsQuery, useSavedCodes, useSpeciesListQuery, useWhereToGoQuery } from '../../hooks/queries'
+import RouteCard from './RouteCard'
+import { useCurrentUser, useDriveQuery, useNearbyPublicQuery, useRegionsQuery, useSavedCodes, useSpeciesListQuery, useWhereToGoQuery } from '../../hooks/queries'
 import { focusFor } from '../../mapFocus'
 import { chanceColour } from '../../chance'
+import { coverage, loadPlan, loadStart, mapsUrl, savePlan, saveStart, type PlanPoint } from '../../routePlan'
 import type { GoPlace } from '../../types'
 import './WhereToGo.css'
 
@@ -29,7 +31,10 @@ const WhereToGo = () => {
     const here = speciesList.data ? new Set(speciesList.data) : null
     return [...savedCodes].filter(code => !here || here.has(code)).sort()
   }, [savedCodes, speciesList.data])
-  const go = useWhereToGoQuery(region, codes)
+  // Where the day starts (kept in this browser): the suggested route counts the drive from there.
+  const [start, setStartState] = useState<PlanPoint | null>(loadStart)
+  const setStart = (next: PlanPoint | null) => { setStartState(next); saveStart(next) }
+  const go = useWhereToGoQuery(region, codes, start)
   const regions = useRegionsQuery(user.state)
   const regionName = regions.data?.find(r => r.code === region)?.name ?? 'your county'
   const [selected, setSelected] = useState<string | null>(null)
@@ -37,6 +42,21 @@ const WhereToGo = () => {
   const [openNearby, setOpenNearby] = useState<string | null>(null)
   const [activeNearby, setActiveNearby] = useState<string | null>(null)
   const [showRoute, setShowRoute] = useState(false)
+  // The person's own stops for this county, once they have edited the route; null follows the suggestion.
+  const [customState, setCustomState] = useState(() => ({ region, stops: loadPlan(region) }))
+  const custom = customState.region === region ? customState.stops : loadPlan(region)
+  const [editing, setEditing] = useState(false)
+  const setCustom = (next: PlanPoint[] | null) => { setCustomState({ region, stops: next }); savePlan(region, next) }
+
+  const route = go.data?.route
+  const suggested = useMemo<PlanPoint[]>(() => (route?.stops ?? []).map(s => ({ locId: s.locId, name: s.locName ?? s.locId, lat: s.lat, lng: s.lng })), [route])
+  const stops = custom ?? suggested
+  // A route of one's own is driven here; the suggested one comes with its drive.
+  const drivePoints = useMemo(() => [...(start ? [start] : []), ...stops].map(p => ({ lat: p.lat, lng: p.lng })), [start, stops])
+  const ownDrive = useDriveQuery(drivePoints, custom !== null && stops.length > 0)
+  const drive = custom ? (ownDrive.isPlaceholderData ? null : ownDrive.data ?? null) : route?.drive ?? null
+  const driveFromStart = custom ? Boolean(start) : Boolean(route?.origin)
+  const arriving = stops.map((_, i) => { const k = driveFromStart ? i : i - 1; return k >= 0 ? drive?.legs?.[k] ?? null : null })
 
   const places = useMemo(() => go.data?.places ?? [], [go.data])
   const points = useMemo<MapPoint[]>(() => places.filter(p => p.lat !== null && p.lng !== null).map(p => ({
@@ -83,10 +103,15 @@ const WhereToGo = () => {
   if (go.isError) return <ErrorMessage networkError={errorMessage(go.error)} />
   if (go.isPending) return <LoadingState label='Working out where to go…' />
 
-  const { route, species } = go.data
+  const { species } = go.data
   const select = (place: GoPlace) => setSelected(place.locId)
-  const routeOnMap = showRoute && route.stops.length >= 2
-    ? { path: route.drive?.geometry ?? route.stops.map(s => [s.lat, s.lng] as [number, number]), stops: route.stops.map(s => ({ lat: s.lat, lng: s.lng, label: s.locName ?? s.locId })) }
+  const straightPath = drivePoints.map(p => [p.lat, p.lng] as [number, number])
+  const routeOnMap = (showRoute || editing) && stops.length > 0 && drivePoints.length >= 2
+    ? {
+        path: drive?.geometry ?? straightPath,
+        stops: stops.map(s => ({ lat: s.lat, lng: s.lng, label: s.name })),
+        start: start ? { lat: start.lat, lng: start.lng, label: `Start: ${start.name}` } : null
+      }
     : null
 
   return (
@@ -96,38 +121,14 @@ const WhereToGo = () => {
           <h1 className='fredericka go__title'>Where to go</h1>
           <p className='go__summary'>{species.length} {species.length === 1 ? 'bird' : 'birds'} on your watch list · {places.length} {places.length === 1 ? 'place' : 'places'} in {regionName} with reports in the last 30 days</p>
         </div>
-        {route.stops.length > 0 && (
-          <div className='go__route'>
-            <h2 className='fredericka go__route-head'>A morning route</h2>
-            <ol className='go__stops'>
-              {route.stops.map((stop, i) => (
-                <li key={stop.locId}>
-                  {i > 0 && (
-                    <span className='go__leg' aria-label={route.drive?.legs?.[i - 1] ? `${route.drive.legs[i - 1].minutes} minute drive` : 'drive'}>
-                      {route.drive?.legs?.[i - 1] ? `↓ ${route.drive.legs[i - 1].minutes} min drive · ${route.drive.legs[i - 1].miles} mi` : '↓ drive'}
-                    </span>
-                  )}
-                  <button type='button' onClick={() => { setSelected(stop.locId); setShowRoute(true) }}>
-                    <span className='go__stop-n'>{i + 1}</span>
-                    <span className='go__stop-text'>
-                      <strong>{stop.locName ?? stop.locId}</strong>
-                      <span>{birdsWord(stop.expected)} expected{stop.bestTime ? ` · best ${stop.bestTime}` : ''}</span>
-                      {stop.birds.length > 0 && <span className='go__stop-birds'>{stop.birds.slice(0, 4).map(b => `${b.comName} ${b.chance}%`).join(' · ')}{stop.birds.length > 4 ? ` · +${stop.birds.length - 4}` : ''}</span>}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ol>
-            <p className='go__covers'>
-              Together these cover about {birdsWord(route.covers)} of your {species.length}.
-              {route.drive ? ` ${route.drive.minutes} minutes of driving, ${route.drive.miles} miles.` : ''}
-              {route.stops[0]?.bestTime ? ` Start at ${route.stops[0].locName ?? 'the first stop'}, best ${route.stops[0].bestTime}.` : ''}
-            </p>
-            <div className='go__route-actions'>
-              <button type='button' className={`pill-button ${showRoute ? 'pill-button--primary' : ''}`} aria-pressed={showRoute} onClick={() => setShowRoute(v => !v)}>{showRoute ? 'Hide route on map' : 'Show route on map'}</button>
-              {route.url && <a className='pill-button' href={route.url} target='_blank' rel='noreferrer'>Open in Maps</a>}
-            </div>
-          </div>
+        {(stops.length > 0 || custom) && (
+          <RouteCard state={user.state} places={places} speciesCount={species.length} stops={stops} start={start} arriving={arriving}
+            drive={drive} covers={custom ? coverage(stops, places) : route!.covers} url={custom ? mapsUrl(stops, start) : route!.url}
+            custom={custom !== null} editing={editing} showRoute={showRoute}
+            onEditing={(on) => { setEditing(on); if (on) { closeNearby() } }}
+            onStops={(next) => setCustom(next)} onStart={setStart} onReset={() => setCustom(null)}
+            onStopClick={(stop) => { if (stop.locId) setSelected(stop.locId); setShowRoute(true) }}
+            onToggleRoute={() => setShowRoute(v => !v)} />
         )}
       </header>
 

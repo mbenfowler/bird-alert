@@ -56,3 +56,17 @@ export const CompassIcon = (props: SVGProps<SVGSVGElement>) => (
     <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20m0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16m4.24-12.24-6.36 2.12-2.12 6.36 6.36-2.12zM12 13.1a1.1 1.1 0 1 1 0-2.2 1.1 1.1 0 0 1 0 2.2" />
   </svg>
 )
+
+/** Two columns of dots: a handle to drag a row by. */
+export const DragIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <path d="M9 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4m6 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4M9 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4m6 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4m-6 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4m6 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4" />
+  </svg>
+)
+
+/** Crosshair: the device's own location. */
+export const LocateIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8m8.94 3A8.99 8.99 0 0 0 13 3.06V1h-2v2.06A8.99 8.99 0 0 0 3.06 11H1v2h2.06A8.99 8.99 0 0 0 11 20.94V23h2v-2.06A8.99 8.99 0 0 0 20.94 13H23v-2zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7" />
+  </svg>
+)

@@ -31,7 +31,7 @@ interface SightingsMapProps {
   /** When set, the map zooms to this pin and its public lands, dims every other pin, and draws the roads. */
   focus?: MapFocus | null
   /** A route through stops, drawn as one line when the page asks for it. */
-  route?: { path: [number, number][]; stops: { lat: number; lng: number; label: string }[] } | null
+  route?: { path: [number, number][]; stops: { lat: number; lng: number; label: string }[]; start?: { lat: number; lng: number; label: string } | null } | null
   /** Fallback centre when there are no points. */
   center?: [number, number]
   height?: number | string
@@ -74,7 +74,7 @@ const FitToPoints = ({ points, focus, route }: { points: MapPoint[]; focus?: Map
   const highlighted = points.find(p => p.highlight)
   const highlightKey = highlighted ? `${highlighted.lat},${highlighted.lng}` : ''
   const focusKey = focus ? `${focus.origin.lat},${focus.origin.lng}|${focus.targets.map(t => `${t.lat},${t.lng}`).join('|')}` : ''
-  const routeKey = route ? route.stops.map(s => `${s.lat},${s.lng}`).join('|') : ''
+  const routeKey = route ? [...(route.start ? [route.start] : []), ...route.stops].map(s => `${s.lat},${s.lng}`).join('|') : ''
   useEffect(() => {
     // A focus frames the pin and its public lands (roads included); a shown route frames its stops;
     // otherwise the pins. Clearing a focus or route falls back through the same effect.
@@ -86,7 +86,7 @@ const FitToPoints = ({ points, focus, route }: { points: MapPoint[]; focus?: Map
       return
     }
     if (route && route.stops.length) {
-      map.flyToBounds(L.latLngBounds([...route.stops.map(s => [s.lat, s.lng] as [number, number]), ...route.path]), { padding: [40, 40], maxZoom: 14, duration: 0.6 })
+      map.flyToBounds(L.latLngBounds([...[...(route.start ? [route.start] : []), ...route.stops].map(s => [s.lat, s.lng] as [number, number]), ...route.path]), { padding: [40, 40], maxZoom: 14, duration: 0.6 })
       return
     }
     if (!points.length) return
@@ -161,6 +161,11 @@ const SightingsMap = ({ points, focus = null, route = null, center = [39.8, -98.
           <>
             <Polyline className='map-route map-route--casing' positions={route.path} pathOptions={{ color: '#fff', weight: 8, opacity: 0.9 }} />
             <Polyline className='map-route' positions={route.path} pathOptions={{ color: '#1a56db', weight: 4, opacity: 0.95 }} />
+            {route.start && (
+              <Marker position={[route.start.lat, route.start.lng]} icon={L.divIcon({ className: 'map-stop map-stop--start', html: '<span></span>', iconSize: [22, 22], iconAnchor: [11, 11] })} zIndexOffset={1900}>
+                <Tooltip direction='top' offset={[0, -12]}>{route.start.label}</Tooltip>
+              </Marker>
+            )}
             {route.stops.map((stop, i) => (
               <Marker key={`stop-${i}`} position={[stop.lat, stop.lng]} icon={L.divIcon({ className: 'map-stop', html: `<span>${i + 1}</span>`, iconSize: [26, 26], iconAnchor: [13, 13] })} zIndexOffset={2000}>
                 <Tooltip direction='top' offset={[0, -14]}>{stop.label}</Tooltip>

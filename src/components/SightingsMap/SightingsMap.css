@@ -127,6 +127,20 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
+/* Where the day starts: a dark disc with a white centre, no number. */
+.map-stop--start {
+    width: 22px;
+    height: 22px;
+    background: #111;
+}
+
+.map-stop--start span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #fff;
+}
+
 /* The public land being looked at: a gold ring on its pin (the road goes gold too). */
 .map-pin--active .map-pin__head {
     box-shadow: 0 0 0 4px var(--accent), 0 2px 6px rgba(0, 0, 0, 0.5);

@@ -1,4 +1,4 @@
-import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, NearbyPublic } from './types'
+import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, NearbyPublic, PlaceSearch, Drive } from './types'
 
 // Every request goes to the same-origin `/api` prefix. In development Vite proxies it to the
 // backend (vite.config.ts); in production Vercel rewrites it (vercel.json). The backend holds
@@ -111,6 +111,13 @@ export const sendEmailPreview = (kind: EmailPreviewKind) => api<EmailPreviewResu
 /** One representative recording of the species from xeno-canto, or `found: false`. */
 export const getBirdSound = (code: string) => api<BirdSound>('/sound', { params: { code } })
 /** The watch list's places folded together, ranked by the birds a visit can expect, with a short route. */
-export const getWhereToGo = (region: string, codes: string[]) => api<WhereToGo>('/ebird/where-to-go', { params: { region, codes: codes.join(',') } })
+export const getWhereToGo = (region: string, codes: string[], from?: { lat: number; lng: number } | null) =>
+  api<WhereToGo>('/ebird/where-to-go', { params: { region, codes: codes.join(','), ...(from ? { from: `${from.lat.toFixed(2)},${from.lng.toFixed(2)}` } : {}) } })
+/** Hotspots in the state by name; towns and addresses too when `addresses` (only on submit). */
+export const getPlaceSearch = (state: string, q: string, addresses: boolean) =>
+  api<PlaceSearch>('/ebird/place-search', { params: { state, q, ...(addresses ? { addresses: '1' } : {}) } })
+/** The drive through points in the order given; null when no road route could be had. */
+export const getDrive = (points: { lat: number; lng: number }[]) =>
+  api<Drive | null>('/ebird/drive', { params: { points: points.map(p => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`).join(';') } })
 /** Public land near a point, for when a bird's best place is someone's yard. */
 export const getNearbyPublic = (lat: number, lng: number) => api<NearbyPublic>('/ebird/nearby', { params: { lat: lat.toFixed(5), lng: lng.toFixed(5) } })
