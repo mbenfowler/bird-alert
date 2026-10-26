@@ -4,6 +4,7 @@ import { toast } from 'react-toastify'
 import SightingsMap, { type MapPoint } from '../SightingsMap/SightingsMap'
 import SeasonStrip from '../SeasonStrip/SeasonStrip'
 import { SoundCredit, SoundPill } from '../SoundButton/SoundButton'
+import NearbyPublic from '../NearbyPublic/NearbyPublic'
 import { useBirdSound } from '../../hooks/useBirdSound'
 import ErrorMessage from '../Error/ErrorMessage'
 import { LoadingState } from '../Loading/Loading'
@@ -232,6 +233,7 @@ const Sighting = () => {
                           <span className='place__evidence'>{evidence(place)}</span>
                           {note && <span className='place__note'>“{note.text}”{note.observer ? ` — ${note.observer}` : ''}, {formatObsDt(note.time ? `${note.day} ${note.time}` : note.day)}</span>}
                         </button>
+                        {place.isHotspot === false && <NearbyPublic lat={place.lat} lng={place.lng} placeName={place.locName ?? place.locId} />}
                       </li>
                     )
                   })}

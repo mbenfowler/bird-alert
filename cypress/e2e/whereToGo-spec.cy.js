@@ -28,4 +28,15 @@ describe('Where to go', () => {
     cy.get('.go__places li').eq(1).find('.go__bird').first().click()
     cy.url().should('include', '/sighting/tuftit/S155544243')
   })
+
+  it('a private place can look up the public land around it', () => {
+    cy.visit('http://localhost:3000/go')
+    cy.get('.go__places li').first().should('contain', 'private').find('.nearby__ask').should('have.text', 'Public land nearby').click()
+    cy.wait('@nearby').its('request.url').should('match', /lat=34\.26954&lng=-83\.90141/)
+    cy.get('.go__places li').first().find('.nearby__list li').should('have.length', 3)
+    cy.get('.go__places li').first().find('.nearby__list li').first().should('contain', 'Little River Park').and('contain', '2.7 mi').and('contain', '1 checklist all time').and('contain', 'sneaky pick')
+    cy.get('.go__places li').first().find('.nearby__list li').eq(1).should('contain', 'Sardis Creek Park').and('contain', '80 checklists').and('not.contain', 'sneaky')
+    cy.get('.go__places li').first().find('.nearby__list li').eq(2).should('contain', 'Wahoo Park').and('contain', 'not an eBird hotspot')
+    cy.get('.go__places li').eq(1).find('.nearby__ask').should('not.exist')
+  })
 })

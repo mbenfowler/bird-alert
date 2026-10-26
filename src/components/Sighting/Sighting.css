@@ -477,3 +477,7 @@
     flex-basis: 100%;
     font-size: 0.8rem;
 }
+
+.sighting__places li > .nearby {
+    padding: 0 14px 10px;
+}

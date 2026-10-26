@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router'
 import SightingsMap, { type MapPoint } from '../SightingsMap/SightingsMap'
+import NearbyPublic from '../NearbyPublic/NearbyPublic'
 import ErrorMessage from '../Error/ErrorMessage'
 import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
@@ -128,6 +129,7 @@ const WhereToGo = () => {
                     ))}
                     {place.birds.length > 8 && <span className='go__more'>+{place.birds.length - 8} more</span>}
                   </div>
+                  {place.isHotspot === false && <NearbyPublic lat={place.lat} lng={place.lng} placeName={place.locName ?? place.locId} />}
                 </li>
               ))}
             </ol>

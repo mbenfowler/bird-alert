@@ -1,4 +1,4 @@
-import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, SeasonMonth, User, UserPatch, WhereToFind, WhereToGo } from './types'
+import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, NearbyPublic } from './types'
 
 // Every request goes to the same-origin `/api` prefix. In development Vite proxies it to the
 // backend (vite.config.ts); in production Vercel rewrites it (vercel.json). The backend holds
@@ -112,3 +112,5 @@ export const sendEmailPreview = (kind: EmailPreviewKind) => api<EmailPreviewResu
 export const getBirdSound = (code: string) => api<BirdSound>('/sound', { params: { code } })
 /** The watch list's places folded together, ranked by the birds a visit can expect, with a short route. */
 export const getWhereToGo = (region: string, codes: string[]) => api<WhereToGo>('/ebird/where-to-go', { params: { region, codes: codes.join(',') } })
+/** Public land near a point, for when a bird's best place is someone's yard. */
+export const getNearbyPublic = (lat: number, lng: number) => api<NearbyPublic>('/ebird/nearby', { params: { lat: lat.toFixed(5), lng: lng.toFixed(5) } })

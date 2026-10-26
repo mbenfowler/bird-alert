@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions,
-  getSavedBirds, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo } from '../apiCalls'
+  getSavedBirds, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getNearbyPublic } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
 import type { User } from '../types'
 
@@ -29,7 +29,8 @@ export const queryKeys = {
   seasonality: (region: string, code: string) => ['seasonality', region, code] as const,
   sightings: (region: string, ids: string) => ['sightings', region, ids] as const,
   whereToFind: (region: string, code: string) => ['where-to-find', region, code] as const,
-  whereToGo: (region: string, codes: string[]) => ['where-to-go', region, codesKey(codes)] as const
+  whereToGo: (region: string, codes: string[]) => ['where-to-go', region, codesKey(codes)] as const,
+  nearby: (lat: number, lng: number) => ['nearby', lat.toFixed(3), lng.toFixed(3)] as const
 }
 
 /** The logged-in user, null when logged out, undefined while the cookie is being checked. */
@@ -233,4 +234,13 @@ export const useWhereToGoQuery = (region: string, codes: string[]) =>
     queryFn: () => getWhereToGo(region, codes),
     staleTime: 10 * MINUTE,
     enabled: Boolean(region) && codes.length > 0
+  })
+
+/** Public land near a point; only once asked for (`enabled`), and kept for a day. */
+export const useNearbyPublicQuery = (lat: number | null, lng: number | null, enabled: boolean) =>
+  useQuery({
+    queryKey: queryKeys.nearby(lat ?? 0, lng ?? 0),
+    queryFn: () => getNearbyPublic(lat!, lng!),
+    staleTime: DAY,
+    enabled: enabled && lat !== null && lng !== null
   })

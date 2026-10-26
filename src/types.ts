@@ -203,3 +203,8 @@ export interface WhereToGo {
   places: GoPlace[]
   route: { stops: GoStop[]; covers: number; url: string | null }
 }
+
+/** Public land near a point: eBird hotspots with their all-time effort, and parks eBird does not list. */
+export interface NearbyHotspot { locId: string; name: string; lat: number; lng: number; miles: number; checklists: number | null; species: number | null; latest: string | null; lightlyBirded: boolean }
+export interface NearbyPark { name: string; lat: number; lng: number; miles: number; type?: string }
+export interface NearbyPublic { hotspots: NearbyHotspot[]; parks: NearbyPark[]; fetchedAt?: string }
