@@ -25,6 +25,9 @@ interface NearbyPublicProps {
   data: NearbyData | undefined
   isPending: boolean
   isError: boolean
+  /** The entry being looked at, lit on the map too; the number button picks it. */
+  activeId?: string | null
+  onPick?: (id: string) => void
 }
 
 /**
@@ -32,7 +35,7 @@ interface NearbyPublicProps {
  * been birded (little effort is a sneaky pick), parks eBird does not list, and the drive to each.
  * The page owns the open state so it can focus the map on the same places.
  */
-const NearbyPublic = ({ placeName, open, onOpen, data, isPending, isError }: NearbyPublicProps) => {
+const NearbyPublic = ({ placeName, open, onOpen, data, isPending, isError, activeId = null, onPick }: NearbyPublicProps) => {
   if (!open) {
     return (
       <div className='nearby'>
@@ -50,9 +53,10 @@ const NearbyPublic = ({ placeName, open, onOpen, data, isPending, isError }: Nea
         : (
           <ul className='nearby__list' aria-label={`Public land near ${placeName}`}>
             {hotspots.map((h, i) => (
-              <li key={h.locId} className='nearby__hotspot'>
+              <li key={h.locId} className={`nearby__hotspot ${activeId === h.locId ? 'is-active' : ''}`}>
+                <button type='button' className='nearby__n' aria-pressed={activeId === h.locId} aria-label={`Show the road to ${h.name} on the map`} onClick={() => onPick?.(h.locId)}>{i + 1}</button>
                 <a href={mapsHref(h.lat, h.lng, h.name)} target='_blank' rel='noreferrer'>
-                  <strong><span className='nearby__n'>{i + 1}</span>{h.name.replace(/^Lake Lanier--/, '')}</strong>
+                  <strong>{h.name.replace(/^Lake Lanier--/, '')}</strong>
                   <span className='nearby__reach'>{reach(h)}</span>
                   <span>{h.checklists ?? 0} {h.checklists === 1 ? 'checklist' : 'checklists'} all time{h.species ? `, ${h.species} species` : ''} · {lastBirded(h.latest)}</span>
                   {h.lightlyBirded && <em>lightly birded, a sneaky pick</em>}
@@ -60,9 +64,10 @@ const NearbyPublic = ({ placeName, open, onOpen, data, isPending, isError }: Nea
               </li>
             ))}
             {parks.map((p, i) => (
-              <li key={`${p.name}-${p.lat}`} className='nearby__park'>
+              <li key={`${p.name}-${p.lat}`} className={`nearby__park ${activeId === `${p.name}-${p.lat}` ? 'is-active' : ''}`}>
+                <button type='button' className='nearby__n' aria-pressed={activeId === `${p.name}-${p.lat}`} aria-label={`Show the road to ${p.name} on the map`} onClick={() => onPick?.(`${p.name}-${p.lat}`)}>{hotspots.length + i + 1}</button>
                 <a href={mapsHref(p.lat, p.lng, p.name)} target='_blank' rel='noreferrer'>
-                  <strong><span className='nearby__n'>{hotspots.length + i + 1}</span>{p.name}</strong>
+                  <strong>{p.name}</strong>
                   <span className='nearby__reach'>{reach(p)}</span>
                   <span>not an eBird hotspot</span>
                   <em>unlisted, nobody is counting here</em>
@@ -71,7 +76,7 @@ const NearbyPublic = ({ placeName, open, onOpen, data, isPending, isError }: Nea
             ))}
           </ul>
         )}
-      <p className='nearby__hint'>The numbers match the pins on the map; tap a pin for its drive. Tap anywhere outside this list to go back.</p>
+      <p className='nearby__hint'>The numbers match the pins on the map; tap a number or a pin to light up that road. Tap anywhere outside this list to go back.</p>
     </div>
   )
 }

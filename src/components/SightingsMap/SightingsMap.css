@@ -126,3 +126,13 @@
     font: 700 12px/1 system-ui, sans-serif;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
 }
+
+/* The public land being looked at: a gold ring on its pin (the road goes gold too). */
+.map-pin--active .map-pin__head {
+    box-shadow: 0 0 0 4px var(--accent), 0 2px 6px rgba(0, 0, 0, 0.5);
+    transform: scale(1.15);
+}
+
+.map-pin--active .map-pin__count {
+    color: #fff;
+}

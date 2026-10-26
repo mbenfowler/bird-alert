@@ -47,7 +47,16 @@
     gap: 6px;
 }
 
+/* Each entry: the number (a button that lights the road) beside the card that opens Maps. */
+.nearby__list li {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+}
+
 .nearby__list a {
+    flex: 1 1 auto;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -62,6 +71,11 @@
 
 .nearby__park a {
     border-left-color: #b8860b;
+}
+
+.nearby__list li.is-active a {
+    border-color: var(--accent-ink);
+    background: var(--accent-soft);
 }
 
 .nearby__list strong {
@@ -89,20 +103,35 @@
     font-size: 0.75rem;
 }
 
-/* The number that ties an entry to its pin on the map. */
+/* The number that ties an entry to its pin on the map; pressing it lights that road. */
 .nearby__n {
-    display: inline-grid;
+    flex: none;
+    align-self: center;
+    display: grid;
     place-items: center;
-    width: 20px;
-    height: 20px;
-    margin-right: 8px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 2px solid transparent;
     border-radius: 50%;
     background: #0f7b3a;
     color: #fff;
-    font: 700 11px/1 system-ui, sans-serif;
-    vertical-align: 1px;
+    font: 700 13px/1 system-ui, sans-serif;
+    cursor: pointer;
 }
 
 .nearby__park .nearby__n {
     background: #b8860b;
+}
+
+.nearby__n[aria-pressed="true"] {
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-color: var(--accent-ink);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.nearby__n:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
 }

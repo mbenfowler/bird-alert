@@ -35,6 +35,7 @@ const WhereToGo = () => {
   const [selected, setSelected] = useState<string | null>(null)
   // One private place at a time can open its public lands; the map focuses on them meanwhile.
   const [openNearby, setOpenNearby] = useState<string | null>(null)
+  const [activeNearby, setActiveNearby] = useState<string | null>(null)
   const [showRoute, setShowRoute] = useState(false)
 
   const places = useMemo(() => go.data?.places ?? [], [go.data])
@@ -50,11 +51,11 @@ const WhereToGo = () => {
   const nearbyPlace = useMemo(() => places.find(p => p.locId === openNearby) ?? null, [places, openNearby])
   const nearby = useNearbyPublicQuery(nearbyPlace?.lat ?? null, nearbyPlace?.lng ?? null, Boolean(nearbyPlace))
   const focus = useMemo(() => nearbyPlace && nearbyPlace.lat !== null && nearbyPlace.lng !== null && nearby.data
-    ? focusFor({ lat: nearbyPlace.lat, lng: nearbyPlace.lng, label: nearbyPlace.locName ?? nearbyPlace.locId }, nearby.data)
-    : null, [nearbyPlace, nearby.data])
+    ? { ...focusFor({ lat: nearbyPlace.lat, lng: nearbyPlace.lng, label: nearbyPlace.locName ?? nearbyPlace.locId }, nearby.data), activeId: activeNearby, onTargetClick: (id: string) => setActiveNearby(current => current === id ? null : id) }
+    : null, [nearbyPlace, nearby.data, activeNearby])
   useEffect(() => {
     if (!openNearby) return
-    return closeOnOutside(() => setOpenNearby(null))
+    return closeOnOutside(() => { setOpenNearby(null); setActiveNearby(null) })
   }, [openNearby])
 
   // Docking, as on the species page: the list scrolls by itself only once the frame is under the bar.
@@ -161,8 +162,9 @@ const WhereToGo = () => {
                   </div>
                   {place.isHotspot === false && place.lat !== null && (
                     <NearbyPublic placeName={place.locName ?? place.locId} open={openNearby === place.locId}
-                      onOpen={() => { setOpenNearby(place.locId); setSelected(place.locId) }}
-                      data={openNearby === place.locId ? nearby.data : undefined} isPending={openNearby === place.locId && nearby.isPending} isError={openNearby === place.locId && nearby.isError} />
+                      onOpen={() => { setOpenNearby(place.locId); setActiveNearby(null); setSelected(place.locId) }}
+                      data={openNearby === place.locId ? nearby.data : undefined} isPending={openNearby === place.locId && nearby.isPending} isError={openNearby === place.locId && nearby.isError}
+                      activeId={activeNearby} onPick={(id) => setActiveNearby(current => current === id ? null : id)} />
                   )}
                 </li>
               ))}

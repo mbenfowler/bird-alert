@@ -18,7 +18,13 @@ export interface MapPoint {
 
 /** A public place reachable from a focused pin, with the road to it when known. */
 export interface FocusTarget { id: string; n: number; lat: number; lng: number; label: string; detail?: string; kind: 'hotspot' | 'park'; path?: [number, number][] | null; minutes?: number | null }
-export interface MapFocus { origin: { lat: number; lng: number; label: string }; targets: FocusTarget[] }
+export interface MapFocus {
+  origin: { lat: number; lng: number; label: string }
+  targets: FocusTarget[]
+  /** The one public land being looked at: its road and pin light up, the others step back. */
+  activeId?: string | null
+  onTargetClick?: (id: string) => void
+}
 
 interface SightingsMapProps {
   points: MapPoint[]
@@ -117,8 +123,8 @@ const OpenHighlighted = ({ id, markers }: { id: string; markers: RefObject<Map<s
 
 /** OpenStreetMap with a pin per sighting; the highlighted pin is the one being looked at. */
 /** A public land's pin: numbered to match its entry in the list, so the map needs no labels. */
-const publicIcon = (kind: 'hotspot' | 'park', n: number) => L.divIcon({
-  className: `map-pin map-pin--public map-pin--${kind}`,
+const publicIcon = (kind: 'hotspot' | 'park', n: number, active: boolean) => L.divIcon({
+  className: `map-pin map-pin--public map-pin--${kind} ${active ? 'map-pin--active' : ''}`,
   html: `<span class="map-pin__head"><span class="map-pin__count">${n}</span></span><span class="map-pin__tail"></span>`,
   iconSize: [26, 36],
   iconAnchor: [13, 36],
@@ -155,12 +161,19 @@ const SightingsMap = ({ points, focus = null, route = null, center = [39.8, -98.
         {focus && focus.targets.map(t => {
           const path = t.path && t.path.length > 1 ? t.path : straight(focus.origin, t)
           const byRoad = Boolean(t.path && t.path.length > 1)
+          const active = focus.activeId === t.id
+          const stepBack = Boolean(focus.activeId) && !active
+          const base = t.kind === 'park' ? '#6b5800' : '#0f7b3a'
           return (
             <span key={t.id}>
-              <Polyline className='map-road map-road--casing' positions={path} pathOptions={{ color: '#fff', weight: 7, opacity: 0.85 }} />
-              <Polyline className={`map-road ${byRoad ? '' : 'map-road--straight'}`} positions={path} pathOptions={{ color: t.kind === 'park' ? '#6b5800' : '#0f7b3a', weight: 4, opacity: 0.95, dashArray: byRoad ? undefined : '6 8' }} />
-              {/* Quiet by default: the name and the drive appear when this pin is tapped. */}
-              <Marker position={[t.lat, t.lng]} icon={publicIcon(t.kind, t.n)} zIndexOffset={1500} title={t.label}>
+              <Polyline className={`map-road map-road--casing ${active ? 'is-active' : ''}`} positions={path} pathOptions={{ color: active ? '#111' : '#fff', weight: active ? 10 : 7, opacity: stepBack ? 0.3 : 0.85 }} />
+              <Polyline className={`map-road ${byRoad ? '' : 'map-road--straight'} ${active ? 'is-active' : ''}`} positions={path}
+                pathOptions={{ color: active ? '#ffd700' : base, weight: active ? 6 : 4, opacity: stepBack ? 0.35 : 0.95, dashArray: byRoad ? undefined : '6 8' }}
+                eventHandlers={focus.onTargetClick ? { click: () => focus.onTargetClick!(t.id) } : undefined} />
+              {/* Quiet by default: the name and the drive appear when this pin is tapped; the tap also lights its road. */}
+              <Marker position={[t.lat, t.lng]} icon={publicIcon(t.kind, t.n, active)} zIndexOffset={active ? 1800 : 1500} title={t.label}
+                opacity={stepBack ? 0.55 : 1}
+                eventHandlers={focus.onTargetClick ? { click: () => focus.onTargetClick!(t.id) } : undefined}>
                 <Popup><strong>{t.n}. {t.label}</strong>{t.detail && <><br />{t.detail}</>}</Popup>
               </Marker>
             </span>

@@ -78,6 +78,7 @@ const Sighting = () => {
   const seasonality = useSeasonalityQuery(region, code)
   const where = useWhereToFindQuery(region, code)
   const [openNearby, setOpenNearby] = useState<string | null>(null)
+  const [activeNearby, setActiveNearby] = useState<string | null>(null)
   const sound = useBirdSound(code, bird?.comName ?? code)
   const regions = useRegionsQuery(user.state)
   const regionName = regions.data?.find(r => r.code === region)?.name ?? 'your county'
@@ -97,11 +98,11 @@ const Sighting = () => {
   const nearbyPlace = useMemo(() => (where.data?.places ?? []).find(p => p.locId === openNearby) ?? null, [where.data, openNearby])
   const nearby = useNearbyPublicQuery(nearbyPlace?.lat ?? null, nearbyPlace?.lng ?? null, Boolean(nearbyPlace))
   const focus = useMemo(() => nearbyPlace && nearbyPlace.lat !== null && nearbyPlace.lng !== null && nearby.data
-    ? focusFor({ lat: nearbyPlace.lat, lng: nearbyPlace.lng, label: nearbyPlace.locName ?? nearbyPlace.locId }, nearby.data)
-    : null, [nearbyPlace, nearby.data])
+    ? { ...focusFor({ lat: nearbyPlace.lat, lng: nearbyPlace.lng, label: nearbyPlace.locName ?? nearbyPlace.locId }, nearby.data), activeId: activeNearby, onTargetClick: (id: string) => setActiveNearby(current => current === id ? null : id) }
+    : null, [nearbyPlace, nearby.data, activeNearby])
   useEffect(() => {
     if (!openNearby) return
-    return closeOnOutside(() => setOpenNearby(null))
+    return closeOnOutside(() => { setOpenNearby(null); setActiveNearby(null) })
   }, [openNearby])
 
   // The frame is docked once the page has scrolled it up under the bar. Until then the list does
@@ -247,8 +248,9 @@ const Sighting = () => {
                         </button>
                         {place.isHotspot === false && place.lat !== null && (
                           <NearbyPublic placeName={place.locName ?? place.locId} open={openNearby === place.locId}
-                            onOpen={() => { setOpenNearby(place.locId); const r = reportAt(place); if (r) select(r) }}
-                            data={openNearby === place.locId ? nearby.data : undefined} isPending={openNearby === place.locId && nearby.isPending} isError={openNearby === place.locId && nearby.isError} />
+                            onOpen={() => { setOpenNearby(place.locId); setActiveNearby(null); const r = reportAt(place); if (r) select(r) }}
+                            data={openNearby === place.locId ? nearby.data : undefined} isPending={openNearby === place.locId && nearby.isPending} isError={openNearby === place.locId && nearby.isError}
+                      activeId={activeNearby} onPick={(id) => setActiveNearby(current => current === id ? null : id)} />
                         )}
                       </li>
                     )

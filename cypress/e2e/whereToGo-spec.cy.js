@@ -57,6 +57,13 @@ describe('Where to go', () => {
     row().find('.nearby__n').should('have.length', 3).first().should('have.text', '1')
     cy.get('.sightings-map .map-pin--park').click()
     cy.get('.leaflet-popup').should('contain', '3. Wahoo Park').and('contain', '4 min drive · 1.2 mi')
+    // The tapped pin and its road light up, and so does its number in the list; a list number does the same.
+    cy.get('.sightings-map .map-pin--active .map-pin__count').should('have.text', '3')
+    cy.get('.sightings-map .map-road.is-active:not(.map-road--casing)').should('have.length', 1)
+    row().find('.nearby__n[aria-pressed="true"]').should('have.text', '3')
+    row().find('.nearby__n').first().click()
+    cy.get('.sightings-map .map-pin--active .map-pin__count').should('have.text', '1')
+    row().find('li.is-active').should('contain', 'Little River Park')
     cy.get('.go__places li.is-current').should('contain', "Rusty's Gainesville Yard")
     cy.get('.go__places li').eq(1).find('.nearby__ask').should('not.exist')
     // Tapping outside the list and the map closes it and the map goes back to all the pins.
