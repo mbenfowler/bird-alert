@@ -51,7 +51,12 @@ describe('Where to go', () => {
     cy.get('.sightings-map .map-pin--public').should('have.length', 3)
     cy.get('.sightings-map .map-road:not(.map-road--casing)').should('have.length', 3)
     cy.get('.sightings-map .map-road--straight').should('have.length', 1)
-    cy.get('.sightings-map .map-road__label').should('have.length', 2).first().should('contain', 'min')
+    // No labels on the map; the pins carry the list numbers and a tap reveals that pin's drive.
+    cy.get('.sightings-map .map-road__label').should('not.exist')
+    cy.get('.sightings-map .map-pin--public .map-pin__count').should('have.length', 3).first().should('have.text', '1')
+    row().find('.nearby__n').should('have.length', 3).first().should('have.text', '1')
+    cy.get('.sightings-map .map-pin--park').click()
+    cy.get('.leaflet-popup').should('contain', '3. Wahoo Park').and('contain', '4 min drive · 1.2 mi')
     cy.get('.go__places li.is-current').should('contain', "Rusty's Gainesville Yard")
     cy.get('.go__places li').eq(1).find('.nearby__ask').should('not.exist')
     // Tapping outside the list and the map closes it and the map goes back to all the pins.

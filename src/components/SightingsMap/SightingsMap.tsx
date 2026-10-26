@@ -17,7 +17,7 @@ export interface MapPoint {
 }
 
 /** A public place reachable from a focused pin, with the road to it when known. */
-export interface FocusTarget { id: string; lat: number; lng: number; label: string; detail?: string; kind: 'hotspot' | 'park'; path?: [number, number][] | null; minutes?: number | null }
+export interface FocusTarget { id: string; n: number; lat: number; lng: number; label: string; detail?: string; kind: 'hotspot' | 'park'; path?: [number, number][] | null; minutes?: number | null }
 export interface MapFocus { origin: { lat: number; lng: number; label: string }; targets: FocusTarget[] }
 
 interface SightingsMapProps {
@@ -116,9 +116,10 @@ const OpenHighlighted = ({ id, markers }: { id: string; markers: RefObject<Map<s
 }
 
 /** OpenStreetMap with a pin per sighting; the highlighted pin is the one being looked at. */
-const publicIcon = (kind: 'hotspot' | 'park') => L.divIcon({
+/** A public land's pin: numbered to match its entry in the list, so the map needs no labels. */
+const publicIcon = (kind: 'hotspot' | 'park', n: number) => L.divIcon({
   className: `map-pin map-pin--public map-pin--${kind}`,
-  html: '<span class="map-pin__head"></span><span class="map-pin__tail"></span>',
+  html: `<span class="map-pin__head"><span class="map-pin__count">${n}</span></span><span class="map-pin__tail"></span>`,
   iconSize: [26, 36],
   iconAnchor: [13, 36],
   popupAnchor: [0, -32]
@@ -154,16 +155,13 @@ const SightingsMap = ({ points, focus = null, route = null, center = [39.8, -98.
         {focus && focus.targets.map(t => {
           const path = t.path && t.path.length > 1 ? t.path : straight(focus.origin, t)
           const byRoad = Boolean(t.path && t.path.length > 1)
-          const mid = path[Math.floor(path.length / 2)]
           return (
             <span key={t.id}>
               <Polyline className='map-road map-road--casing' positions={path} pathOptions={{ color: '#fff', weight: 7, opacity: 0.85 }} />
-              <Polyline className={`map-road ${byRoad ? '' : 'map-road--straight'}`} positions={path} pathOptions={{ color: t.kind === 'park' ? '#6b5800' : '#0f7b3a', weight: 4, opacity: 0.95, dashArray: byRoad ? undefined : '6 8' }}>
-                {t.minutes !== null && t.minutes !== undefined && <Tooltip permanent direction='center' position={mid as [number, number]} className='map-road__label'>{t.minutes} min</Tooltip>}
-              </Polyline>
-              <Marker position={[t.lat, t.lng]} icon={publicIcon(t.kind)} zIndexOffset={1500} title={t.label}>
-                <Tooltip direction='top' offset={[0, -30]} permanent className='map-public__label'>{t.label}</Tooltip>
-                {t.detail && <Popup>{t.label}<br />{t.detail}</Popup>}
+              <Polyline className={`map-road ${byRoad ? '' : 'map-road--straight'}`} positions={path} pathOptions={{ color: t.kind === 'park' ? '#6b5800' : '#0f7b3a', weight: 4, opacity: 0.95, dashArray: byRoad ? undefined : '6 8' }} />
+              {/* Quiet by default: the name and the drive appear when this pin is tapped. */}
+              <Marker position={[t.lat, t.lng]} icon={publicIcon(t.kind, t.n)} zIndexOffset={1500} title={t.label}>
+                <Popup><strong>{t.n}. {t.label}</strong>{t.detail && <><br />{t.detail}</>}</Popup>
               </Marker>
             </span>
           )

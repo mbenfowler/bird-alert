@@ -49,20 +49,20 @@ const NearbyPublic = ({ placeName, open, onOpen, data, isPending, isError }: Nea
         : !hotspots.length && !parks.length ? <p className='nearby__note'>No public land within a few miles of {placeName} is on file.</p>
         : (
           <ul className='nearby__list' aria-label={`Public land near ${placeName}`}>
-            {hotspots.map(h => (
+            {hotspots.map((h, i) => (
               <li key={h.locId} className='nearby__hotspot'>
                 <a href={mapsHref(h.lat, h.lng, h.name)} target='_blank' rel='noreferrer'>
-                  <strong>{h.name.replace(/^Lake Lanier--/, '')}</strong>
+                  <strong><span className='nearby__n'>{i + 1}</span>{h.name.replace(/^Lake Lanier--/, '')}</strong>
                   <span className='nearby__reach'>{reach(h)}</span>
                   <span>{h.checklists ?? 0} {h.checklists === 1 ? 'checklist' : 'checklists'} all time{h.species ? `, ${h.species} species` : ''} · {lastBirded(h.latest)}</span>
                   {h.lightlyBirded && <em>lightly birded, a sneaky pick</em>}
                 </a>
               </li>
             ))}
-            {parks.map(p => (
+            {parks.map((p, i) => (
               <li key={`${p.name}-${p.lat}`} className='nearby__park'>
                 <a href={mapsHref(p.lat, p.lng, p.name)} target='_blank' rel='noreferrer'>
-                  <strong>{p.name}</strong>
+                  <strong><span className='nearby__n'>{hotspots.length + i + 1}</span>{p.name}</strong>
                   <span className='nearby__reach'>{reach(p)}</span>
                   <span>not an eBird hotspot</span>
                   <em>unlisted, nobody is counting here</em>
@@ -71,7 +71,7 @@ const NearbyPublic = ({ placeName, open, onOpen, data, isPending, isError }: Nea
             ))}
           </ul>
         )}
-      <p className='nearby__hint'>Roads and minutes are driving routes; tap anywhere outside this list to go back.</p>
+      <p className='nearby__hint'>The numbers match the pins on the map; tap a pin for its drive. Tap anywhere outside this list to go back.</p>
     </div>
   )
 }

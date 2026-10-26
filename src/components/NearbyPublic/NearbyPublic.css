@@ -88,3 +88,21 @@
     color: var(--muted);
     font-size: 0.75rem;
 }
+
+/* The number that ties an entry to its pin on the map. */
+.nearby__n {
+    display: inline-grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+    border-radius: 50%;
+    background: #0f7b3a;
+    color: #fff;
+    font: 700 11px/1 system-ui, sans-serif;
+    vertical-align: 1px;
+}
+
+.nearby__park .nearby__n {
+    background: #b8860b;
+}
