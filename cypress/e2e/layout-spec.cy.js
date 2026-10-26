@@ -11,6 +11,18 @@ const assertNoHorizontalOverflow = () => {
 describe('Phone-width layout', () => {
   beforeEach(() => cy.viewport(390, 844))
 
+  it('the wordmark is never plain black: gradient until the colour font has loaded', () => {
+    stubAuth()
+    cy.visit('http://localhost:3000/')
+    cy.get('#titleAlert').should(($el) => {
+      const cs = getComputedStyle($el[0])
+      // The app's document, not the spec's: the class is set on the page under test.
+      const colourFont = $el[0].ownerDocument.documentElement.classList.contains('has-colour-font')
+      if (colourFont) expect(cs.fontFamily, 'colour font in use').to.match(/Bungee Spice/)
+      else expect(cs.webkitTextFillColor, 'gradient fallback').to.eq('rgba(0, 0, 0, 0)')
+    })
+  })
+
   it('login does not overflow', () => {
     stubAuth()
     cy.visit('http://localhost:3000/')
