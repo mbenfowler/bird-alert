@@ -1,0 +1,77 @@
+{
+  "hotspots": [
+    {
+      "locId": "L2",
+      "name": "Lake Lanier--Little River Park",
+      "lat": 34.38,
+      "lng": -83.83,
+      "miles": 2.7,
+      "checklists": 1,
+      "species": 23,
+      "latest": "2026-04-13",
+      "lightlyBirded": true,
+      "drive": {
+        "minutes": 11,
+        "miles": 4.8,
+        "geometry": [
+          [
+            34.2695,
+            -83.9014
+          ],
+          [
+            34.3,
+            -83.88
+          ],
+          [
+            34.33,
+            -83.86
+          ],
+          [
+            34.38,
+            -83.83
+          ]
+        ]
+      }
+    },
+    {
+      "locId": "L1",
+      "name": "Lake Lanier--Sardis Creek Park",
+      "lat": 34.4,
+      "lng": -83.9,
+      "miles": 2.9,
+      "checklists": 80,
+      "species": 103,
+      "latest": "2026-07-25",
+      "lightlyBirded": false,
+      "drive": null
+    }
+  ],
+  "parks": [
+    {
+      "name": "Wahoo Park",
+      "lat": 34.37,
+      "lng": -83.86,
+      "miles": 0.6,
+      "type": "park",
+      "drive": {
+        "minutes": 4,
+        "miles": 1.2,
+        "geometry": [
+          [
+            34.2695,
+            -83.9014
+          ],
+          [
+            34.3,
+            -83.89
+          ],
+          [
+            34.37,
+            -83.86
+          ]
+        ]
+      }
+    }
+  ],
+  "fetchedAt": "2026-10-26T00:00:00Z"
+}

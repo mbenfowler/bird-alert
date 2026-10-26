@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, type RefObject } from 'react'
-import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
+import { MapContainer, Marker, Polyline, Popup, TileLayer, Tooltip, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { Link } from 'react-router'
 import 'leaflet/dist/leaflet.css'
@@ -16,8 +16,22 @@ export interface MapPoint {
   highlight?: boolean
 }
 
+/** A public place reachable from a focused pin, with the road to it when known. */
+export interface FocusTarget { id: string; n: number; lat: number; lng: number; label: string; detail?: string; kind: 'hotspot' | 'park'; path?: [number, number][] | null; minutes?: number | null }
+export interface MapFocus {
+  origin: { lat: number; lng: number; label: string }
+  targets: FocusTarget[]
+  /** The one public land being looked at: its road and pin light up, the others step back. */
+  activeId?: string | null
+  onTargetClick?: (id: string) => void
+}
+
 interface SightingsMapProps {
   points: MapPoint[]
+  /** When set, the map zooms to this pin and its public lands, dims every other pin, and draws the roads. */
+  focus?: MapFocus | null
+  /** A route through stops, drawn as one line when the page asks for it. */
+  route?: { path: [number, number][]; stops: { lat: number; lng: number; label: string }[] } | null
   /** Fallback centre when there are no points. */
   center?: [number, number]
   height?: number | string
@@ -54,20 +68,33 @@ const groupByPlace = (points: MapPoint[]): PinGroup[] => {
 }
 
 /** Frames the pins once per set of places; a change of highlight only pans, it never re-zooms. */
-const FitToPoints = ({ points }: { points: MapPoint[] }) => {
+const FitToPoints = ({ points, focus, route }: { points: MapPoint[]; focus?: MapFocus | null; route?: SightingsMapProps['route'] }) => {
   const map = useMap()
   const places = points.map(p => `${p.lat},${p.lng}`).join('|')
   const highlighted = points.find(p => p.highlight)
   const highlightKey = highlighted ? `${highlighted.lat},${highlighted.lng}` : ''
+  const focusKey = focus ? `${focus.origin.lat},${focus.origin.lng}|${focus.targets.map(t => `${t.lat},${t.lng}`).join('|')}` : ''
+  const routeKey = route ? route.stops.map(s => `${s.lat},${s.lng}`).join('|') : ''
   useEffect(() => {
+    // A focus frames the pin and its public lands (roads included); a shown route frames its stops;
+    // otherwise the pins. Clearing a focus or route falls back through the same effect.
+    if (focus) {
+      const pts: [number, number][] = [[focus.origin.lat, focus.origin.lng], ...focus.targets.map(t => [t.lat, t.lng] as [number, number]), ...focus.targets.flatMap(t => t.path ?? [])]
+      map.flyToBounds(L.latLngBounds(pts), { padding: [40, 40], maxZoom: 14, duration: 0.6 })
+      return
+    }
+    if (route && route.stops.length) {
+      map.flyToBounds(L.latLngBounds([...route.stops.map(s => [s.lat, s.lng] as [number, number]), ...route.path]), { padding: [40, 40], maxZoom: 14, duration: 0.6 })
+      return
+    }
     if (!points.length) return
     if (points.length === 1) {
       map.setView([points[0].lat, points[0].lng], 13)
       return
     }
-    map.fitBounds(L.latLngBounds(points.map(p => [p.lat, p.lng] as [number, number])), { padding: [36, 36], maxZoom: 14 })
+    map.flyToBounds(L.latLngBounds(points.map(p => [p.lat, p.lng] as [number, number])), { padding: [36, 36], maxZoom: 14, duration: 0.6 })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, places])
+  }, [map, places, focusKey, routeKey])
   useEffect(() => {
     if (highlightKey) map.panInside(highlightKey.split(',').map(Number) as [number, number], { padding: [36, 36] })
   }, [map, highlightKey])
@@ -95,19 +122,64 @@ const OpenHighlighted = ({ id, markers }: { id: string; markers: RefObject<Map<s
 }
 
 /** OpenStreetMap with a pin per sighting; the highlighted pin is the one being looked at. */
-const SightingsMap = ({ points, center = [39.8, -98.6], height = 360, ariaLabel, onPinClick, openHighlighted = false }: SightingsMapProps) => {
+/** A public land's pin: numbered to match its entry in the list, so the map needs no labels. */
+const publicIcon = (kind: 'hotspot' | 'park', n: number, active: boolean) => L.divIcon({
+  className: `map-pin map-pin--public map-pin--${kind} ${active ? 'map-pin--active' : ''}`,
+  html: `<span class="map-pin__head"><span class="map-pin__count">${n}</span></span><span class="map-pin__tail"></span>`,
+  iconSize: [26, 36],
+  iconAnchor: [13, 36],
+  popupAnchor: [0, -32]
+})
+
+/** A straight line between two points, for when the road could not be had. */
+const straight = (a: { lat: number; lng: number }, b: { lat: number; lng: number }): [number, number][] => [[a.lat, a.lng], [b.lat, b.lng]]
+
+const SightingsMap = ({ points, focus = null, route = null, center = [39.8, -98.6], height = 360, ariaLabel, onPinClick, openHighlighted = false }: SightingsMapProps) => {
   const initial = useMemo<[number, number]>(() => (points[0] ? [points[0].lat, points[0].lng] : center), [points, center])
   const groups = useMemo(() => groupByPlace(points).sort((a, b) => Number(a.highlight) - Number(b.highlight)), [points])
   const markers = useRef(new Map<string, L.Marker>())
   const highlightedId = groups.find(g => g.highlight)?.id ?? ''
   return (
-    <div className='sightings-map' style={{ height }} role='region' aria-label={ariaLabel}>
+    <div className={`sightings-map ${focus ? 'is-focused' : ''} ${route ? 'has-route' : ''}`} style={{ height }} role='region' aria-label={ariaLabel}>
       <MapContainer center={initial} zoom={points.length ? 12 : 4} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url='https://tile.openstreetmap.org/{z}/{x}/{y}.png'
         />
-        <FitToPoints points={points} />
+        <FitToPoints points={points} focus={focus} route={route} />
+        {route && (
+          <>
+            <Polyline className='map-route map-route--casing' positions={route.path} pathOptions={{ color: '#fff', weight: 8, opacity: 0.9 }} />
+            <Polyline className='map-route' positions={route.path} pathOptions={{ color: '#1a56db', weight: 4, opacity: 0.95 }} />
+            {route.stops.map((stop, i) => (
+              <Marker key={`stop-${i}`} position={[stop.lat, stop.lng]} icon={L.divIcon({ className: 'map-stop', html: `<span>${i + 1}</span>`, iconSize: [26, 26], iconAnchor: [13, 13] })} zIndexOffset={2000}>
+                <Tooltip direction='top' offset={[0, -14]}>{stop.label}</Tooltip>
+              </Marker>
+            ))}
+          </>
+        )}
+        {focus && focus.targets.map(t => {
+          const path = t.path && t.path.length > 1 ? t.path : straight(focus.origin, t)
+          const byRoad = Boolean(t.path && t.path.length > 1)
+          const active = focus.activeId === t.id
+          const stepBack = Boolean(focus.activeId) && !active
+          const base = t.kind === 'park' ? '#6b5800' : '#0f7b3a'
+          return (
+            <span key={t.id}>
+              {/* Keyed on the state: Leaflet applies a path's class only when it is created. */}
+              <Polyline key={`casing-${active}-${stepBack}`} className={`map-road map-road--casing ${active ? 'is-active' : ''}`} positions={path} pathOptions={{ color: active ? '#111' : '#fff', weight: active ? 10 : 7, opacity: stepBack ? 0.3 : 0.85 }} />
+              <Polyline key={`road-${active}-${stepBack}`} className={`map-road ${byRoad ? '' : 'map-road--straight'} ${active ? 'is-active' : ''}`} positions={path}
+                pathOptions={{ color: active ? '#ffd700' : base, weight: active ? 6 : 4, opacity: stepBack ? 0.35 : 0.95, dashArray: byRoad ? undefined : '6 8' }}
+                eventHandlers={focus.onTargetClick ? { click: () => focus.onTargetClick!(t.id) } : undefined} />
+              {/* Quiet by default: the name and the drive appear when this pin is tapped; the tap also lights its road. */}
+              <Marker position={[t.lat, t.lng]} icon={publicIcon(t.kind, t.n, active)} zIndexOffset={active ? 1800 : 1500} title={t.label}
+                opacity={stepBack ? 0.55 : 1}
+                eventHandlers={focus.onTargetClick ? { click: () => focus.onTargetClick!(t.id) } : undefined}>
+                <Popup><strong>{t.n}. {t.label}</strong>{t.detail && <><br />{t.detail}</>}</Popup>
+              </Marker>
+            </span>
+          )
+        })}
         {openHighlighted && <OpenHighlighted id={highlightedId} markers={markers} />}
         {groups.map(group => (
           <Marker key={group.id} position={[group.lat, group.lng]} icon={pinIcon(group.highlight, group.points.length)} zIndexOffset={group.highlight ? 1000 : 0}

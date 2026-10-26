@@ -179,3 +179,34 @@ export interface WhereToFind {
   places: Place[]
   grades?: Partial<Record<PlaceBand, BandGrade>>
 }
+
+/** A bird a place offers, within the watch list's where-to-go answer. */
+export interface PlaceBird { speciesCode: string; comName: string; chance: number; band: PlaceBand; lastSeen: Place['lastSeen']; note: PlaceNote | null }
+export interface GoPlace {
+  locId: string
+  locName: string | null
+  lat: number | null
+  lng: number | null
+  isHotspot: boolean | null
+  merged: { locId: string; locName: string | null }[]
+  birds: PlaceBird[]
+  /** How many watch-list birds a visit can expect: the sum of the chances. */
+  expected: number
+  bestTime: string | null
+  seenToday: boolean
+}
+export interface GoStop { locId: string; locName: string | null; lat: number; lng: number; expected: number; bestTime: string | null; birds: PlaceBird[] }
+export interface WhereToGo {
+  region: string
+  asOf: string
+  species: { speciesCode: string; comName: string; class: PersistenceClass; bestTime: WhereToFind['bestTime']; places: number; best: { locId: string; locName: string | null; chance: number } | null }[]
+  places: GoPlace[]
+  route: { stops: GoStop[]; covers: number; url: string | null; drive?: Drive | null }
+}
+
+/** Public land near a point: eBird hotspots with their all-time effort, and parks eBird does not list. */
+/** The drive by road: minutes, miles and the road itself as [lat, lng] points for the map. */
+export interface Drive { minutes: number; miles: number; geometry: [number, number][]; legs?: { minutes: number; miles: number }[] }
+export interface NearbyHotspot { locId: string; name: string; lat: number; lng: number; miles: number; checklists: number | null; species: number | null; latest: string | null; lightlyBirded: boolean; drive?: Drive | null }
+export interface NearbyPark { name: string; lat: number; lng: number; miles: number; type?: string; drive?: Drive | null }
+export interface NearbyPublic { hotspots: NearbyHotspot[]; parks: NearbyPark[]; fetchedAt?: string }

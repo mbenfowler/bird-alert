@@ -1,0 +1,164 @@
+.nearby {
+    margin-top: 4px;
+}
+
+/* The way in: a filled pill, full width, because it can change where someone chooses to go. */
+.nearby__ask {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 2px solid var(--accent-ink);
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font: inherit;
+    font-size: 0.92rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+}
+
+.nearby__ask svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+.nearby__ask:hover {
+    filter: brightness(1.05);
+}
+
+.nearby__note {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+/* Each option: name, how to reach it, a line of facts, and a word on why it is worth a look. */
+.nearby__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 6px;
+}
+
+/* Each entry: the number (a button that lights the road) beside the card that opens Maps. */
+.nearby__list li {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.nearby__list a {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 10px;
+    border: 1.5px solid var(--line);
+    border-left: 5px solid #0f7b3a;
+    border-radius: 8px;
+    background: var(--surface-muted);
+    color: var(--ink);
+    text-decoration: none;
+}
+
+.nearby__park a {
+    border-left-color: #b8860b;
+}
+
+.nearby__list li.is-active a {
+    border-color: var(--accent-ink);
+    background: var(--accent-soft);
+}
+
+.nearby__list strong {
+    overflow-wrap: anywhere;
+}
+
+.nearby__reach {
+    color: var(--ink) !important;
+    font-weight: 600;
+}
+
+.nearby__list span {
+    color: var(--muted);
+    font-size: 0.8rem;
+}
+
+.nearby__list em {
+    color: var(--accent-ink);
+    font-size: 0.8rem;
+}
+
+.nearby__hint {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 0.75rem;
+}
+
+/* The number that ties an entry to its pin on the map; pressing it lights that road. */
+.nearby__n {
+    flex: none;
+    align-self: center;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    background: #0f7b3a;
+    color: #fff;
+    font: 700 13px/1 system-ui, sans-serif;
+    cursor: pointer;
+}
+
+.nearby__park .nearby__n {
+    background: #b8860b;
+}
+
+.nearby__n[aria-pressed="true"] {
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-color: var(--accent-ink);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.nearby__n:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}
+
+/* The open panel's head: what this is, and the way back. */
+.nearby__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.nearby__head strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-size: 0.9rem;
+}
+
+.nearby__close {
+    flex: none;
+    padding: 4px 10px;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+}

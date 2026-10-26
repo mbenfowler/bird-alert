@@ -49,3 +49,10 @@ export const MigrationIcon = (props: SVGProps<SVGSVGElement>) => (
     <path d="M13.5 18.5l4-3.5 4 3.5" />
   </svg>
 )
+
+/** A compass needle, for where to go. */
+export const CompassIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20m0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16m4.24-12.24-6.36 2.12-2.12 6.36 6.36-2.12zM12 13.1a1.1 1.1 0 1 1 0-2.2 1.1 1.1 0 0 1 0 2.2" />
+  </svg>
+)

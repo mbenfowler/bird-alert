@@ -95,6 +95,8 @@ export const login = () => {
   cy.intercept('GET', '**/api/ebird/arriving*', { statusCode: 200, fixture: 'arrivals' }).as('arriving')
   cy.intercept('GET', '**/api/ebird/seasonality*', { statusCode: 200, fixture: 'seasonality' }).as('seasonality')
   cy.intercept('GET', '**/api/ebird/where*', { statusCode: 200, fixture: 'where' }).as('where')
+  cy.intercept('GET', '**/api/ebird/where-to-go*', { statusCode: 200, fixture: 'whereToGo' }).as('whereToGo')
+  cy.intercept('GET', '**/api/ebird/nearby*', { statusCode: 200, fixture: 'nearby' }).as('nearby')
   cy.intercept('GET', '**/api/ebird/regions*', { statusCode: 200, body: [{ code: 'US-GA-139', name: 'Hall' }] }).as('regions')
   // Bird sounds: one stub recording for every species, as a silent clip so playback really runs.
   cy.intercept('GET', '**/api/sound?*', (req) => {

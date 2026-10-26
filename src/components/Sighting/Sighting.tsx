@@ -4,14 +4,17 @@ import { toast } from 'react-toastify'
 import SightingsMap, { type MapPoint } from '../SightingsMap/SightingsMap'
 import SeasonStrip from '../SeasonStrip/SeasonStrip'
 import { SoundCredit, SoundPill } from '../SoundButton/SoundButton'
+import NearbyPublic from '../NearbyPublic/NearbyPublic'
 import { useBirdSound } from '../../hooks/useBirdSound'
 import ErrorMessage from '../Error/ErrorMessage'
 import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
-import { useBirdsQuery, useCurrentUser, useRegionsQuery, useSavedCodes, useSeasonalityQuery, useSpeciesObservationsQuery, useWhereToFindQuery } from '../../hooks/queries'
+import { useBirdsQuery, useCurrentUser, useNearbyPublicQuery, useRegionsQuery, useSavedCodes, useSeasonalityQuery, useSpeciesObservationsQuery, useWhereToFindQuery } from '../../hooks/queries'
+import { focusFor } from '../../mapFocus'
 import { useToggleSavedMutation } from '../../hooks/mutations'
 import type { Observation, Place, PersistenceClass, WhereToFind } from '../../types'
 import { formatObsDt } from '../../format'
+import { article, chanceStyle } from '../../chance'
 import './Sighting.css'
 
 const mapsHref = (o: Observation) => {
@@ -30,31 +33,6 @@ const CLASS_LABEL: Record<PersistenceClass, string> = {
 
 const ago = (daysAgo: number) => daysAgo === 0 ? 'today' : daysAgo === 1 ? 'yesterday' : `${daysAgo} days ago`
 
-/**
- * The band chip's colour runs with the chance: dark green at the top, through yellow around the
- * middle, to grey at zero. Text flips to white once the background is dark enough.
- */
-const bandStyle = (chance: number | undefined) => {
-  if (chance === undefined) return undefined
-  const t = Math.max(0, Math.min(100, chance)) / 100
-  let hue: number, sat: number, light: number
-  if (t >= 0.5) {
-    const u = (t - 0.5) / 0.5
-    hue = 50 + u * 90
-    sat = 85 - u * 30
-    light = 46 - u * 18
-  } else {
-    const u = t / 0.5
-    hue = 50
-    sat = u * 85
-    light = 62 - u * 16
-  }
-  const background = `hsl(${Math.round(hue)}, ${Math.round(sat)}%, ${Math.round(light)}%)`
-  const border = `hsl(${Math.round(hue)}, ${Math.round(sat)}%, ${Math.max(12, Math.round(light - 18))}%)`
-  return { background, borderColor: border, color: light < 40 ? '#fff' : 'var(--ink)' }
-}
-
-const article = (n: number) => (n === 8 || n === 11 || n === 18 || (n >= 80 && n <= 89)) ? 'an' : 'a'
 
 /** The sentence under a place: the chance and when to go (the place's own hours, else the species'). */
 const chanceLine = (place: Place, speciesTime: string | null) => {
@@ -99,6 +77,8 @@ const Sighting = () => {
   const toggleSaved = useToggleSavedMutation()
   const seasonality = useSeasonalityQuery(region, code)
   const where = useWhereToFindQuery(region, code)
+  const [openNearby, setOpenNearby] = useState<string | null>(null)
+  const [activeNearby, setActiveNearby] = useState<string | null>(null)
   const sound = useBirdSound(code, bird?.comName ?? code)
   const regions = useRegionsQuery(user.state)
   const regionName = regions.data?.find(r => r.code === region)?.name ?? 'your county'
@@ -114,6 +94,13 @@ const Sighting = () => {
     // No Details link in the popup: the chosen report is already described under the map.
     highlight: current ? o.subId === current.subId && o.lat === current.lat && o.lng === current.lng : false
   })), [all, current])
+
+  const nearbyPlace = useMemo(() => (where.data?.places ?? []).find(p => p.locId === openNearby) ?? null, [where.data, openNearby])
+  const nearby = useNearbyPublicQuery(nearbyPlace?.lat ?? null, nearbyPlace?.lng ?? null, Boolean(nearbyPlace))
+  const focus = useMemo(() => nearbyPlace && nearbyPlace.lat !== null && nearbyPlace.lng !== null && nearby.data
+    ? { ...focusFor({ lat: nearbyPlace.lat, lng: nearbyPlace.lng, label: nearbyPlace.locName ?? nearbyPlace.locId }, nearby.data), activeId: activeNearby, onTargetClick: (id: string) => setActiveNearby(current => current === id ? null : id) }
+    : null, [nearbyPlace, nearby.data, activeNearby])
+  const closeNearby = () => { setOpenNearby(null); setActiveNearby(null) }
 
   // The frame is docked once the page has scrolled it up under the bar. Until then the list does
   // not scroll on its own, so a swipe on it moves the page (and docks the frame) rather than the
@@ -208,8 +195,8 @@ const Sighting = () => {
       <div className={`sighting__frame ${docked ? 'is-docked' : ''}`} ref={frameRef}>
         <div className='sighting__map'>
           {all.length
-            ? <SightingsMap points={points} height='100%' ariaLabel={`Map of recent ${name} sightings in your region`} openHighlighted
-                onPinClick={(hit) => { const o = all.find(x => `${x.subId}-${x.lat}-${x.lng}` === hit[0]?.id); if (o) select(o) }} />
+            ? <SightingsMap points={points} focus={focus} height='100%' ariaLabel={`Map of recent ${name} sightings in your region`} openHighlighted={!focus}
+                onPinClick={(hit) => { const o = all.find(x => `${x.subId}-${x.lat}-${x.lng}` === hit[0]?.id); if (!o) return; if (openNearby && !(nearbyPlace && (o.subId === nearbyPlace.lastSeen.subId || o.locId === nearbyPlace.locId))) closeNearby(); select(o) }} />
             : <p className='list-note sighting__nomap'>No reports of this species in your region in the last 30 days.</p>}
           <div className='sighting__pick'>
             {current
@@ -247,7 +234,7 @@ const Sighting = () => {
                       <li key={place.locId} className={selected ? 'is-current' : undefined}>
                         <button type='button' onClick={() => { if (report) select(report) }} aria-current={selected ? 'true' : undefined} disabled={!report}>
                           <span className='place__head'>
-                            <span className={`band band--${place.band.toLowerCase().replace(' ', '-')}`} style={bandStyle(place.chance)}>{place.band}</span>
+                            <span className={`band band--${place.band.toLowerCase().replace(' ', '-')}`} style={chanceStyle(place.chance)}>{place.band}</span>
                             <strong>{place.locName ?? place.locId}</strong>
                             {place.isHotspot === false && <span className='place__private' title='A personal location, not a public hotspot'>private</span>}
                             {(place.merged?.length ?? 0) > 0 && <span className='place__private' title={`Includes nearby personal locations: ${place.merged!.map(m => m.locName ?? m.locId).join(', ')}`}>+{place.merged!.length} nearby</span>}
@@ -256,6 +243,12 @@ const Sighting = () => {
                           <span className='place__evidence'>{evidence(place)}</span>
                           {note && <span className='place__note'>“{note.text}”{note.observer ? ` — ${note.observer}` : ''}, {formatObsDt(note.time ? `${note.day} ${note.time}` : note.day)}</span>}
                         </button>
+                        {place.isHotspot === false && place.lat !== null && (
+                          <NearbyPublic placeName={place.locName ?? place.locId} open={openNearby === place.locId}
+                            onOpen={() => { setOpenNearby(place.locId); setActiveNearby(null); const r = reportAt(place); if (r) select(r) }}
+                            data={openNearby === place.locId ? nearby.data : undefined} isPending={openNearby === place.locId && nearby.isPending} isError={openNearby === place.locId && nearby.isError}
+                      activeId={activeNearby} onPick={(id) => setActiveNearby(current => current === id ? null : id)} onClose={closeNearby} />
+                        )}
                       </li>
                     )
                   })}
