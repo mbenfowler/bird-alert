@@ -79,6 +79,8 @@ const FitToPoints = ({ points, focus, route }: { points: MapPoint[]; focus?: Map
     // A focus frames the pin and its public lands (roads included); a shown route frames its stops;
     // otherwise the pins. Clearing a focus or route falls back through the same effect.
     if (focus) {
+      // A popup left open from before (the selected report) would sit over the roads.
+      map.closePopup()
       const pts: [number, number][] = [[focus.origin.lat, focus.origin.lng], ...focus.targets.map(t => [t.lat, t.lng] as [number, number]), ...focus.targets.flatMap(t => t.path ?? [])]
       map.flyToBounds(L.latLngBounds(pts), { padding: [40, 40], maxZoom: 14, duration: 0.6 })
       return

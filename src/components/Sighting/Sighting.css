@@ -292,11 +292,11 @@
     gap: 8px;
 }
 
-.sighting__list li {
+.sighting__list > li {
     min-width: 0;
 }
 
-.sighting__list button {
+.sighting__list > li > button {
     width: 100%;
     display: flex;
     justify-content: space-between;
@@ -312,20 +312,20 @@
     cursor: pointer;
 }
 
-.sighting__list button strong {
+.sighting__list > li > button strong {
     flex: 1 1 auto;
     min-width: 0;
     overflow-wrap: anywhere;
 }
 
-.sighting__list button span {
+.sighting__list > li > button span {
     flex: none;
     color: var(--muted);
     white-space: nowrap;
     font-size: 0.9rem;
 }
 
-.sighting__list .is-current button {
+.sighting__list > .is-current > button {
     border-color: var(--ink);
     background: var(--accent-soft);
 }
@@ -391,13 +391,13 @@
     text-align: center;
 }
 
-.sighting__places button {
+.sighting__places > li > button {
     flex-direction: column;
     align-items: stretch;
     gap: 4px;
 }
 
-.sighting__places button:disabled {
+.sighting__places > li > button:disabled {
     cursor: default;
     opacity: 0.85;
 }
@@ -478,6 +478,25 @@
     font-size: 0.8rem;
 }
 
-.sighting__places li > .nearby {
-    padding: 0 14px 10px;
+/* A place is one card: the row's button (no frame of its own) and, for a private place, the public
+   land panel inside the same frame beneath it. */
+.sighting__places > li {
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+}
+
+.sighting__places > li.is-current {
+    border-color: var(--ink);
+    background: var(--accent-soft);
+}
+
+.sighting__places > li > button,
+.sighting__places > .is-current > button {
+    border: 0;
+    background: transparent;
+}
+
+.sighting__places > li > .nearby {
+    padding: 0 14px 12px;
 }
