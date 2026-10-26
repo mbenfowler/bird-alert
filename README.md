@@ -63,3 +63,7 @@ Pushes to `main` deploy to Vercel automatically. `vercel.json` rewrites `/api/*`
 ## Thanks
 
 Bird data is from the [eBird API](https://documenter.getpostman.com/view/664302/S1ENwy59), photos from Nuthatch and Wikimedia Commons, and most of the goose photos exist because Georgia has a lot of geese.
+
+## Map tiles
+
+Maps use OpenStreetMap's public tile servers, which allow light use only. Before real traffic, set `VITE_TILE_URL` (a `{z}/{x}/{y}` template including your key) and `VITE_TILE_ATTRIBUTION` in the Vercel project to switch to a keyed provider such as MapTiler or Stadia Maps; both have free tiers. The variables are read at build time, so redeploy after setting them.
