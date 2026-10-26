@@ -56,7 +56,7 @@ describe('Sighting page and region map', () => {
   })
 
   it('shows the region map with watch-list pins and switches to notable', () => {
-    cy.get('.alerts-map-link').click()
+    cy.get('.alerts-map-link[href="/map"]').click()
     cy.url().should('include', '/map')
     cy.get('.map-page__bar h1').should('contain', 'Watch list sightings in Hall')
     cy.get('.sightings-map .map-pin').should('have.length', 1)

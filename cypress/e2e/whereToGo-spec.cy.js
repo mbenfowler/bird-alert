@@ -7,7 +7,7 @@ describe('Where to go', () => {
   })
 
   it('reaches the page from the alerts bar and shows the route, places and bird chips', () => {
-    cy.get('.alerts-map-link[href="/go"]').click()
+    cy.get('.alerts-go-link').click()
     cy.url().should('include', '/go')
     cy.wait('@whereToGo').its('request.url').should('match', /codes=cangoo(%2C|,)snogoo/)
     cy.get('.go__summary').should('contain', '2 birds on your watch list').and('contain', '2 places in Hall')
