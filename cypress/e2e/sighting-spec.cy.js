@@ -20,7 +20,8 @@ describe('Sighting page and region map', () => {
     cy.get('.sighting__tips').should('contain', 'Where to look').and('contain', 'V formations').and('contain', 'Any time')
     cy.get('.sighting__odds').should('contain', 'Here all year').and('contain', 'Best 8 am to 10 am')
     cy.get('.sighting__places li').should('have.length', 2)
-    cy.get('.sighting__places li').first().should('have.class', 'is-current').and('contain', 'High').and('contain', 'private').and('contain', '5 days in 30').and('contain', '4 of 6 checklists').and('contain', 'behind the barn')
+    cy.get('.sighting__grades').should('have.text', 'Seen on a visit lately: High 71% · Fair 22%')
+    cy.get('.sighting__places li').first().should('have.class', 'is-current').and('contain', 'High').and('contain', 'private').and('contain', '5 days in 30').and('contain', '67% of 6 checklists').and('contain', 'best 7 am to 9 am').and('contain', 'behind the barn')
     cy.get('.sighting__places li').eq(1).should('contain', 'Fair').and('contain', '+1 nearby').and('not.contain', 'checklists')
   })
 

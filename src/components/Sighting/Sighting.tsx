@@ -10,7 +10,7 @@ import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
 import { useBirdsQuery, useCurrentUser, useRegionsQuery, useSavedCodes, useSeasonalityQuery, useSpeciesObservationsQuery, useWhereToFindQuery } from '../../hooks/queries'
 import { useToggleSavedMutation } from '../../hooks/mutations'
-import type { Observation, Place, PersistenceClass } from '../../types'
+import type { Observation, Place, PersistenceClass, WhereToFind } from '../../types'
 import { formatObsDt } from '../../format'
 import './Sighting.css'
 
@@ -30,11 +30,19 @@ const CLASS_LABEL: Record<PersistenceClass, string> = {
 
 const ago = (daysAgo: number) => daysAgo === 0 ? 'today' : daysAgo === 1 ? 'yesterday' : `${daysAgo} days ago`
 
-/** One line of evidence behind a place's band: how often, how recently, and how reliably. */
+/** One line of evidence behind a place's band: how often, how recently, how reliably, and when. */
 const evidence = (place: Place) => {
   const parts = [`${place.days} ${place.days === 1 ? 'day' : 'days'} in 30`, `last ${ago(place.lastSeen.daysAgo)}${place.lastSeen.time ? ` ${formatObsDt(`${place.lastSeen.day} ${place.lastSeen.time}`).split(', ')[1] ?? ''}` : ''}`.trim()]
-  if (place.effort.detection !== null) parts.push(`${place.effort.withSpecies} of ${place.effort.checklists} checklists`)
+  if (place.effort.detection !== null) parts.push(`${place.effort.detection}% of ${place.effort.checklists} checklists`)
+  if (place.bestTime) parts.push(`best ${place.bestTime.label}`)
   return parts.join(' · ')
+}
+
+/** What the bands have meant here lately, once enough predictions have been graded to say. */
+const gradesLine = (grades: WhereToFind['grades']) => {
+  if (!grades) return null
+  const parts = (['High', 'Good', 'Fair'] as const).filter(b => grades[b]?.enough && grades[b]?.rate !== null).map(b => `${b} ${grades[b]!.rate}%`)
+  return parts.length ? `Seen on a visit lately: ${parts.join(' · ')}` : null
 }
 
 /**
@@ -195,6 +203,7 @@ const Sighting = () => {
                 <p className='sighting__odds'>
                   <span>{CLASS_LABEL[where.data.class]}</span>
                   <span>{where.data.bestTime.source === 'reports' ? `Best ${where.data.bestTime.label}` : `Usually best: ${where.data.bestTime.label.toLowerCase()}`}</span>
+                  {gradesLine(where.data.grades) && <span className='sighting__grades'>{gradesLine(where.data.grades)}</span>}
                 </p>
                 <ol className='sighting__list sighting__places'>
                   {places.map(place => {
