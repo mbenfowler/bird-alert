@@ -8,9 +8,9 @@ import { useBirdSound } from '../../hooks/useBirdSound'
 import ErrorMessage from '../Error/ErrorMessage'
 import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
-import { useBirdsQuery, useCurrentUser, useRegionsQuery, useSavedCodes, useSeasonalityQuery, useSpeciesObservationsQuery } from '../../hooks/queries'
+import { useBirdsQuery, useCurrentUser, useRegionsQuery, useSavedCodes, useSeasonalityQuery, useSpeciesObservationsQuery, useWhereToFindQuery } from '../../hooks/queries'
 import { useToggleSavedMutation } from '../../hooks/mutations'
-import type { Observation } from '../../types'
+import type { Observation, Place, PersistenceClass } from '../../types'
 import { formatObsDt } from '../../format'
 import './Sighting.css'
 
@@ -19,6 +19,22 @@ const mapsHref = (o: Observation) => {
   return apple
     ? `https://maps.apple.com/?ll=${o.lat},${o.lng}&q=${encodeURIComponent(`${o.comName} - ${o.locName}`)}&z=15`
     : `https://www.google.com/maps/search/?api=1&query=${o.lat}%2C${o.lng}`
+}
+
+const CLASS_LABEL: Record<PersistenceClass, string> = {
+  resident: 'Here all year',
+  seasonal: 'A seasonal visitor here',
+  passage: 'Passing through',
+  rare: 'Rare here'
+}
+
+const ago = (daysAgo: number) => daysAgo === 0 ? 'today' : daysAgo === 1 ? 'yesterday' : `${daysAgo} days ago`
+
+/** One line of evidence behind a place's band: how often, how recently, and how reliably. */
+const evidence = (place: Place) => {
+  const parts = [`${place.days} ${place.days === 1 ? 'day' : 'days'} in 30`, `last ${ago(place.lastSeen.daysAgo)}${place.lastSeen.time ? ` ${formatObsDt(`${place.lastSeen.day} ${place.lastSeen.time}`).split(', ')[1] ?? ''}` : ''}`.trim()]
+  if (place.effort.detection !== null) parts.push(`${place.effort.withSpecies} of ${place.effort.checklists} checklists`)
+  return parts.join(' · ')
 }
 
 /**
@@ -41,6 +57,7 @@ const Sighting = () => {
   const savedCodes = useSavedCodes()
   const toggleSaved = useToggleSavedMutation()
   const seasonality = useSeasonalityQuery(region, code)
+  const where = useWhereToFindQuery(region, code)
   const sound = useBirdSound(code, bird?.comName ?? code)
   const regions = useRegionsQuery(user.state)
   const regionName = regions.data?.find(r => r.code === region)?.name ?? 'your county'
@@ -106,6 +123,10 @@ const Sighting = () => {
   const ebirdHref = current?.subId ? `https://ebird.org/checklist/${current.subId}` : `https://ebird.org/species/${code}`
   // Selecting swaps the report in place; the browser's Back still leaves the page, not the selection.
   const select = (o: Observation) => navigate(`/sighting/${code}/${o.subId}`, { replace: true })
+  // A place stands for its newest report in the live feed; selecting it pans the map there.
+  const reportAt = (place: Place) => all.find(o => o.subId === place.lastSeen.subId) ?? all.find(o => o.locId === place.locId) ?? all.find(o => o.locName === place.locName)
+  const places = where.data?.places ?? []
+  const currentPlace = current ? (places.find(p => p.lastSeen.subId === current.subId) ?? places.find(p => p.locId === current.locId)) : undefined
 
   return (
     <section className='sighting'>
@@ -165,24 +186,61 @@ const Sighting = () => {
 
         <div className={`sighting__list-col ${more ? 'has-more' : ''}`}>
           <div className='sighting__scroll' ref={listRef}>
-            <h2 className='fredericka sighting__subhead'>
-              Reported in the last 30 days
-              <span className='sighting__count'>{all.length}</span>
-            </h2>
-            {all.length > 0 && (
-              <ol className='sighting__list'>
-                {all.map(o => {
-                  const selected = Boolean(current && o.subId === current.subId)
-                  return (
-                    <li key={`${o.subId}-${o.lat}-${o.lng}`} className={selected ? 'is-current' : undefined}>
-                      <button type='button' onClick={() => select(o)} aria-current={selected ? 'true' : undefined}>
-                        <strong>{o.locName}</strong>
-                        <span>{formatObsDt(o.obsDt)}{o.howMany ? ` · ${o.howMany} seen` : ''}</span>
-                      </button>
-                    </li>
-                  )
-                })}
-              </ol>
+            {where.data && places.length > 0 ? (
+              <>
+                <h2 className='fredericka sighting__subhead'>
+                  Where to find it
+                  <span className='sighting__count'>{places.length}</span>
+                </h2>
+                <p className='sighting__odds'>
+                  <span>{CLASS_LABEL[where.data.class]}</span>
+                  <span>{where.data.bestTime.source === 'reports' ? `Best ${where.data.bestTime.label}` : `Usually best: ${where.data.bestTime.label.toLowerCase()}`}</span>
+                </p>
+                <ol className='sighting__list sighting__places'>
+                  {places.map(place => {
+                    const selected = currentPlace?.locId === place.locId
+                    const report = reportAt(place)
+                    const note = place.notes[0]
+                    return (
+                      <li key={place.locId} className={selected ? 'is-current' : undefined}>
+                        <button type='button' onClick={() => { if (report) select(report) }} aria-current={selected ? 'true' : undefined} disabled={!report}>
+                          <span className='place__head'>
+                            <span className={`band band--${place.band.toLowerCase().replace(' ', '-')}`}>{place.band}</span>
+                            <strong>{place.locName ?? place.locId}</strong>
+                            {place.isHotspot === false && <span className='place__private' title='A personal location, not a public hotspot'>private</span>}
+                            {(place.merged?.length ?? 0) > 0 && <span className='place__private' title={`Includes nearby personal locations: ${place.merged!.map(m => m.locName ?? m.locId).join(', ')}`}>+{place.merged!.length} nearby</span>}
+                          </span>
+                          <span className='place__evidence'>{evidence(place)}</span>
+                          {note && <span className='place__note'>“{note.text}”{note.observer ? ` — ${note.observer}` : ''}, {formatObsDt(note.time ? `${note.day} ${note.time}` : note.day)}</span>}
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ol>
+              </>
+            ) : (
+              <>
+                <h2 className='fredericka sighting__subhead'>
+                  Reported in the last 30 days
+                  <span className='sighting__count'>{all.length}</span>
+                </h2>
+                {where.isPending && <p className='list-note'>Working out where to look…</p>}
+                {all.length > 0 && (
+                  <ol className='sighting__list'>
+                    {all.map(o => {
+                      const selected = Boolean(current && o.subId === current.subId)
+                      return (
+                        <li key={`${o.subId}-${o.lat}-${o.lng}`} className={selected ? 'is-current' : undefined}>
+                          <button type='button' onClick={() => select(o)} aria-current={selected ? 'true' : undefined}>
+                            <strong>{o.locName}</strong>
+                            <span>{formatObsDt(o.obsDt)}{o.howMany ? ` · ${o.howMany} seen` : ''}</span>
+                          </button>
+                        </li>
+                      )
+                    })}
+                  </ol>
+                )}
+              </>
             )}
           </div>
         </div>

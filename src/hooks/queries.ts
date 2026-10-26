@@ -2,8 +2,7 @@ import { useMemo } from 'react'
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions,
-  getSavedBirds, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality
-} from '../apiCalls'
+  getSavedBirds, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
 import type { User } from '../types'
 
@@ -28,7 +27,8 @@ export const queryKeys = {
   speciesObservations: (region: string, code: string) => ['species-observations', region, code] as const,
   arrivals: (region: string) => ['arrivals', region] as const,
   seasonality: (region: string, code: string) => ['seasonality', region, code] as const,
-  sightings: (region: string, ids: string) => ['sightings', region, ids] as const
+  sightings: (region: string, ids: string) => ['sightings', region, ids] as const,
+  whereToFind: (region: string, code: string) => ['where-to-find', region, code] as const
 }
 
 /** The logged-in user, null when logged out, undefined while the cookie is being checked. */
@@ -214,4 +214,13 @@ export const useSightingsQuery = (region: string, refs: SightingRef[]) =>
     },
     staleTime: 5 * MINUTE,
     enabled: Boolean(region) && refs.length > 0
+  })
+
+/** Where to find one species in the region: ranked places with evidence. Fresh every ten minutes. */
+export const useWhereToFindQuery = (region: string, code: string) =>
+  useQuery({
+    queryKey: queryKeys.whereToFind(region, code),
+    queryFn: () => getWhereToFind(region, code),
+    staleTime: 10 * MINUTE,
+    enabled: Boolean(region && code)
   })
