@@ -158,6 +158,8 @@ export interface Place {
   merged?: { locId: string; locName: string | null }[]
   /** The place's own busiest two hours, once it has five timed reports. */
   bestTime?: { label: string; share: number; samples: number } | null
+  /** The chance (0-100) that a visit finds the bird; the band is a threshold on it. */
+  chance?: number
   band: PlaceBand
   score: number
   days: number

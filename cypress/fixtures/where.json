@@ -44,7 +44,8 @@
         "label": "7 am to 9 am",
         "share": 55,
         "samples": 9
-      }
+      },
+      "chance": 86
     },
     {
       "locId": "L999",
@@ -73,7 +74,8 @@
           "locName": "Olympic Park yard"
         }
       ],
-      "bestTime": null
+      "bestTime": null,
+      "chance": 31
     }
   ],
   "grades": {

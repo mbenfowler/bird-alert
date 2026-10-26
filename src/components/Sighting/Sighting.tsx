@@ -30,11 +30,20 @@ const CLASS_LABEL: Record<PersistenceClass, string> = {
 
 const ago = (daysAgo: number) => daysAgo === 0 ? 'today' : daysAgo === 1 ? 'yesterday' : `${daysAgo} days ago`
 
-/** One line of evidence behind a place's band: how often, how recently, how reliably, and when. */
+const article = (n: number) => (n === 8 || n === 11 || n === 18 || (n >= 80 && n <= 89)) ? 'an' : 'a'
+
+/** The sentence under a place: the chance and when to go (the place's own hours, else the species'). */
+const chanceLine = (place: Place, speciesTime: string | null) => {
+  if (place.chance === undefined) return null
+  const when = place.bestTime?.label ?? speciesTime
+  return `You have ${article(place.chance)} ${place.chance}% chance to see it here${when ? `, best ${when}` : ''}`
+}
+
+/** The evidence behind the number: how often, how recently, and how much the place is birded. */
 const evidence = (place: Place) => {
   const parts = [`${place.days} ${place.days === 1 ? 'day' : 'days'} in 30`, `last ${ago(place.lastSeen.daysAgo)}${place.lastSeen.time ? ` ${formatObsDt(`${place.lastSeen.day} ${place.lastSeen.time}`).split(', ')[1] ?? ''}` : ''}`.trim()]
-  if (place.effort.detection !== null) parts.push(`${place.effort.detection}% of ${place.effort.checklists} checklists`)
-  if (place.bestTime) parts.push(`best ${place.bestTime.label}`)
+  if (place.effort.detection !== null) parts.push(`on ${place.effort.withSpecies} of ${place.effort.checklists} checklists`)
+  else if (place.effort.checklists > 0) parts.push(`${place.effort.checklists} ${place.effort.checklists === 1 ? 'checklist' : 'checklists'} lately`)
   return parts.join(' · ')
 }
 
@@ -219,6 +228,7 @@ const Sighting = () => {
                             {place.isHotspot === false && <span className='place__private' title='A personal location, not a public hotspot'>private</span>}
                             {(place.merged?.length ?? 0) > 0 && <span className='place__private' title={`Includes nearby personal locations: ${place.merged!.map(m => m.locName ?? m.locId).join(', ')}`}>+{place.merged!.length} nearby</span>}
                           </span>
+                          {chanceLine(place, where.data.bestTime.source === 'reports' ? where.data.bestTime.label : null) && <span className='place__chance'>{chanceLine(place, where.data.bestTime.source === 'reports' ? where.data.bestTime.label : null)}</span>}
                           <span className='place__evidence'>{evidence(place)}</span>
                           {note && <span className='place__note'>“{note.text}”{note.observer ? ` — ${note.observer}` : ''}, {formatObsDt(note.time ? `${note.day} ${note.time}` : note.day)}</span>}
                         </button>
