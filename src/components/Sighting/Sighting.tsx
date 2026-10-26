@@ -9,7 +9,8 @@ import { useBirdSound } from '../../hooks/useBirdSound'
 import ErrorMessage from '../Error/ErrorMessage'
 import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
-import { useBirdsQuery, useCurrentUser, useRegionsQuery, useSavedCodes, useSeasonalityQuery, useSpeciesObservationsQuery, useWhereToFindQuery } from '../../hooks/queries'
+import { useBirdsQuery, useCurrentUser, useNearbyPublicQuery, useRegionsQuery, useSavedCodes, useSeasonalityQuery, useSpeciesObservationsQuery, useWhereToFindQuery } from '../../hooks/queries'
+import { closeOnOutside, focusFor } from '../../mapFocus'
 import { useToggleSavedMutation } from '../../hooks/mutations'
 import type { Observation, Place, PersistenceClass, WhereToFind } from '../../types'
 import { formatObsDt } from '../../format'
@@ -76,6 +77,7 @@ const Sighting = () => {
   const toggleSaved = useToggleSavedMutation()
   const seasonality = useSeasonalityQuery(region, code)
   const where = useWhereToFindQuery(region, code)
+  const [openNearby, setOpenNearby] = useState<string | null>(null)
   const sound = useBirdSound(code, bird?.comName ?? code)
   const regions = useRegionsQuery(user.state)
   const regionName = regions.data?.find(r => r.code === region)?.name ?? 'your county'
@@ -91,6 +93,16 @@ const Sighting = () => {
     // No Details link in the popup: the chosen report is already described under the map.
     highlight: current ? o.subId === current.subId && o.lat === current.lat && o.lng === current.lng : false
   })), [all, current])
+
+  const nearbyPlace = useMemo(() => (where.data?.places ?? []).find(p => p.locId === openNearby) ?? null, [where.data, openNearby])
+  const nearby = useNearbyPublicQuery(nearbyPlace?.lat ?? null, nearbyPlace?.lng ?? null, Boolean(nearbyPlace))
+  const focus = useMemo(() => nearbyPlace && nearbyPlace.lat !== null && nearbyPlace.lng !== null && nearby.data
+    ? focusFor({ lat: nearbyPlace.lat, lng: nearbyPlace.lng, label: nearbyPlace.locName ?? nearbyPlace.locId }, nearby.data)
+    : null, [nearbyPlace, nearby.data])
+  useEffect(() => {
+    if (!openNearby) return
+    return closeOnOutside(() => setOpenNearby(null))
+  }, [openNearby])
 
   // The frame is docked once the page has scrolled it up under the bar. Until then the list does
   // not scroll on its own, so a swipe on it moves the page (and docks the frame) rather than the
@@ -185,7 +197,7 @@ const Sighting = () => {
       <div className={`sighting__frame ${docked ? 'is-docked' : ''}`} ref={frameRef}>
         <div className='sighting__map'>
           {all.length
-            ? <SightingsMap points={points} height='100%' ariaLabel={`Map of recent ${name} sightings in your region`} openHighlighted
+            ? <SightingsMap points={points} focus={focus} height='100%' ariaLabel={`Map of recent ${name} sightings in your region`} openHighlighted={!focus}
                 onPinClick={(hit) => { const o = all.find(x => `${x.subId}-${x.lat}-${x.lng}` === hit[0]?.id); if (o) select(o) }} />
             : <p className='list-note sighting__nomap'>No reports of this species in your region in the last 30 days.</p>}
           <div className='sighting__pick'>
@@ -233,7 +245,11 @@ const Sighting = () => {
                           <span className='place__evidence'>{evidence(place)}</span>
                           {note && <span className='place__note'>“{note.text}”{note.observer ? ` — ${note.observer}` : ''}, {formatObsDt(note.time ? `${note.day} ${note.time}` : note.day)}</span>}
                         </button>
-                        {place.isHotspot === false && <NearbyPublic lat={place.lat} lng={place.lng} placeName={place.locName ?? place.locId} />}
+                        {place.isHotspot === false && place.lat !== null && (
+                          <NearbyPublic placeName={place.locName ?? place.locId} open={openNearby === place.locId}
+                            onOpen={() => { setOpenNearby(place.locId); const r = reportAt(place); if (r) select(r) }}
+                            data={openNearby === place.locId ? nearby.data : undefined} isPending={openNearby === place.locId && nearby.isPending} isError={openNearby === place.locId && nearby.isError} />
+                        )}
                       </li>
                     )
                   })}

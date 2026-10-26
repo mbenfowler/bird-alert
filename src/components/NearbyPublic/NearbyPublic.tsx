@@ -1,7 +1,6 @@
-import { useState } from 'react'
+import { CompassIcon } from '../Icons/Icons'
 import { LoadingState } from '../Loading/Loading'
-import { useNearbyPublicQuery } from '../../hooks/queries'
-import type { NearbyHotspot, NearbyPark } from '../../types'
+import type { NearbyPublic as NearbyData, NearbyHotspot, NearbyPark } from '../../types'
 import './NearbyPublic.css'
 
 const mapsHref = (lat: number, lng: number, name: string) => {
@@ -15,49 +14,64 @@ const lastBirded = (iso: string | null) => {
   return `last birded ${d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}`
 }
 
-interface NearbyPublicProps { lat: number | null; lng: number | null; placeName: string }
+/** "9 min drive · 4.8 mi", or the straight-line distance when the road could not be had. */
+const reach = (t: { miles: number; drive?: { minutes: number; miles: number } | null }) =>
+  t.drive ? `${t.drive.minutes} min drive · ${t.drive.miles} mi` : `${t.miles} mi as the crow flies`
+
+interface NearbyPublicProps {
+  placeName: string
+  open: boolean
+  onOpen: () => void
+  data: NearbyData | undefined
+  isPending: boolean
+  isError: boolean
+}
 
 /**
  * For a private place: the public land around it. eBird's hotspots nearby, with how much each has
- * been birded (little effort is a sneaky pick), and parks eBird does not list. Fetched on request.
+ * been birded (little effort is a sneaky pick), parks eBird does not list, and the drive to each.
+ * The page owns the open state so it can focus the map on the same places.
  */
-const NearbyPublic = ({ lat, lng, placeName }: NearbyPublicProps) => {
-  const [open, setOpen] = useState(false)
-  const nearby = useNearbyPublicQuery(lat, lng, open)
-  if (lat === null || lng === null) return null
-
-  const hotspots: NearbyHotspot[] = nearby.data?.hotspots ?? []
-  const parks: NearbyPark[] = nearby.data?.parks ?? []
-
+const NearbyPublic = ({ placeName, open, onOpen, data, isPending, isError }: NearbyPublicProps) => {
+  if (!open) {
+    return (
+      <div className='nearby'>
+        <button type='button' className='nearby__ask' onClick={onOpen}><CompassIcon /> Public land nearby</button>
+      </div>
+    )
+  }
+  const hotspots: NearbyHotspot[] = data?.hotspots ?? []
+  const parks: NearbyPark[] = data?.parks ?? []
   return (
-    <div className='nearby'>
-      {!open
-        ? <button type='button' className='nearby__ask' onClick={() => setOpen(true)}>Public land nearby</button>
-        : nearby.isPending ? <LoadingState variant='inline' label='Looking for public land nearby' />
-        : nearby.isError ? <p className='nearby__note'>Could not look up public land near {placeName} right now.</p>
+    <div className='nearby is-open'>
+      {isPending ? <LoadingState variant='inline' label='Looking for public land nearby' />
+        : isError ? <p className='nearby__note'>Could not look up public land near {placeName} right now.</p>
         : !hotspots.length && !parks.length ? <p className='nearby__note'>No public land within a few miles of {placeName} is on file.</p>
         : (
           <ul className='nearby__list' aria-label={`Public land near ${placeName}`}>
             {hotspots.map(h => (
-              <li key={h.locId}>
+              <li key={h.locId} className='nearby__hotspot'>
                 <a href={mapsHref(h.lat, h.lng, h.name)} target='_blank' rel='noreferrer'>
                   <strong>{h.name.replace(/^Lake Lanier--/, '')}</strong>
-                  <span>{h.miles} mi · {h.checklists ?? 0} {h.checklists === 1 ? 'checklist' : 'checklists'} all time{h.species ? `, ${h.species} species` : ''} · {lastBirded(h.latest)}</span>
+                  <span className='nearby__reach'>{reach(h)}</span>
+                  <span>{h.checklists ?? 0} {h.checklists === 1 ? 'checklist' : 'checklists'} all time{h.species ? `, ${h.species} species` : ''} · {lastBirded(h.latest)}</span>
                   {h.lightlyBirded && <em>lightly birded, a sneaky pick</em>}
                 </a>
               </li>
             ))}
             {parks.map(p => (
-              <li key={`${p.name}-${p.lat}`}>
+              <li key={`${p.name}-${p.lat}`} className='nearby__park'>
                 <a href={mapsHref(p.lat, p.lng, p.name)} target='_blank' rel='noreferrer'>
                   <strong>{p.name}</strong>
-                  <span>{p.miles} mi · not an eBird hotspot</span>
+                  <span className='nearby__reach'>{reach(p)}</span>
+                  <span>not an eBird hotspot</span>
                   <em>unlisted, nobody is counting here</em>
                 </a>
               </li>
             ))}
           </ul>
         )}
+      <p className='nearby__hint'>Roads and minutes are driving routes; tap anywhere outside this list to go back.</p>
     </div>
   )
 }

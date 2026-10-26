@@ -47,7 +47,7 @@
     margin: 0 0 8px;
     padding: 0;
     display: grid;
-    gap: 6px;
+    gap: 4px;
 }
 
 .go__stops button {
@@ -94,11 +94,33 @@
     font-size: 0.85rem;
 }
 
+.go__leg {
+    display: block;
+    margin: 0 0 6px 10px;
+    padding-left: 8px;
+    border-left: 2px dashed var(--line);
+    color: var(--muted);
+    font-family: system-ui, sans-serif;
+    font-size: 0.78rem;
+}
+
+.go__stop-birds {
+    color: var(--ink) !important;
+    font-size: 0.78rem !important;
+}
+
 .go__covers {
     margin: 0 0 10px;
     font-size: 0.9rem;
     color: var(--muted);
     text-align: center;
+}
+
+.go__route-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
 }
 
 .go__route .pill-button {

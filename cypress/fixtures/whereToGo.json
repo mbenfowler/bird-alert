@@ -109,10 +109,71 @@
         "lng": -83.9214,
         "expected": 0.8,
         "bestTime": "8 am to 10 am",
-        "birds": []
+        "birds": [
+          {
+            "speciesCode": "tuftit",
+            "comName": "Tufted Titmouse",
+            "chance": 52,
+            "band": "Good",
+            "lastSeen": {
+              "day": "2023-12-02",
+              "time": "08:10",
+              "subId": "S155544243",
+              "daysAgo": 0
+            },
+            "note": null
+          }
+        ]
+      },
+      {
+        "locId": "L14136408",
+        "locName": "Rusty's Gainesville Yard",
+        "lat": 34.2695382,
+        "lng": -83.9014098,
+        "expected": 0.9,
+        "bestTime": "7 am to 9 am",
+        "birds": [
+          {
+            "speciesCode": "cangoo",
+            "comName": "Canada Goose",
+            "chance": 86,
+            "band": "High",
+            "lastSeen": {
+              "day": "2023-12-01",
+              "time": "13:49",
+              "subId": "S155544243",
+              "daysAgo": 1
+            },
+            "note": null
+          }
+        ]
       }
     ],
-    "covers": 0.8,
-    "url": "https://www.google.com/maps/dir/?api=1&destination=34.2995%2C-83.9214&travelmode=driving"
+    "covers": 1.4,
+    "url": "https://www.google.com/maps/dir/?api=1&destination=34.2995%2C-83.9214&travelmode=driving",
+    "drive": {
+      "minutes": 9,
+      "miles": 3.1,
+      "legs": [
+        {
+          "minutes": 9,
+          "miles": 3.1
+        }
+      ],
+      "geometry": [
+        [
+          34.2995,
+          -83.9214
+        ],
+        [
+          34.29,
+          -83.91
+        ],
+        [
+          34.2695,
+          -83.9014
+        ]
+      ]
+    }
   }
 }

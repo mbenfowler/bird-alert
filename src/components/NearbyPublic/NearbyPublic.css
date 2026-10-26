@@ -1,20 +1,35 @@
 .nearby {
-    margin-top: 2px;
+    margin-top: 4px;
 }
 
+/* The way in: a filled pill, full width, because it can change where someone chooses to go. */
 .nearby__ask {
-    padding: 4px 10px;
-    border: 1.5px dashed var(--line);
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 2px solid var(--accent-ink);
     border-radius: 999px;
-    background: var(--surface);
-    color: var(--ink);
+    background: var(--accent);
+    color: var(--accent-ink);
     font: inherit;
-    font-size: 0.8rem;
+    font-size: 0.92rem;
+    font-weight: 700;
     cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+}
+
+.nearby__ask svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
 }
 
 .nearby__ask:hover {
-    border-color: var(--ink);
+    filter: brightness(1.05);
 }
 
 .nearby__note {
@@ -23,7 +38,7 @@
     font-size: 0.85rem;
 }
 
-/* Each option: name, a line of facts, and a word on why it is worth a look. */
+/* Each option: name, how to reach it, a line of facts, and a word on why it is worth a look. */
 .nearby__list {
     list-style: none;
     margin: 0;
@@ -38,15 +53,24 @@
     gap: 2px;
     padding: 8px 10px;
     border: 1.5px solid var(--line);
-    border-left: 4px solid var(--accent);
+    border-left: 5px solid #0f7b3a;
     border-radius: 8px;
     background: var(--surface-muted);
     color: var(--ink);
     text-decoration: none;
 }
 
+.nearby__park a {
+    border-left-color: #b8860b;
+}
+
 .nearby__list strong {
     overflow-wrap: anywhere;
+}
+
+.nearby__reach {
+    color: var(--ink) !important;
+    font-weight: 600;
 }
 
 .nearby__list span {
@@ -57,4 +81,10 @@
 .nearby__list em {
     color: var(--accent-ink);
     font-size: 0.8rem;
+}
+
+.nearby__hint {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 0.75rem;
 }

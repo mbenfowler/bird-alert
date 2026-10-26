@@ -9,7 +9,29 @@
       "checklists": 1,
       "species": 23,
       "latest": "2026-04-13",
-      "lightlyBirded": true
+      "lightlyBirded": true,
+      "drive": {
+        "minutes": 11,
+        "miles": 4.8,
+        "geometry": [
+          [
+            34.2695,
+            -83.9014
+          ],
+          [
+            34.3,
+            -83.88
+          ],
+          [
+            34.33,
+            -83.86
+          ],
+          [
+            34.38,
+            -83.83
+          ]
+        ]
+      }
     },
     {
       "locId": "L1",
@@ -20,7 +42,8 @@
       "checklists": 80,
       "species": 103,
       "latest": "2026-07-25",
-      "lightlyBirded": false
+      "lightlyBirded": false,
+      "drive": null
     }
   ],
   "parks": [
@@ -29,7 +52,25 @@
       "lat": 34.37,
       "lng": -83.86,
       "miles": 0.6,
-      "type": "park"
+      "type": "park",
+      "drive": {
+        "minutes": 4,
+        "miles": 1.2,
+        "geometry": [
+          [
+            34.2695,
+            -83.9014
+          ],
+          [
+            34.3,
+            -83.89
+          ],
+          [
+            34.37,
+            -83.86
+          ]
+        ]
+      }
     }
   ],
   "fetchedAt": "2026-10-26T00:00:00Z"

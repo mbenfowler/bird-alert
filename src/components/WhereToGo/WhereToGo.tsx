@@ -5,7 +5,8 @@ import NearbyPublic from '../NearbyPublic/NearbyPublic'
 import ErrorMessage from '../Error/ErrorMessage'
 import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
-import { useCurrentUser, useRegionsQuery, useSavedCodes, useSpeciesListQuery, useWhereToGoQuery } from '../../hooks/queries'
+import { useCurrentUser, useNearbyPublicQuery, useRegionsQuery, useSavedCodes, useSpeciesListQuery, useWhereToGoQuery } from '../../hooks/queries'
+import { closeOnOutside, focusFor } from '../../mapFocus'
 import { chanceColour } from '../../chance'
 import type { GoPlace } from '../../types'
 import './WhereToGo.css'
@@ -32,6 +33,9 @@ const WhereToGo = () => {
   const regions = useRegionsQuery(user.state)
   const regionName = regions.data?.find(r => r.code === region)?.name ?? 'your county'
   const [selected, setSelected] = useState<string | null>(null)
+  // One private place at a time can open its public lands; the map focuses on them meanwhile.
+  const [openNearby, setOpenNearby] = useState<string | null>(null)
+  const [showRoute, setShowRoute] = useState(false)
 
   const places = useMemo(() => go.data?.places ?? [], [go.data])
   const points = useMemo<MapPoint[]>(() => places.filter(p => p.lat !== null && p.lng !== null).map(p => ({
@@ -42,6 +46,16 @@ const WhereToGo = () => {
     subtitle: `${birdsWord(p.expected)} expected${p.bestTime ? ` · best ${p.bestTime}` : ''}`,
     highlight: p.locId === selected
   })), [places, selected])
+
+  const nearbyPlace = useMemo(() => places.find(p => p.locId === openNearby) ?? null, [places, openNearby])
+  const nearby = useNearbyPublicQuery(nearbyPlace?.lat ?? null, nearbyPlace?.lng ?? null, Boolean(nearbyPlace))
+  const focus = useMemo(() => nearbyPlace && nearbyPlace.lat !== null && nearbyPlace.lng !== null && nearby.data
+    ? focusFor({ lat: nearbyPlace.lat, lng: nearbyPlace.lng, label: nearbyPlace.locName ?? nearbyPlace.locId }, nearby.data)
+    : null, [nearbyPlace, nearby.data])
+  useEffect(() => {
+    if (!openNearby) return
+    return closeOnOutside(() => setOpenNearby(null))
+  }, [openNearby])
 
   // Docking, as on the species page: the list scrolls by itself only once the frame is under the bar.
   const frameRef = useRef<HTMLDivElement>(null)
@@ -73,6 +87,9 @@ const WhereToGo = () => {
 
   const { route, species } = go.data
   const select = (place: GoPlace) => setSelected(place.locId)
+  const routeOnMap = showRoute && route.stops.length >= 2
+    ? { path: route.drive?.geometry ?? route.stops.map(s => [s.lat, s.lng] as [number, number]), stops: route.stops.map(s => ({ lat: s.lat, lng: s.lng, label: s.locName ?? s.locId })) }
+    : null
 
   return (
     <section className='go'>
@@ -87,18 +104,31 @@ const WhereToGo = () => {
             <ol className='go__stops'>
               {route.stops.map((stop, i) => (
                 <li key={stop.locId}>
-                  <button type='button' onClick={() => setSelected(stop.locId)}>
+                  {i > 0 && (
+                    <span className='go__leg' aria-label={route.drive?.legs?.[i - 1] ? `${route.drive.legs[i - 1].minutes} minute drive` : 'drive'}>
+                      {route.drive?.legs?.[i - 1] ? `↓ ${route.drive.legs[i - 1].minutes} min drive · ${route.drive.legs[i - 1].miles} mi` : '↓ drive'}
+                    </span>
+                  )}
+                  <button type='button' onClick={() => { setSelected(stop.locId); setShowRoute(true) }}>
                     <span className='go__stop-n'>{i + 1}</span>
                     <span className='go__stop-text'>
                       <strong>{stop.locName ?? stop.locId}</strong>
                       <span>{birdsWord(stop.expected)} expected{stop.bestTime ? ` · best ${stop.bestTime}` : ''}</span>
+                      {stop.birds.length > 0 && <span className='go__stop-birds'>{stop.birds.slice(0, 4).map(b => `${b.comName} ${b.chance}%`).join(' · ')}{stop.birds.length > 4 ? ` · +${stop.birds.length - 4}` : ''}</span>}
                     </span>
                   </button>
                 </li>
               ))}
             </ol>
-            <p className='go__covers'>Together these cover about {birdsWord(route.covers)} of your {species.length}.</p>
-            {route.url && <a className='pill-button pill-button--primary' href={route.url} target='_blank' rel='noreferrer'>Open route in Maps</a>}
+            <p className='go__covers'>
+              Together these cover about {birdsWord(route.covers)} of your {species.length}.
+              {route.drive ? ` ${route.drive.minutes} minutes of driving, ${route.drive.miles} miles.` : ''}
+              {route.stops[0]?.bestTime ? ` Start at ${route.stops[0].locName ?? 'the first stop'}, best ${route.stops[0].bestTime}.` : ''}
+            </p>
+            <div className='go__route-actions'>
+              <button type='button' className={`pill-button ${showRoute ? 'pill-button--primary' : ''}`} aria-pressed={showRoute} onClick={() => setShowRoute(v => !v)}>{showRoute ? 'Hide route on map' : 'Show route on map'}</button>
+              {route.url && <a className='pill-button' href={route.url} target='_blank' rel='noreferrer'>Open in Maps</a>}
+            </div>
           </div>
         )}
       </header>
@@ -106,7 +136,7 @@ const WhereToGo = () => {
       <div className={`go__frame ${docked ? 'is-docked' : ''}`} ref={frameRef}>
         <div className='go__map'>
           {points.length
-            ? <SightingsMap points={points} height='100%' ariaLabel={`Map of places for your watch list in ${regionName}`} openHighlighted
+            ? <SightingsMap points={points} focus={focus} route={focus ? null : routeOnMap} height='100%' ariaLabel={`Map of places for your watch list in ${regionName}`} openHighlighted={!focus}
                 onPinClick={(hit) => { const p = places.find(x => x.locId === hit[0]?.id); if (p) select(p) }} />
             : <p className='list-note go__nomap'>None of these places have coordinates yet.</p>}
         </div>
@@ -129,7 +159,11 @@ const WhereToGo = () => {
                     ))}
                     {place.birds.length > 8 && <span className='go__more'>+{place.birds.length - 8} more</span>}
                   </div>
-                  {place.isHotspot === false && <NearbyPublic lat={place.lat} lng={place.lng} placeName={place.locName ?? place.locId} />}
+                  {place.isHotspot === false && place.lat !== null && (
+                    <NearbyPublic placeName={place.locName ?? place.locId} open={openNearby === place.locId}
+                      onOpen={() => { setOpenNearby(place.locId); setSelected(place.locId) }}
+                      data={openNearby === place.locId ? nearby.data : undefined} isPending={openNearby === place.locId && nearby.isPending} isError={openNearby === place.locId && nearby.isError} />
+                  )}
                 </li>
               ))}
             </ol>

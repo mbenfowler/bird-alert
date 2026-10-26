@@ -85,3 +85,63 @@
     margin: 10px 14px;
     line-height: 1.4;
 }
+
+/* Focus: every ordinary pin fades, the focused one and the public lands stand out, roads are drawn. */
+.sightings-map.is-focused .map-pin:not(.map-pin--highlight):not(.map-pin--public) {
+    opacity: 0.25;
+    filter: grayscale(1);
+}
+
+.map-pin--public .map-pin__head {
+    background: #0f7b3a;
+}
+
+.map-pin--public .map-pin__tail {
+    border-top-color: #0f7b3a;
+}
+
+.map-pin--park .map-pin__head {
+    background: #b8860b;
+}
+
+.map-pin--park .map-pin__tail {
+    border-top-color: #b8860b;
+}
+
+.map-road__label {
+    padding: 1px 6px;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    font: 700 11px/1.3 system-ui, sans-serif;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.map-road__label::before {
+    display: none;
+}
+
+.map-public__label {
+    padding: 2px 7px;
+    border: 1.5px solid var(--ink);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--ink);
+    font: 600 11px/1.3 system-ui, sans-serif;
+    white-space: nowrap;
+}
+
+/* Route stops: numbered discs on the drawn road. */
+.map-stop {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    background: #1a56db;
+    color: #fff;
+    font: 700 12px/1 system-ui, sans-serif;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
