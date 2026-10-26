@@ -92,6 +92,16 @@ const WhereToGo = () => {
     return () => { window.removeEventListener('scroll', update); window.removeEventListener('resize', update) }
   }, [places.length])
 
+  // Starting an edit brings the map and the route under the bar together.
+  useEffect(() => {
+    if (!editing) return
+    const frame = frameRef.current
+    if (!frame) return
+    const bar = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-height')) || 55
+    const gap = Number.parseFloat(getComputedStyle(frame).getPropertyValue('--dock-gap')) || 0
+    window.scrollTo({ top: window.scrollY + frame.getBoundingClientRect().top - bar - gap, behavior: 'smooth' })
+  }, [editing])
+
   if (!codes.length) {
     return (
       <section className='go'>
@@ -114,22 +124,25 @@ const WhereToGo = () => {
       }
     : null
 
-  return (
-    <section className='go'>
-      <header className='go__hero'>
-        <div className='go__title-row'>
-          <h1 className='fredericka go__title'>Where to go</h1>
-          <p className='go__summary'>{species.length} {species.length === 1 ? 'bird' : 'birds'} on your watch list · {places.length} {places.length === 1 ? 'place' : 'places'} in {regionName} with reports in the last 30 days</p>
-        </div>
-        {(stops.length > 0 || custom) && (
-          <RouteCard state={user.state} places={places} speciesCount={species.length} stops={stops} start={start} arriving={arriving}
+  const hasRoute = stops.length > 0 || custom !== null
+  const routeCard = hasRoute ? (
+    <RouteCard state={user.state} places={places} speciesCount={species.length} stops={stops} start={start} arriving={arriving}
             drive={drive} covers={custom ? coverage(stops, places) : route!.covers} url={custom ? mapsUrl(stops, start) : route!.url}
             custom={custom !== null} editing={editing} showRoute={showRoute}
             onEditing={(on) => { setEditing(on); if (on) { closeNearby(); setShowRoute(true) } }}
             onStops={(next) => setCustom(next)} onStart={setStart} onReset={() => setCustom(null)}
             onStopClick={(stop) => { if (stop.locId) setSelected(stop.locId); setShowRoute(true) }}
             onToggleRoute={() => setShowRoute(v => !v)} />
-        )}
+  ) : null
+
+  return (
+    <section className={`go ${editing ? 'is-editing-route' : ''}`}>
+      <header className='go__hero'>
+        <div className='go__title-row'>
+          <h1 className='fredericka go__title'>Where to go</h1>
+          <p className='go__summary'>{species.length} {species.length === 1 ? 'bird' : 'birds'} on your watch list · {places.length} {places.length === 1 ? 'place' : 'places'} in {regionName} with reports in the last 30 days</p>
+        </div>
+        {!editing && routeCard}
       </header>
 
       <div className={`go__frame ${docked ? 'is-docked' : ''}`} ref={frameRef}>
@@ -141,6 +154,9 @@ const WhereToGo = () => {
         </div>
         <div className='go__list-col'>
           <div className='go__scroll'>
+            {/* Editing, the route takes the list's place beside the map, so each change shows as it is made. */}
+            {editing && routeCard}
+            {!editing && <>
             <h2 className='fredericka go__subhead'>Best places for your birds</h2>
             <ol className='go__places'>
               {places.map(place => (
@@ -167,6 +183,7 @@ const WhereToGo = () => {
                 </li>
               ))}
             </ol>
+            </>}
           </div>
         </div>
       </div>

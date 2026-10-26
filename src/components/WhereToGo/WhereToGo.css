@@ -485,3 +485,27 @@
         column-gap: 14px;
     }
 }
+
+/* Editing: the route sits in the list's column beside the map and scrolls on its own; its buttons
+   stay in reach at the foot of the column however long the route grows. */
+.is-editing-route .go__scroll {
+    overflow-y: auto;
+    padding-bottom: 0;
+}
+
+.go__scroll .go__route.is-editing {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 0;
+}
+
+.go__route.is-editing .go__route-actions {
+    position: sticky;
+    bottom: 0;
+    margin: auto -12px 0;
+    padding: 10px 12px 12px;
+    background: var(--surface-muted);
+    border-top: 1px solid var(--line);
+    border-radius: 0 0 10px 10px;
+}
