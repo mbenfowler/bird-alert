@@ -31,7 +31,9 @@ interface SightingsMapProps {
   /** When set, the map zooms to this pin and its public lands, dims every other pin, and draws the roads. */
   focus?: MapFocus | null
   /** A route through stops, drawn as one line when the page asks for it. */
-  route?: { path: [number, number][]; stops: { lat: number; lng: number; label: string }[]; start?: { lat: number; lng: number; label: string } | null } | null
+  route?: { path: [number, number][]; stops: { lat: number; lng: number; label: string }[]; start?: { lat: number; lng: number; label: string } | null
+    /** A place being considered: a ghost stop on the end, reached by a dashed line. Never re-frames the map. */
+    preview?: { lat: number; lng: number; label: string; from: [number, number] } | null } | null
   /** Fallback centre when there are no points. */
   center?: [number, number]
   height?: number | string
@@ -96,7 +98,7 @@ const FitToPoints = ({ points, focus, route }: { points: MapPoint[]; focus?: Map
     }
     map.flyToBounds(L.latLngBounds(points.map(p => [p.lat, p.lng] as [number, number])), { padding: [36, 36], maxZoom: 14, duration: 0.6 })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, places, focusKey, routeKey])
+  }, [map, focus ? `f:${focusKey}` : route && route.stops.length ? `r:${routeKey}` : `p:${places}`])
   useEffect(() => {
     if (highlightKey) map.panInside(highlightKey.split(',').map(Number) as [number, number], { padding: [36, 36] })
   }, [map, highlightKey])
@@ -165,6 +167,12 @@ const SightingsMap = ({ points, focus = null, route = null, center = [39.8, -98.
               <Marker position={[route.start.lat, route.start.lng]} icon={L.divIcon({ className: 'map-stop map-stop--start', html: '<span></span>', iconSize: [22, 22], iconAnchor: [11, 11] })} zIndexOffset={1900}>
                 <Tooltip direction='top' offset={[0, -12]}>{route.start.label}</Tooltip>
               </Marker>
+            )}
+            {route.preview && (
+              <>
+                <Polyline key={`preview-${route.preview.lat},${route.preview.lng}`} className='map-route map-route--preview' positions={[route.preview.from, [route.preview.lat, route.preview.lng]]} pathOptions={{ color: '#1a56db', weight: 4, opacity: 0.8, dashArray: '2 8', lineCap: 'round' }} />
+                <Marker position={[route.preview.lat, route.preview.lng]} icon={L.divIcon({ className: 'map-stop map-stop--preview', html: `<span>${route.stops.length + 1}</span>`, iconSize: [26, 26], iconAnchor: [13, 13] })} zIndexOffset={2100} interactive={false} />
+              </>
             )}
             {route.stops.map((stop, i) => (
               <Marker key={`stop-${i}`} position={[stop.lat, stop.lng]} icon={L.divIcon({ className: 'map-stop', html: `<span>${i + 1}</span>`, iconSize: [26, 26], iconAnchor: [13, 13] })} zIndexOffset={2000}>

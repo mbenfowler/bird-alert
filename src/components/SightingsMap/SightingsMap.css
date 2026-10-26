@@ -127,6 +127,13 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
+/* A stop under consideration: the same disc, hollow and dashed. */
+.map-stop--preview {
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px dashed #1a56db;
+    color: #1a56db;
+}
+
 /* Where the day starts: a dark disc with a white centre, no number. */
 .map-stop--start {
     width: 22px;

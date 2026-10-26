@@ -528,3 +528,17 @@
 .go__quick-add:disabled {
     cursor: not-allowed;
 }
+
+/* A place under the mouse, shown as the next stop until the mouse moves on. */
+.go__stop.is-preview .go__stop-main {
+    border-style: dashed;
+    border-color: #1a56db;
+    background: transparent;
+    cursor: default;
+}
+
+.go__stop.is-preview .go__stop-n {
+    background: transparent;
+    border: 2px dashed #1a56db;
+    color: #1a56db;
+}

@@ -9,7 +9,7 @@ import RouteCard from './RouteCard'
 import { useCurrentUser, useDriveQuery, useNearbyPublicQuery, useRegionsQuery, useSavedCodes, useSpeciesListQuery, useWhereToGoQuery } from '../../hooks/queries'
 import { focusFor } from '../../mapFocus'
 import { chanceColour } from '../../chance'
-import { MAX_ROUTE_STOPS, coverage, loadPlan, loadStart, mapsUrl, savePlan, saveStart, type PlanPoint } from '../../routePlan'
+import { MAX_ROUTE_STOPS, coverage, samePlace, loadPlan, loadStart, mapsUrl, savePlan, saveStart, type PlanPoint } from '../../routePlan'
 import type { GoPlace } from '../../types'
 import './WhereToGo.css'
 
@@ -46,6 +46,8 @@ const WhereToGo = () => {
   const [customState, setCustomState] = useState(() => ({ region, stops: loadPlan(region) }))
   const custom = customState.region === region ? customState.stops : loadPlan(region)
   const [editing, setEditing] = useState(false)
+  // A public land the mouse rests on, shown on the end of the route until the mouse moves off.
+  const [phantom, setPhantom] = useState<PlanPoint | null>(null)
   const setCustom = (next: PlanPoint[] | null) => { setCustomState({ region, stops: next }); savePlan(region, next) }
 
   const route = go.data?.route
@@ -116,13 +118,22 @@ const WhereToGo = () => {
   const { species } = go.data
   const select = (place: GoPlace) => setSelected(place.locId)
   const straightPath = drivePoints.map(p => [p.lat, p.lng] as [number, number])
-  const routeOnMap = (showRoute || editing) && stops.length > 0 && drivePoints.length >= 2
+  const preview = phantom && !stops.some(st => samePlace(st, phantom)) ? phantom : null
+  const last = stops.length ? stops[stops.length - 1] : start
+  const routeOnMap = ((showRoute || editing) && stops.length > 0 && drivePoints.length >= 2) || preview
     ? {
-        path: drive?.geometry ?? straightPath,
+        path: drivePoints.length >= 2 ? drive?.geometry ?? straightPath : [],
         stops: stops.map(s => ({ lat: s.lat, lng: s.lng, label: s.name })),
-        start: start ? { lat: start.lat, lng: start.lng, label: `Start: ${start.name}` } : null
+        start: start ? { lat: start.lat, lng: start.lng, label: `Start: ${start.name}` } : null,
+        preview: preview && last ? { lat: preview.lat, lng: preview.lng, label: preview.name, from: [last.lat, last.lng] as [number, number] } : null
       }
     : null
+  const routeTools = {
+    has: (point: PlanPoint) => stops.some(st => samePlace(st, point)),
+    toggle: (point: PlanPoint) => setCustom(stops.some(st => samePlace(st, point)) ? stops.filter(st => !samePlace(st, point)) : [...stops, point].slice(0, MAX_ROUTE_STOPS)),
+    preview: setPhantom,
+    full: stops.length >= MAX_ROUTE_STOPS
+  }
 
   // A place from the list goes on the end of the route (making it the person's own), or comes off it.
   const toggleStop = (place: GoPlace) => {
@@ -133,7 +144,7 @@ const WhereToGo = () => {
   const hasRoute = stops.length > 0 || custom !== null
   const routeCard = hasRoute ? (
     <RouteCard state={user.state} places={places} speciesCount={species.length} stops={stops} start={start} arriving={arriving}
-            drive={drive} covers={custom ? coverage(stops, places) : route!.covers} url={custom ? mapsUrl(stops, start) : route!.url}
+            preview={preview} drive={drive} covers={custom ? coverage(stops, places) : route!.covers} url={custom ? mapsUrl(stops, start) : route!.url}
             custom={custom !== null} editing={editing} showRoute={showRoute}
             onEditing={(on) => { setEditing(on); if (on) { closeNearby(); setShowRoute(true) } }}
             onStops={(next) => setCustom(next)} onStart={setStart} onReset={() => setCustom(null)}
@@ -154,7 +165,7 @@ const WhereToGo = () => {
       <div className={`go__frame ${docked ? 'is-docked' : ''}`} ref={frameRef}>
         <div className='go__map'>
           {points.length
-            ? <SightingsMap points={points} focus={focus} route={focus ? null : routeOnMap} height='100%' ariaLabel={`Map of places for your watch list in ${regionName}`} openHighlighted={!focus}
+            ? <SightingsMap points={points} focus={focus} route={focus && !preview ? null : routeOnMap} height='100%' ariaLabel={`Map of places for your watch list in ${regionName}`} openHighlighted={!focus}
                 onPinClick={(hit) => { const p = places.find(x => x.locId === hit[0]?.id); if (!p) return; if (openNearby && p.locId !== openNearby) closeNearby(); select(p) }} />
             : <p className='list-note go__nomap'>None of these places have coordinates yet.</p>}
         </div>
@@ -194,7 +205,7 @@ const WhereToGo = () => {
                     <NearbyPublic placeName={place.locName ?? place.locId} open={openNearby === place.locId}
                       onOpen={() => { setOpenNearby(place.locId); setActiveNearby(null); setSelected(place.locId) }}
                       data={openNearby === place.locId ? nearby.data : undefined} isPending={openNearby === place.locId && nearby.isPending} isError={openNearby === place.locId && nearby.isError}
-                      activeId={activeNearby} onPick={(id) => setActiveNearby(current => current === id ? null : id)} onClose={closeNearby} />
+                      activeId={activeNearby} onPick={(id) => setActiveNearby(current => current === id ? null : id)} onClose={() => { setPhantom(null); closeNearby() }} route={routeTools} />
                   )}
                 </li>
               ))}

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import PlaceSearch, { type Suggestion } from '../PlaceSearch/PlaceSearch'
 import { ChevronIcon, CloseIcon, DragIcon, LocateIcon } from '../Icons/Icons'
-import { MAX_ROUTE_STOPS, move, samePlace, shortestOrder, type PlanPoint } from '../../routePlan'
+import { MAX_ROUTE_STOPS, move, roadKm, samePlace, shortestOrder, type PlanPoint } from '../../routePlan'
 import type { GoPlace } from '../../types'
 
 type Leg = { minutes: number; miles: number } | null
@@ -12,6 +12,8 @@ interface RouteCardProps {
   speciesCount: number
   stops: PlanPoint[]
   start: PlanPoint | null
+  /** A place being considered, shown as a ghost last stop. */
+  preview?: PlanPoint | null
   /** The drive into each stop (from the one before, or from the start); null where not known yet. */
   arriving: Leg[]
   drive: { minutes: number; miles: number } | null
@@ -37,7 +39,7 @@ const legText = (leg: Leg) => leg ? `↓ ${leg.minutes} min drive · ${leg.miles
  * or the arrows), and sets where the day starts.
  */
 const RouteCard = (props: RouteCardProps) => {
-  const { state, places, speciesCount, stops, start, arriving, drive, covers, url, custom, editing, showRoute } = props
+  const { state, places, speciesCount, stops, start, preview = null, arriving, drive, covers, url, custom, editing, showRoute } = props
   const { onEditing, onStops, onStart, onReset, onStopClick, onToggleRoute } = props
   const byId = new Map(places.map(p => [p.locId, p]))
   const [settingStart, setSettingStart] = useState(false)
@@ -164,6 +166,17 @@ const RouteCard = (props: RouteCardProps) => {
               </li>
             )
           })}
+          {preview && (
+            <li className='go__stop is-preview' aria-live='polite'>
+              {(stops.length > 0 || start) && <span className='go__leg'>↓ about {Math.round(roadKm(stops[stops.length - 1] ?? start!, preview) / 1.609 * 10) / 10} mi</span>}
+              <div className='go__stop-row'>
+                <span className='go__stop-main'>
+                  <span className='go__stop-n'>{stops.length + 1}</span>
+                  <span className='go__stop-text'><strong>{preview.name}</strong><span>Preview · {preview.note || 'not on the route yet'}</span></span>
+                </span>
+              </div>
+            </li>
+          )}
         </ol>
       ) : <p className='go__hint'>No stops yet. Add one below.</p>}
 

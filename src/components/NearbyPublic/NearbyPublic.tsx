@@ -1,6 +1,8 @@
+import type { PointerEvent as ReactPointerEvent } from 'react'
 import { CompassIcon } from '../Icons/Icons'
 import { LoadingState } from '../Loading/Loading'
 import type { NearbyPublic as NearbyData, NearbyHotspot, NearbyPark } from '../../types'
+import type { PlanPoint } from '../../routePlan'
 import './NearbyPublic.css'
 
 const mapsHref = (lat: number, lng: number, name: string) => {
@@ -30,6 +32,13 @@ interface NearbyPublicProps {
   onPick?: (id: string) => void
   /** Ends the look-around: the map goes back to all the pins. */
   onClose: () => void
+  /** Where a route is being planned: whether a place is on it, putting it on or off, and a look at it on the route while the mouse rests on it. */
+  route?: {
+    has: (point: PlanPoint) => boolean
+    toggle: (point: PlanPoint) => void
+    preview: (point: PlanPoint | null) => void
+    full: boolean
+  }
 }
 
 /**
@@ -37,7 +46,7 @@ interface NearbyPublicProps {
  * been birded (little effort is a sneaky pick), parks eBird does not list, and the drive to each.
  * The page owns the open state so it can focus the map on the same places.
  */
-const NearbyPublic = ({ placeName, open, onOpen, data, isPending, isError, activeId = null, onPick, onClose }: NearbyPublicProps) => {
+const NearbyPublic = ({ placeName, open, onOpen, data, isPending, isError, activeId = null, onPick, onClose, route }: NearbyPublicProps) => {
   if (!open) {
     return (
       <div className='nearby'>
@@ -45,6 +54,25 @@ const NearbyPublic = ({ placeName, open, onOpen, data, isPending, isError, activ
       </div>
     )
   }
+  // Each entry can go on the route; resting the mouse on one shows it on the end of the route meanwhile.
+  const routeBits = (point: PlanPoint) => {
+    if (!route) return { hover: {}, button: null }
+    const on = route.has(point)
+    return {
+      hover: {
+        onPointerEnter: (e: ReactPointerEvent) => { if (e.pointerType === 'mouse' && !on) route.preview(point) },
+        onPointerLeave: () => route.preview(null)
+      },
+      button: (
+        <button type='button' className={`nearby__route ${on ? 'is-on' : ''}`} aria-pressed={on} disabled={!on && route.full}
+          aria-label={on ? `Take ${point.name} off the route` : `Add ${point.name} to the route`}
+          onClick={() => { route.preview(null); route.toggle(point) }}>
+          {on ? '✓' : '+'}<span>Route</span>
+        </button>
+      )
+    }
+  }
+  const note = `Public land near ${placeName}`
   const hotspots: NearbyHotspot[] = data?.hotspots ?? []
   const parks: NearbyPark[] = data?.parks ?? []
   return (
@@ -58,8 +86,10 @@ const NearbyPublic = ({ placeName, open, onOpen, data, isPending, isError, activ
         : !hotspots.length && !parks.length ? <p className='nearby__note'>No public land within a few miles of {placeName} is on file.</p>
         : (
           <ul className='nearby__list' aria-label={`Public land near ${placeName}`}>
-            {hotspots.map((h, i) => (
-              <li key={h.locId} className={`nearby__hotspot ${activeId === h.locId ? 'is-active' : ''}`}>
+            {hotspots.map((h, i) => {
+              const bits = routeBits({ locId: h.locId, name: h.name, lat: h.lat, lng: h.lng, note })
+              return (
+              <li key={h.locId} className={`nearby__hotspot ${activeId === h.locId ? 'is-active' : ''}`} {...bits.hover}>
                 <button type='button' className='nearby__n' aria-pressed={activeId === h.locId} aria-label={`Show the road to ${h.name} on the map`} onClick={() => onPick?.(h.locId)}>{i + 1}</button>
                 <a href={mapsHref(h.lat, h.lng, h.name)} target='_blank' rel='noreferrer'>
                   <strong>{h.name.replace(/^Lake Lanier--/, '')}</strong>
@@ -67,10 +97,14 @@ const NearbyPublic = ({ placeName, open, onOpen, data, isPending, isError, activ
                   <span>{h.checklists ?? 0} {h.checklists === 1 ? 'checklist' : 'checklists'} all time{h.species ? `, ${h.species} species` : ''} · {lastBirded(h.latest)}</span>
                   {h.lightlyBirded && <em>lightly birded, a sneaky pick</em>}
                 </a>
+                {bits.button}
               </li>
-            ))}
-            {parks.map((p, i) => (
-              <li key={`${p.name}-${p.lat}`} className={`nearby__park ${activeId === `${p.name}-${p.lat}` ? 'is-active' : ''}`}>
+              )
+            })}
+            {parks.map((p, i) => {
+              const bits = routeBits({ locId: null, name: p.name, lat: p.lat, lng: p.lng, note: `${note} · not an eBird hotspot` })
+              return (
+              <li key={`${p.name}-${p.lat}`} className={`nearby__park ${activeId === `${p.name}-${p.lat}` ? 'is-active' : ''}`} {...bits.hover}>
                 <button type='button' className='nearby__n' aria-pressed={activeId === `${p.name}-${p.lat}`} aria-label={`Show the road to ${p.name} on the map`} onClick={() => onPick?.(`${p.name}-${p.lat}`)}>{hotspots.length + i + 1}</button>
                 <a href={mapsHref(p.lat, p.lng, p.name)} target='_blank' rel='noreferrer'>
                   <strong>{p.name}</strong>
@@ -78,8 +112,10 @@ const NearbyPublic = ({ placeName, open, onOpen, data, isPending, isError, activ
                   <span>not an eBird hotspot</span>
                   <em>unlisted, nobody is counting here</em>
                 </a>
+                {bits.button}
               </li>
-            ))}
+              )
+            })}
           </ul>
         )}
       <p className='nearby__hint'>The numbers match the pins on the map; tap a number or a pin to light up that road. Tapping any other place's pin goes back to all the pins.</p>
