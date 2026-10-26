@@ -124,8 +124,10 @@ nav .text-link {
     color: #ff8c1a;
 }
 
+/* The colour font takes over only where the browser can draw it AND has loaded it (main.tsx adds
+   the class after the load); a missing font file otherwise left the fallback face in black. */
 @supports font-tech(color-COLRv1) {
-    #titleAlert {
+    html.has-colour-font #titleAlert {
         font-family: 'Bungee Spice', 'Bungee', sans-serif;
         background: none;
         -webkit-text-fill-color: initial;
