@@ -11,6 +11,8 @@ describe('Where to go', () => {
     cy.url().should('include', '/go')
     cy.wait('@whereToGo').its('request.url').should('match', /codes=cangoo(%2C|,)snogoo/)
     cy.get('.go__summary').should('contain', '2 birds on your watch list').and('contain', '2 places in Hall')
+    // Bands with enough graded predictions say how they held up; one with too few stays quiet.
+    cy.get('.go__grades').should('contain', '60% and up: 71%').and('contain', '40–59%: 52%').and('not.contain', '20–39%')
     cy.get('.go__stops li').should('have.length', 2).first().should('contain', 'Lake Lanier Olympic Park').and('contain', '0.8 birds expected').and('contain', 'Tufted Titmouse 52%')
     cy.get('.go__stops li').eq(1).find('.go__leg').should('have.text', '↓ 9 min drive · 3.1 mi')
     cy.get('.go__covers').should('contain', 'about 1.4 birds of your 2').and('contain', '9 minutes of driving, 3.1 miles').and('contain', 'Start at Lake Lanier Olympic Park, best 8 am to 10 am')
