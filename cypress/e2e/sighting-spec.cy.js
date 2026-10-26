@@ -20,8 +20,13 @@ describe('Sighting page and region map', () => {
     cy.get('.sighting__tips').should('contain', 'Where to look').and('contain', 'V formations').and('contain', 'Any time')
     cy.get('.sighting__odds').should('contain', 'Here all year').and('contain', 'Best 8 am to 10 am')
     cy.get('.sighting__places li').should('have.length', 2)
-    cy.get('.sighting__places li').first().should('have.class', 'is-current').and('contain', 'High').and('contain', 'private').and('contain', '5 days in 30').and('contain', '4 of 6 checklists').and('contain', 'behind the barn')
-    cy.get('.sighting__places li').eq(1).should('contain', 'Fair').and('contain', '+1 nearby').and('not.contain', 'checklists')
+    cy.get('.sighting__grades').should('have.text', 'Seen on a visit lately: High 71% · Fair 22%')
+    cy.get('.sighting__places li').first().should('have.class', 'is-current').and('contain', 'High').and('contain', 'private').and('contain', 'behind the barn')
+    cy.get('.sighting__places li').first().find('.place__chance').should('have.text', 'You have an 86% chance to see it here, best 7 am to 9 am')
+    cy.get('.sighting__places li').first().find('.place__evidence').should('have.text', '5 days in 30 · last yesterday 1:49 PM · on 4 of 6 checklists')
+    cy.get('.sighting__places li').eq(1).should('contain', 'Fair').and('contain', '+1 nearby')
+    cy.get('.sighting__places li').eq(1).find('.place__chance').should('have.text', 'You have a 31% chance to see it here, best 8 am to 10 am')
+    cy.get('.sighting__places li').eq(1).find('.place__evidence').should('have.text', '1 day in 30 · last 4 days ago 9:10 AM · 2 checklists lately')
   })
 
   it('choosing another report from the list swaps the selection without moving the page', () => {

@@ -39,7 +39,13 @@
         }
       ],
       "isHotspot": false,
-      "merged": []
+      "merged": [],
+      "bestTime": {
+        "label": "7 am to 9 am",
+        "share": 55,
+        "samples": 9
+      },
+      "chance": 86
     },
     {
       "locId": "L999",
@@ -67,7 +73,29 @@
           "locId": "L998",
           "locName": "Olympic Park yard"
         }
-      ]
+      ],
+      "bestTime": null,
+      "chance": 31
     }
-  ]
+  ],
+  "grades": {
+    "High": {
+      "n": 31,
+      "hits": 22,
+      "rate": 71,
+      "enough": true
+    },
+    "Good": {
+      "n": 12,
+      "hits": 5,
+      "rate": 42,
+      "enough": false
+    },
+    "Fair": {
+      "n": 40,
+      "hits": 9,
+      "rate": 22,
+      "enough": true
+    }
+  }
 }

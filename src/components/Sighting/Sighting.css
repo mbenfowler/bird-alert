@@ -445,9 +445,15 @@
     color: var(--muted);
 }
 
+.sighting__places .place__chance {
+    color: var(--ink);
+    font-size: 0.95rem;
+    white-space: normal;
+}
+
 .sighting__places .place__evidence {
     color: var(--muted);
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     white-space: normal;
 }
 
@@ -465,4 +471,9 @@
     font-family: system-ui, sans-serif;
     font-size: 0.7rem;
     font-style: italic;
+}
+
+.sighting__grades {
+    flex-basis: 100%;
+    font-size: 0.8rem;
 }

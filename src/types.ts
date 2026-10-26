@@ -156,6 +156,10 @@ export interface Place {
   isHotspot?: boolean | null
   /** Personal locations within a few hundred metres that were folded into this hotspot. */
   merged?: { locId: string; locName: string | null }[]
+  /** The place's own busiest two hours, once it has five timed reports. */
+  bestTime?: { label: string; share: number; samples: number } | null
+  /** The chance (0-100) that a visit finds the bird; the band is a threshold on it. */
+  chance?: number
   band: PlaceBand
   score: number
   days: number
@@ -164,6 +168,8 @@ export interface Place {
   notes: PlaceNote[]
 }
 export type PersistenceClass = 'resident' | 'seasonal' | 'passage' | 'rare'
+/** How a band has fared lately: graded predictions and how often the bird was there. */
+export interface BandGrade { n: number; hits: number; rate: number | null; enough: boolean }
 export interface WhereToFind {
   speciesCode: string
   class: PersistenceClass
@@ -171,4 +177,5 @@ export interface WhereToFind {
   bestTime: { label: string; source: 'reports' | 'typical'; share?: number; samples?: number }
   asOf: string
   places: Place[]
+  grades?: Partial<Record<PlaceBand, BandGrade>>
 }
