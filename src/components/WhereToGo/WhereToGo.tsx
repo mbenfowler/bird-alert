@@ -125,7 +125,7 @@ const WhereToGo = () => {
           <RouteCard state={user.state} places={places} speciesCount={species.length} stops={stops} start={start} arriving={arriving}
             drive={drive} covers={custom ? coverage(stops, places) : route!.covers} url={custom ? mapsUrl(stops, start) : route!.url}
             custom={custom !== null} editing={editing} showRoute={showRoute}
-            onEditing={(on) => { setEditing(on); if (on) { closeNearby() } }}
+            onEditing={(on) => { setEditing(on); if (on) { closeNearby(); setShowRoute(true) } }}
             onStops={(next) => setCustom(next)} onStart={setStart} onReset={() => setCustom(null)}
             onStopClick={(stop) => { if (stop.locId) setSelected(stop.locId); setShowRoute(true) }}
             onToggleRoute={() => setShowRoute(v => !v)} />
