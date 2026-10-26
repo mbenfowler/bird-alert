@@ -33,6 +33,7 @@ export const stubAuth = ({ userExists = true, user = TEST_USER, loggedIn = false
   // Catch-all first: Cypress gives the most recently registered matching intercept priority.
   cy.intercept('GET', '**/api/ebird/**', { statusCode: 200, body: [] })
   cy.intercept('GET', '**/api/ebird/regions*', { statusCode: 200, body: [{ code: 'US-GA-139', name: 'Hall' }, { code: 'US-GA-121', name: 'Fulton' }] }).as('regions')
+  cy.intercept('GET', '**/api/ebird/where*', { statusCode: 200, fixture: 'where' }).as('where')
   cy.intercept('GET', '**/api/saved', { statusCode: 200, body: [] }).as('getSaved')
   cy.intercept('GET', '**/api/push/public-key', { statusCode: 200, body: { publicKey: 'BFakeKeyForTests' } }).as('pushKey')
   // Bird sounds: one stub recording for every species, as a silent clip so playback really runs.

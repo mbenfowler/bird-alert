@@ -40,6 +40,7 @@ export const stubApi = async (page: Page) => {
     if (p.endsWith('/api/ebird/species-observations')) return route.fulfill(json(speciesRows))
     if (p.endsWith('/api/ebird/arriving')) return route.fulfill(json(fixture('arrivals')))
     if (p.endsWith('/api/ebird/seasonality')) return route.fulfill(json(fixture('seasonality')))
+    if (p.endsWith('/api/ebird/where')) return route.fulfill(json(fixture('where')))
     if (p.endsWith('/api/ebird/regions')) return route.fulfill(json([{ code: 'US-GA-139', name: 'Hall' }]))
     if (p.endsWith('/api/ebird/notable')) return route.fulfill(json([]))
     if (p.endsWith('/api/push/public-key')) return route.fulfill(json({ publicKey: 'BFakeKeyForTests' }))

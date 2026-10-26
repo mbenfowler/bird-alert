@@ -1,4 +1,4 @@
-import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, SeasonMonth, User, UserPatch } from './types'
+import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, SeasonMonth, User, UserPatch, WhereToFind } from './types'
 
 // Every request goes to the same-origin `/api` prefix. In development Vite proxies it to the
 // backend (vite.config.ts); in production Vercel rewrites it (vercel.json). The backend holds
@@ -81,6 +81,8 @@ export const getSpeciesObservations = (region: string, code: string) =>
 export const getRegions = (state: string) => api<Region[]>('/ebird/regions', { params: { state } })
 export const getArrivals = (region: string) => api<Arrivals>('/ebird/arriving', { params: { region } })
 export const getSeasonality = (region: string, code: string) => api<{ months: SeasonMonth[] }>('/ebird/seasonality', { params: { region, code } })
+/** Places the species has been reported lately in the region, ranked by the chance a visit pays off. */
+export const getWhereToFind = (region: string, code: string) => api<WhereToFind>('/ebird/where', { params: { region, code } })
 
 // ---- web push ----
 export interface PushStatus {

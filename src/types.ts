@@ -143,3 +143,32 @@ export interface BirdSound {
   licenseName?: string
   country?: string | null
 }
+
+/** A place a species has been reported lately, with the chance a visit pays off and the evidence. */
+export type PlaceBand = 'High' | 'Good' | 'Fair' | 'Long shot'
+export interface PlaceNote { day: string; time: string | null; observer: string | null; text: string; subId: string | null }
+export interface Place {
+  locId: string
+  locName: string | null
+  lat: number | null
+  lng: number | null
+  /** true for an eBird hotspot, false for someone's personal location, null when unknown. */
+  isHotspot?: boolean | null
+  /** Personal locations within a few hundred metres that were folded into this hotspot. */
+  merged?: { locId: string; locName: string | null }[]
+  band: PlaceBand
+  score: number
+  days: number
+  lastSeen: { day: string; time: string | null; subId: string | null; daysAgo: number }
+  effort: { checklists: number; withSpecies: number; detection: number | null }
+  notes: PlaceNote[]
+}
+export type PersistenceClass = 'resident' | 'seasonal' | 'passage' | 'rare'
+export interface WhereToFind {
+  speciesCode: string
+  class: PersistenceClass
+  halfLifeDays: number
+  bestTime: { label: string; source: 'reports' | 'typical'; share?: number; samples?: number }
+  asOf: string
+  places: Place[]
+}

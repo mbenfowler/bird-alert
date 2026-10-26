@@ -18,31 +18,31 @@ describe('Sighting page and region map', () => {
     cy.get('a.pill-button').contains('Open in Maps').should('have.attr', 'target', '_blank')
     cy.get('button.pill-button').should('contain', 'On your watch list')
     cy.get('.sighting__tips').should('contain', 'Where to look').and('contain', 'V formations').and('contain', 'Any time')
+    cy.get('.sighting__odds').should('contain', 'Here all year').and('contain', 'Best 8 am to 10 am')
+    cy.get('.sighting__places li').should('have.length', 2)
+    cy.get('.sighting__places li').first().should('have.class', 'is-current').and('contain', 'High').and('contain', 'private').and('contain', '5 days in 30').and('contain', '4 of 6 checklists').and('contain', 'behind the barn')
+    cy.get('.sighting__places li').eq(1).should('contain', 'Fair').and('contain', '+1 nearby').and('not.contain', 'checklists')
   })
 
   it('choosing another report from the list swaps the selection without moving the page', () => {
     // Two reports at two places, so there is something to choose between. Later intercepts win.
     cy.fixture('recentBirds').then((obs) => {
       const first = obs.find((o) => o.subId === 'S155544243')
-      const second = { ...first, subId: 'S155544999', locName: 'Lake Lanier Olympic Park', obsDt: '2023-11-28 09:10', lat: first.lat + 0.03, lng: first.lng - 0.02, howMany: 4 }
+      const second = { ...first, subId: 'S155544999', locId: 'L999', locName: 'Lake Lanier Olympic Park', obsDt: '2023-11-28 09:10', lat: first.lat + 0.03, lng: first.lng - 0.02, howMany: 4 }
       cy.intercept('GET', '**/api/ebird/species-observations*', { statusCode: 200, body: [first, second] }).as('twoReports')
     })
     cy.visit('http://localhost:3000/sighting/cangoo/S155544243')
-    cy.get('.sighting__list li').should('have.length', 2)
+    cy.get('.sighting__places li').should('have.length', 2)
     // Scrolling past the bird card docks the frame under the bar; only then does the list scroll by itself.
     cy.get('.sighting__frame').should('not.have.class', 'is-docked')
     cy.scrollTo('bottom')
     cy.get('.sighting__frame').should('have.class', 'is-docked')
     cy.window().then((win) => {
       const docked = win.scrollY
-      cy.get('.sighting__list li').eq(1).find('button').invoke('text').then((label) => {
-        cy.get('.sighting__list li').eq(1).find('button').click({ scrollBehavior: false })
-        cy.get('.sighting__list li.is-current button').should('have.text', label)
-        cy.get('.sighting__meta strong').invoke('text').then((place) => {
-          expect(label).to.include(place)
-          cy.get('.leaflet-popup').should('contain', place)
-        })
-      })
+      cy.get('.sighting__places li').eq(1).find('button').click({ scrollBehavior: false })
+      cy.get('.sighting__places li.is-current').should('contain', 'Lake Lanier Olympic Park')
+      cy.get('.sighting__meta strong').should('have.text', 'Lake Lanier Olympic Park')
+      cy.get('.leaflet-popup').should('contain', 'Lake Lanier Olympic Park')
       cy.url().should('include', '/sighting/cangoo/S155544999')
       cy.window().its('scrollY').should('eq', docked)
     })

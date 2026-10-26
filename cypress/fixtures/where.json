@@ -1,0 +1,73 @@
+{
+  "speciesCode": "cangoo",
+  "class": "resident",
+  "halfLifeDays": 21,
+  "bestTime": {
+    "label": "8 am to 10 am",
+    "source": "reports",
+    "share": 40,
+    "samples": 12
+  },
+  "asOf": "2023-12-02",
+  "places": [
+    {
+      "locId": "L14136408",
+      "locName": "Rusty's Gainesville Yard",
+      "lat": 34.2695382,
+      "lng": -83.9014098,
+      "band": "High",
+      "score": 3.4,
+      "days": 5,
+      "lastSeen": {
+        "day": "2023-12-01",
+        "time": "13:49",
+        "subId": "S155544243",
+        "daysAgo": 1
+      },
+      "effort": {
+        "checklists": 6,
+        "withSpecies": 4,
+        "detection": 67
+      },
+      "notes": [
+        {
+          "day": "2023-12-01",
+          "time": "13:49",
+          "observer": "Rusty",
+          "text": "On the pond behind the barn with the Mallards",
+          "subId": "S155544243"
+        }
+      ],
+      "isHotspot": false,
+      "merged": []
+    },
+    {
+      "locId": "L999",
+      "locName": "Lake Lanier Olympic Park",
+      "lat": 34.2995,
+      "lng": -83.9214,
+      "band": "Fair",
+      "score": 0.6,
+      "days": 1,
+      "lastSeen": {
+        "day": "2023-11-28",
+        "time": "09:10",
+        "subId": "S155544999",
+        "daysAgo": 4
+      },
+      "effort": {
+        "checklists": 2,
+        "withSpecies": 1,
+        "detection": null
+      },
+      "notes": [],
+      "isHotspot": true,
+      "merged": [
+        {
+          "locId": "L998",
+          "locName": "Olympic Park yard"
+        }
+      ]
+    }
+  ]
+}
