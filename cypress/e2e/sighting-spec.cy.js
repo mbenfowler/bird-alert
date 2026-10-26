@@ -65,4 +65,18 @@ describe('Sighting page and region map', () => {
     cy.get('.map-page__bar h1').should('contain', 'Notable sightings in Hall')
     cy.contains('No notable sightings reported in the last month.')
   })
+
+  it('a private place shows public land inside its card, laid out as designed', () => {
+    cy.visit('http://localhost:3000/sighting/cangoo/S155544243')
+    cy.get('.sighting__places li').first().should('contain', 'private').within(() => {
+      cy.get('.nearby__ask').should('be.visible').then(($b) => expect($b[0].getBoundingClientRect().height).to.be.lessThan(60))
+      cy.get('.nearby__ask').click()
+      cy.get('.nearby__head strong').should('contain', 'Public land near').then(($s) => expect($s[0].getBoundingClientRect().width, 'heading is not squeezed into a column').to.be.greaterThan(100))
+      cy.get('.nearby__close').then(($b) => expect($b[0].getBoundingClientRect().height).to.be.lessThan(50))
+      cy.get('.nearby__list li').should('have.length', 3)
+      cy.get('.nearby__list li').first().should('have.css', 'border-top-width', '0px')
+    })
+    cy.get('.leaflet-popup').should('not.exist')
+    cy.get('.sightings-map.is-focused').should('exist')
+  })
 })
