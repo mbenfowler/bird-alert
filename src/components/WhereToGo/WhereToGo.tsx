@@ -4,7 +4,7 @@ import SightingsMap, { type MapPoint } from '../SightingsMap/SightingsMap'
 import ErrorMessage from '../Error/ErrorMessage'
 import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
-import { useCurrentUser, useRegionsQuery, useSavedCodes, useWhereToGoQuery } from '../../hooks/queries'
+import { useCurrentUser, useRegionsQuery, useSavedCodes, useSpeciesListQuery, useWhereToGoQuery } from '../../hooks/queries'
 import { chanceColour } from '../../chance'
 import type { GoPlace } from '../../types'
 import './WhereToGo.css'
@@ -20,7 +20,13 @@ const WhereToGo = () => {
   const user = useCurrentUser()
   const region = user.location
   const savedCodes = useSavedCodes()
-  const codes = useMemo(() => [...savedCodes].sort(), [savedCodes])
+  // Only the watch-list birds that occur in this county are worth asking about; a long list saved
+  // across many places would otherwise go over the wire for nothing.
+  const speciesList = useSpeciesListQuery(region)
+  const codes = useMemo(() => {
+    const here = speciesList.data ? new Set(speciesList.data) : null
+    return [...savedCodes].filter(code => !here || here.has(code)).sort()
+  }, [savedCodes, speciesList.data])
   const go = useWhereToGoQuery(region, codes)
   const regions = useRegionsQuery(user.state)
   const regionName = regions.data?.find(r => r.code === region)?.name ?? 'your county'
