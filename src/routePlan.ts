@@ -97,6 +97,16 @@ const write = (key: string, value: unknown) => {
 const planKey = (region: string) => `bird-alert:route:${region}`
 const START_KEY = 'bird-alert:route-start'
 
+const SYNCED_KEY = 'bird-alert:route-synced'
+/** Whether this browser's own copy has been handed to the account once; after that the account is the record. */
+export const isSynced = () => read(SYNCED_KEY) === true
+export const markSynced = () => write(SYNCED_KEY, true)
+export const clearLocalRoutes = () => {
+  try {
+    for (const key of Object.keys(localStorage)) if (key.startsWith('bird-alert:route')) localStorage.removeItem(key)
+  } catch { /* nothing kept, nothing to clear */ }
+}
+
 export const loadPlan = (region: string): PlanPoint[] | null => {
   const value = read(planKey(region))
   return Array.isArray(value) && value.every(isPoint) ? value.slice(0, MAX_ROUTE_STOPS) : null

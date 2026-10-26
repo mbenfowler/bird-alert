@@ -61,6 +61,19 @@ export const login = () => {
     req.reply({ statusCode: 204, body: '' })
   }).as('deleteSaved')
 
+  // The route kept on the account: empty to begin with, and whatever was last put after that.
+  const account = { stops: {}, start: null }
+  cy.intercept('GET', '**/api/saved?kind=route*', (req) => {
+    const region = new URL(req.url).searchParams.get('region')
+    req.reply({ statusCode: 200, body: { region, stops: account.stops[region] ?? null, start: account.start, updatedAt: null } })
+  }).as('getRoute')
+  cy.intercept('PUT', '**/api/saved?kind=route*', (req) => {
+    const { region, ...change } = req.body
+    if ('stops' in change) account.stops[region] = change.stops
+    if ('start' in change) account.start = change.start
+    req.reply({ statusCode: 200, body: { region, stops: account.stops[region] ?? null, start: account.start, updatedAt: null } })
+  }).as('putRoute')
+
   // Our own bird records, looked up by species code; order of the request is preserved.
   cy.intercept('GET', '**/api/birds?codes=*', (req) => {
     const codes = new URL(req.url).searchParams.get('codes').split(',')
