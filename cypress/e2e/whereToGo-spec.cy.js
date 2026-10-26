@@ -132,4 +132,15 @@ describe('Where to go', () => {
     cy.get('.go__stops > li').should('have.length', 2).first().should('contain', 'Lake Lanier Olympic Park')
     cy.get('.go__start').should('contain', 'Gainesville, Georgia')
   })
+
+  it('a place in the list goes on the route, or comes off it, with one tap', () => {
+    cy.visit('http://localhost:3000/go')
+    cy.get('.go__places li').first().find('.go__quick-add').should('not.exist') // a private yard is not a stop
+    const button = () => cy.get('.go__places li').eq(1).find('.go__quick-add')
+    button().should('have.text', '✓ On route').and('have.attr', 'aria-pressed', 'true').click()
+    cy.get('.go__route-head').should('have.text', 'Your route')
+    cy.get('.go__stops > li').should('have.length', 1).and('not.contain', 'Lake Lanier Olympic Park')
+    button().should('have.text', '+ Add to route').click()
+    cy.get('.go__stops > li').should('have.length', 2).last().should('contain', 'Lake Lanier Olympic Park')
+  })
 })

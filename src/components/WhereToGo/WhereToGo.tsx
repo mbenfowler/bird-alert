@@ -9,7 +9,7 @@ import RouteCard from './RouteCard'
 import { useCurrentUser, useDriveQuery, useNearbyPublicQuery, useRegionsQuery, useSavedCodes, useSpeciesListQuery, useWhereToGoQuery } from '../../hooks/queries'
 import { focusFor } from '../../mapFocus'
 import { chanceColour } from '../../chance'
-import { coverage, loadPlan, loadStart, mapsUrl, savePlan, saveStart, type PlanPoint } from '../../routePlan'
+import { MAX_ROUTE_STOPS, coverage, loadPlan, loadStart, mapsUrl, savePlan, saveStart, type PlanPoint } from '../../routePlan'
 import type { GoPlace } from '../../types'
 import './WhereToGo.css'
 
@@ -124,6 +124,12 @@ const WhereToGo = () => {
       }
     : null
 
+  // A place from the list goes on the end of the route (making it the person's own), or comes off it.
+  const toggleStop = (place: GoPlace) => {
+    if (place.lat === null || place.lng === null) return
+    if (stops.some(st => st.locId === place.locId)) setCustom(stops.filter(st => st.locId !== place.locId))
+    else if (stops.length < MAX_ROUTE_STOPS) setCustom([...stops, { locId: place.locId, name: place.locName ?? place.locId, lat: place.lat, lng: place.lng }])
+  }
   const hasRoute = stops.length > 0 || custom !== null
   const routeCard = hasRoute ? (
     <RouteCard state={user.state} places={places} speciesCount={species.length} stops={stops} start={start} arriving={arriving}
@@ -174,6 +180,16 @@ const WhereToGo = () => {
                     ))}
                     {place.birds.length > 8 && <span className='go__more'>+{place.birds.length - 8} more</span>}
                   </div>
+                  {place.isHotspot !== false && place.lat !== null && place.lng !== null && (() => {
+                    const on = stops.some(st => st.locId === place.locId)
+                    return (
+                      <button type='button' className={`pill-button go__quick-add ${on ? 'is-on' : ''}`} aria-pressed={on}
+                        disabled={!on && stops.length >= MAX_ROUTE_STOPS} title={!on && stops.length >= MAX_ROUTE_STOPS ? `A route takes up to ${MAX_ROUTE_STOPS} stops` : undefined}
+                        onClick={() => toggleStop(place)}>
+                        {on ? '✓ On route' : '+ Add to route'}
+                      </button>
+                    )
+                  })()}
                   {place.isHotspot === false && place.lat !== null && (
                     <NearbyPublic placeName={place.locName ?? place.locId} open={openNearby === place.locId}
                       onOpen={() => { setOpenNearby(place.locId); setActiveNearby(null); setSelected(place.locId) }}
