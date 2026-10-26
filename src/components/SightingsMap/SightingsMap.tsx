@@ -131,6 +131,14 @@ const publicIcon = (kind: 'hotspot' | 'park', n: number, active: boolean) => L.d
   popupAnchor: [0, -32]
 })
 
+/**
+ * Map tiles. OpenStreetMap's own servers are for light use only; before real traffic, point
+ * VITE_TILE_URL (and VITE_TILE_ATTRIBUTION) at a provider with a key, e.g. MapTiler or Stadia,
+ * at build time. No code change needed.
+ */
+const TILE_URL = import.meta.env.VITE_TILE_URL || 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+const TILE_ATTRIBUTION = import.meta.env.VITE_TILE_ATTRIBUTION || '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+
 /** A straight line between two points, for when the road could not be had. */
 const straight = (a: { lat: number; lng: number }, b: { lat: number; lng: number }): [number, number][] => [[a.lat, a.lng], [b.lat, b.lng]]
 
@@ -143,8 +151,8 @@ const SightingsMap = ({ points, focus = null, route = null, center = [39.8, -98.
     <div className={`sightings-map ${focus ? 'is-focused' : ''} ${route ? 'has-route' : ''}`} style={{ height }} role='region' aria-label={ariaLabel}>
       <MapContainer center={initial} zoom={points.length ? 12 : 4} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url='https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+          attribution={TILE_ATTRIBUTION}
+          url={TILE_URL}
         />
         <FitToPoints points={points} focus={focus} route={route} />
         {route && (
