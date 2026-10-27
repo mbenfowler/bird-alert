@@ -65,7 +65,7 @@ export const login = () => {
   const lifeList = { birds: [] }
   cy.intercept('GET', '**/api/saved?kind=seen*', (req) => req.reply({ statusCode: 200, body: lifeList.birds })).as('getSeen')
   cy.intercept('POST', '**/api/saved?kind=seen', (req) => {
-    if (!lifeList.birds.some((b) => b.speciesCode === req.body.speciesCode)) lifeList.birds = [...lifeList.birds, { speciesCode: req.body.speciesCode, firstSeen: '2026-10-27', source: 'tap' }]
+    if (!lifeList.birds.some((b) => b.speciesCode === req.body.speciesCode)) lifeList.birds = [...lifeList.birds, { speciesCode: req.body.speciesCode, firstSeen: `2026-10-${String(10 + lifeList.birds.length).padStart(2, '0')}`, source: 'tap', comName: birdsByCode[req.body.speciesCode]?.comName ?? null, taxonOrder: birdsByCode[req.body.speciesCode]?.taxonOrder ?? null }]
     req.reply({ statusCode: 201, body: { speciesCode: req.body.speciesCode } })
   }).as('postSeen')
   cy.intercept('DELETE', '**/api/saved?kind=seen&speciesCode=*', (req) => {

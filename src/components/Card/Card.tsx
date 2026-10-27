@@ -39,7 +39,12 @@ const Card = ({ bird }: CardProps) => {
                 <p>{bird.comName}</p>
                 <p className='sci-name'>{`(${bird.sciName})`}</p>
                 <p className='last-observed'>
-                    {bird.lastObserved && (
+                    {bird.firstSeen !== undefined ? (bird.firstSeen && (
+                        <>
+                            First seen: <br />
+                            {new Date(`${bird.firstSeen}T12:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </>
+                    )) : bird.lastObserved && (
                         <>
                             Last observed nearby: <br />
                             {bird.lastObserved}
@@ -59,7 +64,16 @@ const Card = ({ bird }: CardProps) => {
                 : <div className='card-link'>{body}</div>}
             {/* The life list: the star's twin at the other corner, a tick for a bird you've seen. */}
             <input type="checkbox" className='card-seen' checked={isSeen} disabled={!seen.loaded} id={`seen-${bird.speciesCode}`} aria-label={`Seen ${bird.comName}`} title={isSeen ? 'On your life list' : 'Seen it? Add to your life list'}
-                onChange={() => toggleSeen.mutate({ speciesCode: bird.speciesCode, seen: !isSeen }, { onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' }) })} />
+                onChange={() => {
+                    const seenNow = !isSeen
+                    toggleSeen.mutate({ speciesCode: bird.speciesCode, seen: seenNow }, {
+                        onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' }),
+                        // Taking a bird off the life list is easy to do by accident; offer it back.
+                        onSuccess: () => { if (!seenNow) toast(({ closeToast }) => (
+                            <span className='toast-undo'>Removed {bird.comName} from your life list <button type='button' onClick={() => { toggleSeen.mutate({ speciesCode: bird.speciesCode, seen: true }); closeToast() }}>Undo</button></span>
+                        ), { position: 'bottom-center' }) }
+                    })
+                }} />
             <input type="checkbox" checked={isChecked} disabled={toggleSaved.isPending} id={bird.speciesCode} name={bird.comName} aria-label={`Watch ${bird.comName}`} onChange={handleChange} />
             <SoundToggle state={sound.state} name={bird.comName} onToggle={() => { void sound.toggle() }} className='card-sound' />
         </article>

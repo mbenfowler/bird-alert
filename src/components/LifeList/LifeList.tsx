@@ -1,4 +1,5 @@
 import { useRef, useState, type ChangeEvent } from 'react'
+import { Link } from 'react-router'
 import { errorMessage } from '../../apiCalls'
 import { useSeenBirdsQuery } from '../../hooks/queries'
 import { useImportLifeListMutation, useToggleSeenMutation } from '../../hooks/mutations'
@@ -47,6 +48,7 @@ const LifeList = () => {
               : 'Tap “Seen it” on any bird you’ve seen, or start from your eBird life list below.'}
           </p>
         </div>
+        {count > 0 && <Link className='pill-button life-list__view' to='/life-list'>View and manage</Link>}
       </div>
       <details className='life-list__import'>
         <summary>Start from your eBird life list</summary>

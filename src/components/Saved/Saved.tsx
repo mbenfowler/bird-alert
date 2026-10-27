@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import BirdsList from '../BirdsList/BirdsList'
+import ListTabs from '../ListTabs/ListTabs'
 import ErrorMessage from '../Error/ErrorMessage'
 import { SkeletonList } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
@@ -43,6 +44,7 @@ const Saved = () => {
 
     return (
         <section id='birdsInArea'>
+            <ListTabs lifeCount={seen.codes.size} />
             <h2 className='fredericka list-heading'>Birds on your watch list</h2>
             {seenCount > 0 && (
                 <label className='list-filter'>

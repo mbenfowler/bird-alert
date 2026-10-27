@@ -63,6 +63,8 @@ export interface Bird {
   taxonOrder?: number | null
   /** Set on the saved view only: most recent nearby observation date. */
   lastObserved?: string
+  /** On the life list page: the day it went on the list. */
+  firstSeen?: string | null
   /** Field craft for the species, from the API; null for species we have none for. */
   tips?: BirdTips | null
 }
@@ -219,7 +221,7 @@ export interface FoundHotspot { kind: 'hotspot'; locId: string; name: string; co
 export interface SavedRoute { region: string; stops: SavedPoint[] | null; start: SavedPoint | null; updatedAt: string | null }
 export interface SavedPoint { locId: string | null; name: string; lat: number; lng: number; note?: string | null }
 /** A bird on the life list: tapped "Seen it", or brought in from an eBird export. */
-export interface SeenBird { speciesCode: string; firstSeen: string | null; source: 'tap' | 'import' }
+export interface SeenBird { speciesCode: string; firstSeen: string | null; source: 'tap' | 'import'; comName?: string | null; taxonOrder?: number | null }
 /** What an eBird import did; rows left out say why, and offer the species to mark by hand where there is a choice. */
 export interface SplitChoice { speciesCode: string; comName: string }
 export interface LifeListImport { added: number; already: number; total: number; skipped: { name: string; reason: string; choices?: SplitChoice[]; where?: { locId: string | null; region: string | null; day: string } }[] }

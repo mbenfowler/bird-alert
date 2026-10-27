@@ -1,0 +1,29 @@
+.list-tabs {
+    display: inline-flex;
+    margin: 6px auto 4px;
+    padding: 3px;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+}
+
+.list-tabs__tab {
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 16px;
+    border-radius: 999px;
+    color: var(--ink);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.list-tabs__tab.is-active {
+    background: var(--accent);
+    color: var(--accent-ink);
+}
+
+.list-tabs__tab:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}

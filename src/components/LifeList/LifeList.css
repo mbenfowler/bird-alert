@@ -110,3 +110,8 @@
 .split-help__answer .life-list__choices {
     margin-left: 0;
 }
+
+.life-list__view {
+    flex: none;
+    white-space: nowrap;
+}

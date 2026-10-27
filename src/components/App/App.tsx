@@ -19,6 +19,7 @@ import { LoadingState } from '../Loading/Loading'
 
 // Everything off the main path loads on demand, keeping the first visit light.
 const Saved = lazy(() => import('../Saved/Saved'))
+const LifeListPage = lazy(() => import('../LifeListPage/LifeListPage'))
 const Settings = lazy(() => import('../Settings/Settings'))
 const EmailConfirm = lazy(() => import('../EmailConfirm/EmailConfirm'))
 const Unsubscribe = lazy(() => import('../Unsubscribe/Unsubscribe'))
@@ -154,6 +155,7 @@ const App = () => {
           <Route path='/' element={requireUser(home)} />
           <Route path='/login' element={<Login />} />
           <Route path='/saved' element={requireUser(<Saved />)} />
+          <Route path='/life-list' element={requireUser(<LifeListPage />)} />
           <Route path='/settings' element={requireUser(<Settings />)} />
           <Route path='/map' element={requireUser(<MapPage />)} />
           <Route path='/sighting/:code/:subId' element={requireUser(<Sighting />)} />

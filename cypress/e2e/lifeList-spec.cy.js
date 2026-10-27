@@ -34,7 +34,7 @@ describe('Life list', () => {
     cy.wait('@splitEvidence').its('request.body').should('deep.include', { locId: 'L342269', day: '2024-05-25' })
     cy.wait('@postSeen').its('request.body').should('deep.equal', { speciesCode: 'wewvir2' })
     cy.contains('.life-list__result li', 'Eastern/Western Warbling Vireo').should('contain', '✓ Western Warbling Vireo added')
-    cy.get('.life-list__count').should('have.text', '12 birds')
+    cy.get('.life-list__count').should('have.text', '13 birds') // twelve imported, and the vireo picked above
     // A pre-split sighting: pick which species it was.
     cy.contains('.life-list__result li', 'Saltmarsh/Prairie Willet').within(() => {
       cy.contains('Which did you see?')
@@ -76,5 +76,31 @@ describe('Life list', () => {
       expect(codes).to.include('mutswa', 'county birds beyond the watch list count too')
     })
     cy.get('.go__summary').should('contain', 'possible lifer')
+  })
+
+  it('the life list page shows, sorts, searches and takes birds off, with an undo', () => {
+    cy.get('#seen-snogoo').click()
+    cy.wait('@postSeen')
+    cy.get('#seen-cangoo').click()
+    cy.wait('@postSeen')
+    cy.visit('http://localhost:3000/saved')
+    cy.contains('.list-tabs__tab', 'Life list (2)').click()
+    cy.url().should('include', '/life-list')
+    cy.get('.list-heading').should('contain', 'Your life list: 2 birds')
+    // Newest first: the goose ticked second leads, and the card says when it went on the list.
+    cy.get('.birds-list .card').should('have.length', 2).first().should('contain', 'Canada Goose').and('contain', 'First seen')
+    cy.get('.life-page__sort select').select('A to Z')
+    cy.get('.birds-list .card').first().should('contain', 'Canada Goose')
+    cy.get('.life-page__search input').type('snow')
+    cy.get('.birds-list .card').should('have.length', 1).and('contain', 'Snow Goose')
+    cy.get('.life-page__search input').clear()
+    cy.get('.birds-list .card').should('have.length', 2)
+    // Off the list, and back with the toast's Undo.
+    cy.get('#seen-snogoo').click()
+    cy.wait('@deleteSeen')
+    cy.get('.birds-list .card').should('have.length', 1)
+    cy.contains('.toast-undo', 'Removed Snow Goose from your life list').find('button').click()
+    cy.wait('@postSeen').its('request.body').should('deep.equal', { speciesCode: 'snogoo' })
+    cy.get('.birds-list .card').should('have.length', 2)
   })
 })
