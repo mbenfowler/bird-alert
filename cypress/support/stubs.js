@@ -17,7 +17,7 @@ export const stubAuth = ({ userExists = true, user = TEST_USER, loggedIn = false
   }).as('login')
   cy.intercept('POST', '**/api/auth/signup', (req) => {
     state.loggedIn = true
-    state.user = { ...state.user, email: req.body.email, location: '', state: '', email_confirmed: false }
+    state.user = { ...state.user, email: req.body.email, location: req.body.location ?? '', state: req.body.state ?? '', email_confirmed: false, hasPasskey: false }
     req.reply({ statusCode: 201, body: state.user })
   }).as('signup')
   cy.intercept('POST', '**/api/auth/logout', { statusCode: 204, body: '' }).as('logout')

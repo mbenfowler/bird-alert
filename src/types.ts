@@ -18,6 +18,8 @@ export interface User {
   timezone: string | null
   created_at: string
   updated_at: string
+  /** Whether any passkey is on the account. */
+  hasPasskey?: boolean
 }
 
 export type EmailPreference = 'alert_digest_email_enabled' | 'rare_sightings_email_enabled' | 'migration_email_enabled'
@@ -238,6 +240,8 @@ export interface SharedSighting {
   locName: string; lat: number; lng: number; obsDt: string | null; howMany: number | null; subId: string | null; regionName: string | null
 }
 export type Share = SharedRoute | SharedSighting
+/** A passkey on the account: the device it was made on and the site it belongs to. */
+export interface Passkey { id: string; name: string | null; site: string; createdAt: string; lastUsedAt: string | null }
 export interface FoundAddress { kind: 'address'; name: string; lat: number; lng: number }
 export interface PlaceSearch { hotspots: FoundHotspot[]; addresses: FoundAddress[] }
 export interface NearbyPublic { hotspots: NearbyHotspot[]; parks: NearbyPark[]; fetchedAt?: string }

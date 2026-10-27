@@ -2,6 +2,8 @@ export const TEST_USER = {
   id: 1,
   username: '',
   email: 'robinware456@gmail.com',
+  // Already has a passkey, so signing in with the password goes straight in (no Face ID offer).
+  hasPasskey: true,
   location: 'US-GA-139',
   state: 'GA',
   email_confirmed: true,
@@ -153,6 +155,6 @@ export const login = () => {
 
   cy.visit('http://localhost:3000/login')
   cy.get('.input').type('robinware456@gmail.com{enter}')
-  cy.get(':nth-child(2) > .input', { timeout: 10000 }).should('be.visible')
-  cy.get(':nth-child(2) > .input').type('1234{enter}')
+  cy.get('.input.password', { timeout: 10000 }).should('be.visible')
+  cy.get('.input.password').type('1234{enter}')
 }

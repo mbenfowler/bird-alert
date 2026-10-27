@@ -1,4 +1,4 @@
-import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share } from './types'
+import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share, Passkey } from './types'
 
 // Every request goes to the same-origin `/api` prefix. In development Vite proxies it to the
 // backend (vite.config.ts); in production Vercel rewrites it (vercel.json). The backend holds
@@ -51,7 +51,15 @@ const api = <T,>(path: string, { method = 'GET', body, params }: RequestOptions 
 export const getCurrentUser = () => api<User>('/auth/me')
 export const getUserExists = (email: string) => api<{ userExists: boolean }>('/auth/exists', { params: { email } })
 export const login = (email: string, password: string) => api<User>('/auth/login', { method: 'POST', body: { email, password } })
-export const signup = (email: string, password: string) => api<User>('/auth/signup', { method: 'POST', body: { email, password } })
+export const signup = (email: string, password: string, place?: { state: string; location: string } | null) =>
+  api<User>('/auth/signup', { method: 'POST', body: { email, password, ...(place ?? {}) } })
+// ---- passkeys ----
+export const passkeyLoginOptions = () => api<{ options: unknown; token: string }>('/auth/passkey-login-options', { method: 'POST' })
+export const passkeyLogin = (response: unknown, token: string) => api<User>('/auth/passkey-login', { method: 'POST', body: { response, token } })
+export const passkeyRegisterOptions = () => api<{ options: unknown; token: string }>('/auth/passkey-register-options', { method: 'POST' })
+export const passkeyRegister = (response: unknown, token: string) => api<Passkey[]>('/auth/passkey-register', { method: 'POST', body: { response, token } })
+export const getPasskeys = () => api<Passkey[]>('/auth/passkeys')
+export const deletePasskey = (id: string) => api<Passkey[]>('/auth/passkeys', { method: 'DELETE', params: { id } })
 export const logout = () => api<null>('/auth/logout', { method: 'POST' })
 export const requestPasswordReset = (email: string) => api<{ ok: true }>('/auth/forgot', { method: 'POST', body: { email } })
 export const resetPassword = (token: string, password: string) => api<{ ok: true }>('/auth/reset', { method: 'POST', body: { token, password } })
