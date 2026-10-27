@@ -4,6 +4,8 @@ import { BrowserRouter } from 'react-router'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import App from './components/App/App'
 import { queryClient, persistOptions } from './queryClient'
+import { Analytics } from '@vercel/analytics/react'
+import { redactPageView } from './analytics'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -11,6 +13,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <BrowserRouter>
         <App />
       </BrowserRouter>
+      {/* Page views (Vercel Web Analytics: no cookies, nothing personal); quiet outside production. */}
+      <Analytics beforeSend={redactPageView} />
     </PersistQueryClientProvider>
   </React.StrictMode>
 )
