@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions,
-  getSavedBirds, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute } from '../apiCalls'
+  getSavedBirds, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
 import type { User } from '../types'
 
@@ -16,6 +16,7 @@ export const codesKey = (codes: string[]) => {
 export const queryKeys = {
   session: ['session'] as const,
   saved: ['saved'] as const,
+  seen: ['seen'] as const,
   speciesList: (region: string) => ['species-list', region] as const,
   birds: (codes: string[]) => ['birds', codes.join(',')] as const,
   birdPages: (region: string, codes: string[], pageSize: number) => ['bird-pages', region, codesKey(codes), pageSize] as const,
@@ -65,6 +66,17 @@ export const useSavedBirdsQuery = () =>
 export const useSavedCodes = (): Set<string> => {
   const { data } = useSavedBirdsQuery()
   return useMemo(() => new Set((data ?? []).map(bird => bird.speciesCode)), [data])
+}
+
+/** The life list. */
+export const useSeenBirdsQuery = (enabled = true) =>
+  useQuery({ queryKey: queryKeys.seen, queryFn: getSeenBirds, staleTime: 5 * MINUTE, enabled })
+
+/** The life list as a set of species codes, and whether it has loaded. */
+export const useSeenCodes = () => {
+  const { data, isSuccess } = useSeenBirdsQuery()
+  const codes = useMemo(() => new Set((data ?? []).map(bird => bird.speciesCode)), [data])
+  return { codes, loaded: isSuccess }
 }
 
 /** eBird's species list for a region changes rarely; keep it for a day and persist it. */

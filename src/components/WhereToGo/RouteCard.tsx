@@ -10,6 +10,8 @@ interface RouteCardProps {
   state: string
   places: GoPlace[]
   speciesCount: number
+  /** Counting lifers (birds not on the life list) rather than the watch list. */
+  lifers?: boolean
   stops: PlanPoint[]
   start: PlanPoint | null
   /** A place being considered, shown as a ghost last stop. */
@@ -41,7 +43,7 @@ const legText = (leg: Leg) => leg ? `↓ ${leg.minutes} min drive · ${leg.miles
  * or the arrows), and sets where the day starts.
  */
 const RouteCard = (props: RouteCardProps) => {
-  const { state, places, speciesCount, stops, start, preview = null, arriving, drive, covers, url, custom, saveFailed = false, editing, showRoute } = props
+  const { state, places, speciesCount, lifers = false, stops, start, preview = null, arriving, drive, covers, url, custom, saveFailed = false, editing, showRoute } = props
   const { onEditing, onStops, onStart, onReset, onStopClick, onToggleRoute } = props
   const byId = new Map(places.map(p => [p.locId, p]))
   const [settingStart, setSettingStart] = useState(false)
@@ -184,7 +186,7 @@ const RouteCard = (props: RouteCardProps) => {
 
       {stops.length > 0 && (
         <p className='go__covers'>
-          Together these cover about {birdsWord(covers)} of your {speciesCount}.
+          Together these cover about {lifers ? `${covers % 1 === 0 ? covers : covers.toFixed(1)} of the ${speciesCount} possible ${speciesCount === 1 ? 'lifer' : 'lifers'}` : `${birdsWord(covers)} of your ${speciesCount}`}.
           {drive ? ` ${drive.minutes} minutes of driving, ${drive.miles} miles.` : ''}
           {firstBest ? ` Start at ${stops[0].name}, best ${firstBest}.` : ''}
           {unscored ? ' Stops from outside your list’s places aren’t counted.' : ''}

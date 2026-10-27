@@ -1,4 +1,4 @@
-import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint } from './types'
+import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice } from './types'
 
 // Every request goes to the same-origin `/api` prefix. In development Vite proxies it to the
 // backend (vite.config.ts); in production Vercel rewrites it (vercel.json). The backend holds
@@ -65,6 +65,14 @@ export const patchUser = (changes: UserPatch) => api<User>('/user', { method: 'P
 // ---- watch list ----
 export const getSavedBirds = () => api<Bird[]>('/saved')
 export const postSavedBird = (speciesCode: string) => api<Bird>('/saved', { method: 'POST', body: { speciesCode } })
+// ---- life list ----
+export const getSeenBirds = () => api<SeenBird[]>('/saved', { params: { kind: 'seen' } })
+export const postSeenBird = (speciesCode: string) => api<{ speciesCode: string }>('/saved', { method: 'POST', params: { kind: 'seen' }, body: { speciesCode } })
+export const deleteSeenBird = (speciesCode: string) => api<null>('/saved', { method: 'DELETE', params: { kind: 'seen', speciesCode } })
+export const getSplitEvidence = (ask: { choices: SplitChoice[]; locId: string | null; region: string | null; day: string }) =>
+  api<SplitEvidence>('/saved', { method: 'POST', params: { kind: 'seen', evidence: '1' }, body: ask })
+export const importLifeList = (csv: string) => api<LifeListImport>('/saved', { method: 'POST', params: { kind: 'seen', import: '1' }, body: { csv } })
+
 export const getSavedRoute = (region: string) => api<SavedRoute>('/saved', { params: { kind: 'route', region } })
 /** Only the fields given change: `stops: null` goes back to the suggestion, `start: null` clears the start. */
 export const putSavedRoute = (change: { region: string; stops?: SavedPoint[] | null; start?: SavedPoint | null }) =>

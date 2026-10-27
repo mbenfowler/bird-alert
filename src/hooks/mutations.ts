@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { deleteSavedBird, logout, patchUser, postSavedBird, putSavedRoute } from '../apiCalls'
+import { deleteSavedBird, deleteSeenBird, importLifeList, logout, patchUser, postSavedBird, postSeenBird, putSavedRoute } from '../apiCalls'
 import { clearLocalRoutes } from '../routePlan'
 import { queryKeys } from './queries'
-import type { Bird, User } from '../types'
+import type { Bird, SeenBird, User } from '../types'
 
 /** Put a freshly logged-in user into the cache so every view updates at once. */
 export const useSetSession = () => {
@@ -19,6 +19,7 @@ export const useLogoutMutation = () => {
       queryClient.setQueryData(queryKeys.session, null)
       queryClient.removeQueries({ queryKey: queryKeys.saved })
       queryClient.removeQueries({ queryKey: ['saved-route'] })
+      queryClient.removeQueries({ queryKey: queryKeys.seen })
       // The next person on this browser starts from their own account's route.
       clearLocalRoutes()
     }
@@ -32,6 +33,30 @@ export const useSaveRouteMutation = () => {
     mutationFn: putSavedRoute,
     onSuccess: (saved) => queryClient.setQueryData(queryKeys.savedRoute(saved.region), saved)
   })
+}
+
+/** "Seen it" on or off; the life list updates at once and settles with the server. */
+export const useToggleSeenMutation = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ speciesCode, seen }: { speciesCode: string; seen: boolean }) => (seen ? postSeenBird(speciesCode) : deleteSeenBird(speciesCode)).then(() => speciesCode),
+    onMutate: async ({ speciesCode, seen }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.seen })
+      const previous = queryClient.getQueryData<SeenBird[]>(queryKeys.seen) ?? []
+      const next = seen
+        ? (previous.some(b => b.speciesCode === speciesCode) ? previous : [...previous, { speciesCode, firstSeen: new Date().toISOString().slice(0, 10), source: 'tap' as const }])
+        : previous.filter(b => b.speciesCode !== speciesCode)
+      queryClient.setQueryData<SeenBird[]>(queryKeys.seen, next)
+      return { previous }
+    },
+    onError: (_error, _variables, context) => { if (context) queryClient.setQueryData(queryKeys.seen, context.previous) },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.seen })
+  })
+}
+
+export const useImportLifeListMutation = () => {
+  const queryClient = useQueryClient()
+  return useMutation({ mutationFn: importLifeList, onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.seen }) })
 }
 
 export const usePatchUserMutation = () => {

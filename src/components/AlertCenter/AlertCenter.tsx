@@ -1,7 +1,7 @@
 import { useEffect, type ChangeEvent } from 'react'
 import { toast } from 'react-toastify'
 import { errorMessage, sendEmailPreview } from '../../apiCalls'
-import { useCurrentUser, usePushStatusQuery } from '../../hooks/queries'
+import { useCurrentUser, usePushStatusQuery, useSeenBirdsQuery } from '../../hooks/queries'
 import { usePatchUserMutation } from '../../hooks/mutations'
 import { usePushNotifications } from '../../hooks/usePushNotifications'
 import { LoadingState } from '../Loading/Loading'
@@ -11,8 +11,11 @@ import './AlertCenter.css'
 const PUSH_KINDS: { field: PushPreference; label: string; hint: string }[] = [
   { field: 'push_watchlist_enabled', label: 'Watch list sightings', hint: 'One notification an hour listing every bird of yours reported since the last check.' },
   { field: 'push_notable_enabled', label: 'Notable sightings', hint: "eBird's uncommon birds for your area." },
-  { field: 'push_first_of_season', label: 'First of the season', hint: 'The first report of a migrant returning to your area, once per species each season.' }
+  { field: 'push_first_of_season', label: 'First of the season', hint: 'The first report of a migrant returning to your area, once per species each season.' },
+  { field: 'push_lifer_enabled', label: 'Lifer chances', hint: 'A bird that isn’t on your life list reported in your area. Each one at most every three days.' }
 ]
+// Lifer alerts measure against the life list; with only a few birds on it, nearly everything is a lifer.
+const MIN_LIFE_LIST = 10
 
 const EMAIL_PREFERENCES: { field: EmailPreference; label: string; hint: string; preview: EmailPreviewKind; nothing: string }[] = [
   { field: 'alert_digest_email_enabled', label: 'Daily email digest', hint: 'One email a morning when a bird on your watch list was seen nearby.', preview: 'watchlist', nothing: 'none of your watch-list birds were reported nearby in the last day.' },
@@ -41,6 +44,7 @@ const timeAgo = (iso: string) => {
 
 const AlertCenter = () => {
   const user = useCurrentUser()
+  const lifeListSize = useSeenBirdsQuery().data?.length ?? 0
   const patchUser = usePatchUserMutation()
   const push = usePushNotifications()
   const status = usePushStatusQuery()
@@ -139,10 +143,10 @@ const AlertCenter = () => {
               <div className='notification notification--sub'>
                 <div className='notification__text'>
                   <label htmlFor={field}>{label}</label>
-                  <p className='notification__hint'>{hint}</p>
+                  <p className='notification__hint'>{hint}{field === 'push_lifer_enabled' && lifeListSize < MIN_LIFE_LIST ? ` Needs ${MIN_LIFE_LIST} or more birds on your life list (above) first.` : ''}</p>
                 </div>
                 <div className='notification__controls'>
-                  <input className='switch switch--small' type='checkbox' id={field} name={field} checked={Boolean(user[field])} disabled={!pushOn || pendingField === field} onChange={togglePreference} />
+                  <input className='switch switch--small' type='checkbox' id={field} name={field} checked={Boolean(user[field])} disabled={!pushOn || pendingField === field || (field === 'push_lifer_enabled' && !user[field] && lifeListSize < MIN_LIFE_LIST)} onChange={togglePreference} />
                 </div>
               </div>
               {field === 'push_notable_enabled' && (

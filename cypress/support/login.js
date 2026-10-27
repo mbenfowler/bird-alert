@@ -61,6 +61,36 @@ export const login = () => {
     req.reply({ statusCode: 204, body: '' })
   }).as('deleteSaved')
 
+  // The life list: empty to begin with; taps add and remove.
+  const lifeList = { birds: [] }
+  cy.intercept('GET', '**/api/saved?kind=seen*', (req) => req.reply({ statusCode: 200, body: lifeList.birds })).as('getSeen')
+  cy.intercept('POST', '**/api/saved?kind=seen', (req) => {
+    if (!lifeList.birds.some((b) => b.speciesCode === req.body.speciesCode)) lifeList.birds = [...lifeList.birds, { speciesCode: req.body.speciesCode, firstSeen: `2026-10-${String(10 + lifeList.birds.length).padStart(2, '0')}`, source: 'tap', comName: birdsByCode[req.body.speciesCode]?.comName ?? null, taxonOrder: birdsByCode[req.body.speciesCode]?.taxonOrder ?? null }]
+    req.reply({ statusCode: 201, body: { speciesCode: req.body.speciesCode } })
+  }).as('postSeen')
+  cy.intercept('DELETE', '**/api/saved?kind=seen&speciesCode=*', (req) => {
+    const code = new URL(req.url).searchParams.get('speciesCode')
+    lifeList.birds = lifeList.birds.filter((b) => b.speciesCode !== code)
+    req.reply({ statusCode: 204, body: '' })
+  }).as('deleteSeen')
+  // An eBird import: twelve birds land, and two rows come back for the person to settle.
+  cy.intercept('POST', '**/api/saved?kind=seen&import=1', (req) => {
+    const codes = ['snogoo', ...Array.from({ length: 11 }, (_, i) => `imp${String(i).padStart(3, '0')}`)]
+    const added = codes.filter((code) => !lifeList.birds.some((b) => b.speciesCode === code))
+    lifeList.birds = [...lifeList.birds, ...added.map((speciesCode) => ({ speciesCode, firstSeen: '2020-01-01', source: 'import' }))]
+    req.reply({ statusCode: 200, body: { added: added.length, already: codes.length - added.length, total: lifeList.birds.length, skipped: [
+      { name: 'Saltmarsh/Prairie Willet', reason: 'one of two species (often an old sighting from before eBird split it), so it’s yours to say which', choices: [{ speciesCode: 'willet2', comName: 'Saltmarsh Willet' }, { speciesCode: 'willet3', comName: 'Prairie Willet' }], where: { locId: 'L591483', region: 'US-GA', day: '2025-08-23' } },
+      { name: 'Eastern/Western Warbling Vireo', reason: 'one of two species (often an old sighting from before eBird split it), so it’s yours to say which', choices: [{ speciesCode: 'eawvir1', comName: 'Eastern Warbling Vireo' }, { speciesCode: 'wewvir2', comName: 'Western Warbling Vireo' }], where: { locId: 'L342269', region: 'US-CO', day: '2024-05-25' } },
+      { name: 'Muscovy Duck', reason: 'an escapee eBird doesn’t count', choices: [{ speciesCode: 'musduc', comName: 'Muscovy Duck' }] }
+    ] } })
+  }).as('importLifeList')
+  cy.intercept('POST', '**/api/saved?kind=seen&evidence=1', (req) => {
+    const vireo = req.body.choices[0].speciesCode === 'eawvir1'
+    req.reply({ statusCode: 200, body: vireo
+      ? { area: 'US-GA-139', areaKind: 'county', from: '05-11', to: '06-08', sampled: 10, lean: 'wewvir2', strength: 'clear', ranked: [{ speciesCode: 'wewvir2', comName: 'Western Warbling Vireo', days: 9 }, { speciesCode: 'eawvir1', comName: 'Eastern Warbling Vireo', days: 2 }] }
+      : { area: 'US-GA-139', areaKind: 'county', from: '08-09', to: '09-06', sampled: 10, lean: null, strength: 'thin', ranked: [{ speciesCode: 'willet2', comName: 'Saltmarsh Willet', days: 0 }, { speciesCode: 'willet3', comName: 'Prairie Willet', days: 0 }] } })
+  }).as('splitEvidence')
+
   // The route kept on the account: empty to begin with, and whatever was last put after that.
   const account = { stops: {}, start: null }
   cy.intercept('GET', '**/api/saved?kind=route*', (req) => {
