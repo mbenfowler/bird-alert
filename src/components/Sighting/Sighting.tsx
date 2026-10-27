@@ -12,9 +12,10 @@ import { errorMessage } from '../../apiCalls'
 import { useBirdsQuery, useCurrentUser, useNearbyPublicQuery, useRegionsQuery, useSavedCodes, useSeasonalityQuery, useSpeciesObservationsQuery, useWhereToFindQuery } from '../../hooks/queries'
 import { focusFor } from '../../mapFocus'
 import { useToggleSavedMutation } from '../../hooks/mutations'
-import type { Observation, Place, PersistenceClass, WhereToFind } from '../../types'
+import type { Observation, Place, PersistenceClass } from '../../types'
 import { formatObsDt } from '../../format'
 import { article, chanceStyle } from '../../chance'
+import AccuracyBadge from '../AccuracyBadge/AccuracyBadge'
 import './Sighting.css'
 
 const mapsHref = (o: Observation) => {
@@ -47,13 +48,6 @@ const evidence = (place: Place) => {
   if (place.effort.detection !== null) parts.push(`on ${place.effort.withSpecies} of ${place.effort.checklists} checklists`)
   else if (place.effort.checklists > 0) parts.push(`${place.effort.checklists} ${place.effort.checklists === 1 ? 'checklist' : 'checklists'} lately`)
   return parts.join(' · ')
-}
-
-/** What the bands have meant here lately, once enough predictions have been graded to say. */
-const gradesLine = (grades: WhereToFind['grades']) => {
-  if (!grades) return null
-  const parts = (['High', 'Good', 'Fair'] as const).filter(b => grades[b]?.enough && grades[b]?.rate !== null).map(b => `${b} ${grades[b]!.rate}%`)
-  return parts.length ? `Seen on a visit lately: ${parts.join(' · ')}` : null
 }
 
 /**
@@ -223,8 +217,8 @@ const Sighting = () => {
                 <p className='sighting__odds'>
                   <span>{CLASS_LABEL[where.data.class]}</span>
                   <span>{where.data.bestTime.source === 'reports' ? `Best ${where.data.bestTime.label}` : `Usually best: ${where.data.bestTime.label.toLowerCase()}`}</span>
-                  {gradesLine(where.data.grades) && <span className='sighting__grades'>{gradesLine(where.data.grades)}</span>}
                 </p>
+                <AccuracyBadge grades={where.data.grades} />
                 <ol className='sighting__list sighting__places'>
                   {places.map(place => {
                     const selected = currentPlace?.locId === place.locId

@@ -29,6 +29,10 @@
     line-height: 1.4;
 }
 
+.go__title-row .accuracy {
+    margin-top: 6px;
+}
+
 /* The route: numbered stops in a flat inset panel, like the chart on the species page. */
 .go__route {
     padding: 10px 12px 12px;

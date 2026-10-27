@@ -12,6 +12,7 @@ import { chanceColour } from '../../chance'
 import { MAX_ROUTE_STOPS, coverage, samePlace, mapsUrl, type PlanPoint } from '../../routePlan'
 import { useRoutePlan } from '../../hooks/useRoutePlan'
 import type { GoPlace } from '../../types'
+import AccuracyBadge from '../AccuracyBadge/AccuracyBadge'
 import './WhereToGo.css'
 
 const birdsWord = (n: number) => `${n % 1 === 0 ? n : n.toFixed(1)} ${n === 1 ? 'bird' : 'birds'}`
@@ -155,6 +156,7 @@ const WhereToGo = () => {
         <div className='go__title-row'>
           <h1 className='fredericka go__title'>Where to go</h1>
           <p className='go__summary'>{species.length} {species.length === 1 ? 'bird' : 'birds'} on your watch list · {places.length} {places.length === 1 ? 'place' : 'places'} in {regionName} with reports in the last 30 days</p>
+          <AccuracyBadge grades={go.data.grades} />
         </div>
         {!editing && routeCard}
       </header>

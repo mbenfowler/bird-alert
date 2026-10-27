@@ -201,6 +201,8 @@ export interface WhereToGo {
   asOf: string
   species: { speciesCode: string; comName: string; class: PersistenceClass; bestTime: WhereToFind['bestTime']; places: number; best: { locId: string; locName: string | null; chance: number } | null }[]
   places: GoPlace[]
+  /** How each band has held up lately; a band is shown once `enough` predictions are graded. */
+  grades?: WhereToFind['grades']
   route: { stops: GoStop[]; covers: number; url: string | null; drive?: Drive | null; origin?: { lat: number; lng: number } | null }
 }
 
