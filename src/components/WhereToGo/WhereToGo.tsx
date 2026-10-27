@@ -9,7 +9,8 @@ import RouteCard from './RouteCard'
 import { useCurrentUser, useDriveQuery, useNearbyPublicQuery, useRegionsQuery, useSavedCodes, useSpeciesListQuery, useWhereToGoQuery } from '../../hooks/queries'
 import { focusFor } from '../../mapFocus'
 import { chanceColour } from '../../chance'
-import { MAX_ROUTE_STOPS, coverage, samePlace, loadPlan, loadStart, mapsUrl, savePlan, saveStart, type PlanPoint } from '../../routePlan'
+import { MAX_ROUTE_STOPS, coverage, samePlace, mapsUrl, type PlanPoint } from '../../routePlan'
+import { useRoutePlan } from '../../hooks/useRoutePlan'
 import type { GoPlace } from '../../types'
 import './WhereToGo.css'
 
@@ -31,9 +32,9 @@ const WhereToGo = () => {
     const here = speciesList.data ? new Set(speciesList.data) : null
     return [...savedCodes].filter(code => !here || here.has(code)).sort()
   }, [savedCodes, speciesList.data])
-  // Where the day starts (kept in this browser): the suggested route counts the drive from there.
-  const [start, setStartState] = useState<PlanPoint | null>(loadStart)
-  const setStart = (next: PlanPoint | null) => { setStartState(next); saveStart(next) }
+  // The person's own stops for this county (null follows the suggestion) and where the day starts,
+  // kept on the account. The suggested route counts the drive from the start.
+  const { custom, setCustom, start, setStart, saveFailed } = useRoutePlan(region)
   const go = useWhereToGoQuery(region, codes, start)
   const regions = useRegionsQuery(user.state)
   const regionName = regions.data?.find(r => r.code === region)?.name ?? 'your county'
@@ -42,13 +43,9 @@ const WhereToGo = () => {
   const [openNearby, setOpenNearby] = useState<string | null>(null)
   const [activeNearby, setActiveNearby] = useState<string | null>(null)
   const [showRoute, setShowRoute] = useState(false)
-  // The person's own stops for this county, once they have edited the route; null follows the suggestion.
-  const [customState, setCustomState] = useState(() => ({ region, stops: loadPlan(region) }))
-  const custom = customState.region === region ? customState.stops : loadPlan(region)
   const [editing, setEditing] = useState(false)
   // A public land the mouse rests on, shown on the end of the route until the mouse moves off.
   const [phantom, setPhantom] = useState<PlanPoint | null>(null)
-  const setCustom = (next: PlanPoint[] | null) => { setCustomState({ region, stops: next }); savePlan(region, next) }
 
   const route = go.data?.route
   const suggested = useMemo<PlanPoint[]>(() => (route?.stops ?? []).map(s => ({ locId: s.locId, name: s.locName ?? s.locId, lat: s.lat, lng: s.lng })), [route])
@@ -145,7 +142,7 @@ const WhereToGo = () => {
   const routeCard = hasRoute ? (
     <RouteCard state={user.state} places={places} speciesCount={species.length} stops={stops} start={start} arriving={arriving}
             preview={preview} drive={drive} covers={custom ? coverage(stops, places) : route!.covers} url={custom ? mapsUrl(stops, start) : route!.url}
-            custom={custom !== null} editing={editing} showRoute={showRoute}
+            custom={custom !== null} saveFailed={saveFailed} editing={editing} showRoute={showRoute}
             onEditing={(on) => { setEditing(on); if (on) { closeNearby(); setShowRoute(true) } }}
             onStops={(next) => setCustom(next)} onStart={setStart} onReset={() => setCustom(null)}
             onStopClick={(stop) => { if (stop.locId) setSelected(stop.locId); setShowRoute(true) }}

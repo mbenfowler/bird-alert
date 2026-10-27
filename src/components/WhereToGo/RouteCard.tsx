@@ -20,6 +20,8 @@ interface RouteCardProps {
   covers: number
   url: string | null
   custom: boolean
+  /** The last save to the account failed; the route is still kept in this browser. */
+  saveFailed?: boolean
   editing: boolean
   showRoute: boolean
   onEditing: (editing: boolean) => void
@@ -39,7 +41,7 @@ const legText = (leg: Leg) => leg ? `↓ ${leg.minutes} min drive · ${leg.miles
  * or the arrows), and sets where the day starts.
  */
 const RouteCard = (props: RouteCardProps) => {
-  const { state, places, speciesCount, stops, start, preview = null, arriving, drive, covers, url, custom, editing, showRoute } = props
+  const { state, places, speciesCount, stops, start, preview = null, arriving, drive, covers, url, custom, saveFailed = false, editing, showRoute } = props
   const { onEditing, onStops, onStart, onReset, onStopClick, onToggleRoute } = props
   const byId = new Map(places.map(p => [p.locId, p]))
   const [settingStart, setSettingStart] = useState(false)
@@ -189,6 +191,7 @@ const RouteCard = (props: RouteCardProps) => {
         </p>
       )}
 
+      {saveFailed && <p className='go__hint'>Couldn’t save this route to your account just now. It’s kept on this device and will save with your next change.</p>}
       {editing ? (
         <>
           <div className='go__add'>

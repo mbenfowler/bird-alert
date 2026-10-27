@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions,
-  getSavedBirds, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getNearbyPublic, getPlaceSearch, getDrive } from '../apiCalls'
+  getSavedBirds, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
 import type { User } from '../types'
 
@@ -30,6 +30,7 @@ export const queryKeys = {
   sightings: (region: string, ids: string) => ['sightings', region, ids] as const,
   whereToFind: (region: string, code: string) => ['where-to-find', region, code] as const,
   whereToGo: (region: string, codes: string[], from?: { lat: number; lng: number } | null) => ['where-to-go', region, codesKey(codes), from ? `${from.lat.toFixed(2)},${from.lng.toFixed(2)}` : ''] as const,
+  savedRoute: (region: string) => ['saved-route', region] as const,
   placeSearch: (state: string, q: string, addresses: boolean) => ['place-search', state, q.trim().toLowerCase(), addresses] as const,
   drive: (points: { lat: number; lng: number }[]) => ['drive', points.map(p => `${p.lat.toFixed(4)},${p.lng.toFixed(4)}`).join(';')] as const,
   nearby: (lat: number, lng: number) => ['nearby', lat.toFixed(3), lng.toFixed(3)] as const
@@ -238,6 +239,16 @@ export const useWhereToGoQuery = (region: string, codes: string[], from?: { lat:
     // A new starting point keeps the old route up while the new one comes in.
     placeholderData: keepPreviousData,
     enabled: Boolean(region) && codes.length > 0
+  })
+
+/** The route kept on the account for this county; looked at again whenever the page is opened. */
+export const useSavedRouteQuery = (region: string) =>
+  useQuery({
+    queryKey: queryKeys.savedRoute(region),
+    queryFn: () => getSavedRoute(region),
+    staleTime: 0,
+    retry: 1,
+    enabled: Boolean(region)
   })
 
 /** Places by name for a route: hotspots as you type, addresses once submitted. */

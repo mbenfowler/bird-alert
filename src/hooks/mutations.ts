@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { deleteSavedBird, logout, patchUser, postSavedBird } from '../apiCalls'
+import { deleteSavedBird, logout, patchUser, postSavedBird, putSavedRoute } from '../apiCalls'
+import { clearLocalRoutes } from '../routePlan'
 import { queryKeys } from './queries'
 import type { Bird, User } from '../types'
 
@@ -17,7 +18,19 @@ export const useLogoutMutation = () => {
     onSettled: () => {
       queryClient.setQueryData(queryKeys.session, null)
       queryClient.removeQueries({ queryKey: queryKeys.saved })
+      queryClient.removeQueries({ queryKey: ['saved-route'] })
+      // The next person on this browser starts from their own account's route.
+      clearLocalRoutes()
     }
+  })
+}
+
+/** Saves the route to the account; the answer becomes the cached copy for its county. */
+export const useSaveRouteMutation = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: putSavedRoute,
+    onSuccess: (saved) => queryClient.setQueryData(queryKeys.savedRoute(saved.region), saved)
   })
 }
 

@@ -1,4 +1,4 @@
-import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, NearbyPublic, PlaceSearch, Drive } from './types'
+import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint } from './types'
 
 // Every request goes to the same-origin `/api` prefix. In development Vite proxies it to the
 // backend (vite.config.ts); in production Vercel rewrites it (vercel.json). The backend holds
@@ -32,7 +32,7 @@ const parseResponse = async <T,>(res: Response): Promise<T> => {
 }
 
 interface RequestOptions {
-    method?: 'GET' | 'POST' | 'PATCH' | 'DELETE'
+    method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
     body?: unknown
     params?: Record<string, string>
 }
@@ -65,6 +65,10 @@ export const patchUser = (changes: UserPatch) => api<User>('/user', { method: 'P
 // ---- watch list ----
 export const getSavedBirds = () => api<Bird[]>('/saved')
 export const postSavedBird = (speciesCode: string) => api<Bird>('/saved', { method: 'POST', body: { speciesCode } })
+export const getSavedRoute = (region: string) => api<SavedRoute>('/saved', { params: { kind: 'route', region } })
+/** Only the fields given change: `stops: null` goes back to the suggestion, `start: null` clears the start. */
+export const putSavedRoute = (change: { region: string; stops?: SavedPoint[] | null; start?: SavedPoint | null }) =>
+  api<SavedRoute>('/saved', { method: 'PUT', params: { kind: 'route' }, body: change })
 export const deleteSavedBird = (speciesCode: string) => api<null>('/saved', { method: 'DELETE', params: { speciesCode } })
 
 // ---- birds (the server resolves and stores codes it has not seen before) ----

@@ -122,7 +122,13 @@ describe('Where to go', () => {
     cy.contains('button', 'Done').click()
     cy.get('.go__route a.pill-button').should('have.attr', 'href').and('include', 'origin=34.2979%2C-83.8241').and('include', 'destination=34.2995%2C-83.9214')
     cy.get('.sightings-map .map-stop--start').should('have.length', 1)
-    // Kept across a reload, and undone by going back to the suggestion.
+    // Kept on the account: a browser with nothing of its own (another device) still gets it.
+    // The save goes a moment after the last change; retried until it has.
+    cy.get('@putRoute.all').should((puts) => {
+      const last = [...puts].reverse().find((p) => 'stops' in p.request.body)
+      expect(last?.request.body.stops.map((s) => s.name)).to.deep.equal(['Yahoola Creek Park', 'Lake Lanier Olympic Park'])
+    })
+    cy.clearLocalStorage()
     cy.reload()
     cy.get('.go__route-head').should('have.text', 'Your route')
     cy.get('.go__stops > li').first().should('contain', 'Yahoola Creek Park')
