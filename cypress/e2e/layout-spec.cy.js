@@ -32,7 +32,7 @@ describe('Phone-width layout', () => {
 
   it('the forgotten-password link is a clear button once the email is known', () => {
     stubAuth()
-    cy.visit('http://localhost:3000/')
+    cy.visit('http://localhost:3000/login')
     cy.get('.input.email').type('robinware456@gmail.com{enter}')
     cy.get('.login-forgot').should('contain', 'Forgot your password?')
     cy.get('.login-forgot__button').should('be.visible').and('have.text', 'Email me a reset link').click()
@@ -41,9 +41,22 @@ describe('Phone-width layout', () => {
 
   it('login does not overflow', () => {
     stubAuth()
-    cy.visit('http://localhost:3000/')
+    cy.visit('http://localhost:3000/login')
     cy.get('.input.email')
     assertNoHorizontalOverflow()
+  })
+
+  it('the splash page does not overflow, and its pickers leave room for their arrows', () => {
+    stubAuth()
+    cy.intercept('GET', '**/api/ebird/notable*', { fixture: 'notableWeek' })
+    cy.intercept('GET', '**/api/ebird/observations*', { fixture: 'notableWeek' })
+    cy.intercept('GET', '**/api/birds?*', { statusCode: 200, body: [] })
+    cy.visit('http://localhost:3000/')
+    cy.get('.landing__bird').should('have.length', 2)
+    assertNoHorizontalOverflow()
+    cy.get('.landing__pickers select').each(($s) => {
+      expect(parseFloat(getComputedStyle($s[0]).paddingRight)).to.be.at.least(32)
+    })
   })
 
   it('a new page starts at the top and each alert tab starts at its first card', () => {

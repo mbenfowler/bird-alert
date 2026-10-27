@@ -72,7 +72,7 @@ const LifeListPage = () => {
               </div>
               <label className='life-page__sort'>
                 <span>Sort</span>
-                <select value={sort} onChange={(e) => setSort(e.target.value as Sort)}>
+                <select className='select' value={sort} onChange={(e) => setSort(e.target.value as Sort)}>
                   <option value='newest'>Newest first</option>
                   <option value='name'>A to Z</option>
                   <option value='taxonomic'>Taxonomic</option>

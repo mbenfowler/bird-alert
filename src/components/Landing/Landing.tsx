@@ -99,13 +99,13 @@ const Landing = () => {
           <div className='landing__pickers'>
             <label>
               <span className='visually-hidden'>State</span>
-              <select value={state} onChange={(e) => pickState(e.target.value)}>
+              <select className='select' value={state} onChange={(e) => pickState(e.target.value)}>
                 {US_STATES.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
               </select>
             </label>
             <label>
               <span className='visually-hidden'>County</span>
-              <select value={stateRegion ? '' : region} onChange={(e) => e.target.value && setRegion(e.target.value)} disabled={!countyChoices.length}>
+              <select className='select' value={stateRegion ? '' : region} onChange={(e) => e.target.value && setRegion(e.target.value)} disabled={!countyChoices.length}>
                 {stateRegion && <option value=''>All of {stateName}</option>}
                 {countyChoices.map(r => <option key={r.code} value={r.code}>{r.name}</option>)}
               </select>
