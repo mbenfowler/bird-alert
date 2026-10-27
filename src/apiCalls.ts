@@ -81,6 +81,10 @@ export const getSplitEvidence = (ask: { choices: SplitChoice[]; locId: string | 
   api<SplitEvidence>('/saved', { method: 'POST', params: { kind: 'seen', evidence: '1' }, body: ask })
 export const importLifeList = (csv: string) => api<LifeListImport>('/saved', { method: 'POST', params: { kind: 'seen', import: '1' }, body: { csv } })
 
+// ---- feedback ----
+export const sendFeedback = (feedback: { kind: 'idea' | 'bug' | 'other'; message: string; page?: string }) =>
+  api<{ ok: true }>('/saved', { method: 'POST', params: { kind: 'feedback' }, body: feedback })
+
 // ---- share links ----
 export const createShare = (share: Record<string, unknown> & { kind: 'route' | 'sighting' }) => api<{ id: string; url: string }>('/saved', { method: 'POST', params: { kind: 'share' }, body: share })
 export const getShare = (id: string) => api<Share>('/ebird/share', { params: { id } })

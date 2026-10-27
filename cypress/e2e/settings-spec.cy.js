@@ -75,4 +75,22 @@ describe('Settings', () => {
     cy.wait('@patchUser').its('request.body').should('deep.equal', { migration_email_enabled: true })
     cy.get('#migration_email_enabled').should('be.checked')
   })
+
+  it('sends an idea or a problem straight to the owner, and says thanks', () => {
+    cy.intercept('POST', '**/api/saved?kind=feedback', { statusCode: 201, body: { ok: true } }).as('feedback')
+    cy.get('.feedback__send').should('be.disabled')
+    cy.contains('.feedback__kind', 'Something’s broken').click()
+    cy.contains('.feedback__kind', 'Something’s broken').should('have.attr', 'aria-checked', 'true')
+    cy.get('.feedback__text').should('have.attr', 'placeholder').and('include', 'What happened')
+    cy.get('.feedback__text').type('The map pins overlap on my phone.')
+    cy.get('.feedback__send').click()
+    cy.wait('@feedback').its('request.body').should('deep.equal', { kind: 'bug', message: 'The map pins overlap on my phone.', page: '/settings' })
+    cy.contains('.feedback__thanks', 'Thanks! I read every one.')
+    cy.get('.feedback__text').should('have.value', '')
+    // Too many in a day: the server says so, in its own words.
+    cy.intercept('POST', '**/api/saved?kind=feedback', { statusCode: 429, body: { error: 'Thanks for all the ideas! Send more tomorrow.' } })
+    cy.get('.feedback__text').type('One more idea')
+    cy.get('.feedback__send').click()
+    cy.contains('.feedback__error', 'Send more tomorrow')
+  })
 })
