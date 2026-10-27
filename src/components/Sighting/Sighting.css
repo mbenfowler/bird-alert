@@ -473,11 +473,6 @@
     font-style: italic;
 }
 
-.sighting__grades {
-    flex-basis: 100%;
-    font-size: 0.8rem;
-}
-
 /* A place is one card: the row's button (no frame of its own) and, for a private place, the public
    land panel inside the same frame beneath it. */
 .sighting__places > li {

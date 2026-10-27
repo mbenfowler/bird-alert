@@ -11,16 +11,9 @@ import { focusFor } from '../../mapFocus'
 import { chanceColour } from '../../chance'
 import { MAX_ROUTE_STOPS, coverage, samePlace, mapsUrl, type PlanPoint } from '../../routePlan'
 import { useRoutePlan } from '../../hooks/useRoutePlan'
-import type { GoPlace, WhereToGo as WhereToGoData } from '../../types'
+import type { GoPlace } from '../../types'
+import AccuracyBadge from '../AccuracyBadge/AccuracyBadge'
 import './WhereToGo.css'
-
-/** What the chances have meant lately, in the chances' own terms, once enough have been graded. */
-const BAND_RANGES = [['High', '60% and up'], ['Good', '40–59%'], ['Fair', '20–39%']] as const
-const gradesLine = (grades: WhereToGoData['grades']) => {
-  if (!grades) return null
-  const parts = BAND_RANGES.filter(([band]) => grades[band]?.enough && grades[band]?.rate !== null).map(([band, range]) => `${range}: ${grades[band]!.rate}%`)
-  return parts.length ? `How the chances have held up lately (the bird reported there within a week): ${parts.join(' · ')}` : null
-}
 
 const birdsWord = (n: number) => `${n % 1 === 0 ? n : n.toFixed(1)} ${n === 1 ? 'bird' : 'birds'}`
 
@@ -163,7 +156,7 @@ const WhereToGo = () => {
         <div className='go__title-row'>
           <h1 className='fredericka go__title'>Where to go</h1>
           <p className='go__summary'>{species.length} {species.length === 1 ? 'bird' : 'birds'} on your watch list · {places.length} {places.length === 1 ? 'place' : 'places'} in {regionName} with reports in the last 30 days</p>
-          {gradesLine(go.data.grades) && <p className='go__grades'>{gradesLine(go.data.grades)}</p>}
+          <AccuracyBadge grades={go.data.grades} />
         </div>
         {!editing && routeCard}
       </header>

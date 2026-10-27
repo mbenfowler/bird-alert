@@ -29,12 +29,8 @@
     line-height: 1.4;
 }
 
-.go__grades {
-    margin: 4px 0 0;
-    color: var(--muted);
-    font-family: system-ui, sans-serif;
-    font-size: 0.82rem;
-    line-height: 1.4;
+.go__title-row .accuracy {
+    margin-top: 6px;
 }
 
 /* The route: numbered stops in a flat inset panel, like the chart on the species page. */

@@ -1,0 +1,71 @@
+.accuracy {
+    position: relative;
+    display: inline-block;
+    font-family: system-ui, sans-serif;
+}
+
+.accuracy__badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border: 1.5px solid #0f7b3a;
+    border-radius: 999px;
+    color: #0f7b3a;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+}
+
+.accuracy__badge::-webkit-details-marker {
+    display: none;
+}
+
+.accuracy[open] .accuracy__badge,
+.accuracy__badge:hover {
+    background: #e6f4ea;
+}
+
+.accuracy__badge:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.accuracy__panel {
+    position: absolute;
+    z-index: 1200; /* over the map */
+    top: calc(100% + 6px);
+    left: 0;
+    width: min(320px, calc(100vw - 32px));
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+    font-size: 0.85rem;
+    line-height: 1.4;
+    text-align: left;
+}
+
+.accuracy__panel p {
+    margin: 0 0 6px;
+}
+
+.accuracy__panel ul {
+    margin: 0 0 6px;
+    padding-left: 18px;
+}
+
+.accuracy__panel li span,
+.accuracy__foot {
+    color: var(--muted);
+}
+
+.accuracy__foot {
+    margin: 0 !important;
+    font-size: 0.78rem;
+}
+
