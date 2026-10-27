@@ -71,7 +71,8 @@ const Card = ({ bird }: CardProps) => {
                     toggleSeen.mutate({ speciesCode: bird.speciesCode, seen: seenNow }, { onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' }) })
                     // Taking a bird off the life list is easy to do by accident; offer it back. Said at
                     // once, and undone without this card, which the life list page drops straight away.
-                    if (!seenNow) toast(({ closeToast }) => (
+                    if (seenNow) toast.success(`${bird.comName} added to your life list!`, { position: 'bottom-center' })
+                    else toast(({ closeToast }) => (
                         <span className='toast-undo'>Removed {bird.comName} from your life list <button type='button' onClick={() => { void postSeenBird(bird.speciesCode).finally(() => queryClient.invalidateQueries({ queryKey: queryKeys.seen })); closeToast() }}>Undo</button></span>
                     ), { position: 'bottom-center' })
                 }} />

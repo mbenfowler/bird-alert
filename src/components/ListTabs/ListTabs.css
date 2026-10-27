@@ -1,5 +1,9 @@
 .list-tabs {
     display: inline-flex;
+    /* Sized to the two tabs and centred, however wide the page. */
+    align-self: center;
+    width: max-content;
+    max-width: calc(100% - 24px);
     margin: 6px auto 4px;
     padding: 3px;
     border: 2px solid var(--ink);
@@ -9,6 +13,7 @@
 
 .list-tabs__tab {
     min-height: 38px;
+    white-space: nowrap;
     display: inline-flex;
     align-items: center;
     padding: 0 16px;

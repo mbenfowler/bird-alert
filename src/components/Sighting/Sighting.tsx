@@ -170,7 +170,10 @@ const Sighting = () => {
             {bird && (() => {
               const isSeen = seen.codes.has(bird.speciesCode)
               return <button type='button' className={`pill-button ${isSeen ? 'pill-button--seen' : ''}`} disabled={!seen.loaded} aria-pressed={isSeen}
-                onClick={() => toggleSeen.mutate({ speciesCode: bird.speciesCode, seen: !isSeen }, { onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' }) })}>{isSeen ? '✓ On your life list' : 'Seen it?'}</button>
+                onClick={() => toggleSeen.mutate({ speciesCode: bird.speciesCode, seen: !isSeen }, {
+                  onSuccess: () => toast.success(isSeen ? 'Removed from your life list.' : 'Added to your life list!', { position: 'bottom-center' }),
+                  onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
+                })}>{isSeen ? '✓ On your life list' : 'Seen it?'}</button>
             })()}
             {bird?.wikiURL && <a className='pill-button' href={bird.wikiURL} target='_blank' rel='noreferrer'>Wikipedia</a>}
           </div>
