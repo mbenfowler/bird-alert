@@ -3,12 +3,15 @@ import { errorMessage } from '../../apiCalls'
 import { useSeenBirdsQuery } from '../../hooks/queries'
 import { useImportLifeListMutation, useToggleSeenMutation } from '../../hooks/mutations'
 import type { LifeListImport } from '../../types'
+import SplitHelp from './SplitHelp'
 import './LifeList.css'
 
 /**
  * The life list in Settings: how many birds are on it, and for experienced birders a one-time
  * start from eBird's life list export. Everyone else builds it with "Seen it" on each bird.
  */
+const LEFT = '\u0000left'
+
 const LifeList = () => {
   const seen = useSeenBirdsQuery()
   const importer = useImportLifeListMutation()
@@ -66,7 +69,7 @@ const LifeList = () => {
                     <li key={row.name}>
                       <strong>{row.name}</strong>: {row.reason}.
                       {picked[row.name]
-                        ? <span className='life-list__picked'> ✓ {picked[row.name]} added</span>
+                        ? <span className='life-list__picked'> {picked[row.name] === LEFT ? 'Left as a possible lifer for both' : `✓ ${picked[row.name]} added`}</span>
                         : row.choices && (
                           <span className='life-list__choices'>
                             {row.choices.length > 1 ? 'Which did you see? ' : ''}
@@ -77,6 +80,7 @@ const LifeList = () => {
                             ))}
                           </span>
                         )}
+                      {!picked[row.name] && <SplitHelp row={row} onPick={(code, name) => pick(row.name, code, name)} onLeave={() => setPicked(current => ({ ...current, [row.name]: LEFT }))} />}
                     </li>
                   ))}
                 </ul>

@@ -22,11 +22,26 @@ describe('Life list', () => {
     cy.contains('summary', 'Start from your eBird life list').click()
     cy.get('#lifeListFile').selectFile({ contents: Cypress.Buffer.from('Category,Common Name,Scientific Name\nspecies,Snow Goose,Anser caerulescens\n'), fileName: 'ebird_world_life_list.csv', mimeType: 'text/csv' }, { force: true })
     cy.wait('@importLifeList').its('request.body.csv').should('include', 'Snow Goose')
-    cy.get('.life-list__result').should('contain', 'Added 12 birds').and('contain', 'Your life list has 12').and('contain', '2 rows were left out')
+    cy.get('.life-list__result').should('contain', 'Added 12 birds').and('contain', 'Your life list has 12').and('contain', '3 rows were left out')
+    // Not sure which vireo: local reports lean Western, and one tap takes the suggestion.
+    cy.contains('.life-list__result li', 'Eastern/Western Warbling Vireo').within(() => {
+      cy.contains('button', 'Not sure? Check local reports').click()
+      cy.contains('Probably Western Warbling Vireo').should('exist')
+      cy.contains('Hall County').should('exist')
+      cy.contains('Western Warbling Vireo on 9, Eastern Warbling Vireo on 2').should('exist')
+      cy.contains('button', 'Mark Western Warbling Vireo').click()
+    })
+    cy.wait('@splitEvidence').its('request.body').should('deep.include', { locId: 'L342269', day: '2024-05-25' })
+    cy.wait('@postSeen').its('request.body').should('deep.equal', { speciesCode: 'wewvir2' })
+    cy.contains('.life-list__result li', 'Eastern/Western Warbling Vireo').should('contain', '✓ Western Warbling Vireo added')
     cy.get('.life-list__count').should('have.text', '12 birds')
     // A pre-split sighting: pick which species it was.
     cy.contains('.life-list__result li', 'Saltmarsh/Prairie Willet').within(() => {
       cy.contains('Which did you see?')
+      // Local reports can't say here; the person can still choose.
+      cy.contains('button', 'Not sure? Check local reports').click()
+      cy.contains('Too few identified reports to say').should('exist')
+      cy.contains('button', 'Mark').should('not.exist')
       cy.contains('button', 'Saltmarsh Willet').click()
     })
     cy.wait('@postSeen').its('request.body').should('deep.equal', { speciesCode: 'willet2' })

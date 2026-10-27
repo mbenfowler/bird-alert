@@ -221,7 +221,10 @@ export interface SavedPoint { locId: string | null; name: string; lat: number; l
 /** A bird on the life list: tapped "Seen it", or brought in from an eBird export. */
 export interface SeenBird { speciesCode: string; firstSeen: string | null; source: 'tap' | 'import' }
 /** What an eBird import did; rows left out say why, and offer the species to mark by hand where there is a choice. */
-export interface LifeListImport { added: number; already: number; total: number; skipped: { name: string; reason: string; choices?: { speciesCode: string; comName: string }[] }[] }
+export interface SplitChoice { speciesCode: string; comName: string }
+export interface LifeListImport { added: number; already: number; total: number; skipped: { name: string; reason: string; choices?: SplitChoice[]; where?: { locId: string | null; region: string | null; day: string } }[] }
+/** Which of a slash it likely was, from identified reports around that place and date. */
+export interface SplitEvidence { area: string; areaKind: 'county' | 'state'; from: string; to: string; sampled: number; lean: string | null; strength: 'clear' | 'mixed' | 'thin'; ranked: (SplitChoice & { days: number })[] }
 export interface FoundAddress { kind: 'address'; name: string; lat: number; lng: number }
 export interface PlaceSearch { hotspots: FoundHotspot[]; addresses: FoundAddress[] }
 export interface NearbyPublic { hotspots: NearbyHotspot[]; parks: NearbyPark[]; fetchedAt?: string }
