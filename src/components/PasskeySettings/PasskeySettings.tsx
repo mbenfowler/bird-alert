@@ -29,7 +29,7 @@ const PasskeySettings = () => {
       <h2 className='fredericka'>Passkeys</h2>
       <div className='notification life-list__card'>
         <div className='notification__text'>
-          <p className='life-list__count'>{list.length ? `${list.length} ${list.length === 1 ? 'passkey' : 'passkeys'}` : 'No passkeys yet'}</p>
+          <p className='passkeys__count'>{list.length ? `${list.length} ${list.length === 1 ? 'passkey' : 'passkeys'}` : 'No passkeys yet'}</p>
           <p className='notification__hint'>Sign in with {name === 'your device’s lock' ? 'your device' : name} instead of typing a password. Nothing about your face or fingerprint leaves the device.</p>
         </div>
         {supported && <button type='button' className='pill-button life-list__view' onClick={() => add.mutate()} disabled={add.isPending}>{add.isPending ? 'Adding…' : 'Add on this device'}</button>}

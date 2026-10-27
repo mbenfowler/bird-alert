@@ -36,3 +36,8 @@
     text-decoration: underline;
     cursor: pointer;
 }
+
+.passkeys__count {
+    font-size: 1.05rem;
+    font-weight: 600;
+}
