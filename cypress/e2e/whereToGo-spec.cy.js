@@ -179,4 +179,20 @@ describe('Where to go', () => {
     entry(0).find('.nearby__route').click()
     cy.get('.go__stops > li').should('have.length', 3).and('not.contain', 'Little River Park')
   })
+
+  it('a route can be shared as a link, its stops and drive but never the start', () => {
+    cy.intercept('POST', '**/api/saved?kind=share', { statusCode: 201, body: { id: 'abc123defg', url: 'https://bird-alert.vercel.app/share/r/abc123defg' } }).as('share')
+    cy.visit('http://localhost:3000/go')
+    cy.contains('.go__route-actions button', 'Share').click()
+    cy.wait('@share').its('request.body').then((body) => {
+      expect(body.kind).to.equal('route')
+      expect(body.regionName).to.equal('Hall')
+      expect(body.stops.map((s) => s.name)).to.deep.equal(['Lake Lanier Olympic Park', "Rusty's Gainesville Yard"])
+      expect(body.stops[0].birds[0]).to.equal('Tufted Titmouse 52%')
+      expect(body).not.to.have.property('start')
+      expect(body.drive.minutes).to.equal(9)
+    })
+    // The link is copied (or shown, where the clipboard is off limits).
+    cy.get('.Toastify').should(($t) => expect($t.text()).to.match(/Link copied|\/share\/r\/abc123defg/))
+  })
 })

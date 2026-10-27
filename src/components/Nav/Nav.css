@@ -152,3 +152,10 @@ nav a {
 #settings:hover #settingsText {
     color: red;
 }
+
+.nav-login {
+    min-height: 38px;
+    padding: 0 16px;
+    font-weight: 700;
+    text-decoration: none;
+}

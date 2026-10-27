@@ -1,0 +1,43 @@
+.passkeys__list {
+    list-style: none;
+    display: grid;
+    gap: 6px;
+}
+
+.passkeys__list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+}
+
+.passkeys__list li > span {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.passkeys__meta {
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+.passkeys__remove {
+    flex: none;
+    padding: 6px 8px;
+    border: none;
+    background: none;
+    color: var(--link);
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.passkeys__count {
+    font-size: 1.05rem;
+    font-weight: 600;
+}

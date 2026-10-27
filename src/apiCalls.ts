@@ -1,4 +1,4 @@
-import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice } from './types'
+import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share, Passkey } from './types'
 
 // Every request goes to the same-origin `/api` prefix. In development Vite proxies it to the
 // backend (vite.config.ts); in production Vercel rewrites it (vercel.json). The backend holds
@@ -51,7 +51,15 @@ const api = <T,>(path: string, { method = 'GET', body, params }: RequestOptions 
 export const getCurrentUser = () => api<User>('/auth/me')
 export const getUserExists = (email: string) => api<{ userExists: boolean }>('/auth/exists', { params: { email } })
 export const login = (email: string, password: string) => api<User>('/auth/login', { method: 'POST', body: { email, password } })
-export const signup = (email: string, password: string) => api<User>('/auth/signup', { method: 'POST', body: { email, password } })
+export const signup = (email: string, password: string, place?: { state: string; location: string } | null) =>
+  api<User>('/auth/signup', { method: 'POST', body: { email, password, ...(place ?? {}) } })
+// ---- passkeys ----
+export const passkeyLoginOptions = () => api<{ options: unknown; token: string }>('/auth/passkey-login-options', { method: 'POST' })
+export const passkeyLogin = (response: unknown, token: string) => api<User>('/auth/passkey-login', { method: 'POST', body: { response, token } })
+export const passkeyRegisterOptions = () => api<{ options: unknown; token: string }>('/auth/passkey-register-options', { method: 'POST' })
+export const passkeyRegister = (response: unknown, token: string) => api<Passkey[]>('/auth/passkey-register', { method: 'POST', body: { response, token } })
+export const getPasskeys = () => api<Passkey[]>('/auth/passkeys')
+export const deletePasskey = (id: string) => api<Passkey[]>('/auth/passkeys', { method: 'DELETE', params: { id } })
 export const logout = () => api<null>('/auth/logout', { method: 'POST' })
 export const requestPasswordReset = (email: string) => api<{ ok: true }>('/auth/forgot', { method: 'POST', body: { email } })
 export const resetPassword = (token: string, password: string) => api<{ ok: true }>('/auth/reset', { method: 'POST', body: { token, password } })
@@ -73,6 +81,10 @@ export const getSplitEvidence = (ask: { choices: SplitChoice[]; locId: string | 
   api<SplitEvidence>('/saved', { method: 'POST', params: { kind: 'seen', evidence: '1' }, body: ask })
 export const importLifeList = (csv: string) => api<LifeListImport>('/saved', { method: 'POST', params: { kind: 'seen', import: '1' }, body: { csv } })
 
+// ---- share links ----
+export const createShare = (share: Record<string, unknown> & { kind: 'route' | 'sighting' }) => api<{ id: string; url: string }>('/saved', { method: 'POST', params: { kind: 'share' }, body: share })
+export const getShare = (id: string) => api<Share>('/ebird/share', { params: { id } })
+
 export const getSavedRoute = (region: string) => api<SavedRoute>('/saved', { params: { kind: 'route', region } })
 /** Only the fields given change: `stops: null` goes back to the suggestion, `start: null` clears the start. */
 export const putSavedRoute = (change: { region: string; stops?: SavedPoint[] | null; start?: SavedPoint | null }) =>
@@ -87,6 +99,8 @@ export const searchBirds = (q: string) => api<Bird[]>('/birds', { params: { q } 
 // ---- eBird, proxied and cached by the backend ----
 export const getSpeciesList = (region: string) => api<string[]>('/ebird/species-list', { params: { region } })
 export const getRecentObservations = (region: string) => api<Observation[]>('/ebird/observations', { params: { region } })
+/** The last week's notable reports: what the splash page shows a visitor before any account. */
+export const getNotableThisWeek = (region: string) => api<Observation[]>('/ebird/notable', { params: { region, back: '7' } })
 export const getNotableObservations = (region: string) => api<Observation[]>('/ebird/notable', { params: { region, back: '30' } })
 export const getSpeciesObservations = (region: string, code: string) =>
     api<Observation[]>('/ebird/species-observations', { params: { region, code, back: '30' } })

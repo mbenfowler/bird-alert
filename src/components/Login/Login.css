@@ -1,63 +1,211 @@
+/* The login card: the splash page's white card with an ink shadow, one column, big tap targets. */
 .login {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 24px 16px 56px;
 }
 
 .login-panel {
-    width: 90%;
-    height: 50%;
-    padding: 10% 0;
+    width: min(100%, 440px);
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    font-family: 'Fredericka the Great';
-    border: solid 3px #beab95;
-    border-radius: 10px;
-    box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.4);
+    gap: 14px;
+    padding: 26px 22px;
+    border: 2px solid var(--ink);
+    border-radius: 18px;
+    background: var(--surface);
+    box-shadow: 6px 6px 0 var(--ink);
 }
 
-.user-entry {
-  width: 50%;
-  min-width: 250px;
-  padding: 2% 0;
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  * {
-    margin: 0;
-  }
+.login-kicker {
+    align-self: flex-start;
+    padding: 3px 10px;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: var(--accent);
+    font-family: system-ui, sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.login-title {
+    font-size: clamp(1.7rem, 6vw, 2.2rem);
+    line-height: 1.1;
+}
+
+.login-lede {
+    color: var(--muted);
+    line-height: 1.45;
+}
+
+.login-passkey {
+    justify-content: center;
+    gap: 8px;
+    min-height: 50px;
+    font-weight: 700;
+}
+
+.login-or {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--muted);
+    font-family: system-ui, sans-serif;
+    font-size: 0.82rem;
+}
+
+.login-or::before,
+.login-or::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.login-label {
+    font-family: system-ui, sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
 }
 
 .input {
-  height: 30px;
-  width: 100%;
-  text-align: center;
-  border: 1px solid darkgray;
+    width: 100%;
+    height: 50px;
+    padding: 0 14px;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 16px; /* under 16px, iOS zooms the page on focus */
 }
 
-.info {
-  color: red;
-  text-align: center;
-  padding: 0;
+.input:focus {
+    outline: none;
+    border-color: var(--accent-ink);
+    box-shadow: 0 0 0 4px var(--accent-soft);
 }
 
-.login-spinner:before {
-  width: 30px;
-  height: 30px;
+/* Present for password managers from the start; it opens once the email is known. */
+.login-password {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-/* Forgotten password: a small question and a real button, in the app's pill style, so it reads as
-   something to tap rather than a line of the page. */
+.login-password.is-pending {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.login-password__field {
+    position: relative;
+}
+
+.login-password__field .input {
+    padding-right: 72px;
+}
+
+.login-eye {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    min-height: 36px;
+    padding: 0 12px;
+    border: none;
+    border-radius: 999px;
+    background: var(--surface-muted);
+    color: var(--ink);
+    font: 600 0.85rem system-ui, sans-serif;
+    cursor: pointer;
+}
+
+.login-eye:focus-visible {
+    outline: 3px solid var(--focus);
+}
+
+.login-county {
+    font-size: 0.95rem;
+}
+
+.login-county-pick {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+}
+
+.login-county-pick select {
+    height: 46px;
+    padding: 0 12px;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    background-color: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 16px;
+}
+
+.login-submit {
+    justify-content: center;
+    min-height: 52px;
+    margin-top: 4px;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.login-link {
+    align-self: center;
+    padding: 6px 8px;
+    border: none;
+    background: none;
+    color: var(--link);
+    font: inherit;
+    font-size: 0.92rem;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.login-county .login-link {
+    padding: 0 4px;
+}
+
+.login-error {
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #fdecea;
+    color: #8a1c10;
+    font-size: 0.92rem;
+}
+
+.login-fine {
+    color: var(--muted);
+    font-size: 0.88rem;
+    text-align: center;
+}
+
+.login-fine a {
+    color: var(--link);
+}
+
+/* Forgotten password: a small question and a real button, in the app's pill style. */
 .login-forgot {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
     gap: 8px 10px;
-    margin-top: 10px;
     font-family: system-ui, sans-serif;
     font-size: 0.9rem;
     color: var(--muted);

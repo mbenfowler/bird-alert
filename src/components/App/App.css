@@ -241,3 +241,25 @@ html, body {
 .pill-button--seen:hover:not(:disabled) {
     background: #d4ecdc;
 }
+
+/* Dropdowns: the browser's own arrow off, a chevron of ours with room to breathe. */
+.select {
+    -webkit-appearance: none;
+    appearance: none;
+    padding-right: 38px !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23111111' d='M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 20px 20px;
+    cursor: pointer;
+    text-overflow: ellipsis;
+}
+
+.select:hover:not(:disabled) {
+    border-color: var(--ink);
+}
+
+.select:disabled {
+    opacity: 0.6;
+    cursor: default;
+}

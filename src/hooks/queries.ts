@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions,
-  getSavedBirds, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds } from '../apiCalls'
+  getSavedBirds, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
 import type { User } from '../types'
 
@@ -67,6 +67,20 @@ export const useSavedCodes = (): Set<string> => {
   const { data } = useSavedBirdsQuery()
   return useMemo(() => new Set((data ?? []).map(bird => bird.speciesCode)), [data])
 }
+
+/** A county's notable reports this week, for the splash page; public and cached at the edge. */
+export const useNotableThisWeekQuery = (region: string) =>
+  useQuery({
+    queryKey: ['notable-week', region] as const,
+    queryFn: () => getNotableThisWeek(region),
+    staleTime: 5 * MINUTE,
+    placeholderData: keepPreviousData,
+    enabled: Boolean(region)
+  })
+
+/** A shared route or sighting; it never changes once made. */
+export const useShareQuery = (id: string) =>
+  useQuery({ queryKey: ['share', id] as const, queryFn: () => getShare(id), staleTime: Infinity, retry: 1, enabled: Boolean(id) })
 
 /** The life list. */
 export const useSeenBirdsQuery = (enabled = true) =>

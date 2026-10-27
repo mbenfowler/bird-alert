@@ -1,3 +1,6 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Disallow: /api/
+Allow: /
+
+Sitemap: https://bird-alert.vercel.app/sitemap.xml

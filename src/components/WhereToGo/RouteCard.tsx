@@ -32,6 +32,8 @@ interface RouteCardProps {
   onReset: () => void
   onStopClick: (stop: PlanPoint) => void
   onToggleRoute: () => void
+  /** Make a read-only link to this route (the start is never included). */
+  onShare?: () => void
 }
 
 const birdsWord = (n: number) => `${n % 1 === 0 ? n : n.toFixed(1)} ${n === 1 ? 'bird' : 'birds'}`
@@ -44,7 +46,7 @@ const legText = (leg: Leg) => leg ? `↓ ${leg.minutes} min drive · ${leg.miles
  */
 const RouteCard = (props: RouteCardProps) => {
   const { state, places, speciesCount, lifers = false, stops, start, preview = null, arriving, drive, covers, url, custom, saveFailed = false, editing, showRoute } = props
-  const { onEditing, onStops, onStart, onReset, onStopClick, onToggleRoute } = props
+  const { onEditing, onStops, onStart, onReset, onStopClick, onToggleRoute, onShare } = props
   const byId = new Map(places.map(p => [p.locId, p]))
   const [settingStart, setSettingStart] = useState(false)
   const [locating, setLocating] = useState<'idle' | 'busy' | 'failed'>('idle')
@@ -213,6 +215,7 @@ const RouteCard = (props: RouteCardProps) => {
           {stops.length > 0 && <button type='button' className={`pill-button ${showRoute ? 'pill-button--primary' : ''}`} aria-pressed={showRoute} onClick={onToggleRoute}>{showRoute ? 'Hide route on map' : 'Show route on map'}</button>}
           {url && <a className='pill-button' href={url} target='_blank' rel='noreferrer'>Open in Maps</a>}
           <button type='button' className='pill-button' onClick={() => onEditing(true)}>Edit route</button>
+          {onShare && stops.length > 0 && <button type='button' className='pill-button' onClick={onShare}>Share</button>}
         </div>
       )}
     </div>

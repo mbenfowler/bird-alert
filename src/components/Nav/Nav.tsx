@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { useSessionQuery } from '../../hooks/queries'
 import { useLogoutMutation } from '../../hooks/mutations'
 import './Nav.css'
@@ -7,7 +7,11 @@ import './Nav.css'
 const canHover = typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches
 
 const Nav = () => {
-    const { data: user } = useSessionQuery()
+    const session = useSessionQuery()
+    const user = session.data
+    // Only once we know there's no session, so a logged-in person never sees "Log in" flash past.
+    const loggedOut = session.isError || session.data === null
+    const { pathname } = useLocation()
     const logoutMutation = useLogoutMutation()
     const navigate = useNavigate()
 
@@ -30,7 +34,9 @@ const Nav = () => {
 
     return (
         <nav ref={navRef}>
-            <Link className='text-link' to={user ? '/' : '/login'}><span id='titleBird'>Bird </span><span id='titleAlert'>Alert!</span></Link>
+            <Link className='text-link' to='/'><span id='titleBird'>Bird </span><span id='titleAlert'>Alert!</span></Link>
+            {/* Someone without an account, anywhere but the login page itself, gets a way in. */}
+            {loggedOut && pathname !== '/login' && <Link to='/login' className='pill-button nav-login'>Log in</Link>}
             {user &&
                 <div>
                     {/* The icons are backgrounds on the links, not <img> elements: on iOS an image inside a link
