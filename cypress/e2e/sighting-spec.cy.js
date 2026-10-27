@@ -26,7 +26,7 @@ describe('Sighting page and region map', () => {
     cy.get('.accuracy__panel li').should('have.length', 2)
     cy.get('.accuracy__panel li').first().should('contain', '60% or better').and('contain', '71%')
     cy.get('.accuracy__panel li').last().should('contain', '20–39%').and('contain', '22%')
-    cy.get('body').click(0, 0)
+    cy.get('.sighting__odds').click()
     cy.get('.accuracy').should('not.have.attr', 'open')
     cy.get('.sighting__places li').first().should('have.class', 'is-current').and('contain', 'High').and('contain', 'private').and('contain', 'behind the barn')
     cy.get('.sighting__places li').first().find('.place__chance').should('have.text', 'You have an 86% chance to see it here, best 7 am to 9 am')
