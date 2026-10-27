@@ -12,6 +12,7 @@ import { errorMessage } from '../../apiCalls'
 import { useBirdsQuery, useCurrentUser, useNearbyPublicQuery, useRegionsQuery, useSavedCodes, useSeenCodes, useSeasonalityQuery, useSpeciesObservationsQuery, useWhereToFindQuery } from '../../hooks/queries'
 import { focusFor } from '../../mapFocus'
 import { useToggleSavedMutation, useToggleSeenMutation } from '../../hooks/mutations'
+import { shareThing } from '../../share'
 import type { Observation, Place, PersistenceClass } from '../../types'
 import { formatObsDt } from '../../format'
 import { article, chanceStyle } from '../../chance'
@@ -167,6 +168,9 @@ const Sighting = () => {
           <div className='sighting__actions'>
             {bird && <SoundPill state={sound.state} name={name} onToggle={() => { void sound.toggle() }} />}
             {bird && <button type='button' className='pill-button' onClick={watch} disabled={toggleSaved.isPending} aria-pressed={isWatched}>{isWatched ? '★ On your watch list' : '☆ Add to watch list'}</button>}
+            {bird && current && <button type='button' className='pill-button' onClick={() => {
+              void shareThing({ kind: 'sighting', speciesCode: bird.speciesCode, locName: current.locName, lat: current.lat, lng: current.lng, obsDt: current.obsDt, howMany: current.howMany ?? null, subId: current.subId, regionName }, `${bird.comName} at ${current.locName}`)
+            }}>Share</button>}
             {bird && (() => {
               const isSeen = seen.codes.has(bird.speciesCode)
               return <button type='button' className={`pill-button ${isSeen ? 'pill-button--seen' : ''}`} disabled={!seen.loaded} aria-pressed={isSeen}

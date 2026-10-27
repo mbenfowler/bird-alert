@@ -11,6 +11,7 @@ import { focusFor } from '../../mapFocus'
 import { chanceColour } from '../../chance'
 import { MAX_ROUTE_STOPS, coverage, samePlace, mapsUrl, type PlanPoint } from '../../routePlan'
 import { useRoutePlan } from '../../hooks/useRoutePlan'
+import { shareThing } from '../../share'
 import type { GoPlace } from '../../types'
 import AccuracyBadge from '../AccuracyBadge/AccuracyBadge'
 import './WhereToGo.css'
@@ -168,7 +169,28 @@ const WhereToGo = () => {
             onEditing={(on) => { setEditing(on); if (on) { closeNearby(); setShowRoute(true) } }}
             onStops={(next) => setCustom(next)} onStart={setStart} onReset={() => setCustom(null)}
             onStopClick={(stop) => { if (stop.locId) setSelected(stop.locId); setShowRoute(true) }}
-            onToggleRoute={() => setShowRoute(v => !v)} />
+            onToggleRoute={() => setShowRoute(v => !v)}
+            onShare={() => {
+              const byId = new Map(places.map(p => [p.locId, p]))
+              const covered = custom ? coverage(stops, places) : route!.covers
+              void shareThing({
+                kind: 'route',
+                regionName,
+                covers: lifers ? null : `Covers about ${birdsWord(covered)} of a ${species.length}-bird watch list.`,
+                stops: stops.map(s => {
+                  const place = s.locId ? byId.get(s.locId) : undefined
+                  return {
+                    name: s.name, lat: s.lat, lng: s.lng, locId: s.locId,
+                    detail: place ? `${birdsWord(place.expected)} expected${place.bestTime ? ` · best ${place.bestTime}` : ''}` : s.note ?? null,
+                    birds: (place?.birds ?? []).slice(0, 4).map(b => `${b.comName} ${b.chance}%`)
+                  }
+                }),
+                // The drive is shared from the first stop on: the start (often home) stays private.
+                drive: drive ? (start
+                  ? (() => { const legs = arriving.slice(1); return legs.length && legs.every(Boolean) ? { minutes: legs.reduce((n, l) => n + l!.minutes, 0), miles: Math.round(legs.reduce((n, l) => n + l!.miles, 0) * 10) / 10, legs, geometry: [] } : null })()
+                  : { minutes: drive.minutes, miles: drive.miles, legs: arriving.slice(1), geometry: drive.geometry }) : null
+              }, `A birding route in ${regionName}`)
+            }} />
   ) : null
 
   return (

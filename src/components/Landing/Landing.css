@@ -1,0 +1,455 @@
+/* The front door: the app's grey canvas, white cards with ink borders, gold where it matters. */
+.landing {
+    width: min(100%, 1120px);
+    margin: 0 auto;
+    padding: 12px 16px 56px;
+    display: grid;
+    gap: 40px;
+}
+
+.landing__hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+}
+
+@media screen and (min-width: 900px) {
+    .landing__hero {
+        grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.95fr);
+        gap: 40px;
+        padding-top: 28px;
+    }
+}
+
+.landing__pitch {
+    display: grid;
+    gap: 16px;
+    align-content: start;
+}
+
+.landing__kicker {
+    justify-self: start;
+    padding: 4px 12px;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--ink);
+    font-family: system-ui, sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.landing__title {
+    font-size: clamp(2.3rem, 6.2vw, 4.2rem);
+    line-height: 1.04;
+    letter-spacing: -0.01em;
+}
+
+.landing__lede {
+    max-width: 34em;
+    font-size: 1.12rem;
+    line-height: 1.55;
+    color: #2b2b2b;
+}
+
+.landing__ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.landing__cta {
+    min-height: 50px;
+    padding: 0 26px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    justify-content: center;
+    text-decoration: none;
+}
+
+.landing__fine {
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+/* The live panel: a white card with a pulsing dot, real birds from this week. */
+.landing__live {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+    border: 2px solid var(--ink);
+    border-radius: 18px;
+    background: var(--surface);
+    box-shadow: 6px 6px 0 var(--ink);
+}
+
+.landing__live-head {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.landing__live-dot {
+    position: relative;
+    flex: none;
+    width: 14px;
+    height: 14px;
+}
+
+.landing__live-dot span,
+.landing__live-dot::after {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: #d9341a;
+}
+
+.landing__live-dot::after {
+    content: '';
+    animation: landing-pulse 1.8s ease-out infinite;
+}
+
+@keyframes landing-pulse {
+    from { transform: scale(1); opacity: 0.6; }
+    to { transform: scale(2.6); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .landing__live-dot::after { animation: none; }
+}
+
+.landing__live-title {
+    font-size: 1.15rem;
+    line-height: 1.2;
+}
+
+.landing__live-sub {
+    color: var(--muted);
+    font-family: system-ui, sans-serif;
+    font-size: 0.82rem;
+}
+
+.landing__pickers {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+}
+
+.landing__pickers select {
+    width: 100%;
+    height: 42px;
+    padding: 0 10px;
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 16px;
+}
+
+.landing__pickers select:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 1px;
+}
+
+.landing__birds {
+    list-style: none;
+    display: grid;
+    gap: 8px;
+}
+
+.landing__bird {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 68px;
+    padding: 6px 10px 6px 6px;
+    border: 1.5px solid var(--rule);
+    border-radius: 12px;
+    background: var(--surface);
+}
+
+.landing__thumb {
+    flex: none;
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+    object-fit: cover;
+    background: var(--surface-muted);
+}
+
+.landing__thumb--blank {
+    display: grid;
+    place-items: center;
+    font-size: 1.4rem;
+}
+
+.landing__bird-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.landing__bird-text strong {
+    font-size: 1.02rem;
+}
+
+.landing__bird-text span {
+    color: var(--muted);
+    font-size: 0.88rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.landing__bird-text .landing__bird-meta {
+    font-family: system-ui, sans-serif;
+    font-size: 0.78rem;
+}
+
+.landing__ebird {
+    flex: none;
+    padding: 4px 10px;
+    border: 1.5px solid var(--line);
+    border-radius: 999px;
+    color: var(--ink);
+    font-family: system-ui, sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.landing__ebird:hover {
+    background: var(--accent-soft);
+}
+
+.landing__bird.is-loading .landing__bar {
+    flex: 1;
+    height: 14px;
+    border-radius: 7px;
+    background: var(--surface-muted);
+}
+
+.landing__live-note,
+.landing__live-more {
+    color: var(--muted);
+    font-size: 0.92rem;
+}
+
+.landing__stat {
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--accent-soft);
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.landing__stat strong {
+    font-size: 1.15rem;
+}
+
+.landing__live-cta {
+    justify-self: start;
+    color: var(--link);
+    font-weight: 700;
+}
+
+/* What it does: four cards, each with a small piece of the real thing. */
+.landing__features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+.landing__feature {
+    display: grid;
+    gap: 10px;
+    align-content: start;
+    padding: 16px;
+    border: 2px solid var(--ink);
+    border-radius: 16px;
+    background: var(--surface);
+}
+
+.landing__feature h3 {
+    font-family: 'Fredericka the Great', serif;
+    font-weight: 400;
+    font-size: 1.3rem;
+}
+
+.landing__feature > p {
+    color: #2b2b2b;
+    line-height: 1.5;
+}
+
+.landing__mock {
+    display: grid;
+    gap: 4px;
+    min-height: 118px;
+    align-content: center;
+    padding: 12px;
+    border-radius: 12px;
+    background: var(--surface-muted);
+    font-family: system-ui, sans-serif;
+    font-size: 0.86rem;
+}
+
+.mock__place {
+    font-weight: 700;
+}
+
+.mock__odds {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.mock__pct {
+    padding: 0 8px;
+    border-radius: 999px;
+    background: #0b5c2b;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+.mock__meta {
+    color: var(--muted);
+    font-size: 0.78rem;
+}
+
+.landing__mock--route ol {
+    list-style: none;
+    display: grid;
+    gap: 2px;
+}
+
+.landing__mock--route li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.landing__mock--route li span {
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: #fff;
+    font-size: 0.72rem;
+}
+
+.landing__mock--route .mock__leg {
+    padding-left: 9px;
+    margin-left: 9px;
+    border-left: 2px dashed var(--line);
+    color: var(--muted);
+    font-size: 0.74rem;
+    font-weight: 400;
+}
+
+.landing__mock--push,
+.landing__mock--lifer {
+    background: linear-gradient(160deg, #f4f4f4, #dedede);
+}
+
+.landing__mock--push > *,
+.landing__mock--lifer > p:not(.mock__chip) {
+    justify-self: stretch;
+}
+
+.mock__app {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+    font-size: 0.74rem;
+}
+
+.mock__push-title {
+    padding: 8px 10px 0;
+    border-radius: 10px 10px 0 0;
+    background: var(--surface);
+    font-weight: 700;
+}
+
+.mock__push-title + .mock__meta {
+    padding: 0 10px 8px;
+    border-radius: 0 0 10px 10px;
+    background: var(--surface);
+    margin-top: -4px;
+}
+
+.mock__chip {
+    justify-self: start;
+    margin-top: 4px;
+    padding: 2px 10px;
+    border: 1.5px solid #0b5c2b;
+    border-radius: 999px;
+    background: #e6f4ea;
+    color: #0b5c2b;
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+/* How it works, and the second chance to start. */
+.landing__steps {
+    display: grid;
+    justify-items: center;
+    gap: 16px;
+    text-align: center;
+}
+
+.landing__steps h2 {
+    font-size: clamp(1.6rem, 4vw, 2.2rem);
+}
+
+.landing__steps ol {
+    list-style: none;
+    counter-reset: step;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    width: 100%;
+}
+
+.landing__steps li {
+    counter-increment: step;
+    position: relative;
+    padding: 30px 16px 16px;
+    border-radius: 14px;
+    background: var(--surface);
+    line-height: 1.5;
+}
+
+.landing__steps li::before {
+    content: counter(step);
+    position: absolute;
+    top: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    background: var(--accent);
+    font-weight: 800;
+}
+
+.landing__foot {
+    color: var(--muted);
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.landing__foot a {
+    color: var(--link);
+}

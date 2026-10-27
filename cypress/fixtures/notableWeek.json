@@ -1,0 +1,5 @@
+[
+  { "speciesCode": "paibun", "comName": "Painted Bunting", "sciName": "Passerina ciris", "locId": "L999", "locName": "Chicopee Lake", "obsDt": "2026-10-27 08:10", "howMany": 2, "lat": 34.25, "lng": -83.85, "obsValid": true, "obsReviewed": false, "locationPrivate": false, "subId": "S100000001" },
+  { "speciesCode": "paibun", "comName": "Painted Bunting", "sciName": "Passerina ciris", "locId": "L998", "locName": "Lake Lanier--Longwood Park", "obsDt": "2026-10-25 07:40", "howMany": 1, "lat": 34.3, "lng": -83.82, "obsValid": true, "obsReviewed": false, "locationPrivate": false, "subId": "S100000002" },
+  { "speciesCode": "sedwre", "comName": "Sedge Wren", "sciName": "Cistothorus stellaris", "locId": "L997", "locName": "3526 Monroe Cir, Gainesville US-GA 34.31153, -83.92861", "obsDt": "2026-10-24 09:00", "howMany": 1, "lat": 34.39, "lng": -83.74, "obsValid": true, "obsReviewed": false, "locationPrivate": true, "subId": "S100000003" }
+]

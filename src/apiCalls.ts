@@ -1,4 +1,4 @@
-import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice } from './types'
+import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share } from './types'
 
 // Every request goes to the same-origin `/api` prefix. In development Vite proxies it to the
 // backend (vite.config.ts); in production Vercel rewrites it (vercel.json). The backend holds
@@ -73,6 +73,10 @@ export const getSplitEvidence = (ask: { choices: SplitChoice[]; locId: string | 
   api<SplitEvidence>('/saved', { method: 'POST', params: { kind: 'seen', evidence: '1' }, body: ask })
 export const importLifeList = (csv: string) => api<LifeListImport>('/saved', { method: 'POST', params: { kind: 'seen', import: '1' }, body: { csv } })
 
+// ---- share links ----
+export const createShare = (share: Record<string, unknown> & { kind: 'route' | 'sighting' }) => api<{ id: string; url: string }>('/saved', { method: 'POST', params: { kind: 'share' }, body: share })
+export const getShare = (id: string) => api<Share>('/ebird/share', { params: { id } })
+
 export const getSavedRoute = (region: string) => api<SavedRoute>('/saved', { params: { kind: 'route', region } })
 /** Only the fields given change: `stops: null` goes back to the suggestion, `start: null` clears the start. */
 export const putSavedRoute = (change: { region: string; stops?: SavedPoint[] | null; start?: SavedPoint | null }) =>
@@ -87,6 +91,8 @@ export const searchBirds = (q: string) => api<Bird[]>('/birds', { params: { q } 
 // ---- eBird, proxied and cached by the backend ----
 export const getSpeciesList = (region: string) => api<string[]>('/ebird/species-list', { params: { region } })
 export const getRecentObservations = (region: string) => api<Observation[]>('/ebird/observations', { params: { region } })
+/** The last week's notable reports: what the splash page shows a visitor before any account. */
+export const getNotableThisWeek = (region: string) => api<Observation[]>('/ebird/notable', { params: { region, back: '7' } })
 export const getNotableObservations = (region: string) => api<Observation[]>('/ebird/notable', { params: { region, back: '30' } })
 export const getSpeciesObservations = (region: string, code: string) =>
     api<Observation[]>('/ebird/species-observations', { params: { region, code, back: '30' } })

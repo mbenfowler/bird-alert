@@ -28,9 +28,11 @@ const Sighting = lazy(() => import('../Sighting/Sighting'))
 const MapPage = lazy(() => import('../MapPage/MapPage'))
 const AlertSightings = lazy(() => import('../AlertSightings/AlertSightings'))
 const WhereToGo = lazy(() => import('../WhereToGo/WhereToGo'))
+const Landing = lazy(() => import('../Landing/Landing'))
+const Shared = lazy(() => import('../Shared/Shared'))
 
 // Routes reachable without a session. Everything else redirects to /login once we know there is no user.
-const PUBLIC_PATH_PREFIXES = ['/login', '/reset/', '/confirm/', '/unsubscribe/']
+const PUBLIC_PATH_PREFIXES = ['/login', '/reset/', '/confirm/', '/unsubscribe/', '/share/']
 
 const App = () => {
   const session = useSessionQuery()
@@ -43,7 +45,8 @@ const App = () => {
   const navigateRef = useRef(navigate)
   useEffect(() => { navigateRef.current = navigate }, [navigate])
 
-  const isPublicPath = PUBLIC_PATH_PREFIXES.some(prefix => pathname.startsWith(prefix))
+  // The front door is public too: someone without an account sees the splash page there.
+  const isPublicPath = pathname === '/' || PUBLIC_PATH_PREFIXES.some(prefix => pathname.startsWith(prefix))
   // A new page starts at the top. Back/forward (POP) and in-place swaps (REPLACE, used when a pin
   // on a sighting's map picks another report) keep the reader where they were.
   const navigationType = useNavigationType()
@@ -152,7 +155,7 @@ const App = () => {
         <RouteError resetKey={pathname}>
         <Suspense fallback={<LoadingState />}>
         <Routes>
-          <Route path='/' element={requireUser(home)} />
+          <Route path='/' element={user === null ? <Landing /> : requireUser(home)} />
           <Route path='/login' element={<Login />} />
           <Route path='/saved' element={requireUser(<Saved />)} />
           <Route path='/life-list' element={requireUser(<LifeListPage />)} />
@@ -161,6 +164,7 @@ const App = () => {
           <Route path='/sighting/:code/:subId' element={requireUser(<Sighting />)} />
           <Route path='/sightings' element={requireUser(<AlertSightings />)} />
           <Route path='/go' element={requireUser(<WhereToGo />)} />
+          <Route path='/share/:kind/:id' element={<Shared />} />
           <Route path='/reset/:token' element={<PassReset />} />
           <Route path='/unsubscribe/:token' element={<Unsubscribe />} />
           <Route path='/confirm/:token' element={<EmailConfirm />} />

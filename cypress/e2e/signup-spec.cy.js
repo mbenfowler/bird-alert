@@ -3,7 +3,7 @@ import { stubAuth } from '../support/stubs'
 describe('Creating an account', () => {
   beforeEach(() => {
     stubAuth({ userExists: false })
-    cy.visit('http://localhost:3000/')
+    cy.visit('http://localhost:3000/login')
   })
 
   it('asks for a password once the email is unknown, enforces the minimum length, then lands on the set-location prompt', () => {

@@ -1,7 +1,17 @@
 {
   "framework": "vite",
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://bird-alert-be.vercel.app/api/:path*" },
-    { "source": "/((?!api/|assets/).*)", "destination": "/index.html" }
+    {
+      "source": "/api/:path*",
+      "destination": "https://bird-alert-be.vercel.app/api/:path*"
+    },
+    {
+      "source": "/share/:kind/:id",
+      "destination": "https://bird-alert-be.vercel.app/api/ebird/share-page?kind=:kind&id=:id"
+    },
+    {
+      "source": "/((?!api/|assets/|images/|robots.txt|sitemap.xml).*)",
+      "destination": "/index.html"
+    }
   ]
 }

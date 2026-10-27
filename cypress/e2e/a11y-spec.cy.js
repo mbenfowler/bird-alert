@@ -17,8 +17,17 @@ const checkA11y = () => {
 describe('Accessibility', () => {
   it('login page', () => {
     stubAuth()
-    cy.visit('http://localhost:3000/')
+    cy.visit('http://localhost:3000/login')
     cy.get('.input.email')
+    checkA11y()
+  })
+
+  it('splash page', () => {
+    stubAuth()
+    cy.intercept('GET', '**/api/ebird/notable*', { fixture: 'notableWeek' })
+    cy.intercept('GET', '**/api/birds?*', { statusCode: 200, body: [] })
+    cy.visit('http://localhost:3000/')
+    cy.get('.landing__bird').should('have.length.at.least', 1)
     checkA11y()
   })
 
