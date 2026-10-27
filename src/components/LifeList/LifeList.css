@@ -1,0 +1,79 @@
+.life-list {
+    width: min(100%, 560px);
+    margin: 28px auto 0;
+    padding: 0 12px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.life-list h2 {
+    margin-bottom: 4px;
+}
+
+.life-list__count {
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.life-list__import {
+    padding: 12px 16px;
+    border: 2px solid var(--line);
+    border-radius: 14px;
+    background: var(--surface);
+}
+
+.life-list__import summary {
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.life-list__import ol {
+    margin: 10px 0 12px;
+    padding-left: 20px;
+    color: var(--muted);
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+
+.life-list__import a {
+    color: var(--link);
+}
+
+.life-list__error {
+    margin-top: 10px;
+    color: #b42318;
+}
+
+.life-list__result {
+    margin-top: 12px;
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+
+.life-list__result ul {
+    margin: 6px 0 0;
+    padding-left: 18px;
+    display: grid;
+    gap: 6px;
+}
+
+.life-list__choices {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.life-list__choice {
+    min-height: 32px;
+    padding: 0 12px;
+    font-size: 0.85rem;
+}
+
+.life-list__picked {
+    color: #0b5c2b;
+    font-weight: 600;
+}

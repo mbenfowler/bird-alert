@@ -61,6 +61,29 @@ export const login = () => {
     req.reply({ statusCode: 204, body: '' })
   }).as('deleteSaved')
 
+  // The life list: empty to begin with; taps add and remove.
+  const lifeList = { birds: [] }
+  cy.intercept('GET', '**/api/saved?kind=seen*', (req) => req.reply({ statusCode: 200, body: lifeList.birds })).as('getSeen')
+  cy.intercept('POST', '**/api/saved?kind=seen', (req) => {
+    if (!lifeList.birds.some((b) => b.speciesCode === req.body.speciesCode)) lifeList.birds = [...lifeList.birds, { speciesCode: req.body.speciesCode, firstSeen: '2026-10-27', source: 'tap' }]
+    req.reply({ statusCode: 201, body: { speciesCode: req.body.speciesCode } })
+  }).as('postSeen')
+  cy.intercept('DELETE', '**/api/saved?kind=seen&speciesCode=*', (req) => {
+    const code = new URL(req.url).searchParams.get('speciesCode')
+    lifeList.birds = lifeList.birds.filter((b) => b.speciesCode !== code)
+    req.reply({ statusCode: 204, body: '' })
+  }).as('deleteSeen')
+  // An eBird import: twelve birds land, and two rows come back for the person to settle.
+  cy.intercept('POST', '**/api/saved?kind=seen&import=1', (req) => {
+    const codes = ['snogoo', ...Array.from({ length: 11 }, (_, i) => `imp${String(i).padStart(3, '0')}`)]
+    const added = codes.filter((code) => !lifeList.birds.some((b) => b.speciesCode === code))
+    lifeList.birds = [...lifeList.birds, ...added.map((speciesCode) => ({ speciesCode, firstSeen: '2020-01-01', source: 'import' }))]
+    req.reply({ statusCode: 200, body: { added: added.length, already: codes.length - added.length, total: lifeList.birds.length, skipped: [
+      { name: 'Saltmarsh/Prairie Willet', reason: 'one of two species (often an old sighting from before eBird split it), so it’s yours to say which', choices: [{ speciesCode: 'willet2', comName: 'Saltmarsh Willet' }, { speciesCode: 'willet3', comName: 'Prairie Willet' }] },
+      { name: 'Muscovy Duck', reason: 'an escapee eBird doesn’t count', choices: [{ speciesCode: 'musduc', comName: 'Muscovy Duck' }] }
+    ] } })
+  }).as('importLifeList')
+
   // The route kept on the account: empty to begin with, and whatever was last put after that.
   const account = { stops: {}, start: null }
   cy.intercept('GET', '**/api/saved?kind=route*', (req) => {

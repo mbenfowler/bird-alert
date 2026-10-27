@@ -1,8 +1,8 @@
 import { toast } from 'react-toastify'
 import './Card.css'
 import { errorMessage } from '../../apiCalls'
-import { useSavedCodes } from '../../hooks/queries'
-import { useToggleSavedMutation } from '../../hooks/mutations'
+import { useSavedCodes, useSeenCodes } from '../../hooks/queries'
+import { useToggleSavedMutation, useToggleSeenMutation } from '../../hooks/mutations'
 import type { Bird } from '../../types'
 import { SoundCredit, SoundToggle } from '../SoundButton/SoundButton'
 import { useBirdSound } from '../../hooks/useBirdSound'
@@ -15,6 +15,9 @@ const Card = ({ bird }: CardProps) => {
     const savedCodes = useSavedCodes()
     const toggleSaved = useToggleSavedMutation()
     const sound = useBirdSound(bird.speciesCode, bird.comName)
+    const seen = useSeenCodes()
+    const toggleSeen = useToggleSeenMutation()
+    const isSeen = seen.codes.has(bird.speciesCode)
 
     // Checked state comes straight from the watch list, so every card agrees with the saved view.
     const isChecked = savedCodes.has(bird.speciesCode)
@@ -54,6 +57,9 @@ const Card = ({ bird }: CardProps) => {
             {bird.wikiURL
                 ? <a className='card-link' href={bird.wikiURL} target='_blank' rel='noreferrer'>{body}<span className='visually-hidden'>, read about this bird on Wikipedia (opens in a new tab)</span></a>
                 : <div className='card-link'>{body}</div>}
+            {/* The life list: the star's twin at the other corner, a tick for a bird you've seen. */}
+            <input type="checkbox" className='card-seen' checked={isSeen} disabled={!seen.loaded} id={`seen-${bird.speciesCode}`} aria-label={`Seen ${bird.comName}`} title={isSeen ? 'On your life list' : 'Seen it? Add to your life list'}
+                onChange={() => toggleSeen.mutate({ speciesCode: bird.speciesCode, seen: !isSeen }, { onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' }) })} />
             <input type="checkbox" checked={isChecked} disabled={toggleSaved.isPending} id={bird.speciesCode} name={bird.comName} aria-label={`Watch ${bird.comName}`} onChange={handleChange} />
             <SoundToggle state={sound.state} name={bird.comName} onToggle={() => { void sound.toggle() }} className='card-sound' />
         </article>

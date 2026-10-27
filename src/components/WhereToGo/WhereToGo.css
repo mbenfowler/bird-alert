@@ -546,3 +546,23 @@
     border: 2px dashed #1a56db;
     color: #1a56db;
 }
+
+/* Lifers first: the small switch, under the title. */
+.go__mode {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin: 8px 0 0;
+    padding: 6px 12px 6px 6px;
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+.go__mode:has(input:focus-visible) {
+    outline: 3px solid var(--focus);
+}
+
+.go__mode-hint {
+    color: var(--muted);
+    font-size: 0.85rem;
+}

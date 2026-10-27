@@ -11,6 +11,7 @@ export interface User {
   push_notable_enabled: boolean
   push_notable_batched: boolean
   push_first_of_season: boolean
+  push_lifer_enabled?: boolean
   migration_email_enabled: boolean
   push_quiet_start: number | null
   push_quiet_end: number | null
@@ -20,7 +21,7 @@ export interface User {
 }
 
 export type EmailPreference = 'alert_digest_email_enabled' | 'rare_sightings_email_enabled' | 'migration_email_enabled'
-export type PushPreference = 'push_watchlist_enabled' | 'push_notable_enabled' | 'push_first_of_season'
+export type PushPreference = 'push_watchlist_enabled' | 'push_notable_enabled' | 'push_first_of_season' | 'push_lifer_enabled'
 
 export interface UserPatch {
   email?: string
@@ -32,6 +33,7 @@ export interface UserPatch {
   push_notable_enabled?: boolean
   push_notable_batched?: boolean
   push_first_of_season?: boolean
+  push_lifer_enabled?: boolean
   migration_email_enabled?: boolean
   push_quiet_start?: number | null
   push_quiet_end?: number | null
@@ -216,6 +218,10 @@ export interface FoundHotspot { kind: 'hotspot'; locId: string; name: string; co
 /** The route kept on the account: this county's stops (null follows the suggestion) and the start. */
 export interface SavedRoute { region: string; stops: SavedPoint[] | null; start: SavedPoint | null; updatedAt: string | null }
 export interface SavedPoint { locId: string | null; name: string; lat: number; lng: number; note?: string | null }
+/** A bird on the life list: tapped "Seen it", or brought in from an eBird export. */
+export interface SeenBird { speciesCode: string; firstSeen: string | null; source: 'tap' | 'import' }
+/** What an eBird import did; rows left out say why, and offer the species to mark by hand where there is a choice. */
+export interface LifeListImport { added: number; already: number; total: number; skipped: { name: string; reason: string; choices?: { speciesCode: string; comName: string }[] }[] }
 export interface FoundAddress { kind: 'address'; name: string; lat: number; lng: number }
 export interface PlaceSearch { hotspots: FoundHotspot[]; addresses: FoundAddress[] }
 export interface NearbyPublic { hotspots: NearbyHotspot[]; parks: NearbyPark[]; fetchedAt?: string }

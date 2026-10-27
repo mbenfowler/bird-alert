@@ -1,0 +1,65 @@
+import { login } from '../support/login'
+
+describe('Life list', () => {
+  beforeEach(() => {
+    login()
+    cy.get('.birds-list .card', { timeout: 15000 })
+  })
+
+  it('a card’s tick puts a bird on the life list and takes it off again', () => {
+    cy.get('#seen-snogoo').should('not.be.checked').click()
+    cy.wait('@postSeen').its('request.body').should('deep.equal', { speciesCode: 'snogoo' })
+    cy.get('#seen-snogoo').should('be.checked')
+    cy.get('#seen-snogoo').click()
+    cy.wait('@deleteSeen').its('request.url').should('include', 'speciesCode=snogoo')
+    cy.get('#seen-snogoo').should('not.be.checked')
+  })
+
+  it('settings imports an eBird life list and lets the person settle the rows it could not', () => {
+    cy.visit('http://localhost:3000/settings')
+    cy.get('.life-list__count').should('have.text', 'No birds yet')
+    cy.contains('.notification__hint', 'Needs 10 or more birds').should('exist')
+    cy.contains('summary', 'Start from your eBird life list').click()
+    cy.get('#lifeListFile').selectFile({ contents: Cypress.Buffer.from('Category,Common Name,Scientific Name\nspecies,Snow Goose,Anser caerulescens\n'), fileName: 'ebird_world_life_list.csv', mimeType: 'text/csv' }, { force: true })
+    cy.wait('@importLifeList').its('request.body.csv').should('include', 'Snow Goose')
+    cy.get('.life-list__result').should('contain', 'Added 12 birds').and('contain', 'Your life list has 12').and('contain', '2 rows were left out')
+    cy.get('.life-list__count').should('have.text', '12 birds')
+    // A pre-split sighting: pick which species it was.
+    cy.contains('.life-list__result li', 'Saltmarsh/Prairie Willet').within(() => {
+      cy.contains('Which did you see?')
+      cy.contains('button', 'Saltmarsh Willet').click()
+    })
+    cy.wait('@postSeen').its('request.body').should('deep.equal', { speciesCode: 'willet2' })
+    cy.contains('.life-list__result li', 'Saltmarsh/Prairie Willet').should('contain', '✓ Saltmarsh Willet added')
+    cy.contains('.life-list__result li', 'Muscovy Duck').find('button').should('have.text', 'Count it anyway')
+    cy.contains('.notification__hint', 'Needs 10 or more birds').should('not.exist')
+  })
+
+  it('the watch list can hide birds already seen', () => {
+    cy.get('#seen-snogoo').click()
+    cy.wait('@postSeen')
+    cy.visit('http://localhost:3000/saved')
+    cy.get('.birds-list .card').then(($cards) => {
+      const all = $cards.length
+      cy.contains('.list-filter', 'Hide the 1 I’ve seen').find('input').click()
+      cy.get('.birds-list .card').should('have.length', all - 1)
+      cy.get('#seen-snogoo').should('not.exist')
+      cy.get('.list-end').should('contain', 'you haven’t seen yet')
+    })
+  })
+
+  it('where to go can rank places by lifers: the county’s birds not on the life list', () => {
+    cy.get('#seen-snogoo').click()
+    cy.wait('@postSeen')
+    cy.visit('http://localhost:3000/go')
+    cy.wait('@whereToGo')
+    cy.contains('.go__mode', 'Lifers first').find('input').should('not.be.checked').click()
+    cy.wait('@whereToGo').its('request.url').then((url) => {
+      const codes = new URL(url).searchParams.get('codes').split(',')
+      expect(codes).to.include('cangoo')
+      expect(codes).not.to.include('snogoo')
+      expect(codes).to.include('mutswa', 'county birds beyond the watch list count too')
+    })
+    cy.get('.go__summary').should('contain', 'possible lifer')
+  })
+})

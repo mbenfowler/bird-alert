@@ -229,3 +229,15 @@ button#confirmPasswordReset {
 html, body {
     touch-action: manipulation;
 }
+
+/* On the life list: the same pill, in the green the tick uses. */
+.pill-button--seen {
+    border-color: #0b5c2b;
+    background: #e6f4ea;
+    color: #0b5c2b;
+    -webkit-text-fill-color: #0b5c2b;
+}
+
+.pill-button--seen:hover:not(:disabled) {
+    background: #d4ecdc;
+}

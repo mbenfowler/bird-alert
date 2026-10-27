@@ -6,7 +6,7 @@ import ErrorMessage from '../Error/ErrorMessage'
 import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
 import RouteCard from './RouteCard'
-import { useCurrentUser, useDriveQuery, useNearbyPublicQuery, useRegionsQuery, useSavedCodes, useSpeciesListQuery, useWhereToGoQuery } from '../../hooks/queries'
+import { useCurrentUser, useDriveQuery, useNearbyPublicQuery, useRegionsQuery, useSavedCodes, useSeenCodes, useSpeciesListQuery, useWhereToGoQuery } from '../../hooks/queries'
 import { focusFor } from '../../mapFocus'
 import { chanceColour } from '../../chance'
 import { MAX_ROUTE_STOPS, coverage, samePlace, mapsUrl, type PlanPoint } from '../../routePlan'
@@ -14,6 +14,9 @@ import { useRoutePlan } from '../../hooks/useRoutePlan'
 import type { GoPlace } from '../../types'
 import AccuracyBadge from '../AccuracyBadge/AccuracyBadge'
 import './WhereToGo.css'
+
+const LIFER_MODE_KEY = 'bird-alert:go-lifers'
+const readLiferMode = () => { try { return localStorage.getItem(LIFER_MODE_KEY) === '1' } catch { return false } }
 
 const birdsWord = (n: number) => `${n % 1 === 0 ? n : n.toFixed(1)} ${n === 1 ? 'bird' : 'birds'}`
 
@@ -29,10 +32,16 @@ const WhereToGo = () => {
   // Only the watch-list birds that occur in this county are worth asking about; a long list saved
   // across many places would otherwise go over the wire for nothing.
   const speciesList = useSpeciesListQuery(region)
+  // Lifers first: every bird of the county that isn't on the life list, in place of the watch list.
+  const seen = useSeenCodes()
+  const [liferMode, setLiferModeState] = useState(readLiferMode)
+  const setLiferMode = (on: boolean) => { setLiferModeState(on); try { localStorage.setItem(LIFER_MODE_KEY, on ? '1' : '0') } catch { /* this visit only */ } }
+  const lifers = liferMode && seen.codes.size > 0
   const codes = useMemo(() => {
+    if (lifers) return (speciesList.data ?? []).filter(code => !seen.codes.has(code)).sort()
     const here = speciesList.data ? new Set(speciesList.data) : null
     return [...savedCodes].filter(code => !here || here.has(code)).sort()
-  }, [savedCodes, speciesList.data])
+  }, [lifers, savedCodes, seen.codes, speciesList.data])
   // The person's own stops for this county (null follows the suggestion) and where the day starts,
   // kept on the account. The suggested route counts the drive from the start.
   const { custom, setCustom, start, setStart, saveFailed } = useRoutePlan(region)
@@ -102,11 +111,21 @@ const WhereToGo = () => {
     window.scrollTo({ top: window.scrollY + frame.getBoundingClientRect().top - bar - gap, behavior: 'smooth' })
   }, [editing])
 
+  const modeSwitch = seen.codes.size > 0 && (
+    <label className='go__mode'>
+      <input className='switch switch--small' type='checkbox' checked={lifers} onChange={(e) => setLiferMode(e.target.checked)} />
+      <span><strong>Lifers first</strong> <span className='go__mode-hint'>{lifers ? 'Places ranked by birds not on your life list' : 'Rank places by birds you’ve never seen'}</span></span>
+    </label>
+  )
+
   if (!codes.length) {
     return (
       <section className='go'>
         <h1 className='fredericka go__title'>Where to go</h1>
-        <p className='list-note'>Add birds to your watch list and this page will say where to find them. <Link to='/'>Pick some from the home page.</Link></p>
+        {modeSwitch}
+        {lifers
+          ? <p className='list-note'>Every bird on {regionName}’s list is already on your life list. Nice work.</p>
+          : <p className='list-note'>Add birds to your watch list and this page will say where to find them. <Link to='/'>Pick some from the home page.</Link></p>}
       </section>
     )
   }
@@ -114,6 +133,8 @@ const WhereToGo = () => {
   if (go.isPending) return <LoadingState label='Working out where to go…' />
 
   const { species } = go.data
+  // In lifer mode the list is the whole county; only the birds with a place to go count.
+  const possibleLifers = species.filter(sp => sp.places > 0).length
   const select = (place: GoPlace) => setSelected(place.locId)
   const straightPath = drivePoints.map(p => [p.lat, p.lng] as [number, number])
   const preview = phantom && !stops.some(st => samePlace(st, phantom)) ? phantom : null
@@ -141,7 +162,7 @@ const WhereToGo = () => {
   }
   const hasRoute = stops.length > 0 || custom !== null
   const routeCard = hasRoute ? (
-    <RouteCard state={user.state} places={places} speciesCount={species.length} stops={stops} start={start} arriving={arriving}
+    <RouteCard state={user.state} places={places} speciesCount={lifers ? possibleLifers : species.length} lifers={lifers} stops={stops} start={start} arriving={arriving}
             preview={preview} drive={drive} covers={custom ? coverage(stops, places) : route!.covers} url={custom ? mapsUrl(stops, start) : route!.url}
             custom={custom !== null} saveFailed={saveFailed} editing={editing} showRoute={showRoute}
             onEditing={(on) => { setEditing(on); if (on) { closeNearby(); setShowRoute(true) } }}
@@ -155,7 +176,8 @@ const WhereToGo = () => {
       <header className='go__hero'>
         <div className='go__title-row'>
           <h1 className='fredericka go__title'>Where to go</h1>
-          <p className='go__summary'>{species.length} {species.length === 1 ? 'bird' : 'birds'} on your watch list · {places.length} {places.length === 1 ? 'place' : 'places'} in {regionName} with reports in the last 30 days</p>
+          {modeSwitch}
+          <p className='go__summary'>{lifers ? `${possibleLifers} possible ${possibleLifers === 1 ? 'lifer' : 'lifers'} reported lately` : `${species.length} ${species.length === 1 ? 'bird' : 'birds'} on your watch list`} · {places.length} {places.length === 1 ? 'place' : 'places'} in {regionName} with reports in the last 30 days</p>
           <AccuracyBadge grades={go.data.grades} />
         </div>
         {!editing && routeCard}

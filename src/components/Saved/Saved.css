@@ -6,3 +6,20 @@
     font-size: xx-large;
     text-align: center;
 }
+
+/* The home page's search-scope switch, for the watch list. */
+.list-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 10px;
+    padding: 6px 12px 6px 6px;
+    border-radius: 999px;
+    color: var(--ink);
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+.list-filter:has(input:focus-visible) {
+    outline: 3px solid var(--focus);
+}

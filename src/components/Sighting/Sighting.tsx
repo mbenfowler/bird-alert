@@ -9,9 +9,9 @@ import { useBirdSound } from '../../hooks/useBirdSound'
 import ErrorMessage from '../Error/ErrorMessage'
 import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
-import { useBirdsQuery, useCurrentUser, useNearbyPublicQuery, useRegionsQuery, useSavedCodes, useSeasonalityQuery, useSpeciesObservationsQuery, useWhereToFindQuery } from '../../hooks/queries'
+import { useBirdsQuery, useCurrentUser, useNearbyPublicQuery, useRegionsQuery, useSavedCodes, useSeenCodes, useSeasonalityQuery, useSpeciesObservationsQuery, useWhereToFindQuery } from '../../hooks/queries'
 import { focusFor } from '../../mapFocus'
-import { useToggleSavedMutation } from '../../hooks/mutations'
+import { useToggleSavedMutation, useToggleSeenMutation } from '../../hooks/mutations'
 import type { Observation, Place, PersistenceClass } from '../../types'
 import { formatObsDt } from '../../format'
 import { article, chanceStyle } from '../../chance'
@@ -69,6 +69,8 @@ const Sighting = () => {
   const observations = useSpeciesObservationsQuery(region, code)
   const savedCodes = useSavedCodes()
   const toggleSaved = useToggleSavedMutation()
+  const seen = useSeenCodes()
+  const toggleSeen = useToggleSeenMutation()
   const seasonality = useSeasonalityQuery(region, code)
   const where = useWhereToFindQuery(region, code)
   const [openNearby, setOpenNearby] = useState<string | null>(null)
@@ -165,6 +167,11 @@ const Sighting = () => {
           <div className='sighting__actions'>
             {bird && <SoundPill state={sound.state} name={name} onToggle={() => { void sound.toggle() }} />}
             {bird && <button type='button' className='pill-button' onClick={watch} disabled={toggleSaved.isPending} aria-pressed={isWatched}>{isWatched ? '★ On your watch list' : '☆ Add to watch list'}</button>}
+            {bird && (() => {
+              const isSeen = seen.codes.has(bird.speciesCode)
+              return <button type='button' className={`pill-button ${isSeen ? 'pill-button--seen' : ''}`} disabled={!seen.loaded} aria-pressed={isSeen}
+                onClick={() => toggleSeen.mutate({ speciesCode: bird.speciesCode, seen: !isSeen }, { onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' }) })}>{isSeen ? '✓ On your life list' : 'Seen it?'}</button>
+            })()}
             {bird?.wikiURL && <a className='pill-button' href={bird.wikiURL} target='_blank' rel='noreferrer'>Wikipedia</a>}
           </div>
         </div>
