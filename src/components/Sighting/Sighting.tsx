@@ -226,7 +226,8 @@ const Sighting = () => {
 
         <div className={`sighting__list-col ${more ? 'has-more' : ''}`}>
           <div className='sighting__scroll' ref={listRef}>
-            {chaseable && current?.locId && <StillThere key={`${current.locId}-${code}`} locId={current.locId} code={code} cls={where.data?.class} to={current} from={start} />}
+            {chaseable && current?.locId && <StillThere key={`${current.locId}-${code}`} locId={current.locId} code={code} cls={where.data?.class} to={current} from={start}
+              others={where.data?.class === 'passage' ? currentPlace?.chance : undefined} />}
             {where.data && places.length > 0 ? (
               <>
                 <h2 className='fredericka sighting__subhead'>

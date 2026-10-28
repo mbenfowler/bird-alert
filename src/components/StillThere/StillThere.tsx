@@ -14,16 +14,20 @@ const VERDICT: Record<Chase['verdict'], string> = {
 }
 
 const ago = (hours: number) => hours < 1 ? 'under an hour ago' : hours < 36 ? `${hours} ${hours === 1 ? 'hour' : 'hours'} ago` : `${Math.round(hours / 24)} days ago`
+/** "an 83%", "a 2%", and below one percent, "less than a 1%" rather than a flat zero. */
+const odds = (n: number) => n < 1 ? 'less than a 1%' : `${article(n)} ${n}%`
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 
 /**
  * "Still there?" for a bird at one place: when it was last seen, what the checklists filed there
  * since say, and the chance a trip now finds it. With a start point, the drive too.
  */
-const StillThere = ({ locId, code, cls, to, from }: {
+const StillThere = ({ locId, code, cls, to, from, others }: {
   locId: string | null | undefined
   code: string
   cls?: PersistenceClass
+  /** For a bird passing through: the chance of finding one here at all (the where-to-find odds). */
+  others?: number
   to: { lat: number; lng: number }
   from?: { lat: number; lng: number } | null
 }) => {
@@ -49,7 +53,13 @@ const StillThere = ({ locId, code, cls, to, from }: {
       )}
       {c.lastSeen && (
         <p className='still-there__chance'>
-          You have {article(c.chance)} {c.chance}% chance to find it if you go now{drive.data ? `, ${drive.data.minutes} minutes from your start` : ''}.
+          You have {odds(c.chance)} chance to find it if you go now{drive.data ? `, ${drive.data.minutes} minutes from your start` : ''}.
+        </p>
+      )}
+      {/* A migrant that has moved on can be followed by others of its kind; this one's odds aren't the whole story. */}
+      {others !== undefined && others > c.chance && (c.verdict === 'gone' || c.verdict === 'maybe') && (
+        <p className='still-there__others'>
+          Others are still passing through, though: you have {odds(others)} chance to find one here, going by recent reports.
         </p>
       )}
     </div>
