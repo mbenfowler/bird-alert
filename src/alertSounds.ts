@@ -1,15 +1,14 @@
-import { getBirdSound } from './apiCalls'
-import type { BirdSound } from './types'
-
 /**
  * The sounds Alert! mode can play, one chosen per kind of alert. Sci-fi and classic sounds are
- * made in the browser (no files); bird calls are short clips of xeno-canto recordings, credited;
+ * made in the browser (no files); bird calls are short clips of xeno-canto recordings, cut and
+ * levelled, kept in public/sounds/alerts (credits in CREDITS.txt there and in BIRD_CALLS here);
  * spoken ones use the device's own voice and say the bird's name. All free.
  */
 export type AlertKind = 'watchlist' | 'notable' | 'mega' | 'lifer'
 export type SoundGroup = 'Sci-fi' | 'Bird calls' | 'Spoken' | 'Classic' | 'Off'
 export interface PlayContext { bird: string; code: number | null; volume: number; voice?: string | null }
-interface AlertSound { id: string; name: string; group: SoundGroup; play: (ctx: PlayContext) => Promise<void> | void; birdCode?: string }
+export interface BirdCallCredit { xcId: number; recordist: string; license: string }
+interface AlertSound { id: string; name: string; group: SoundGroup; play: (ctx: PlayContext) => Promise<void> | void; credit?: BirdCallCredit }
 
 export const KIND_LABEL: Record<AlertKind, string> = { watchlist: 'Watch list', notable: 'Notable', mega: 'ABA Code 4–5', lifer: 'Lifer chance' }
 export const DEFAULT_SOUNDS: Record<AlertKind, string> = { watchlist: 'chime', notable: 'bridge-chirp', lifer: 'say-binoculars', mega: 'red-alert-say' }
@@ -122,24 +121,34 @@ const redAlert = synth((a, t, v) => {
 
 // ---- spoken ----
 /**
- * Voices that sound like a person, best first. Browsers default to whatever the system lists
- * first, which on a Mac can be a novelty voice; these are the good ones on Apple, Google and
- * Microsoft systems ("Enhanced", "Premium" and "Natural" are the higher-quality downloads).
+ * The voices worth hearing, picked by ear on a Mac: Daniel (the default), plus five of the
+ * novelty voices that make good alarms. Chrome and Safari name some of them with their region.
  */
-const GOOD_VOICES = [/\b(Premium|Enhanced|Natural)\b/i, /^Samantha/i, /^Google US English/i, /^Daniel/i, /^Karen/i, /^Moira/i, /^Microsoft (Aria|Jenny|Guy)/i, /^Google UK English/i, /^Alex$/i]
-/** Novelty and robotic voices, never picked on their own. */
-const SILLY_VOICES = /^(Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Good News|Jester|Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox|Fred|Junior|Ralph|Kathy|Grandma|Grandpa|Eddy|Flo|Reed|Rocko|Sandy|Shelley)\b/i
+const VOICES: { label: string; match: RegExp }[] = [
+  { label: 'Daniel', match: /^Daniel\b/ },
+  { label: 'Bad News', match: /^Bad News\b/ },
+  { label: 'Bells', match: /^Bells\b/ },
+  { label: 'Boing', match: /^Boing\b/ },
+  { label: 'Grandpa', match: /^Grandpa \(English \((United States|US)\)\)/ },
+  { label: 'Trinoids', match: /^Trinoids\b/ }
+]
+/** Fallbacks on devices without Daniel (Windows, Android): their natural voices. */
+const FALLBACK_VOICES = [/\b(Natural|Premium|Enhanced)\b/i, /^Google UK English Male/i, /^Google US English/i, /^Microsoft (Ryan|Guy|Aria|Jenny)/i]
 
-/** This device's English voices, for choosing one, best first. */
-export const englishVoices = (): SpeechSynthesisVoice[] => {
+/** The voices on this device that can be chosen, Daniel first: { label, name }. */
+export const alertVoices = (): { label: string; name: string }[] => {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return []
-  const rank = (v: SpeechSynthesisVoice) => { const i = GOOD_VOICES.findIndex((re) => re.test(v.name)); return i === -1 ? GOOD_VOICES.length + (SILLY_VOICES.test(v.name) ? 1 : 0) : i }
-  return window.speechSynthesis.getVoices().filter((v) => /^en(-|_|$)/i.test(v.lang)).sort((a, b) => rank(a) - rank(b) || Number(b.localService) - Number(a.localService))
+  const all = window.speechSynthesis.getVoices()
+  return VOICES.flatMap(({ label, match }) => { const v = all.find((x) => match.test(x.name)); return v ? [{ label, name: v.name }] : [] })
 }
-/** The chosen voice if this device has it, else the best one it has. */
+/** The chosen voice if this device has it, else Daniel, else the device's best natural English voice. */
 const pickVoice = (name?: string | null) => {
-  const voices = englishVoices()
-  return voices.find((v) => v.name === name) ?? voices.find((v) => !SILLY_VOICES.test(v.name)) ?? null
+  const all = typeof window !== 'undefined' && 'speechSynthesis' in window ? window.speechSynthesis.getVoices() : []
+  const chosen = all.find((v) => v.name === name) ?? all.find((v) => VOICES[0]!.match.test(v.name))
+  if (chosen) return chosen
+  const english = all.filter((v) => /^en(-|_|$)/i.test(v.lang))
+  for (const re of FALLBACK_VOICES) { const v = english.find((x) => re.test(x.name)); if (v) return v }
+  return english[0] ?? null
 }
 // The list arrives late in some browsers; asking once early gets it loading.
 if (typeof window !== 'undefined' && 'speechSynthesis' in window) window.speechSynthesis.getVoices()
@@ -162,32 +171,28 @@ const say = (text: (ctx: PlayContext) => string) => (ctx: PlayContext) => new Pr
 })
 
 // ---- bird calls ----
-const credits = new Map<string, BirdSound>()
-/** The recording a bird-call sound uses, with its credit (cached for the session). */
-export const birdCallCredit = async (speciesCode: string) => {
-  if (!credits.has(speciesCode)) credits.set(speciesCode, await getBirdSound(speciesCode))
-  return credits.get(speciesCode)!
+/** The recording each clip was cut from (see public/sounds/alerts/CREDITS.txt). */
+const BIRD_CALLS: Record<string, BirdCallCredit> = {
+  rethaw: { xcId: 645523, recordist: 'Bobby Wilcox', license: 'CC BY-NC-SA 4.0' },
+  baleag: { xcId: 769877, recordist: 'Russ Wigh', license: 'CC BY-NC-SA 4.0' },
+  comloo: { xcId: 432766, recordist: 'Stanislas Wroza', license: 'CC BY-NC-SA 4.0' },
+  blujay: { xcId: 994294, recordist: 'Rory Nefdt', license: 'CC BY-NC-SA 4.0' },
+  laukoo1: { xcId: 1104895, recordist: 'Tom Cooney', license: 'CC BY-NC-SA 4.0' },
+  sancra: { xcId: 794683, recordist: 'Valerie Heemstra', license: 'CC BY-NC-SA 4.0' },
+  comrav: { xcId: 1084372, recordist: 'Lars Edenius', license: 'CC BY-NC-SA 4.0' },
+  osprey: { xcId: 145834, recordist: 'Paul Marvin', license: 'CC BY-NC-SA 3.0' },
+  amecro: { xcId: 1104243, recordist: 'Fred Rowley', license: 'CC BY-NC-SA 4.0' }
 }
-const birdCall = (speciesCode: string, seconds = 4) => async ({ volume }: PlayContext) => {
-  const sound = await birdCallCredit(speciesCode).catch(() => null)
-  if (!sound?.found || !sound.url) return
-  const clip = new Audio(sound.url)
-  const peak = Math.min(1, 0.55 * volume)
-  clip.volume = peak
-  await clip.play().catch(() => undefined)
-  // A short clip, faded out, not the whole recording.
-  await new Promise<void>((resolve) => {
-    const stopAt = window.setTimeout(() => {
-      let step = 0
-      const fade = window.setInterval(() => {
-        step += 1
-        clip.volume = Math.max(0, peak * (1 - step / 8))
-        if (step >= 8) { window.clearInterval(fade); clip.pause(); resolve() }
-      }, 60)
-    }, seconds * 1000)
-    clip.onended = () => { window.clearTimeout(stopAt); resolve() }
-  })
-}
+/** A clip, already cut to the call and levelled, played whole. */
+const birdCall = (speciesCode: string) => ({ volume }: PlayContext) => new Promise<void>((resolve) => {
+  const clip = new Audio(`/sounds/alerts/${speciesCode}.m4a`)
+  clip.volume = Math.min(1, 0.8 * volume)
+  clip.onended = () => resolve()
+  clip.onerror = () => resolve()
+  void clip.play().catch(() => resolve())
+  window.setTimeout(resolve, 8000)
+})
+const call = (id: string, name: string, code: string): AlertSound => ({ id, name, group: 'Bird calls', play: birdCall(code), credit: BIRD_CALLS[code] })
 
 export const SOUNDS: AlertSound[] = [
   { id: 'chime', name: 'Gentle chime', group: 'Classic', play: chime },
@@ -198,16 +203,15 @@ export const SOUNDS: AlertSound[] = [
   { id: 'proximity', name: 'Proximity alarm', group: 'Sci-fi', play: proximity },
   { id: 'red-alert', name: 'Red alert klaxon', group: 'Sci-fi', play: redAlert },
   { id: 'red-alert-say', name: 'Red alert + announcement', group: 'Sci-fi', play: async (ctx) => { await redAlert(ctx); await say(({ bird }) => `Red alert. ${bird}.`)(ctx) } },
-  { id: 'hawk', name: 'Red-tailed Hawk (the movie “eagle” scream)', group: 'Bird calls', play: birdCall('rethaw'), birdCode: 'rethaw' },
-  { id: 'eagle', name: 'Bald Eagle', group: 'Bird calls', play: birdCall('baleag'), birdCode: 'baleag' },
-  { id: 'loon', name: 'Common Loon wail', group: 'Bird calls', play: birdCall('comloo', 6), birdCode: 'comloo' },
-  { id: 'jay', name: 'Blue Jay alarm', group: 'Bird calls', play: birdCall('blujay'), birdCode: 'blujay' },
-  { id: 'kookaburra', name: 'Laughing Kookaburra', group: 'Bird calls', play: birdCall('laukoo1', 6), birdCode: 'laukoo1' },
-  { id: 'owl', name: 'Barred Owl (“who cooks for you”)', group: 'Bird calls', play: birdCall('brdowl', 5), birdCode: 'brdowl' },
-  { id: 'crane', name: 'Sandhill Crane', group: 'Bird calls', play: birdCall('sancra'), birdCode: 'sancra' },
-  { id: 'raven', name: 'Common Raven', group: 'Bird calls', play: birdCall('comrav'), birdCode: 'comrav' },
-  { id: 'woodpecker', name: 'Pileated Woodpecker', group: 'Bird calls', play: birdCall('pilwoo'), birdCode: 'pilwoo' },
-  { id: 'killdeer', name: 'Killdeer', group: 'Bird calls', play: birdCall('killde'), birdCode: 'killde' },
+  call('hawk', 'Red-tailed Hawk (the movie “eagle” scream)', 'rethaw'),
+  call('eagle', 'Bald Eagle', 'baleag'),
+  call('osprey', 'Osprey', 'osprey'),
+  call('loon', 'Common Loon wail', 'comloo'),
+  call('jay', 'Blue Jay alarm', 'blujay'),
+  call('kookaburra', 'Laughing Kookaburra', 'laukoo1'),
+  call('crane', 'Sandhill Crane', 'sancra'),
+  call('raven', 'Common Raven', 'comrav'),
+  call('crow', 'American Crow', 'amecro'),
   { id: 'say-bird-alert', name: '“Bird alert! … nearby.”', group: 'Spoken', play: say(({ bird }) => `Bird alert! ${bird} nearby.`) },
   { id: 'say-not-a-drill', name: '“This is not a drill.”', group: 'Spoken', play: say(({ bird }) => `This is not a drill. ${bird} reported nearby.`) },
   { id: 'say-binoculars', name: '“Grab your binoculars!”', group: 'Spoken', play: say(({ bird }) => `Grab your binoculars! ${bird}!`) },

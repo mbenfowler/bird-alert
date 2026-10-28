@@ -1,0 +1,13 @@
+Alert sounds: short clips of recordings from xeno-canto (https://xeno-canto.org).
+Each is cut to its loudest few seconds, faded, and levelled in loudness; nothing else is changed.
+These adapted clips are shared under the same license as their recording.
+
+rethaw.m4a  Red-tailed Hawk  XC645523 by Bobby Wilcox  CC BY-NC-SA 4.0  https://xeno-canto.org/645523  https://creativecommons.org/licenses/by-nc-sa/4.0/
+baleag.m4a  Bald Eagle  XC769877 by Russ Wigh  CC BY-NC-SA 4.0  https://xeno-canto.org/769877  https://creativecommons.org/licenses/by-nc-sa/4.0/
+comloo.m4a  Common Loon  XC432766 by Stanislas Wroza  CC BY-NC-SA 4.0  https://xeno-canto.org/432766  https://creativecommons.org/licenses/by-nc-sa/4.0/
+blujay.m4a  Blue Jay  XC994294 by Rory Nefdt  CC BY-NC-SA 4.0  https://xeno-canto.org/994294  https://creativecommons.org/licenses/by-nc-sa/4.0/
+laukoo1.m4a  Laughing Kookaburra  XC1104895 by Tom Cooney  CC BY-NC-SA 4.0  https://xeno-canto.org/1104895  https://creativecommons.org/licenses/by-nc-sa/4.0/
+sancra.m4a  Sandhill Crane  XC794683 by Valerie Heemstra  CC BY-NC-SA 4.0  https://xeno-canto.org/794683  https://creativecommons.org/licenses/by-nc-sa/4.0/
+comrav.m4a  Common Raven  XC1084372 by Lars Edenius  CC BY-NC-SA 4.0  https://xeno-canto.org/1084372  https://creativecommons.org/licenses/by-nc-sa/4.0/
+osprey.m4a  Osprey  XC145834 by Paul Marvin  CC BY-NC-SA 3.0  https://xeno-canto.org/145834  https://creativecommons.org/licenses/by-nc-sa/3.0/
+amecro.m4a  American Crow  XC1104243 by Fred Rowley  CC BY-NC-SA 4.0  https://xeno-canto.org/1104243  https://creativecommons.org/licenses/by-nc-sa/4.0/

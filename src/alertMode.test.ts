@@ -31,3 +31,19 @@ describe('alert sounds', () => {
     for (const id of Object.values(DEFAULT_SOUNDS)) expect(ids).toContain(id)
   })
 })
+
+describe('bird-call clips', () => {
+  it('every bird call has its clip in public/sounds/alerts and a credit', async () => {
+    const { SOUNDS } = await import('./alertSounds')
+    const fs = await import('node:fs')
+    const calls = SOUNDS.filter((s) => s.group === 'Bird calls')
+    expect(calls.length).toBeGreaterThanOrEqual(8)
+    for (const s of calls) {
+      expect(s.credit?.recordist, s.id).toBeTruthy()
+      expect(s.credit?.license, s.id).toMatch(/^CC BY/)
+    }
+    const credits = fs.readFileSync('public/sounds/alerts/CREDITS.txt', 'utf8')
+    for (const s of calls) expect(credits, s.id).toContain(`XC${s.credit!.xcId}`)
+    for (const file of fs.readdirSync('public/sounds/alerts').filter((f) => f.endsWith('.m4a'))) expect(fs.statSync(`public/sounds/alerts/${file}`).size).toBeLessThan(120_000)
+  })
+})
