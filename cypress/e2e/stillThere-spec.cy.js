@@ -1,46 +1,41 @@
 import { login } from '../support/login'
 
 describe('Still there? and the Home Screen nudge', () => {
-  it('a rarity\'s report says whether it\'s still there, with the drive from your start', () => {
+  const chaseFor = (cls, chase, extraStubs = () => {}) => {
     login()
     cy.get('.birds-list .card', { timeout: 15000 })
+    extraStubs()
     cy.fixture('where').then((where) => {
-      cy.intercept('GET', '**/api/ebird/where?*', { body: { ...where, class: 'rare' } }).as('rareWhere')
+      cy.intercept('GET', '**/api/ebird/where?*', { body: { ...where, class: cls } })
     })
-    cy.intercept('GET', '**/api/saved?kind=route*', { body: { region: 'US-GA-139', stops: null, start: { locId: null, name: 'Home', lat: 34.3, lng: -83.8 }, updatedAt: null } })
-    cy.intercept('GET', '**/api/ebird/drive?*', { body: { minutes: 18, miles: 9.2, geometry: [] } }).as('drive')
-    cy.intercept('GET', '**/api/ebird/chase?*', { body: { locId: 'L14136408', speciesCode: 'cangoo', lastSeen: '2023-11-30 13:49', hoursAgo: 4, checkedSince: 2, foundSince: 2, missesSince: 0, stillThere: 92, chance: 81, verdict: 'fresh' } }).as('chase')
-    cy.visit('http://localhost:3000/sighting/cangoo/S155544243')
-    cy.wait('@chase').its('request.url').should('include', 'locId=L14136408').and('include', 'cls=rare')
-    cy.get('.still-there').should('contain', 'Yes, as of the latest checklists').and('contain', '4 hours ago').and('contain', 'It was on all 2 checklists filed here since the report.')
-    cy.get('.still-there__chance').should('have.text', 'You have an 81% chance to find it if you go now, 18 minutes from your start.')
-  })
-
-  it('a migrant that moved on says so honestly, and points to the odds of finding another', () => {
-    login()
-    cy.get('.birds-list .card', { timeout: 15000 })
-    cy.fixture('where').then((where) => {
-      cy.intercept('GET', '**/api/ebird/where?*', { body: { ...where, class: 'passage' } })
-    })
-    cy.intercept('GET', '**/api/ebird/chase?*', { body: { locId: 'L14136408', speciesCode: 'cangoo', lastSeen: '2023-11-21 08:25', hoursAgo: 170, checkedSince: 3, foundSince: 0, missesSince: 3, stillThere: 1, chance: 0, verdict: 'gone' } }).as('chase')
+    cy.intercept('GET', '**/api/ebird/chase?*', { body: { locId: 'L14136408', speciesCode: 'cangoo', stillThere: 50, chance: 30, verdict: 'maybe', ...chase } }).as('chase')
     cy.visit('http://localhost:3000/sighting/cangoo/S155544243')
     cy.wait('@chase')
-    cy.get('.still-there').should('contain', 'Probably gone').and('contain', '7 days ago').and('contain', '3 checklists since then didn’t have it.')
-    cy.get('.still-there__chance').should('have.text', 'You have less than a 1% chance to find it if you go now.')
-    cy.get('.still-there__others').should('have.text', 'Others are still passing through, though: you have an 86% chance to find one here, going by recent reports.')
+  }
+
+  it('a rarity\'s report says what the checklists since show, with the place\'s one tested chance and the drive', () => {
+    chaseFor('rare', { lastSeen: '2023-11-30 13:49', hoursAgo: 4, checkedSince: 2, foundSince: 2, missesSince: 0, verdict: 'fresh' }, () => {
+      cy.intercept('GET', '**/api/saved?kind=route*', { body: { region: 'US-GA-139', stops: null, start: { locId: null, name: 'Home', lat: 34.3, lng: -83.8 }, updatedAt: null } })
+      cy.intercept('GET', '**/api/ebird/drive?*', { body: { minutes: 18, miles: 9.2, geometry: [] } }).as('drive')
+    })
+    cy.get('@chase').its('request.url').should('include', 'locId=L14136408').and('include', 'cls=rare')
+    cy.get('.still-there__verdict').should('have.text', 'Seen on the latest checklists')
+    cy.get('.still-there__detail').should('contain', '4 hours ago').and('contain', 'It was on all 2 checklists filed here since the report.')
+    // One number only, the where-to-find chance for this place (86% in the fixture), never a second estimate.
+    cy.get('.still-there__chance').should('have.length', 1).and('have.text', 'You have an 86% chance to find one here if you go now, 18 minutes from your start.')
   })
 
-  it('a rarity that moved on gives the place\'s odds plainly, without claiming others are coming', () => {
-    login()
-    cy.get('.birds-list .card', { timeout: 15000 })
-    cy.fixture('where').then((where) => {
-      cy.intercept('GET', '**/api/ebird/where?*', { body: { ...where, class: 'rare' } })
-    })
-    cy.intercept('GET', '**/api/ebird/chase?*', { body: { locId: 'L14136408', speciesCode: 'cangoo', lastSeen: '2023-11-21 08:25', hoursAgo: 170, checkedSince: 3, foundSince: 0, missesSince: 3, stillThere: 1, chance: 0, verdict: 'gone' } }).as('chase')
-    cy.visit('http://localhost:3000/sighting/cangoo/S155544243')
-    cy.wait('@chase')
-    cy.get('.still-there__chance').should('have.text', 'You have less than a 1% chance to find it if you go now.')
-    cy.get('.still-there__others').should('have.text', 'Going by recent reports, you have an 86% chance to find one here.')
+  it('one quiet checklist says just that, not "probably gone"', () => {
+    chaseFor('passage', { lastSeen: '2023-11-27 13:17', hoursAgo: 72, checkedSince: 1, foundSince: 0, missesSince: 1, verdict: 'gone' })
+    cy.get('.still-there__verdict').should('have.text', 'Not on the last checklist')
+    cy.get('.still-there__detail').should('contain', '3 days ago').and('contain', '1 checklist since didn’t have it.')
+    cy.get('.still-there__chance').should('have.text', 'You have an 86% chance to find one here if you go now.')
+  })
+
+  it('three checklists in a row without it reads as probably gone', () => {
+    chaseFor('rare', { lastSeen: '2023-11-21 08:25', hoursAgo: 170, checkedSince: 3, foundSince: 0, missesSince: 3, verdict: 'gone' })
+    cy.get('.still-there__verdict').should('have.text', 'Probably gone')
+    cy.get('.still-there__detail').should('contain', '7 days ago').and('contain', '3 checklists since didn’t have it.')
   })
 
   it('a bird that lives here gets no "still there?"', () => {

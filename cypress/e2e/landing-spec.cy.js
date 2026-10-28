@@ -88,8 +88,9 @@ describe('Shared links', () => {
     cy.intercept('GET', '**/api/ebird/chase?*', { body: { locId: 'L999', speciesCode: 'paibun', lastSeen: '2026-10-27 08:10', hoursAgo: 30, checkedSince: 3, foundSince: 0, missesSince: 3, stillThere: 18, chance: 11, verdict: 'gone' } }).as('chase')
     cy.visit('http://localhost:3000/share/s/sight67890')
     cy.wait('@chase').its('request.url').should('include', 'locId=L999').and('include', 'code=paibun')
-    cy.get('.still-there').should('contain', 'Probably gone').and('contain', '30 hours ago').and('contain', '3 checklists since then didn’t have it.')
-    cy.get('.still-there__chance').should('have.text', 'You have an 11% chance to find it if you go now.')
+    cy.get('.still-there').should('contain', 'Probably gone').and('contain', '30 hours ago').and('contain', '3 checklists since didn’t have it.')
+    // No tested chance for a place on a shared page, so the facts stand alone.
+    cy.get('.still-there__chance').should('not.exist')
   })
 
   it('a visitor who lands on a shared link carries it to signup, first visit winning', () => {
