@@ -190,3 +190,7 @@
     color: var(--link);
     font-weight: 600;
 }
+
+.shared__aba {
+    margin: 6px 0 0;
+}

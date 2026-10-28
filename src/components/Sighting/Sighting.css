@@ -495,3 +495,7 @@
 .sighting__places > li > .nearby {
     padding: 0 14px 12px;
 }
+
+.sighting__aba {
+    margin: 0 0 8px;
+}

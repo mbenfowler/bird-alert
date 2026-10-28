@@ -19,6 +19,7 @@ import { formatObsDt } from '../../format'
 import { article, chanceStyle } from '../../chance'
 import AccuracyBadge from '../AccuracyBadge/AccuracyBadge'
 import StillThere from '../StillThere/StillThere'
+import AbaCode from '../AbaCode/AbaCode'
 import './Sighting.css'
 
 const mapsHref = (o: Observation) => {
@@ -166,6 +167,7 @@ const Sighting = () => {
         <div className='sighting__title'>
           <h1 className='fredericka'>{name}</h1>
           {bird?.sciName && <p className='sighting__sci'>{bird.sciName}</p>}
+          {bird?.aba && bird.aba >= 3 && bird.aba <= 5 && <p className='sighting__aba'><AbaCode code={bird.aba} explain /></p>}
           <p className='sighting__blurb'>
             {all.length ? `Reported ${all.length === 1 ? 'once' : `${all.length} times`} in ${regionName} in the last 30 days.` : `No reports in ${regionName} in the last 30 days.`}
           </p>

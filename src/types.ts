@@ -72,6 +72,8 @@ export interface Bird {
   firstSeen?: string | null
   /** Field craft for the species, from the API; null for species we have none for. */
   tips?: BirdTips | null
+  /** ABA Checklist code (3-5 are shown), or null. */
+  aba?: number | null
 }
 
 /** One row from eBird's recent observations endpoints. */
@@ -89,6 +91,8 @@ export interface Observation {
   obsReviewed: boolean
   locationPrivate: boolean
   subId: string
+  /** ABA Checklist code, on notable sightings (3 rare, 4 casual, 5 accidental are shown); null when not on the list. */
+  aba?: number | null
 }
 
 export interface Region {
@@ -243,6 +247,8 @@ export interface SharedSighting {
   locName: string; lat: number; lng: number; obsDt: string | null; howMany: number | null; subId: string | null; regionName: string | null
   /** The eBird place; links shared before late October 2026 don't have it. */
   locId?: string | null
+  /** ABA Checklist code (3-5 are shown), or null. */
+  aba?: number | null
 }
 export type Share = SharedRoute | SharedSighting
 /** Whether a bird is still at a place: the newest sighting, checklists filed since, and what they say. */
