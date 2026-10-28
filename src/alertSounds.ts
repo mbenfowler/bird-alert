@@ -142,7 +142,12 @@ const FALLBACK_VOICES = [/\b(Natural|Premium|Enhanced)\b/i, /^Google UK English 
 export const alertVoices = (): { label: string; name: string }[] => {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return []
   const all = window.speechSynthesis.getVoices()
-  return VOICES.flatMap(({ label, match }) => { const v = all.find((x) => match.test(x.name)); return v ? [{ label, name: v.name }] : [] })
+  const picked = VOICES.flatMap(({ label, match }) => { const v = all.find((x) => match.test(x.name)); return v ? [{ label, name: v.name }] : [] })
+  // The high-quality voices a person downloads (Mac: Premium and Enhanced; Windows: Natural) are worth offering too.
+  const downloaded = all.filter((v) => /^en(-|_|$)/i.test(v.lang) && /\((Premium|Enhanced)\)|\bNatural\b/i.test(v.name) && !picked.some((p) => p.name === v.name))
+    .map((v) => ({ label: v.name.replace(/\s*\((English|en)[^)]*\)\)?/i, '').replace(/^Microsoft\s+/, '').trim(), name: v.name }))
+    .sort((a, b) => a.label.localeCompare(b.label))
+  return [...picked, ...downloaded]
 }
 /** The chosen voice if this device has it, else Daniel, else the device's best natural English voice. */
 const pickVoice = (name?: string | null) => {
