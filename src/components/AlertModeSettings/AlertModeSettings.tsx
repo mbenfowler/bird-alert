@@ -13,7 +13,9 @@ const useVoices = () => {
     if (!('speechSynthesis' in window)) return
     const update = () => setVoices(alertVoices())
     window.speechSynthesis.addEventListener('voiceschanged', update)
-    return () => window.speechSynthesis.removeEventListener('voiceschanged', update)
+    // Safari fills the list late and doesn't always say so: look again a few times.
+    const timers = [250, 1000, 2500].map((ms) => window.setTimeout(update, ms))
+    return () => { window.speechSynthesis.removeEventListener('voiceschanged', update); timers.forEach((t) => window.clearTimeout(t)) }
   }, [])
   return voices
 }

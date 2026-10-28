@@ -149,8 +149,9 @@ export const alertVoices = (): { label: string; name: string }[] => {
   const all = window.speechSynthesis.getVoices()
   const picked = VOICES.flatMap(({ label, match }) => { const v = all.find((x) => match.test(x.name)); return v ? [{ label, name: v.name }] : [] })
   // The high-quality voices a person downloads (Mac: Premium and Enhanced, which only Safari offers pages; Windows: Natural) are worth offering too.
-  const downloaded = all.filter((v) => /^en(-|_|$)/i.test(v.lang) && /\((Premium|Enhanced)\)|\bNatural\b/i.test(v.name) && !picked.some((p) => p.name === v.name))
-    .map((v) => ({ label: v.name.replace(/\s*\((English|en)[^)]*\)\)?/i, '').replace(/^Microsoft\s+/, '').trim(), name: v.name }))
+  // Safari names them plainly ("Matilda") and says "premium" or "enhanced" in the voice's id instead.
+  const downloaded = all.filter((v) => /^en(-|_|$)/i.test(v.lang) && (/\((Premium|Enhanced)\)|\bNatural\b/i.test(v.name) || /\.(premium|enhanced)\./i.test(v.voiceURI)) && !picked.some((p) => p.name === v.name))
+    .map((v) => ({ label: `${v.name.replace(/\s*\((English|en)[^)]*\)\)?/i, '').replace(/\s*\((Premium|Enhanced)\)/i, '').replace(/^Microsoft\s+/, '').trim()}${/premium/i.test(v.name + v.voiceURI) ? ' (Premium)' : /enhanced/i.test(v.name + v.voiceURI) ? ' (Enhanced)' : ''}`, name: v.name }))
     .sort((a, b) => a.label.localeCompare(b.label))
   return [...picked, ...downloaded]
 }
