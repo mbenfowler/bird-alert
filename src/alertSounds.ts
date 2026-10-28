@@ -120,6 +120,9 @@ const redAlert = synth((a, t, v) => {
 })
 
 // ---- spoken ----
+/** Spelled out, so every voice says the number the same way. */
+const CODE_WORDS: Record<number, string> = { 3: 'three', 4: 'four', 5: 'five' }
+
 /**
  * The voices worth hearing, picked by ear on a Mac: Daniel (the default), plus five of the
  * novelty voices that make good alarms. Chrome and Safari name some of them with their region.
@@ -215,7 +218,8 @@ export const SOUNDS: AlertSound[] = [
   { id: 'say-bird-alert', name: '“Bird alert! … nearby.”', group: 'Spoken', play: say(({ bird }) => `Bird alert! ${bird} nearby.`) },
   { id: 'say-not-a-drill', name: '“This is not a drill.”', group: 'Spoken', play: say(({ bird }) => `This is not a drill. ${bird} reported nearby.`) },
   { id: 'say-binoculars', name: '“Grab your binoculars!”', group: 'Spoken', play: say(({ bird }) => `Grab your binoculars! ${bird}!`) },
-  { id: 'say-code', name: '“Code four! Code four!”', group: 'Spoken', play: say(({ bird, code }) => code ? `Code ${code}! Code ${code}! ${bird}!` : `Heads up! ${bird}!`) },
+  // The bird's own ABA code when it has one (3-5), otherwise the phrase as it's known: "code four".
+  { id: 'say-code', name: '“Code four! Code four!”', group: 'Spoken', play: say(({ bird, code }) => { const n = CODE_WORDS[code ?? 4] ?? 'four'; return `Code ${n}! Code ${n}! ${bird}!` }) },
   { id: 'say-mission', name: '“Mission control, we have a…”', group: 'Spoken', play: say(({ bird }) => `Mission control, we have a ${bird}.`) },
   { id: 'say-drop', name: '“Drop everything.”', group: 'Spoken', play: say(({ bird }) => `Drop everything. ${bird}.`) },
   { id: 'none', name: 'None (lights only)', group: 'Off', play: () => undefined }
