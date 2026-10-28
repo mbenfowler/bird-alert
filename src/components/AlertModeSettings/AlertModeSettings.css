@@ -1,0 +1,119 @@
+.alert-mode {
+  min-width: 0;
+  margin-top: 8px;
+}
+
+.alert-mode__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+}
+
+.notification__text .alert-mode label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.alert-mode__volume {
+  display: inline-flex;
+  margin: 0;
+  padding: 0;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.alert-mode__volume label {
+  padding: 4px 12px;
+  cursor: pointer;
+}
+
+.alert-mode__volume label.is-selected {
+  background: var(--accent);
+}
+
+.alert-mode__volume input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.alert-mode__volume:disabled {
+  opacity: 0.5;
+}
+
+/* minmax(0, 1fr): without it, Safari sizes the column to the longest sound name and the row runs off a phone. */
+.alert-mode__sounds {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  margin: 12px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.alert-mode__voice {
+  margin: 0 0 12px;
+  min-width: 0;
+}
+
+.notification__text .alert-mode__voice label,
+.notification__text .alert-mode__sounds label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.alert-mode__pick {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.alert-mode__sounds li {
+  min-width: 0;
+}
+
+.alert-mode__pick select {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  text-overflow: ellipsis;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 0.92rem;
+}
+
+.alert-mode__play {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--accent);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.alert-mode__play:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.alert-mode__credit {
+  margin: 4px 0 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.alert-mode[aria-disabled='true'] {
+  opacity: 0.6;
+}

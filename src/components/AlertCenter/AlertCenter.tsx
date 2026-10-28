@@ -7,6 +7,7 @@ import { usePushNotifications } from '../../hooks/usePushNotifications'
 import { LoadingState } from '../Loading/Loading'
 import type { EmailPreference, EmailPreviewKind, EmailPreviewResult, PushPreference } from '../../types'
 import './AlertCenter.css'
+import AlertModeSettings from '../AlertModeSettings/AlertModeSettings'
 
 const PUSH_KINDS: { field: PushPreference; label: string; hint: string }[] = [
   { field: 'push_watchlist_enabled', label: 'Watch list sightings', hint: 'One notification an hour listing every bird of yours reported since the last check.' },
@@ -191,6 +192,14 @@ const AlertCenter = () => {
               </label>
             </div>
           )}
+          {/* Alert! mode: per device, on by default; only for alerts that arrive while the app is on screen. */}
+          <div className='notification notification--sub'>
+            <div className='notification__text'>
+              <span className='notification__label' id='alert-mode-label'>Alert! mode</span>
+              <p className='notification__hint'>When an alert arrives while the app is open on screen, the app sounds the alarm for a few seconds, bigger for rarer birds, with a sound you pick for each kind. Sound needs a tap on the page first (your browser&rsquo;s rule).</p>
+              <AlertModeSettings disabled={!pushOn} />
+            </div>
+          </div>
           {pushOn && <button type='button' className='test-push' onClick={sendTest}>Send a test notification</button>}
         </div>
       </div>

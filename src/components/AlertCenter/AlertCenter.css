@@ -227,3 +227,10 @@
     padding: 0 12px;
     font-size: 0.9rem;
 }
+
+/* Alert! mode's heading, like the other rows' labels (the controls are in AlertModeSettings). */
+.notification__label {
+  display: block;
+  font-size: 0.98rem;
+  font-weight: 600;
+}
