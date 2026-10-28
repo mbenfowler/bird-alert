@@ -30,6 +30,7 @@ const AlertSightings = lazy(() => import('../AlertSightings/AlertSightings'))
 const WhereToGo = lazy(() => import('../WhereToGo/WhereToGo'))
 const Landing = lazy(() => import('../Landing/Landing'))
 const Shared = lazy(() => import('../Shared/Shared'))
+const Onboarding = lazy(() => import('../Onboarding/Onboarding'))
 
 // Routes reachable without a session. Everything else redirects to /login once we know there is no user.
 const PUBLIC_PATH_PREFIXES = ['/login', '/reset/', '/confirm/', '/unsubscribe/', '/share/']
@@ -56,6 +57,12 @@ const App = () => {
   useEffect(() => {
     if (user === null && !isPublicPath) navigate('/login', { replace: true })
   }, [user, isPublicPath, navigate])
+  // A new account goes through the short setup once. Only an explicit null (setup not yet done)
+  // counts: an account the server doesn't mark either way is left alone.
+  const needsSetup = Boolean(user) && user?.onboarded_at === null
+  useEffect(() => {
+    if (needsSetup && pathname !== '/welcome' && !pathname.startsWith('/share/') && !pathname.startsWith('/confirm/') && !pathname.startsWith('/unsubscribe/')) navigate('/welcome', { replace: true })
+  }, [needsSetup, pathname, navigate])
 
   // Push notifications hand off to the page through src/notificationHandoff.ts. The page follows a
   // tap's target on start, on return to the foreground, on a broadcast, or on a short poll while
@@ -165,6 +172,7 @@ const App = () => {
           <Route path='/sightings' element={requireUser(<AlertSightings />)} />
           <Route path='/go' element={requireUser(<WhereToGo />)} />
           <Route path='/share/:kind/:id' element={<Shared />} />
+          <Route path='/welcome' element={requireUser(<Onboarding />)} />
           <Route path='/reset/:token' element={<PassReset />} />
           <Route path='/unsubscribe/:token' element={<Unsubscribe />} />
           <Route path='/confirm/:token' element={<EmailConfirm />} />
