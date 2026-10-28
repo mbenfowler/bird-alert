@@ -23,11 +23,11 @@ const AccuracyBadge = ({ grades }: { grades?: Partial<Record<PlaceBand, BandGrad
     <details className='accuracy' ref={ref}>
       <summary className='accuracy__badge'>✓ Checked against real reports</summary>
       <div className='accuracy__panel'>
-        <p>Every day the app writes down its chances, then a week later checks whether birders reported the bird at that place.</p>
+        <p>Every day the app writes down its chances, then checks the next checklist someone files at that place: was the bird on it?</p>
         <ul>
           {rows.map(([band, range]) => {
             const g = grades[band]!
-            return <li key={band}>When it said <strong>{range}</strong>, the bird was reported <strong>{g.rate}%</strong> of the time <span>({g.n} predictions)</span></li>
+            return <li key={band}>When it said <strong>{range}</strong>, the next visit found the bird <strong>{g.rate}%</strong> of the time <span>({g.n} predictions)</span></li>
           })}
         </ul>
         <p className='accuracy__foot'>Over the last two months in this county.</p>
