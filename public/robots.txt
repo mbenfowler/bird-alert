@@ -1,5 +1,7 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
+# Preview images for shared links (bird cards, route maps) live here; X and Facebook fetch them.
+Allow: /api/map
 Disallow: /api/
 Allow: /
 
