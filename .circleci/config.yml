@@ -3,11 +3,11 @@ orbs:
   node: circleci/node@5.1.0
   cypress: cypress-io/cypress@3.2.0
 
-# Vite 8 and Cypress 15 need Node 20.19+; the orb's default executor is older, so every job runs on this image.
+# Vite 8 and Cypress 15 need Node 20.19+, and jsdom and react-router want 22.22+; the orb's default executor is older, so every job runs on this image.
 executors:
   node22:
     docker:
-      - image: cimg/node:22.20.0-browsers
+      - image: cimg/node:22.22.3-browsers
 
 jobs:
   build:
