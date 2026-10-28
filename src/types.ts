@@ -11,6 +11,8 @@ export interface User {
   push_notable_enabled: boolean
   push_notable_batched: boolean
   push_first_of_season: boolean
+  /** When the short post-signup setup was finished or skipped; null until then. */
+  onboarded_at?: string | null
   push_lifer_enabled?: boolean
   migration_email_enabled: boolean
   push_quiet_start: number | null
@@ -40,6 +42,7 @@ export interface UserPatch {
   push_quiet_start?: number | null
   push_quiet_end?: number | null
   timezone?: string
+  onboarded?: true
 }
 
 /** A bird as stored in our database, or as assembled from eBird taxonomy plus image and wiki lookups. */
