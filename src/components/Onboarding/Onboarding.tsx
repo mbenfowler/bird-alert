@@ -145,7 +145,7 @@ const Onboarding = () => {
                 })}
               </ul>
             ) : <p className='onboard__lede'>{recent.isPending || birds.isPending ? 'Finding birds near you…' : 'No recent reports to show yet. You can star birds from the home page any time.'}</p>}
-            <button type='button' className='pill-button pill-button--primary onboard__next' disabled={saving} onClick={() => { void saveBirds() }}>
+            <button type='button' className='pill-button pill-button--primary onboard__next onboard__next--stick' disabled={saving} onClick={() => { void saveBirds() }}>
               {saving ? 'Saving…' : starred.size ? `Next (${starred.size})` : 'Next'}
             </button>
           </>
@@ -154,15 +154,14 @@ const Onboarding = () => {
         {step === 'alerts' && (
           <>
             <h1 className='fredericka onboard__title'>How should we tell you?</h1>
-            {pushSupported && (
-              isIOS() && !isStandalone()
-                ? <p className='onboard__note'>To get notifications on iPhone, add Bird Alert! to your Home Screen first (Share → Add to Home Screen).</p>
-                : push.state === 'on'
+            {/* On iPhone, Safari only offers notifications once the app is on the Home Screen, so say that before anything else. */}
+            {isIOS() && !isStandalone()
+              ? <p className='onboard__note'>To get notifications on iPhone, add Bird Alert! to your Home Screen first (Share → Add to Home Screen).</p>
+              : pushSupported && (push.state === 'on'
                   ? <p className='onboard__ok'>✓ Notifications are on for this device</p>
                   : <button type='button' className='pill-button onboard__push' onClick={() => { void push.enable() }} disabled={push.state === 'busy' || push.state === 'denied'}>
                       🔔 {push.state === 'denied' ? 'Notifications are blocked in your browser' : push.state === 'busy' ? 'Turning on…' : 'Turn on notifications'}
-                    </button>
-            )}
+                    </button>)}
             <ul className='onboard__rows'>
               {rows.map(({ field, label }) => (
                 <li key={field}>
