@@ -30,6 +30,19 @@ describe('Still there? and the Home Screen nudge', () => {
     cy.get('.still-there__others').should('have.text', 'Others are still passing through, though: you have an 86% chance to find one here, going by recent reports.')
   })
 
+  it('a rarity that moved on gives the place\'s odds plainly, without claiming others are coming', () => {
+    login()
+    cy.get('.birds-list .card', { timeout: 15000 })
+    cy.fixture('where').then((where) => {
+      cy.intercept('GET', '**/api/ebird/where?*', { body: { ...where, class: 'rare' } })
+    })
+    cy.intercept('GET', '**/api/ebird/chase?*', { body: { locId: 'L14136408', speciesCode: 'cangoo', lastSeen: '2023-11-21 08:25', hoursAgo: 170, checkedSince: 3, foundSince: 0, missesSince: 3, stillThere: 1, chance: 0, verdict: 'gone' } }).as('chase')
+    cy.visit('http://localhost:3000/sighting/cangoo/S155544243')
+    cy.wait('@chase')
+    cy.get('.still-there__chance').should('have.text', 'You have less than a 1% chance to find it if you go now.')
+    cy.get('.still-there__others').should('have.text', 'Going by recent reports, you have an 86% chance to find one here.')
+  })
+
   it('a bird that lives here gets no "still there?"', () => {
     login()
     cy.get('.birds-list .card', { timeout: 15000 })

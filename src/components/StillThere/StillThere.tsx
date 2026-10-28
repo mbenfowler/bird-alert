@@ -26,7 +26,7 @@ const StillThere = ({ locId, code, cls, to, from, others }: {
   locId: string | null | undefined
   code: string
   cls?: PersistenceClass
-  /** For a bird passing through: the chance of finding one here at all (the where-to-find odds). */
+  /** The chance of finding one here at all (the where-to-find odds), shown once this one has likely left. */
   others?: number
   to: { lat: number; lng: number }
   from?: { lat: number; lng: number } | null
@@ -56,10 +56,13 @@ const StillThere = ({ locId, code, cls, to, from, others }: {
           You have {odds(c.chance)} chance to find it if you go now{drive.data ? `, ${drive.data.minutes} minutes from your start` : ''}.
         </p>
       )}
-      {/* A migrant that has moved on can be followed by others of its kind; this one's odds aren't the whole story. */}
+      {/* This one having left isn't the whole story: a migrant can be followed by others of its kind. For a
+          rarity the place's odds lean on the bird that left, so they're given plainly, with no claim of others. */}
       {others !== undefined && others > c.chance && (c.verdict === 'gone' || c.verdict === 'maybe') && (
         <p className='still-there__others'>
-          Others are still passing through, though: you have {odds(others)} chance to find one here, going by recent reports.
+          {cls === 'passage'
+            ? `Others are still passing through, though: you have ${odds(others)} chance to find one here, going by recent reports.`
+            : `Going by recent reports, you have ${odds(others)} chance to find one here.`}
         </p>
       )}
     </div>
