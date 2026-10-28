@@ -73,6 +73,8 @@ describe('Shared links', () => {
     cy.get('.shared__lede').should('contain', '2 reported at').and('contain', 'Chicopee Lake').and('contain', '(Hall)')
     cy.contains('a', 'The checklist on eBird').should('have.attr', 'href', 'https://ebird.org/checklist/S100000001')
     cy.contains('a', 'Directions').should('have.attr', 'href').and('include', '34.25%2C-83.85')
+    // A tall photo is never cropped: the whole bird shows, over a blurred copy of itself.
+    cy.get('.shared__photo img').should('have.css', 'object-fit', 'contain')
   })
 
   it('a link that never existed says so kindly', () => {

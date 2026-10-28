@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, type CSSProperties } from 'react'
 import { Link, useParams } from 'react-router'
 import SightingsMap from '../SightingsMap/SightingsMap'
 import { LoadingState } from '../Loading/Loading'
@@ -66,7 +66,12 @@ const SightingView = ({ share }: { share: SharedSighting }) => {
     <article className='shared'>
       <p className='shared__kicker'>A shared sighting</p>
       <div className='shared__bird'>
-        {share.birdImg && <img className='shared__photo' src={share.birdImg} alt={`A ${share.comName}`} width='320' height='240' />}
+        {/* The whole bird, however tall the photo: it sits uncropped over a blurred copy of itself. */}
+        {share.birdImg && (
+          <div className='shared__photo' style={{ '--photo': `url("${share.birdImg.replace(/"/g, '%22')}")` } as CSSProperties}>
+            <img src={share.birdImg} alt={`A ${share.comName}`} width='320' height='240' />
+          </div>
+        )}
         <div>
           <h1 className='fredericka shared__title'>{share.comName}</h1>
           {share.sciName && <p className='shared__sci'>{share.sciName}</p>}
