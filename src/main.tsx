@@ -6,6 +6,10 @@ import App from './components/App/App'
 import { queryClient, persistOptions } from './queryClient'
 import { Analytics } from '@vercel/analytics/react'
 import { redactPageView } from './analytics'
+import { noteArrival } from './arrival'
+
+// Where this visitor came from, noted once, sent only if they sign up.
+noteArrival()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
