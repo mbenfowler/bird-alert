@@ -8,7 +8,7 @@ import type { BirdSound } from './types'
  */
 export type AlertKind = 'watchlist' | 'notable' | 'mega' | 'lifer'
 export type SoundGroup = 'Sci-fi' | 'Bird calls' | 'Spoken' | 'Classic' | 'Off'
-export interface PlayContext { bird: string; code: number | null; volume: number }
+export interface PlayContext { bird: string; code: number | null; volume: number; voice?: string | null }
 interface AlertSound { id: string; name: string; group: SoundGroup; play: (ctx: PlayContext) => Promise<void> | void; birdCode?: string }
 
 export const KIND_LABEL: Record<AlertKind, string> = { watchlist: 'Watch list', notable: 'Notable', mega: 'ABA Code 4–5', lifer: 'Lifer chance' }
@@ -121,16 +121,44 @@ const redAlert = synth((a, t, v) => {
 })
 
 // ---- spoken ----
+/**
+ * Voices that sound like a person, best first. Browsers default to whatever the system lists
+ * first, which on a Mac can be a novelty voice; these are the good ones on Apple, Google and
+ * Microsoft systems ("Enhanced", "Premium" and "Natural" are the higher-quality downloads).
+ */
+const GOOD_VOICES = [/\b(Premium|Enhanced|Natural)\b/i, /^Samantha/i, /^Google US English/i, /^Daniel/i, /^Karen/i, /^Moira/i, /^Microsoft (Aria|Jenny|Guy)/i, /^Google UK English/i, /^Alex$/i]
+/** Novelty and robotic voices, never picked on their own. */
+const SILLY_VOICES = /^(Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Good News|Jester|Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox|Fred|Junior|Ralph|Kathy|Grandma|Grandpa|Eddy|Flo|Reed|Rocko|Sandy|Shelley)\b/i
+
+/** This device's English voices, for choosing one, best first. */
+export const englishVoices = (): SpeechSynthesisVoice[] => {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return []
+  const rank = (v: SpeechSynthesisVoice) => { const i = GOOD_VOICES.findIndex((re) => re.test(v.name)); return i === -1 ? GOOD_VOICES.length + (SILLY_VOICES.test(v.name) ? 1 : 0) : i }
+  return window.speechSynthesis.getVoices().filter((v) => /^en(-|_|$)/i.test(v.lang)).sort((a, b) => rank(a) - rank(b) || Number(b.localService) - Number(a.localService))
+}
+/** The chosen voice if this device has it, else the best one it has. */
+const pickVoice = (name?: string | null) => {
+  const voices = englishVoices()
+  return voices.find((v) => v.name === name) ?? voices.find((v) => !SILLY_VOICES.test(v.name)) ?? null
+}
+// The list arrives late in some browsers; asking once early gets it loading.
+if (typeof window !== 'undefined' && 'speechSynthesis' in window) window.speechSynthesis.getVoices()
+
 const say = (text: (ctx: PlayContext) => string) => (ctx: PlayContext) => new Promise<void>((resolve) => {
   if (!('speechSynthesis' in window)) return resolve()
+  const synth = window.speechSynthesis
   const u = new SpeechSynthesisUtterance(text(ctx))
+  const voice = pickVoice(ctx.voice)
+  if (voice) { u.voice = voice; u.lang = voice.lang }
   u.volume = Math.min(1, ctx.volume)
-  u.rate = 1.05
+  u.rate = 1
+  u.pitch = 1
   u.onend = () => resolve()
   u.onerror = () => resolve()
-  window.speechSynthesis.cancel()
-  window.speechSynthesis.speak(u)
-  window.setTimeout(resolve, 6000)
+  // Cancelling and speaking in the same moment garbles the start in Chrome, so only clear the queue if something is in it.
+  if (synth.speaking || synth.pending) synth.cancel()
+  window.setTimeout(() => synth.speak(u), 60)
+  window.setTimeout(resolve, 8000)
 })
 
 // ---- bird calls ----

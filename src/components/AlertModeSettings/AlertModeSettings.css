@@ -56,6 +56,12 @@
   list-style: none;
 }
 
+.alert-mode__voice {
+  margin: 0 0 12px;
+  min-width: 0;
+}
+
+.notification__text .alert-mode__voice label,
 .notification__text .alert-mode__sounds label {
   display: block;
   margin-bottom: 4px;

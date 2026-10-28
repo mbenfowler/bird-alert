@@ -1,11 +1,24 @@
 import { useEffect, useState } from 'react'
 import { readAlertMode, saveAlertMode, soundTheAlarm, type AlertModeSettings as Settings } from '../../alertMode'
-import { birdCallCredit, birdFromTitle, EXAMPLE, KIND_LABEL, playAlertSound, SOUND_GROUPS, SOUNDS, soundById, unlockAudio, type AlertKind } from '../../alertSounds'
+import { birdCallCredit, birdFromTitle, englishVoices, EXAMPLE, KIND_LABEL, playAlertSound, SOUND_GROUPS, SOUNDS, soundById, unlockAudio, type AlertKind } from '../../alertSounds'
 import { SoundCredit } from '../SoundButton/SoundButton'
 import type { BirdSound } from '../../types'
 import './AlertModeSettings.css'
 
 const KINDS: AlertKind[] = ['watchlist', 'notable', 'lifer', 'mega']
+const isSpoken = (id: string) => id.startsWith('say-') || id === 'red-alert-say'
+
+/** This device's English voices; the list arrives late in some browsers, so it follows the change event. */
+const useVoices = () => {
+  const [voices, setVoices] = useState(englishVoices)
+  useEffect(() => {
+    if (!('speechSynthesis' in window)) return
+    const update = () => setVoices(englishVoices())
+    window.speechSynthesis.addEventListener('voiceschanged', update)
+    return () => window.speechSynthesis.removeEventListener('voiceschanged', update)
+  }, [])
+  return voices
+}
 
 /** The recording behind a bird-call sound, credited as its license asks. */
 const Credit = ({ soundId }: { soundId: string }) => {
@@ -27,6 +40,8 @@ const Credit = ({ soundId }: { soundId: string }) => {
  */
 const AlertModeSettings = ({ disabled }: { disabled: boolean }) => {
   const [settings, setSettings] = useState<Settings>(readAlertMode)
+  const voices = useVoices()
+  const speaks = KINDS.some((kind) => isSpoken(settings.sounds[kind]))
   const change = (patch: Partial<Settings>) => {
     const next = { ...settings, ...patch, sounds: { ...settings.sounds, ...(patch.sounds ?? {}) } }
     setSettings(next)
@@ -35,7 +50,7 @@ const AlertModeSettings = ({ disabled }: { disabled: boolean }) => {
   const preview = (kind: AlertKind) => {
     unlockAudio()
     const { title } = EXAMPLE[kind]
-    void playAlertSound(settings.sounds[kind], { ...birdFromTitle(title), volume: settings.volume === 'quiet' ? 0.45 : 1 })
+    void playAlertSound(settings.sounds[kind], { ...birdFromTitle(title), volume: settings.volume === 'quiet' ? 0.45 : 1, voice: settings.voice })
   }
   return (
     <div className='alert-mode' aria-disabled={disabled}>
@@ -70,6 +85,19 @@ const AlertModeSettings = ({ disabled }: { disabled: boolean }) => {
           </li>
         ))}
       </ul>
+      {/* Spoken sounds use this device's own voices; the best one is picked unless another is chosen. */}
+      {speaks && voices.length > 0 && (
+        <div className='alert-mode__voice'>
+          <label htmlFor='alert-voice'>Voice</label>
+          <div className='alert-mode__pick'>
+            <select id='alert-voice' value={settings.voice ?? ''} disabled={disabled || !settings.sound} onChange={(e) => change({ voice: e.target.value || null })}>
+              <option value=''>Best on this device ({voices[0]!.name})</option>
+              {voices.map((v) => <option key={v.voiceURI} value={v.name}>{v.name}{v.localService ? '' : ' (online)'}</option>)}
+            </select>
+            <button type='button' className='alert-mode__play' aria-label='Hear this voice' disabled={disabled || !settings.sound} onClick={() => { unlockAudio(); void playAlertSound('say-bird-alert', { bird: 'Roadside Hawk', code: 4, volume: settings.volume === 'quiet' ? 0.45 : 1, voice: settings.voice }) }}>▶</button>
+          </div>
+        </div>
+      )}
       <button type='button' className='test-push test-push--inline' disabled={disabled || (!settings.lights && !settings.sound)} onClick={() => { unlockAudio(); soundTheAlarm(EXAMPLE.mega.title, settings) }}>Try the full alarm</button>
     </div>
   )

@@ -9,10 +9,10 @@ import { birdFromTitle, DEFAULT_SOUNDS, kindFor, playAlertSound, type AlertKind 
  */
 export type Intensity = 'gentle' | 'full' | 'siren'
 export type Volume = 'quiet' | 'normal'
-export interface AlertModeSettings { lights: boolean; sound: boolean; volume: Volume; sounds: Record<AlertKind, string> }
+export interface AlertModeSettings { lights: boolean; sound: boolean; volume: Volume; sounds: Record<AlertKind, string>; voice: string | null }
 
 const KEY = 'alertMode'
-const DEFAULTS: AlertModeSettings = { lights: true, sound: true, volume: 'quiet', sounds: DEFAULT_SOUNDS }
+const DEFAULTS: AlertModeSettings = { lights: true, sound: true, volume: 'quiet', sounds: DEFAULT_SOUNDS, voice: null }
 const DURATION_MS: Record<Intensity, number> = { gentle: 2400, full: 6000, siren: 9000 }
 const INTENSITY: Record<AlertKind, Intensity> = { watchlist: 'gentle', notable: 'full', lifer: 'full', mega: 'siren' }
 const VOLUME: Record<Volume, number> = { quiet: 0.45, normal: 1 }
@@ -44,5 +44,5 @@ export const soundTheAlarm = (title: string, settings: AlertModeSettings = readA
     window.clearTimeout(settle)
     settle = window.setTimeout(() => { delete root.dataset.alarm }, DURATION_MS[intensity])
   }
-  if (settings.sound) void playAlertSound(settings.sounds[kind], { ...birdFromTitle(title), volume: VOLUME[settings.volume] })
+  if (settings.sound) void playAlertSound(settings.sounds[kind], { ...birdFromTitle(title), volume: VOLUME[settings.volume], voice: settings.voice })
 }
