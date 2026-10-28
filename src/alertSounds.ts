@@ -133,7 +133,12 @@ const VOICES: { label: string; match: RegExp }[] = [
   { label: 'Bells', match: /^Bells\b/ },
   { label: 'Boing', match: /^Boing\b/ },
   { label: 'Grandpa', match: /^Grandpa \(English \((United States|US)\)\)/ },
-  { label: 'Trinoids', match: /^Trinoids\b/ }
+  { label: 'Trinoids', match: /^Trinoids\b/ },
+  // Chrome's own voices (spoken by Google's servers, so they need a connection). Chrome on a Mac
+  // never offers the system's Premium voices to pages, so these are its best.
+  { label: 'Google UK English Female', match: /^Google UK English Female$/ },
+  { label: 'Google UK English Male', match: /^Google UK English Male$/ },
+  { label: 'Google US English', match: /^Google US English$/ }
 ]
 /** Fallbacks on devices without Daniel (Windows, Android): their natural voices. */
 const FALLBACK_VOICES = [/\b(Natural|Premium|Enhanced)\b/i, /^Google UK English Male/i, /^Google US English/i, /^Microsoft (Ryan|Guy|Aria|Jenny)/i]
@@ -143,7 +148,7 @@ export const alertVoices = (): { label: string; name: string }[] => {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return []
   const all = window.speechSynthesis.getVoices()
   const picked = VOICES.flatMap(({ label, match }) => { const v = all.find((x) => match.test(x.name)); return v ? [{ label, name: v.name }] : [] })
-  // The high-quality voices a person downloads (Mac: Premium and Enhanced; Windows: Natural) are worth offering too.
+  // The high-quality voices a person downloads (Mac: Premium and Enhanced, which only Safari offers pages; Windows: Natural) are worth offering too.
   const downloaded = all.filter((v) => /^en(-|_|$)/i.test(v.lang) && /\((Premium|Enhanced)\)|\bNatural\b/i.test(v.name) && !picked.some((p) => p.name === v.name))
     .map((v) => ({ label: v.name.replace(/\s*\((English|en)[^)]*\)\)?/i, '').replace(/^Microsoft\s+/, '').trim(), name: v.name }))
     .sort((a, b) => a.label.localeCompare(b.label))
