@@ -1,4 +1,4 @@
-import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share, Passkey } from './types'
+import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share, Passkey, Chase, PersistenceClass } from './types'
 
 // Every request goes to the same-origin `/api` prefix. In development Vite proxies it to the
 // backend (vite.config.ts); in production Vercel rewrites it (vercel.json). The backend holds
@@ -112,6 +112,9 @@ export const getRegions = (state: string) => api<Region[]>('/ebird/regions', { p
 export const getArrivals = (region: string) => api<Arrivals>('/ebird/arriving', { params: { region } })
 export const getSeasonality = (region: string, code: string) => api<{ months: SeasonMonth[] }>('/ebird/seasonality', { params: { region, code } })
 /** Places the species has been reported lately in the region, ranked by the chance a visit pays off. */
+/** Is the bird still at the place? `cls` sets how fast a sighting goes stale. */
+export const getChase = (locId: string, code: string, cls?: PersistenceClass) =>
+  api<Chase>('/ebird/chase', { params: { locId, code, ...(cls ? { cls } : {}) } })
 export const getWhereToFind = (region: string, code: string) => api<WhereToFind>('/ebird/where', { params: { region, code } })
 
 // ---- web push ----

@@ -9,7 +9,7 @@ import { useBirdSound } from '../../hooks/useBirdSound'
 import ErrorMessage from '../Error/ErrorMessage'
 import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
-import { useBirdsQuery, useCurrentUser, useNearbyPublicQuery, useRegionsQuery, useSavedCodes, useSeenCodes, useSeasonalityQuery, useSpeciesObservationsQuery, useWhereToFindQuery } from '../../hooks/queries'
+import { useBirdsQuery, useCurrentUser, useNearbyPublicQuery, useRegionsQuery, useSavedCodes, useSeenCodes, useSeasonalityQuery, useSavedRouteQuery, useSpeciesObservationsQuery, useWhereToFindQuery } from '../../hooks/queries'
 import { focusFor } from '../../mapFocus'
 import { useToggleSavedMutation, useToggleSeenMutation } from '../../hooks/mutations'
 import { shareThing } from '../../share'
@@ -17,6 +17,7 @@ import type { Observation, Place, PersistenceClass } from '../../types'
 import { formatObsDt } from '../../format'
 import { article, chanceStyle } from '../../chance'
 import AccuracyBadge from '../AccuracyBadge/AccuracyBadge'
+import StillThere from '../StillThere/StillThere'
 import './Sighting.css'
 
 const mapsHref = (o: Observation) => {
@@ -74,6 +75,9 @@ const Sighting = () => {
   const toggleSeen = useToggleSeenMutation()
   const seasonality = useSeasonalityQuery(region, code)
   const where = useWhereToFindQuery(region, code)
+  // A rarity or a bird passing through may already have moved on, so its report gets a "still there?".
+  const chaseable = where.data?.class === 'rare' || where.data?.class === 'passage'
+  const start = useSavedRouteQuery(chaseable ? region : '').data?.start ?? null
   const [openNearby, setOpenNearby] = useState<string | null>(null)
   const [activeNearby, setActiveNearby] = useState<string | null>(null)
   const sound = useBirdSound(code, bird?.comName ?? code)
@@ -169,7 +173,7 @@ const Sighting = () => {
             {bird && <SoundPill state={sound.state} name={name} onToggle={() => { void sound.toggle() }} />}
             {bird && <button type='button' className='pill-button' onClick={watch} disabled={toggleSaved.isPending} aria-pressed={isWatched}>{isWatched ? '★ On your watch list' : '☆ Add to watch list'}</button>}
             {bird && current && <button type='button' className='pill-button' onClick={() => {
-              void shareThing({ kind: 'sighting', speciesCode: bird.speciesCode, locName: current.locName, lat: current.lat, lng: current.lng, obsDt: current.obsDt, howMany: current.howMany ?? null, subId: current.subId, regionName }, `${bird.comName} at ${current.locName}`)
+              void shareThing({ kind: 'sighting', speciesCode: bird.speciesCode, locId: current.locId, locName: current.locName, lat: current.lat, lng: current.lng, obsDt: current.obsDt, howMany: current.howMany ?? null, subId: current.subId, regionName }, `${bird.comName} at ${current.locName}`)
             }}>Share</button>}
             {bird && (() => {
               const isSeen = seen.codes.has(bird.speciesCode)
@@ -222,6 +226,7 @@ const Sighting = () => {
 
         <div className={`sighting__list-col ${more ? 'has-more' : ''}`}>
           <div className='sighting__scroll' ref={listRef}>
+            {chaseable && current?.locId && <StillThere key={`${current.locId}-${code}`} locId={current.locId} code={code} cls={where.data?.class} to={current} from={start} />}
             {where.data && places.length > 0 ? (
               <>
                 <h2 className='fredericka sighting__subhead'>

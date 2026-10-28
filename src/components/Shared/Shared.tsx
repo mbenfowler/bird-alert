@@ -6,6 +6,7 @@ import { errorMessage } from '../../apiCalls'
 import { useSessionQuery, useShareQuery } from '../../hooks/queries'
 import { mapsUrl } from '../../routePlan'
 import { formatObsDt } from '../../format'
+import StillThere from '../StillThere/StillThere'
 import type { SharedRoute, SharedSighting } from '../../types'
 import './Shared.css'
 
@@ -85,6 +86,7 @@ const SightingView = ({ share }: { share: SharedSighting }) => {
           </p>
         </div>
       </div>
+      {share.locId && <StillThere locId={share.locId} code={share.speciesCode} to={share} />}
       <div className='shared__map shared__map--single'>
         <SightingsMap points={points} height='100%' ariaLabel={`Map of where the ${share.comName} was reported`} />
       </div>

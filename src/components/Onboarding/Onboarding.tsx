@@ -7,14 +7,13 @@ import { usePushNotifications } from '../../hooks/usePushNotifications'
 import { useQueryClient } from '@tanstack/react-query'
 import { US_STATES } from '../../usStates'
 import type { UserPatch } from '../../types'
+import { isIOS, isStandalone } from '../../install'
 import './Onboarding.css'
 
 const TILES = 12
 type Step = 'county' | 'birds' | 'alerts' | 'lifelist'
 type Tag = 'Notable this week' | 'Arriving now' | null
 
-const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent)
-const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true
 
 /**
  * The short setup after signing up, shown once: tap the birds you'd love to see, choose how to

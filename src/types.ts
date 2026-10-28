@@ -241,8 +241,18 @@ export interface SharedRoute {
 export interface SharedSighting {
   id: string; kind: 'sighting'; createdAt: string; speciesCode: string; comName: string; sciName: string | null; birdImg: string | null
   locName: string; lat: number; lng: number; obsDt: string | null; howMany: number | null; subId: string | null; regionName: string | null
+  /** The eBird place; links shared before late October 2026 don't have it. */
+  locId?: string | null
 }
 export type Share = SharedRoute | SharedSighting
+/** Whether a bird is still at a place: the newest sighting, checklists filed since, and what they say. */
+export interface Chase {
+  locId: string; speciesCode: string; lastSeen: string | null; hoursAgo: number | null
+  checkedSince: number; foundSince: number; missesSince: number
+  /** Percent: the bird is still there; a visit now finds it. */
+  stillThere: number; chance: number
+  verdict: 'fresh' | 'likely' | 'maybe' | 'gone' | 'unknown'
+}
 /** A passkey on the account: the device it was made on and the site it belongs to. */
 export interface Passkey { id: string; name: string | null; site: string; createdAt: string; lastUsedAt: string | null }
 export interface FoundAddress { kind: 'address'; name: string; lat: number; lng: number }
