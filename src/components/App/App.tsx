@@ -10,6 +10,7 @@ import type { PendingPush } from '../../types'
 const APP_BUILD = '2026-10-22.9'
 import { toast, ToastContainer } from 'react-toastify'
 import InstallNudge from '../InstallNudge/InstallNudge'
+import { claimThisDevice } from '../../hooks/usePushNotifications'
 import { useSessionQuery } from '../../hooks/queries'
 import './App.css'
 import Login from '../Login/Login'
@@ -58,6 +59,11 @@ const App = () => {
   useEffect(() => {
     if (user === null && !isPublicPath) navigate('/login', { replace: true })
   }, [user, isPublicPath, navigate])
+  // This browser's notifications go to whoever is signed in now, not to whoever turned them on.
+  const signedInId = user?.id
+  useEffect(() => {
+    if (signedInId) void claimThisDevice().catch(() => undefined)
+  }, [signedInId])
   // A new account goes through the short setup once. Only an explicit null (setup not yet done)
   // counts: an account the server doesn't mark either way is left alone.
   const needsSetup = Boolean(user) && user?.onboarded_at === null

@@ -7,6 +7,7 @@ import { errorMessage } from '../../apiCalls'
 import { formatObsDt } from '../../format'
 import { parseSightingRefs, useCurrentUser, useRegionsQuery, useSightingsQuery } from '../../hooks/queries'
 import './AlertSightings.css'
+import { countyLabel, useLinkRegion } from '../../linkRegion'
 
 /**
  * Where a watch-list push notification lands: every sighting it announced on one small map, with
@@ -14,12 +15,12 @@ import './AlertSightings.css'
  */
 const AlertSightings = () => {
   const user = useCurrentUser()
-  const region = user.location
+  const { region, state, own, query } = useLinkRegion(user)
   const [params] = useSearchParams()
   const refs = useMemo(() => parseSightingRefs(params.get('s')), [params])
   const sightings = useSightingsQuery(region, refs)
-  const regions = useRegionsQuery(user.state)
-  const regionName = regions.data?.find(r => r.code === region)?.name ?? 'your county'
+  const regions = useRegionsQuery(state)
+  const regionName = countyLabel(regions.data?.find(r => r.code === region)?.name, state, own)
 
   const rows = useMemo(() => sightings.data ?? [], [sightings.data])
   // Tapping a pin, or a row, highlights that place on both the map and the table.
@@ -31,9 +32,9 @@ const AlertSightings = () => {
     lng: o.lng,
     title: o.comName,
     subtitle: `${o.locName} · ${formatObsDt(o.obsDt)}`,
-    href: `/sighting/${o.speciesCode}/${o.subId}`,
+    href: `/sighting/${o.speciesCode}/${o.subId}${query}`,
     highlight: selectedPlace === `${o.lat},${o.lng}`
-  })), [rows, selectedPlace])
+  })), [rows, selectedPlace, query])
   const missing = refs.length - new Set(rows.map(o => o.speciesCode)).size
 
   return (
@@ -63,7 +64,7 @@ const AlertSightings = () => {
                     <tr key={`${o.speciesCode}-${o.subId}-${o.lat}-${o.lng}`} className={selectedPlace === placeOf(o) ? 'is-selected' : undefined}
                       aria-selected={selectedPlace === placeOf(o)} onClick={() => setSelectedPlace(placeOf(o))}>
                       <td>
-                        <Link to={`/sighting/${o.speciesCode}/${o.subId}`}>{o.comName}</Link>
+                        <Link to={`/sighting/${o.speciesCode}/${o.subId}${query}`}>{o.comName}</Link>
                         <span className='alert-sightings__where'>{o.locName}</span>
                       </td>
                       <td>{formatObsDt(o.obsDt)}</td>

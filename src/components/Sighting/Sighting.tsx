@@ -11,6 +11,7 @@ import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
 import { useBirdsQuery, useCurrentUser, useNearbyPublicQuery, useRegionsQuery, useSavedCodes, useSeenCodes, useSeasonalityQuery, useSavedRouteQuery, useSpeciesObservationsQuery, useWhereToFindQuery } from '../../hooks/queries'
 import { focusFor } from '../../mapFocus'
+import { countyLabel, useLinkRegion } from '../../linkRegion'
 import { useToggleSavedMutation, useToggleSeenMutation } from '../../hooks/mutations'
 import { shareThing } from '../../share'
 import type { Observation, Place, PersistenceClass } from '../../types'
@@ -63,7 +64,8 @@ const evidence = (place: Place) => {
 const Sighting = () => {
   const { code = '', subId = '' } = useParams<{ code: string; subId: string }>()
   const user = useCurrentUser()
-  const region = user.location
+  // An alert or link for another county opens on that county.
+  const { region, state, own, query } = useLinkRegion(user)
   const navigate = useNavigate()
 
   const birds = useBirdsQuery(code ? [code] : [])
@@ -81,8 +83,8 @@ const Sighting = () => {
   const [openNearby, setOpenNearby] = useState<string | null>(null)
   const [activeNearby, setActiveNearby] = useState<string | null>(null)
   const sound = useBirdSound(code, bird?.comName ?? code)
-  const regions = useRegionsQuery(user.state)
-  const regionName = regions.data?.find(r => r.code === region)?.name ?? 'your county'
+  const regions = useRegionsQuery(state)
+  const regionName = countyLabel(regions.data?.find(r => r.code === region)?.name, state, own)
 
   const all = useMemo(() => observations.data ?? [], [observations.data])
   const current = useMemo(() => all.find(o => o.subId === subId) ?? all[0], [all, subId])
@@ -151,7 +153,7 @@ const Sighting = () => {
   const img = bird?.birdImg && bird.birdImg !== 'undefined' ? bird.birdImg : '/images/noBirdImg.png'
   const ebirdHref = current?.subId ? `https://ebird.org/checklist/${current.subId}` : `https://ebird.org/species/${code}`
   // Selecting swaps the report in place; the browser's Back still leaves the page, not the selection.
-  const select = (o: Observation) => navigate(`/sighting/${code}/${o.subId}`, { replace: true })
+  const select = (o: Observation) => navigate(`/sighting/${code}/${o.subId}${query}`, { replace: true })
   // A place stands for its newest report in the live feed; selecting it pans the map there.
   const reportAt = (place: Place) => all.find(o => o.subId === place.lastSeen.subId) ?? all.find(o => o.locId === place.locId) ?? all.find(o => o.locName === place.locName)
   const places = where.data?.places ?? []

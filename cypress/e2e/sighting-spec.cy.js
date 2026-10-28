@@ -87,3 +87,31 @@ describe('Sighting page and region map', () => {
     cy.get('.sightings-map.is-focused').should('exist')
   })
 })
+
+describe('A link for another county', () => {
+  beforeEach(() => {
+    login()
+    cy.get('.birds-list .card', { timeout: 15000 })
+  })
+
+  it('opens on the county it names, not the account\'s own', () => {
+    cy.intercept('GET', '**/api/ebird/regions?state=ME*', { body: [{ code: 'US-ME-003', name: 'Aroostook' }] }).as('meRegions')
+    cy.fixture('recentBirds').then((obs) => {
+      const first = obs.find((o) => o.subId === 'S155544243')
+      cy.intercept('GET', '**/api/ebird/species-observations*', (req) => {
+        req.reply({ body: req.query.region === 'US-ME-003' ? [{ ...first, subId: 'S406049926', locName: 'Madawaska Lake' }] : [] })
+      }).as('obs')
+    })
+    cy.visit('http://localhost:3000/sighting/cangoo/S406049926?region=US-ME-003')
+    cy.wait('@obs').its('request.query.region').should('eq', 'US-ME-003')
+    cy.get('.sighting__blurb').should('contain', 'Reported once in Aroostook, Maine in the last 30 days.')
+    cy.get('.sighting__meta').should('contain', 'Madawaska Lake')
+  })
+
+  it('ignores a malformed county and uses the account\'s own', () => {
+    cy.intercept('GET', '**/api/ebird/species-observations*').as('obs')
+    cy.visit('http://localhost:3000/sighting/cangoo/S155544243?region=nonsense')
+    cy.wait('@obs').its('request.query.region').should('eq', 'US-GA-139')
+    cy.get('.sighting__blurb').should('contain', 'in Hall in the last 30 days')
+  })
+})
