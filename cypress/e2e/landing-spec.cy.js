@@ -92,7 +92,21 @@ describe('Shared links', () => {
     cy.get('.still-there__chance').should('have.text', 'You have an 11% chance to find it if you go now.')
   })
 
-  it('a link that never existed says so kindly', () => {
+  it('a visitor who lands on a shared link carries it to signup, first visit winning', () => {
+    stubAuth()
+    cy.intercept('GET', '**/api/ebird/share?id=sight67890', { body: {
+      id: 'sight67890', kind: 'sighting', createdAt: '2026-10-27T12:00:00Z', speciesCode: 'paibun', comName: 'Painted Bunting', sciName: 'Passerina ciris', birdImg: '/images/bird.png',
+      locName: 'Chicopee Lake', lat: 34.25, lng: -83.85, obsDt: '2026-10-27 08:10', howMany: 2, subId: 'S100000001', regionName: 'Hall'
+    } })
+    cy.visit('http://localhost:3000/share/s/sight67890?utm_source=x')
+    cy.contains('h1', 'Painted Bunting')
+    cy.window().then((win) => expect(JSON.parse(win.localStorage.getItem('arrivedFrom'))).to.deep.include({ landing: 'share-sighting', share: 'sight67890', utm: 'x' }))
+    // A later visit to the home page doesn't replace it.
+    cy.visit('http://localhost:3000/')
+    cy.window().then((win) => expect(JSON.parse(win.localStorage.getItem('arrivedFrom'))).to.deep.include({ landing: 'share-sighting', share: 'sight67890' }))
+  })
+
+    it('a link that never existed says so kindly', () => {
     stubAuth()
     cy.intercept('GET', '**/api/ebird/share?id=nothere123', { statusCode: 404, body: { error: 'This link has expired or never existed' } })
     cy.visit('http://localhost:3000/share/s/nothere123')

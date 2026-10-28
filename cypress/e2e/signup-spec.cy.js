@@ -19,7 +19,11 @@ describe('Creating an account', () => {
 
     cy.get('.input.password').clear()
     cy.get('.input.password').type('longenough1{enter}')
-    cy.wait('@signup').its('request.body').should('deep.equal', { email: 'newbirder@example.com', password: 'longenough1' })
+    cy.wait('@signup').its('request.body').should((body) => {
+      expect(body).to.deep.include({ email: 'newbirder@example.com', password: 'longenough1' })
+      // What brought them in rides along: here, straight to the sign-in page.
+      expect(body.source).to.deep.equal({ landing: 'login' })
+    })
     // A device that can use passkeys is offered one, once; "Not now" goes on and is remembered.
     cy.contains('h1', 'next time?')
     cy.contains('button', 'Not now').click()
@@ -36,6 +40,9 @@ describe('Creating an account', () => {
     cy.get('.login-eye').should('have.text', 'Show').click()
     cy.get('.input.password').should('have.attr', 'type', 'text').type('longenough1')
     cy.contains('button', 'Create account').click()
-    cy.wait('@signup').its('request.body').should('deep.equal', { email: 'newbirder@example.com', password: 'longenough1', state: 'GA', location: 'US-GA-139' })
+    cy.wait('@signup').its('request.body').should((body) => {
+      expect(body).to.deep.include({ email: 'newbirder@example.com', password: 'longenough1', state: 'GA', location: 'US-GA-139' })
+      expect(body.source).to.deep.equal({ landing: 'login' })
+    })
   })
 })
