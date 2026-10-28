@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { releaseThisDevice } from './usePushNotifications'
 import { deleteSavedBird, deleteSeenBird, importLifeList, logout, patchUser, postSavedBird, postSeenBird, putSavedRoute } from '../apiCalls'
 import { clearLocalRoutes } from '../routePlan'
 import { queryKeys } from './queries'
@@ -13,7 +14,8 @@ export const useSetSession = () => {
 export const useLogoutMutation = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: logout,
+    // This browser's alerts stop first, while the session can still say whose they were.
+    mutationFn: async () => { await releaseThisDevice().catch(() => undefined); return logout() },
     // Whatever the server said, the client is logged out now.
     onSettled: () => {
       queryClient.setQueryData(queryKeys.session, null)

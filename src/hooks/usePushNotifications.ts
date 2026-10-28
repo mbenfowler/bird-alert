@@ -17,6 +17,32 @@ const urlBase64ToUint8Array = (base64: string) => {
 
 const supported = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
 
+/** This browser's push subscription, when notifications are allowed and it has one. */
+const currentSubscription = async () => {
+  if (!supported() || Notification.permission !== 'granted') return null
+  // getRegistration, not .ready: .ready waits forever on a page that never registered the worker.
+  const registration = await navigator.serviceWorker.getRegistration()
+  return registration ? registration.pushManager.getSubscription() : null
+}
+
+/**
+ * Notifications belong to the browser, so they follow whoever signs in on it: on each sign-in or
+ * load, an existing subscription is filed under the account now using it. (Otherwise a browser
+ * once used by another account keeps getting that account's alerts.)
+ */
+export const claimThisDevice = async () => {
+  const subscription = await currentSubscription()
+  if (!subscription) return
+  const status = await getPushStatus(subscription.endpoint)
+  if (!status.subscribed) await subscribePush({ ...subscription.toJSON(), userAgent: navigator.userAgent })
+}
+
+/** Before signing out: this browser stops getting the account's alerts. The browser keeps its subscription for the next sign-in. */
+export const releaseThisDevice = async () => {
+  const subscription = await currentSubscription()
+  if (subscription) await unsubscribePush(subscription.endpoint)
+}
+
 /** Push subscription for this device, kept in sync with the server. */
 export const usePushNotifications = () => {
   const [state, setState] = useState<PushState>('checking')
