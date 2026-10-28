@@ -12,6 +12,9 @@ executors:
 jobs:
   build:
     executor: node22
+    # Only e2e runs Cypress; skipping its ~500 MB download keeps a slow mirror from hanging this job.
+    environment:
+      CYPRESS_INSTALL_BINARY: "0"
     steps:
       - checkout
       - node/install-packages:
@@ -39,6 +42,9 @@ jobs:
   # installed with apt, which this image allows without a password.
   webkit:
     executor: node22
+    # Only e2e runs Cypress; skipping its ~500 MB download keeps a slow mirror from hanging this job.
+    environment:
+      CYPRESS_INSTALL_BINARY: "0"
     steps:
       - checkout
       - node/install-packages:
