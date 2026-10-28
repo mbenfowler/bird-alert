@@ -1,0 +1,62 @@
+.aba-code {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 0 9px;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: var(--accent);
+    color: #111;
+    font-family: system-ui, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 800;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.aba-code-note {
+    position: relative;
+    display: inline-block;
+}
+
+.aba-code-note summary {
+    cursor: pointer;
+    list-style: none;
+}
+
+.aba-code-note summary::-webkit-details-marker {
+    display: none;
+}
+
+.aba-code-note summary:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.aba-code-note__panel {
+    position: absolute;
+    z-index: 1200; /* over the map */
+    top: calc(100% + 6px);
+    left: 0;
+    width: min(300px, calc(100vw - 32px));
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+    font-family: system-ui, sans-serif;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    text-align: left;
+}
+
+.aba-code-note__panel p {
+    margin: 0;
+}
+
+.aba-code-note__credit {
+    margin-top: 6px !important;
+    color: var(--muted);
+    font-size: 0.75rem;
+}

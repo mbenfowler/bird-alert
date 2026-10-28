@@ -7,6 +7,7 @@ import { useSessionQuery, useShareQuery } from '../../hooks/queries'
 import { mapsUrl } from '../../routePlan'
 import { formatObsDt } from '../../format'
 import StillThere from '../StillThere/StillThere'
+import AbaCode from '../AbaCode/AbaCode'
 import type { SharedRoute, SharedSighting } from '../../types'
 import './Shared.css'
 
@@ -76,6 +77,7 @@ const SightingView = ({ share }: { share: SharedSighting }) => {
         <div>
           <h1 className='fredericka shared__title'>{share.comName}</h1>
           {share.sciName && <p className='shared__sci'>{share.sciName}</p>}
+          {share.aba && share.aba >= 3 && share.aba <= 5 && <p className='shared__aba'><AbaCode code={share.aba} explain /></p>}
           <p className='shared__lede'>
             {share.howMany && share.howMany > 1 ? `${share.howMany} reported` : 'Reported'} at <strong>{share.locName}</strong>
             {share.obsDt ? `, ${formatObsDt(share.obsDt)}` : ''}{share.regionName ? ` (${share.regionName})` : ''}.

@@ -115,3 +115,34 @@ describe('A link for another county', () => {
     cy.get('.sighting__blurb').should('contain', 'in Hall in the last 30 days')
   })
 })
+
+describe('ABA codes in the app', () => {
+  beforeEach(() => {
+    login()
+    cy.get('.birds-list .card', { timeout: 15000 })
+  })
+
+  it('the species page shows a coded bird\'s ABA code, and a notable card does too', () => {
+    cy.fixture('cangoo').then((bird) => {
+      cy.intercept('GET', '**/api/birds?codes=*', { body: [{ ...bird, aba: 5 }] })
+    })
+    cy.visit('http://localhost:3000/sighting/cangoo/S155544243')
+    cy.get('.sighting__aba summary').should('have.text', 'ABA Code 5 · accidental')
+    cy.fixture('recentBirds').then((obs) => {
+      cy.intercept('GET', '**/api/ebird/notable*', { body: [{ ...obs[0], aba: 3 }] }).as('notable')
+    })
+    cy.visit('http://localhost:3000/')
+    cy.get('#notable').click()
+    cy.wait('@notable')
+    cy.get('.alert-card .aba-code').first().should('have.text', 'ABA Code 3 · rare')
+  })
+
+  it('a regular bird shows no code', () => {
+    cy.fixture('cangoo').then((bird) => {
+      cy.intercept('GET', '**/api/birds?codes=*', { body: [{ ...bird, aba: 1 }] })
+    })
+    cy.visit('http://localhost:3000/sighting/cangoo/S155544243')
+    cy.get('.sighting__title h1').should('contain', 'Canada Goose')
+    cy.get('.sighting__aba').should('not.exist')
+  })
+})

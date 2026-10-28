@@ -4,6 +4,7 @@ import { useBirdsQuery, useNotableThisWeekQuery, useObservationsQuery, useRegion
 import { US_STATES } from '../../usStates'
 import type { Observation } from '../../types'
 import './Landing.css'
+import AbaCode from '../AbaCode/AbaCode'
 
 const REGION_KEY = 'bird-alert:landing-region'
 const DEFAULT_REGION = 'US-GA-139'
@@ -121,7 +122,7 @@ const Landing = () => {
                   <li key={o.speciesCode} className='landing__bird'>
                     {photo.get(o.speciesCode) ? <img className='landing__thumb' src={photo.get(o.speciesCode)!} alt='' loading='lazy' width='56' height='56' /> : <span className='landing__thumb landing__thumb--blank' aria-hidden='true'>🐦</span>}
                     <span className='landing__bird-text'>
-                      <strong>{o.comName}</strong>
+                      <strong>{o.comName}{o.aba && o.aba >= 3 && o.aba <= 5 ? <> <AbaCode code={o.aba} /></> : null}</strong>
                       <span>{placeLabel(o)}</span>
                       <span className='landing__bird-meta'>{ago(o.obsDt)}{reports > 1 ? ` · ${reports} reports${places.size > 1 ? `, ${places.size} places` : ''}` : ''}</span>
                     </span>
