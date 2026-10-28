@@ -1,0 +1,48 @@
+.still-there {
+    margin: 0 0 14px;
+    padding: 10px 12px 10px 14px;
+    border: 2px solid var(--ink);
+    border-left: 8px solid var(--still, var(--muted));
+    border-radius: 12px;
+    background: var(--surface, transparent);
+}
+
+.still-there p {
+    margin: 0;
+}
+
+.still-there__head {
+    margin: 0 0 2px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.still-there__verdict {
+    font-size: 1.05rem;
+}
+
+.still-there__detail {
+    margin-top: 4px !important;
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+.still-there__chance {
+    margin-top: 4px !important;
+    font-size: 0.95rem;
+}
+
+.still-there__others {
+    margin-top: 6px !important;
+    padding-top: 6px;
+    border-top: 1px solid var(--rule);
+    font-size: 0.9rem;
+}
+
+.still-there.is-loading p {
+    color: var(--muted);
+    font-size: 0.85rem;
+}

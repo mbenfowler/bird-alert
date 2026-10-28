@@ -75,6 +75,21 @@ describe('Shared links', () => {
     cy.contains('a', 'Directions').should('have.attr', 'href').and('include', '34.25%2C-83.85')
     // A tall photo is never cropped: the whole bird shows, over a blurred copy of itself.
     cy.get('.shared__photo img').should('have.css', 'object-fit', 'contain')
+    // An older link has no eBird place, so there's no "still there?" to ask.
+    cy.get('.still-there').should('not.exist')
+  })
+
+  it('a shared sighting says whether the bird is still there', () => {
+    stubAuth()
+    cy.intercept('GET', '**/api/ebird/share?id=sight67890', { body: {
+      id: 'sight67890', kind: 'sighting', createdAt: '2026-10-27T12:00:00Z', speciesCode: 'paibun', comName: 'Painted Bunting', sciName: 'Passerina ciris', birdImg: '/images/bird.png',
+      locId: 'L999', locName: 'Chicopee Lake', lat: 34.25, lng: -83.85, obsDt: '2026-10-27 08:10', howMany: 2, subId: 'S100000001', regionName: 'Hall'
+    } })
+    cy.intercept('GET', '**/api/ebird/chase?*', { body: { locId: 'L999', speciesCode: 'paibun', lastSeen: '2026-10-27 08:10', hoursAgo: 30, checkedSince: 3, foundSince: 0, missesSince: 3, stillThere: 18, chance: 11, verdict: 'gone' } }).as('chase')
+    cy.visit('http://localhost:3000/share/s/sight67890')
+    cy.wait('@chase').its('request.url').should('include', 'locId=L999').and('include', 'code=paibun')
+    cy.get('.still-there').should('contain', 'Probably gone').and('contain', '30 hours ago').and('contain', '3 checklists since then didn’t have it.')
+    cy.get('.still-there__chance').should('have.text', 'You have an 11% chance to find it if you go now.')
   })
 
   it('a link that never existed says so kindly', () => {

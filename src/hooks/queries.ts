@@ -2,9 +2,9 @@ import { useMemo } from 'react'
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions,
-  getSavedBirds, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare } from '../apiCalls'
+  getSavedBirds, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
-import type { User } from '../types'
+import type { PersistenceClass, User } from '../types'
 
 /** Short stable fingerprint of a code list, so a changed species list gets its own cache entry. */
 export const codesKey = (codes: string[]) => {
@@ -29,6 +29,7 @@ export const queryKeys = {
   arrivals: (region: string) => ['arrivals', region] as const,
   seasonality: (region: string, code: string) => ['seasonality', region, code] as const,
   sightings: (region: string, ids: string) => ['sightings', region, ids] as const,
+  chase: (locId: string, code: string, cls?: string) => ['chase', locId, code, cls ?? 'rare'] as const,
   whereToFind: (region: string, code: string) => ['where-to-find', region, code] as const,
   whereToGo: (region: string, codes: string[], from?: { lat: number; lng: number } | null) => ['where-to-go', region, codesKey(codes), from ? `${from.lat.toFixed(2)},${from.lng.toFixed(2)}` : ''] as const,
   savedRoute: (region: string) => ['saved-route', region] as const,
@@ -254,6 +255,16 @@ export const useWhereToFindQuery = (region: string, code: string) =>
     queryFn: () => getWhereToFind(region, code),
     staleTime: 10 * MINUTE,
     enabled: Boolean(region && code)
+  })
+
+/** Whether a bird is still at a place; checklists come in all day, so it's kept ten minutes. */
+export const useChaseQuery = (locId: string | null | undefined, code: string, cls?: PersistenceClass, enabled = true) =>
+  useQuery({
+    queryKey: queryKeys.chase(locId ?? '', code, cls),
+    queryFn: () => getChase(locId!, code, cls),
+    staleTime: 10 * MINUTE,
+    retry: 1,
+    enabled: enabled && Boolean(locId && /^L\d+$/.test(locId) && code)
   })
 
 /** Where to go for the whole watch list. Fresh every ten minutes; nothing until the list is known. */

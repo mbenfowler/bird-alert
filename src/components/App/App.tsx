@@ -9,6 +9,7 @@ import type { PendingPush } from '../../types'
 // Which build is running, for the notification trace.
 const APP_BUILD = '2026-10-22.9'
 import { toast, ToastContainer } from 'react-toastify'
+import InstallNudge from '../InstallNudge/InstallNudge'
 import { useSessionQuery } from '../../hooks/queries'
 import './App.css'
 import Login from '../Login/Login'
@@ -181,6 +182,7 @@ const App = () => {
         </Suspense>
         </RouteError>
         <ToastContainer />
+        {user && <InstallNudge />}
       </main>
     </>
   )
