@@ -11,6 +11,7 @@ const APP_BUILD = '2026-10-22.9'
 import { toast, ToastContainer } from 'react-toastify'
 import InstallNudge from '../InstallNudge/InstallNudge'
 import { claimThisDevice } from '../../hooks/usePushNotifications'
+import { soundTheAlarm } from '../../alertMode'
 import { useSessionQuery } from '../../hooks/queries'
 import './App.css'
 import Login from '../Login/Login'
@@ -83,6 +84,7 @@ const App = () => {
     }
     // A target is followed once, and never offered as a toast when the app is already there or on its way.
     let lastOpened: string | null = null
+    let lastAlarmed: string | null = null
     const here = () => window.location.pathname + window.location.search
     const go = (path: string | null, via: string) => {
       if (!path || cancelled || path === lastOpened) return
@@ -94,6 +96,8 @@ const App = () => {
       if (!push || cancelled || document.visibilityState !== 'visible') return
       if (push.path === lastOpened || push.path === here()) return
       note('app-toast', { via, target: push.path })
+      // Once per alert, however many times it is offered.
+      if (push.path !== lastAlarmed) { lastAlarmed = push.path; soundTheAlarm(push.title) }
       // On iPhone the system banner is a dead end while the app is open, so this toast is the way in; give it time.
       toast(`${push.title} · tap to view`, { toastId: push.path, position: 'top-center', autoClose: 20000, closeOnClick: true, onClick: () => navigateRef.current(push.path) })
     }
@@ -188,6 +192,7 @@ const App = () => {
         </Suspense>
         </RouteError>
         <ToastContainer />
+        <div className='alarm-glow' aria-hidden='true' />
         {user && <InstallNudge />}
       </main>
     </>

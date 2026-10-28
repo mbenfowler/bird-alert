@@ -1,0 +1,104 @@
+.alert-mode {
+  margin-top: 8px;
+}
+
+.alert-mode__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+}
+
+.notification__text .alert-mode label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.alert-mode__volume {
+  display: inline-flex;
+  margin: 0;
+  padding: 0;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.alert-mode__volume label {
+  padding: 4px 12px;
+  cursor: pointer;
+}
+
+.alert-mode__volume label.is-selected {
+  background: var(--accent);
+}
+
+.alert-mode__volume input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.alert-mode__volume:disabled {
+  opacity: 0.5;
+}
+
+.alert-mode__sounds {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notification__text .alert-mode__sounds label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.alert-mode__pick {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.alert-mode__pick select {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 0.92rem;
+}
+
+.alert-mode__play {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--accent);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.alert-mode__play:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.alert-mode__credit {
+  margin: 4px 0 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.alert-mode[aria-disabled='true'] {
+  opacity: 0.6;
+}

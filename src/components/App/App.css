@@ -263,3 +263,59 @@ html, body {
     opacity: 0.6;
     cursor: default;
 }
+
+/* ---- Alert! mode (src/alertMode.ts): the app sounds the alarm when a notification arrives on screen. ----
+   Flashes stay under 3 a second (WCAG 2.3.1); with reduced motion it is a steady colour change. */
+.alarm-glow {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    pointer-events: none;
+    opacity: 0;
+}
+
+html[data-alarm] .alarm-glow {
+    box-shadow: inset 0 0 0 6px #ffb000, inset 0 0 90px rgba(255, 70, 0, 0.55);
+    animation: alarm-glow 0.9s ease-in-out infinite alternate;
+}
+
+html[data-alarm='gentle'] .alarm-glow {
+    box-shadow: inset 0 0 0 4px #ffd700, inset 0 0 60px rgba(255, 190, 0, 0.4);
+    animation-iteration-count: 2;
+}
+
+html[data-alarm='full'] nav,
+html[data-alarm='siren'] nav {
+    animation: alarm-bar 0.8s steps(1, end) infinite;
+}
+
+html[data-alarm='siren'] .alarm-glow {
+    box-shadow: inset 0 0 0 8px #ff2a00, inset 0 0 120px rgba(255, 30, 0, 0.6);
+    animation-duration: 0.6s;
+}
+
+html[data-alarm] #titleAlert {
+    display: inline-block;
+    animation: alarm-word 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes alarm-glow {
+    from { opacity: 0.25; }
+    to { opacity: 1; }
+}
+
+@keyframes alarm-bar {
+    0% { background-color: #c8200e; }
+    50% { background-color: #5a0d06; }
+}
+
+@keyframes alarm-word {
+    from { transform: scale(1); }
+    to { transform: scale(1.12) rotate(-2deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html[data-alarm] .alarm-glow { animation: none; opacity: 1; }
+    html[data-alarm='full'] nav, html[data-alarm='siren'] nav { animation: none; background-color: #c8200e; }
+    html[data-alarm] #titleAlert { animation: none; }
+}
