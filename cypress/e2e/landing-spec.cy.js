@@ -125,7 +125,7 @@ describe('ABA Checklist codes', () => {
     cy.intercept('GET', '**/api/ebird/observations*', { fixture: 'notableWeek' })
     cy.intercept('GET', '**/api/birds?*', { body: [] })
     cy.visit('http://localhost:3000/')
-    cy.contains('.landing__bird', 'Sedge Wren').find('.aba-code').should('have.text', 'ABA Code 4 · casual')
+    cy.contains('.landing__bird', 'Sedge Wren').find('.aba-code').should('have.text', 'ABA Code 4 · not every year')
     cy.contains('.landing__bird', 'Painted Bunting').find('.aba-code').should('not.exist')
   })
 
@@ -136,7 +136,7 @@ describe('ABA Checklist codes', () => {
       locName: 'Estero Llano Grande SP', lat: 26.12, lng: -97.95, obsDt: '2026-10-28 08:10', howMany: 1, subId: 'S100000009', regionName: 'Texas', aba: 4
     } })
     cy.visit('http://localhost:3000/share/s/sight24680')
-    cy.get('.shared__aba summary').should('have.text', 'ABA Code 4 · casual').click()
+    cy.get('.shared__aba summary').should('have.text', 'ABA Code 4 · not every year').click()
     cy.get('.aba-code-note__panel').should('contain', 'not seen every year in the ABA Area').and('contain', 'used with permission of the American Birding Association')
   })
 })

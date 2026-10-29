@@ -77,6 +77,8 @@
 /* The live panel: a white card with a pulsing dot, real birds from this week. */
 .landing__live {
     display: grid;
+    /* WebKit sizes an auto track to its widest card's natural width; this holds it to the panel. */
+    grid-template-columns: minmax(0, 1fr);
     gap: 12px;
     padding: 16px;
     border: 2px solid var(--ink);
@@ -158,6 +160,7 @@
 .landing__birds {
     list-style: none;
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 8px;
 }
 
@@ -198,7 +201,7 @@
     font-size: 1.02rem;
 }
 
-.landing__bird-text span {
+.landing__bird-text > span {
     color: var(--muted);
     font-size: 0.88rem;
     overflow: hidden;
