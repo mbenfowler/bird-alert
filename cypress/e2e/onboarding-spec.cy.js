@@ -70,4 +70,16 @@ describe('Setup after signing up', () => {
     cy.contains('.onboard__lede', 'No recent reports to show yet')
     cy.contains('Finding birds near you').should('not.exist')
   })
+
+  it('a quiet county borrows birds from across the state', () => {
+    cy.intercept('GET', '**/api/ebird/notable*', { body: [] })
+    cy.intercept('GET', '**/api/ebird/arriving*', { body: { learning: true, arrivals: [] } })
+    cy.intercept('GET', '**/api/ebird/observations*', (req) => {
+      const statewide = /region=US-GA(&|$)/.test(req.url)
+      req.reply({ body: statewide ? [{ speciesCode: 'norcar', comName: 'Northern Cardinal', locId: 'L9', locName: 'Somewhere in Georgia', obsDt: '2026-10-27 08:00', lat: 33.7, lng: -84.4, subId: 'S9' }] : [] })
+    }).as('obs')
+    cy.visit('http://localhost:3000/welcome')
+    cy.contains('.onboard__tile', 'Northern Cardinal')
+    cy.contains('.onboard__lede', 'Nothing has been reported in your county lately, so these are from across Georgia.')
+  })
 })

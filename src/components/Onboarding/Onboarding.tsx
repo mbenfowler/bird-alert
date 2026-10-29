@@ -5,7 +5,7 @@ import { queryKeys, useArrivalsQuery, useBirdsQuery, useCurrentUser, useNotableT
 import { useImportLifeListMutation, usePatchUserMutation } from '../../hooks/mutations'
 import { usePushNotifications } from '../../hooks/usePushNotifications'
 import { useQueryClient } from '@tanstack/react-query'
-import { countyLabel } from '../../usStates'
+import { countyLabel, countyWord, stateName, subnational1 } from '../../usStates'
 import StateOptions from '../StateOptions/StateOptions'
 import type { UserPatch } from '../../types'
 import { isIOS, isStandalone } from '../../install'
@@ -41,14 +41,19 @@ const Onboarding = () => {
   const notable = useNotableThisWeekQuery(region)
   const arrivals = useArrivalsQuery(region)
   const recent = useObservationsQuery(region)
+  // A quiet county (or a rural Mexican district) may have nothing reported lately; then the birds
+  // come from across the state, so the step still has something to star.
+  const quiet = Boolean(region) && !recent.isPending && !recent.data?.length && !notable.isPending && !notable.data?.length
+  const stateRecent = useObservationsQuery(quiet && user.state ? subnational1(user.state) : '')
+  const fromState = quiet && Boolean(stateRecent.data?.length)
   const candidates = useMemo(() => {
     const out: { code: string; tag: Tag }[] = []
     const add = (code: string, tag: Tag) => { if (out.length < TILES && !out.some(c => c.code === code)) out.push({ code, tag }) }
     for (const o of notable.data ?? []) if (out.filter(c => c.tag === 'Notable this week').length < 4) add(o.speciesCode, 'Notable this week')
     for (const a of (arrivals.data?.learning ? [] : arrivals.data?.arrivals ?? [])) if (out.filter(c => c.tag === 'Arriving now').length < 4) add(a.speciesCode, 'Arriving now')
-    for (const o of recent.data ?? []) add(o.speciesCode, null)
+    for (const o of (fromState ? stateRecent.data : recent.data) ?? []) add(o.speciesCode, null)
     return out
-  }, [notable.data, arrivals.data, recent.data])
+  }, [notable.data, arrivals.data, recent.data, fromState, stateRecent.data])
   const birds = useBirdsQuery(candidates.map(c => c.code))
   const byCode = useMemo(() => new Map((birds.data ?? []).map(b => [b.speciesCode, b])), [birds.data])
   const tiles = candidates.map(c => ({ ...c, bird: byCode.get(c.code) })).filter(t => t.bird && t.bird.birdImg && t.bird.birdImg !== 'undefined')
@@ -128,6 +133,7 @@ const Onboarding = () => {
           <>
             <h1 className='fredericka onboard__title'>Tap the birds you’d love to see</h1>
             <p className='onboard__lede'>We’ll tell you when they’re around.</p>
+            {fromState && tiles.length > 0 && <p className='onboard__lede'>Nothing has been reported in your {countyWord(user.state)} lately, so these are from across {stateName(user.state) ?? 'your state'}.</p>}
             {tiles.length ? (
               <ul className='onboard__tiles'>
                 {tiles.map(({ code, tag, bird }) => {
@@ -144,7 +150,7 @@ const Onboarding = () => {
                   )
                 })}
               </ul>
-            ) : <p className='onboard__lede'>{recent.isPending || (candidates.length > 0 && birds.isPending) ? 'Finding birds near you…' : 'No recent reports to show yet. You can star birds from the home page any time.'}</p>}
+            ) : <p className='onboard__lede'>{recent.isPending || (quiet && stateRecent.isPending && Boolean(user.state)) || (candidates.length > 0 && birds.isPending) ? 'Finding birds near you…' : 'No recent reports to show yet. You can star birds from the home page any time.'}</p>}
             <button type='button' className='pill-button pill-button--primary onboard__next onboard__next--stick' disabled={saving} onClick={() => { void saveBirds() }}>
               {saving ? 'Saving…' : starred.size ? `Next (${starred.size})` : 'Next'}
             </button>
