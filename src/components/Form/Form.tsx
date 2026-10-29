@@ -4,7 +4,7 @@ import { toast } from 'react-toastify'
 import { resendConfirmationEmail, requestPasswordReset, errorMessage } from '../../apiCalls'
 import { useCurrentUser, useRegionsQuery } from '../../hooks/queries'
 import { usePatchUserMutation } from '../../hooks/mutations'
-import { countyWord } from '../../usStates'
+import { countyLabel, countyWord } from '../../usStates'
 import StateOptions from '../StateOptions/StateOptions'
 import './Form.css'
 
@@ -85,7 +85,7 @@ const Form = () => {
             {regions.isError && <p className='passwordErrorText' role='alert'>Could not load regions: {errorMessage(regions.error)}</p>}
             {!!regions.data?.length &&
                 <label className='field'>
-                    <span className='field__label'>{countyWord(form.state) === 'area' ? 'Area' : 'County'}</span>
+                    <span className='field__label'>{countyLabel(form.state)}</span>
                     <select name="location" value={form.location} onChange={handleChange}>
                         <option value="">Select your {countyWord(form.state)}</option>
                         {regions.data.map(region => <option key={region.code} value={region.code}>{region.name} - {region.code}</option>)}

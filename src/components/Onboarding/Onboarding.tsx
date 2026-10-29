@@ -5,7 +5,7 @@ import { queryKeys, useArrivalsQuery, useBirdsQuery, useCurrentUser, useNotableT
 import { useImportLifeListMutation, usePatchUserMutation } from '../../hooks/mutations'
 import { usePushNotifications } from '../../hooks/usePushNotifications'
 import { useQueryClient } from '@tanstack/react-query'
-import { countyWord } from '../../usStates'
+import { countyLabel } from '../../usStates'
 import StateOptions from '../StateOptions/StateOptions'
 import type { UserPatch } from '../../types'
 import { isIOS, isStandalone } from '../../install'
@@ -114,8 +114,8 @@ const Onboarding = () => {
               <select className='select' aria-label='State' value={pickState} onChange={(e) => { setPickState(e.target.value); setPickCounty('') }}>
                 <StateOptions />
               </select>
-              <select className='select' aria-label={countyWord(pickState) === 'area' ? 'Area' : 'County'} value={pickCounty} onChange={(e) => setPickCounty(e.target.value)}>
-                <option value=''>{countyWord(pickState) === 'area' ? 'Area' : 'County'}</option>
+              <select className='select' aria-label={countyLabel(pickState)} value={pickCounty} onChange={(e) => setPickCounty(e.target.value)}>
+                <option value=''>{countyLabel(pickState)}</option>
                 {(regions.data ?? []).map(r => <option key={r.code} value={r.code}>{r.name}</option>)}
               </select>
             </div>
@@ -144,7 +144,7 @@ const Onboarding = () => {
                   )
                 })}
               </ul>
-            ) : <p className='onboard__lede'>{recent.isPending || birds.isPending ? 'Finding birds near you…' : 'No recent reports to show yet. You can star birds from the home page any time.'}</p>}
+            ) : <p className='onboard__lede'>{recent.isPending || (candidates.length > 0 && birds.isPending) ? 'Finding birds near you…' : 'No recent reports to show yet. You can star birds from the home page any time.'}</p>}
             <button type='button' className='pill-button pill-button--primary onboard__next onboard__next--stick' disabled={saving} onClick={() => { void saveBirds() }}>
               {saving ? 'Saving…' : starred.size ? `Next (${starred.size})` : 'Next'}
             </button>

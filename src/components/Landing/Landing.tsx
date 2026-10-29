@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { useBirdsQuery, useNotableThisWeekQuery, useObservationsQuery, useRegionsQuery } from '../../hooks/queries'
-import { countyName as fullCountyName, countyWord, stateName as fullStateName, subnational1 } from '../../usStates'
+import { countyName as fullCountyName, countyLabel, countyWord, stateName as fullStateName, subnational1 } from '../../usStates'
 import StateOptions from '../StateOptions/StateOptions'
 import type { Observation } from '../../types'
 import './Landing.css'
@@ -107,7 +107,7 @@ const Landing = () => {
               </select>
             </label>
             <label>
-              <span className='visually-hidden'>{countyWord(state) === 'area' ? 'Area' : 'County'}</span>
+              <span className='visually-hidden'>{countyLabel(state)}</span>
               <select className='select' value={stateRegion ? '' : region} onChange={(e) => e.target.value && setRegion(e.target.value)} disabled={!countyChoices.length}>
                 {stateRegion && <option value=''>All of {stateName}</option>}
                 {countyChoices.map(r => <option key={r.code} value={r.code}>{r.name}</option>)}

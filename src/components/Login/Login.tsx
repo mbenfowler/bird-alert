@@ -5,7 +5,7 @@ import { getUserExists, login, signup, requestPasswordReset, errorMessage } from
 import { useRegionsQuery, useSessionQuery } from '../../hooks/queries'
 import { useSetSession } from '../../hooks/mutations'
 import { addPasskey, cancelPasskeyAutofill, passkeysSupported, signInWithPasskey, unlockName, wasCancelled } from '../../passkeys'
-import { countyName as fullCountyName, countyWord, stateName as fullStateName, stateOfRegion } from '../../usStates'
+import { countyName as fullCountyName, countyLabel, countyWord, stateName as fullStateName, stateOfRegion } from '../../usStates'
 import StateOptions from '../StateOptions/StateOptions'
 import type { User } from '../../types'
 import './Login.css'
@@ -185,7 +185,7 @@ const Login = () => {
               <select className='select' aria-label='State' value={pickState} onChange={(e) => { setPickState(e.target.value); setCounty('') }}>
                 <StateOptions />
               </select>
-              <select className='select' aria-label={countyWord(pickState) === 'area' ? 'Area' : 'County'} value={county} onChange={(e) => setCounty(e.target.value)}>
+              <select className='select' aria-label={countyLabel(pickState)} value={county} onChange={(e) => setCounty(e.target.value)}>
                 <option value=''>Choose later</option>
                 {(regions.data ?? []).map(r => <option key={r.code} value={r.code}>{r.name}</option>)}
               </select>
