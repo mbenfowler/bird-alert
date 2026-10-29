@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { releaseThisDevice } from './usePushNotifications'
-import { deleteSavedBird, deleteSeenBird, importLifeList, logout, patchUser, postSavedBird, postSeenBird, putSavedRoute } from '../apiCalls'
+import { deleteAccount, deleteSavedBird, deleteSeenBird, importLifeList, logout, patchUser, postSavedBird, postSeenBird, putSavedRoute } from '../apiCalls'
 import { clearLocalRoutes } from '../routePlan'
 import { queryKeys } from './queries'
 import type { Bird, SeenBird, User } from '../types'
@@ -11,20 +11,32 @@ export const useSetSession = () => {
   return (user: User | null) => queryClient.setQueryData(queryKeys.session, user)
 }
 
+/** Forgets the account on this browser: the session, its lists and its routes. */
+const forgetAccount = (queryClient: ReturnType<typeof useQueryClient>) => {
+  queryClient.setQueryData(queryKeys.session, null)
+  queryClient.removeQueries({ queryKey: queryKeys.saved })
+  queryClient.removeQueries({ queryKey: ['saved-route'] })
+  queryClient.removeQueries({ queryKey: queryKeys.seen })
+  // The next person on this browser starts from their own account's route.
+  clearLocalRoutes()
+}
+
 export const useLogoutMutation = () => {
   const queryClient = useQueryClient()
   return useMutation({
     // This browser's alerts stop first, while the session can still say whose they were.
     mutationFn: async () => { await releaseThisDevice().catch(() => undefined); return logout() },
     // Whatever the server said, the client is logged out now.
-    onSettled: () => {
-      queryClient.setQueryData(queryKeys.session, null)
-      queryClient.removeQueries({ queryKey: queryKeys.saved })
-      queryClient.removeQueries({ queryKey: ['saved-route'] })
-      queryClient.removeQueries({ queryKey: queryKeys.seen })
-      // The next person on this browser starts from their own account's route.
-      clearLocalRoutes()
-    }
+    onSettled: () => forgetAccount(queryClient)
+  })
+}
+
+/** Deletes the account for good. Only a confirmed delete forgets it here; a failure leaves the person signed in. */
+export const useDeleteAccountMutation = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async () => { await releaseThisDevice().catch(() => undefined); return deleteAccount() },
+    onSuccess: () => forgetAccount(queryClient)
   })
 }
 
