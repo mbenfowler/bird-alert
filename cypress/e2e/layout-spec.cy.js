@@ -33,7 +33,7 @@ describe('Phone-width layout', () => {
   it('the forgotten-password link is a clear button once the email is known', () => {
     stubAuth()
     cy.visit('http://localhost:3000/login')
-    cy.get('.input.email').type('robinware456@gmail.com{enter}')
+    cy.get('.input.email').type('robin@example.com{enter}')
     cy.get('.login-forgot').should('contain', 'Forgot your password?')
     cy.get('.login-forgot__button').should('be.visible').and('have.text', 'Email me a reset link').click()
     cy.wait('@forgot')

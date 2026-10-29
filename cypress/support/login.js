@@ -1,7 +1,7 @@
 export const TEST_USER = {
   id: 1,
   username: '',
-  email: 'robinware456@gmail.com',
+  email: 'robin@example.com',
   // Already has a passkey, so signing in with the password goes straight in (no Face ID offer).
   hasPasskey: true,
   location: 'US-GA-139',
@@ -154,7 +154,7 @@ export const login = () => {
   cy.intercept('GET', '**/api/push/status*', { statusCode: 200, body: { subscribed: false, devices: 0, lastRun: { at: new Date(Date.now() - 14 * 60000).toISOString(), notified: 0 } } }).as('pushStatus')
 
   cy.visit('http://localhost:3000/login')
-  cy.get('.input.email').type('robinware456@gmail.com{enter}')
+  cy.get('.input.email').type('robin@example.com{enter}')
   cy.get('.input.password', { timeout: 10000 }).should('be.visible')
   cy.get('.input.password').type('1234{enter}')
 }
