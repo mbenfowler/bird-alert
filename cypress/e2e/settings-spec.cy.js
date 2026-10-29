@@ -61,7 +61,7 @@ describe('Settings', () => {
     }).as('mailPreview')
     cy.get('button[data-preview="migration"]').click()
     cy.wait('@mailPreview').its('request.body').should('deep.equal', { kind: 'migration' })
-    cy.contains('Sent to robinware456@gmail.com')
+    cy.contains('Sent to robin@example.com')
     cy.get('button[data-preview="rare"]').click()
     cy.wait('@mailPreview')
     cy.contains('Nothing to send right now: no notable sightings nearby in the last day.')

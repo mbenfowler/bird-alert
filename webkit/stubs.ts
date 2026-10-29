@@ -6,7 +6,7 @@ const FIXTURES = join(__dirname, '..', 'cypress', 'fixtures')
 const fixture = (name: string) => JSON.parse(readFileSync(join(FIXTURES, `${name}.json`), 'utf8'))
 
 export const USER = {
-  id: 1, username: '', email: 'robinware456@gmail.com', location: 'US-GA-139', state: 'GA', email_confirmed: true,
+  id: 1, username: '', email: 'robin@example.com', location: 'US-GA-139', state: 'GA', email_confirmed: true,
   alert_digest_email_enabled: true, rare_sightings_email_enabled: true, push_watchlist_enabled: true, push_notable_enabled: false,
   push_notable_batched: false, push_first_of_season: false, migration_email_enabled: false, push_quiet_start: 22, push_quiet_end: 6,
   timezone: 'America/New_York', created_at: '2023-11-21T19:33:34.829Z', updated_at: '2023-12-01T23:13:41.118Z'
