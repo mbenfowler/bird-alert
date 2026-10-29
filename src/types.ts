@@ -91,7 +91,7 @@ export interface Observation {
   obsReviewed: boolean
   locationPrivate: boolean
   subId: string
-  /** ABA Checklist code, on notable sightings (3 rare, 4 casual, 5 accidental are shown); null when not on the list. */
+  /** ABA Checklist code, on notable sightings (3, 4 and 5 are shown); null when not on the list. */
   aba?: number | null
 }
 

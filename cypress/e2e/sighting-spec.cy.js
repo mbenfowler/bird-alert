@@ -127,14 +127,14 @@ describe('ABA codes in the app', () => {
       cy.intercept('GET', '**/api/birds?codes=*', { body: [{ ...bird, aba: 5 }] })
     })
     cy.visit('http://localhost:3000/sighting/cangoo/S155544243')
-    cy.get('.sighting__aba summary').should('have.text', 'ABA Code 5 · accidental')
+    cy.get('.sighting__aba summary').should('have.text', 'ABA Code 5 · a few records ever')
     cy.fixture('recentBirds').then((obs) => {
       cy.intercept('GET', '**/api/ebird/notable*', { body: [{ ...obs[0], aba: 3 }] }).as('notable')
     })
     cy.visit('http://localhost:3000/')
     cy.get('#notable').click()
     cy.wait('@notable')
-    cy.get('.alert-card .aba-code').first().should('have.text', 'ABA Code 3 · rare')
+    cy.get('.alert-card .aba-code').first().should('have.text', 'ABA Code 3 · a few each year')
   })
 
   it('a regular bird shows no code', () => {
