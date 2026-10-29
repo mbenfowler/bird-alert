@@ -4,6 +4,7 @@ import AlertCenter from '../AlertCenter/AlertCenter'
 import LifeList from '../LifeList/LifeList'
 import PasskeySettings from '../PasskeySettings/PasskeySettings'
 import Feedback from '../Feedback/Feedback'
+import DeleteAccount from '../DeleteAccount/DeleteAccount'
 import { useLogoutMutation } from '../../hooks/mutations'
 import './Settings.css'
 
@@ -21,6 +22,7 @@ const Settings = () => {
             <Feedback />
             <div className='settings-footer'>
                 <button type='button' className='pill-button' id='logoutButton' onClick={handleLogout} disabled={logoutMutation.isPending}>Log out</button>
+                <DeleteAccount />
             </div>
         </section>
     )

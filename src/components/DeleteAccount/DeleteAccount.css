@@ -1,0 +1,42 @@
+/* Quiet on purpose: a plain text link under Log out, and a short panel once asked. */
+.delete-account__ask {
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.9rem;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.delete-account {
+    width: 100%;
+    padding: 16px;
+    box-sizing: border-box;
+    border: 2px solid var(--ink);
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--ink);
+}
+
+.delete-account__title {
+    margin: 0 0 8px;
+    font-size: 1.1rem;
+}
+
+.delete-account p {
+    margin: 0 0 12px;
+    line-height: 1.4;
+}
+
+.delete-account__error {
+    font-weight: 600;
+}
+
+.delete-account__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}

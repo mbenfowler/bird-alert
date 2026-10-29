@@ -62,6 +62,8 @@ export const passkeyRegister = (response: unknown, token: string) => api<Passkey
 export const getPasskeys = () => api<Passkey[]>('/auth/passkeys')
 export const deletePasskey = (id: string) => api<Passkey[]>('/auth/passkeys', { method: 'DELETE', params: { id } })
 export const logout = () => api<null>('/auth/logout', { method: 'POST' })
+/** Deletes the account and everything kept for it, for good; the session ends with it. */
+export const deleteAccount = () => api<null>('/user', { method: 'DELETE', body: { confirm: 'delete' } })
 export const requestPasswordReset = (email: string) => api<{ ok: true }>('/auth/forgot', { method: 'POST', body: { email } })
 export const resetPassword = (token: string, password: string) => api<{ ok: true }>('/auth/reset', { method: 'POST', body: { token, password } })
 export const confirmEmail = (token: string) => api<{ ok: true }>('/auth/confirm', { method: 'POST', body: { token } })

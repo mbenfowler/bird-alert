@@ -93,4 +93,26 @@ describe('Settings', () => {
     cy.get('.feedback__send').click()
     cy.contains('.feedback__error', 'Send more tomorrow')
   })
+
+  it('deletes the account only after a second, plain confirmation, and a failure leaves you signed in', () => {
+    cy.intercept('DELETE', '**/api/user', { statusCode: 500, body: { error: 'Internal server error' } }).as('deleteFails')
+    cy.contains('button', 'Delete my account').click()
+    cy.contains('h2', 'Delete your account?')
+    cy.contains('.delete-account', 'It can’t be undone')
+    cy.contains('button', 'Keep it').click()
+    cy.get('.delete-account').should('not.exist')
+
+    cy.contains('button', 'Delete my account').click()
+    cy.get('.delete-account').contains('button', 'Delete my account').click()
+    cy.wait('@deleteFails').its('request.body').should('deep.equal', { confirm: 'delete' })
+    cy.get('.delete-account__error').should('be.visible')
+    cy.url().should('include', '/settings')
+
+    cy.intercept('DELETE', '**/api/user', { statusCode: 204, body: '' }).as('deleted')
+    cy.intercept('GET', '**/api/auth/me', { statusCode: 401, body: { error: 'Not logged in' } })
+    cy.get('.delete-account').contains('button', 'Delete my account').click()
+    cy.wait('@deleted')
+    cy.url().should('include', '/login')
+    cy.contains('Your account has been deleted.')
+  })
 })
