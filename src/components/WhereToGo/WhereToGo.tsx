@@ -15,6 +15,7 @@ import { shareThing } from '../../share'
 import type { GoPlace } from '../../types'
 import AccuracyBadge from '../AccuracyBadge/AccuracyBadge'
 import './WhereToGo.css'
+import { countyWord } from '../../usStates'
 
 const LIFER_MODE_KEY = 'bird-alert:go-lifers'
 const readLiferMode = () => { try { return localStorage.getItem(LIFER_MODE_KEY) === '1' } catch { return false } }
@@ -48,7 +49,7 @@ const WhereToGo = () => {
   const { custom, setCustom, start, setStart, saveFailed } = useRoutePlan(region)
   const go = useWhereToGoQuery(region, codes, start)
   const regions = useRegionsQuery(user.state)
-  const regionName = regions.data?.find(r => r.code === region)?.name ?? 'your county'
+  const regionName = regions.data?.find(r => r.code === region)?.name ?? `your ${countyWord(user.state)}`
   const [selected, setSelected] = useState<string | null>(null)
   // One private place at a time can open its public lands; the map focuses on them meanwhile.
   const [openNearby, setOpenNearby] = useState<string | null>(null)
@@ -134,6 +135,8 @@ const WhereToGo = () => {
   if (go.isPending) return <LoadingState label='Working out where to go…' />
 
   const { species } = go.data
+  // An area chosen in the last hour or so has no checklists on file yet; say so rather than look empty.
+  const gathering = (go.data.onFile?.checklists ?? Infinity) < 20
   // In lifer mode the list is the whole county; only the birds with a place to go count.
   const possibleLifers = species.filter(sp => sp.places > 0).length
   const select = (place: GoPlace) => setSelected(place.locId)
@@ -210,7 +213,7 @@ const WhereToGo = () => {
           {points.length
             ? <SightingsMap points={points} focus={focus} route={focus && !preview ? null : routeOnMap} height='100%' ariaLabel={`Map of places for your watch list in ${regionName}`} openHighlighted={!focus}
                 onPinClick={(hit) => { const p = places.find(x => x.locId === hit[0]?.id); if (!p) return; if (openNearby && p.locId !== openNearby) closeNearby(); select(p) }} />
-            : <p className='list-note go__nomap'>None of these places have coordinates yet.</p>}
+            : <p className='list-note go__nomap'>{places.length ? 'None of these places have coordinates yet.' : 'No places to show yet.'}</p>}
         </div>
         <div className='go__list-col'>
           <div className='go__scroll'>
@@ -218,6 +221,9 @@ const WhereToGo = () => {
             {editing && routeCard}
             {!editing && <>
             <h2 className='fredericka go__subhead'>Best places for your birds</h2>
+            {!places.length && <p className='list-note go__empty'>{gathering
+              ? `We’re still gathering ${regionName}’s checklists. A newly chosen ${countyWord(user.state)} fills in within an hour or two, and the chances sharpen over the next few days as more checklists come in.`
+              : `None of your birds have been reported in ${regionName} lately. Add a few more birds to widen the search.`}</p>}
             <ol className='go__places'>
               {places.map(place => (
                 <li key={place.locId} className={`go__place ${place.locId === selected ? 'is-current' : ''}`}>

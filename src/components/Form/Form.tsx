@@ -4,15 +4,9 @@ import { toast } from 'react-toastify'
 import { resendConfirmationEmail, requestPasswordReset, errorMessage } from '../../apiCalls'
 import { useCurrentUser, useRegionsQuery } from '../../hooks/queries'
 import { usePatchUserMutation } from '../../hooks/mutations'
+import { countyWord } from '../../usStates'
+import StateOptions from '../StateOptions/StateOptions'
 import './Form.css'
-
-const STATE_CODES = [
-    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
-    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
-    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
-]
 
 const toastAt = { position: 'bottom-center' } as const
 
@@ -82,18 +76,18 @@ const Form = () => {
             </label>
             <button type='button' className='link-button password-reset-text' id='sendPasswordResetEmail' onClick={handlePasswordReset}>Send me a password reset email</button>
             <label className='field'>
-                <span className='field__label'>State</span>
+                <span className='field__label'>State or province</span>
                 <select name="state" value={form.state} onChange={handleChange}>
-                    <option value="">Select your state</option>
-                    {STATE_CODES.map(state => <option key={state} value={state}>{state}</option>)}
+                    <option value="">Select your state or province</option>
+                    <StateOptions />
                 </select>
             </label>
             {regions.isError && <p className='passwordErrorText' role='alert'>Could not load regions: {errorMessage(regions.error)}</p>}
             {!!regions.data?.length &&
                 <label className='field'>
-                    <span className='field__label'>County</span>
+                    <span className='field__label'>{countyWord(form.state) === 'area' ? 'Area' : 'County'}</span>
                     <select name="location" value={form.location} onChange={handleChange}>
-                        <option value="">Select your county</option>
+                        <option value="">Select your {countyWord(form.state)}</option>
                         {regions.data.map(region => <option key={region.code} value={region.code}>{region.name} - {region.code}</option>)}
                     </select>
                 </label>

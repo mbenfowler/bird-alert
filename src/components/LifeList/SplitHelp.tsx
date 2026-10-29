@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { errorMessage, getSplitEvidence } from '../../apiCalls'
 import { useRegionsQuery } from '../../hooks/queries'
 import type { LifeListImport, SplitEvidence } from '../../types'
+import { countyName } from '../../usStates'
 
 type Row = LifeListImport['skipped'][number]
 
@@ -31,7 +32,8 @@ const SplitHelp = ({ row, onPick, onLeave }: { row: Row; onPick: (speciesCode: s
       </span>
     )
   }
-  const area = evidence.areaKind === 'county' ? `${regions.data?.find(r => r.code === evidence.area)?.name ?? evidence.area} County` : evidence.area.replace(/^US-/, '')
+  const areaState = evidence.area.split('-')[1] ?? ''
+  const area = evidence.areaKind === 'county' ? countyName(regions.data?.find(r => r.code === evidence.area)?.name ?? evidence.area, areaState) : evidence.area.replace(/^(US|CA)-/, '')
   const when = `${monthDay(evidence.from)} to ${monthDay(evidence.to)}`
   const counts = evidence.ranked.map(c => `${c.comName} on ${c.days}`).join(', ')
   const top = evidence.ranked[0]

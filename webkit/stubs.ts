@@ -55,6 +55,10 @@ export const stubApi = async (page: Page, { loggedIn = true } = {}) => {
     if (route.request().method() === 'POST') return route.fulfill({ status: 204, body: '' })
     return route.fulfill(json([]))
   })
+  // Third-party hosts never decide a test: a slow CDN from CI held up the load event and timed out a run.
+  await page.route('https://cdnjs.buymeacoffee.com/**', (route) => route.fulfill({ status: 200, contentType: 'application/javascript', body: '' }))
+  await page.route('https://fonts.googleapis.com/**', (route) => route.fulfill({ status: 200, contentType: 'text/css', body: '' }))
+  await page.route('https://fonts.gstatic.com/**', (route) => route.fulfill({ status: 204, body: '' }))
   // Map tiles never leave the machine.
   await page.route('**/tile.openstreetmap.org/**', (route) => route.fulfill({ status: 200, contentType: 'image/png', body: readFileSync(join(FIXTURES, 'tile.png')) }))
 }

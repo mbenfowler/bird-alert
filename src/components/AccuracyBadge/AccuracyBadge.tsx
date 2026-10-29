@@ -30,7 +30,7 @@ const AccuracyBadge = ({ grades }: { grades?: Partial<Record<PlaceBand, BandGrad
             return <li key={band}>When it said <strong>{range}</strong>, the next visit found the bird <strong>{g.rate}%</strong> of the time <span>({g.n} predictions)</span></li>
           })}
         </ul>
-        <p className='accuracy__foot'>Over the last two months in this county.</p>
+        <p className='accuracy__foot'>Over the last two months around here.</p>
       </div>
     </details>
   )

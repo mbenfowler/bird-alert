@@ -195,4 +195,14 @@ describe('Where to go', () => {
     // The link is copied (or shown, where the clipboard is off limits).
     cy.get('.Toastify').should(($t) => expect($t.text()).to.match(/Link copied|\/share\/r\/abc123defg/))
   })
+
+  it('a newly chosen county with nothing on file says it is still gathering, rather than looking empty', () => {
+    cy.fixture('whereToGo').then((go) => {
+      cy.intercept('GET', '**/api/ebird/where-to-go*', { body: { ...go, places: [], route: { ...go.route, stops: [], covers: [], url: null, drive: null }, onFile: { checklists: 0 } } }).as('emptyGo')
+    })
+    cy.visit('http://localhost:3000/go')
+    cy.wait('@emptyGo')
+    cy.get('.go__empty').should('contain', 'still gathering').and('contain', 'within an hour or two')
+    cy.get('.go__nomap').should('have.text', 'No places to show yet.')
+  })
 })

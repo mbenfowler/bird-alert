@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { useBirdsQuery, useNotableThisWeekQuery, useObservationsQuery, useRegionsQuery } from '../../hooks/queries'
-import { US_STATES } from '../../usStates'
+import { countyName as fullCountyName, countyWord, stateName as fullStateName, subnational1 } from '../../usStates'
+import StateOptions from '../StateOptions/StateOptions'
 import type { Observation } from '../../types'
 import './Landing.css'
 import AbaCode from '../AbaCode/AbaCode'
@@ -29,7 +30,8 @@ const ago = (obsDt: string) => {
  */
 const placeLabel = (o: Observation) => {
   if (!o.locationPrivate) return o.locName.replace(/^Lake Lanier--/, '')
-  const town = o.locName.match(/,\s*([^,]+?)\s+US-[A-Z]{2}\b/)?.[1]
+  // "…, Gainesville US-GA (…)" in the US; "…, Toronto, Ontario, CA (…)" in Canada.
+  const town = o.locName.match(/,\s*([^,]+?)\s+US-[A-Z]{2}\b/)?.[1] ?? o.locName.match(/,\s*([^,]+?),\s*[^,]+,\s*CA\b/)?.[1]
   return town ? `A private yard near ${town}` : 'A private yard'
 }
 
@@ -53,9 +55,9 @@ const Landing = () => {
   const setRegion = (code: string) => { setRegionState(code); try { localStorage.setItem(REGION_KEY, code) } catch { /* this visit only */ } }
   const state = region.split('-')[1]
   const regions = useRegionsQuery(state)
-  const stateName = US_STATES.find(([code]) => code === state)?.[1]
+  const stateName = fullStateName(state)
   const countyName = regions.data?.find(r => r.code === region)?.name
-  const placeName = countyName ? `${countyName} County` : stateName
+  const placeName = countyName ? fullCountyName(countyName, state) : stateName
   const notable = useNotableThisWeekQuery(region)
   const rows = useMemo(() => byBird(notable.data ?? []).slice(0, SHOWN), [notable.data])
   const birds = useBirdsQuery(rows.map(r => r.latest.speciesCode))
@@ -67,9 +69,9 @@ const Landing = () => {
 
   const pickState = (code: string) => {
     // A new state starts on its first county once the list arrives; until then keep the old one.
-    setRegion(`US-${code}`)
+    setRegion(subnational1(code))
   }
-  const stateRegion = /^US-[A-Z]{2}$/.test(region)
+  const stateRegion = /^(US|CA)-[A-Z]{2}$/.test(region)
   const countyChoices = regions.data ?? []
 
   return (
@@ -101,11 +103,11 @@ const Landing = () => {
             <label>
               <span className='visually-hidden'>State</span>
               <select className='select' value={state} onChange={(e) => pickState(e.target.value)}>
-                {US_STATES.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
+                <StateOptions />
               </select>
             </label>
             <label>
-              <span className='visually-hidden'>County</span>
+              <span className='visually-hidden'>{countyWord(state) === 'area' ? 'Area' : 'County'}</span>
               <select className='select' value={stateRegion ? '' : region} onChange={(e) => e.target.value && setRegion(e.target.value)} disabled={!countyChoices.length}>
                 {stateRegion && <option value=''>All of {stateName}</option>}
                 {countyChoices.map(r => <option key={r.code} value={r.code}>{r.name}</option>)}
@@ -115,7 +117,7 @@ const Landing = () => {
           {notable.isPending ? (
               <ul className='landing__birds' aria-busy='true'>{Array.from({ length: 4 }, (_, i) => <li key={i} className='landing__bird is-loading'><span className='landing__thumb' /><span className='landing__bar' /></li>)}</ul>
             ) : notable.isError ? <p className='landing__live-note'>eBird didn’t answer just now. Try again in a minute.</p>
-            : !rows.length ? <p className='landing__live-note'>Nothing unusual reported in {placeName ?? 'this county'} this week. A quiet week is a good week to look anyway.</p>
+            : !rows.length ? <p className='landing__live-note'>Nothing unusual reported in {placeName ?? `this ${countyWord(state)}`} this week. A quiet week is a good week to look anyway.</p>
             : (
               <ul className='landing__birds'>
                 {rows.map(({ latest: o, reports, places }) => (
@@ -133,7 +135,7 @@ const Landing = () => {
             )}
           {total > SHOWN && <p className='landing__live-more'>+{total - SHOWN} more this week.</p>}
           {speciesLately > 0 && (
-            <p className='landing__stat'><strong>{speciesLately}</strong> species reported in {placeName ?? 'this county'} in the last two weeks, and the app knows where each one was.</p>
+            <p className='landing__stat'><strong>{speciesLately}</strong> species reported in {placeName ?? `this ${countyWord(state)}`} in the last two weeks, and the app knows where each one was.</p>
           )}
           <Link className='landing__live-cta' to='/login'>Get told when the birds you want show up here →</Link>
         </section>
@@ -186,7 +188,7 @@ const Landing = () => {
       <section className='landing__steps' aria-label='How it works'>
         <h2 className='fredericka'>Three minutes to set up</h2>
         <ol>
-          <li><strong>Pick your county.</strong> Everything is local: your sightings, your hotspots, your migrants.</li>
+          <li><strong>Pick your county (or area, in Canada).</strong> Everything is local: your sightings, your hotspots, your migrants.</li>
           <li><strong>Star the birds you want.</strong> Or let the notable list and the arrivals pick for you.</li>
           <li><strong>Go.</strong> Alerts come to your phone; Where to go has the morning planned.</li>
         </ol>

@@ -6,6 +6,7 @@ import { AlertIcon, ChevronIcon, CompassIcon, MapIcon, MigrationIcon, StarIcon }
 import { LoadingState } from '../Loading/Loading'
 import { useArrivalsQuery, useCurrentUser, useNotableQuery, useObservationsQuery, useRegionsQuery, useSavedCodes } from '../../hooks/queries'
 import './BirdAlerts.css'
+import { countyWord } from '../../usStates'
 
 type AlertType = 'star' | 'notable' | 'arriving'
 
@@ -31,7 +32,7 @@ const BirdAlerts = () => {
     const notable = useNotableQuery(region, alertType === 'notable')
     const arriving = useArrivalsQuery(region, alertType === 'arriving')
     const regions = useRegionsQuery(user.state)
-    const regionName = regions.data?.find(r => r.code === region)?.name ?? 'your county'
+    const regionName = regions.data?.find(r => r.code === region)?.name ?? `your ${countyWord(user.state)}`
 
     const birdAlerts = useMemo(
       () => (observations.data ?? []).filter(obs => savedCodes.has(obs.speciesCode)),
