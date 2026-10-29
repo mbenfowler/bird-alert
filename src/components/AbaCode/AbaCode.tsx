@@ -25,7 +25,8 @@ const AbaCode = ({ code, explain = false }: { code?: number | null; explain?: bo
     return () => document.removeEventListener('pointerdown', close)
   }, [explain])
   if (!code || !WORDS[code]) return null
-  const label = `ABA Code ${code} · ${WORDS[code]}`
+  // "ABA Code 5 ·" never breaks; on a narrow card the words wrap after it instead of widening the card.
+  const label = <><span className='aba-code__code'>ABA Code {code} ·</span> <span>{WORDS[code]}</span></>
   if (!explain) return <span className='aba-code' title={`ABA Checklist Code ${code}: ${MEANS[code]}`}>{label}</span>
   return (
     <details className='aba-code-note' ref={ref}>

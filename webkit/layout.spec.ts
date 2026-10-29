@@ -19,6 +19,8 @@ const expectNoOverflow = async (page: Page, ignore: string[] = []) => {
 }
 
 const SIZES = [
+  // The narrowest phones still in use (iPhone SE 1st generation, iPhones set to Display Zoom).
+  { name: 'small phone portrait', width: 320, height: 568 },
   { name: 'iPhone SE portrait', width: 375, height: 667 },
   { name: 'iPhone 15 Pro Max portrait', width: 430, height: 932 },
   { name: 'iPhone 14 landscape', width: 844, height: 390 }
@@ -28,6 +30,13 @@ for (const size of SIZES) {
   test.describe(size.name, () => {
     test.use({ viewport: { width: size.width, height: size.height } })
     test.beforeEach(async ({ page }) => { await stubApi(page) })
+
+    test('splash page, logged out, with ABA code chips', async ({ page }) => {
+      await stubApi(page, { loggedIn: false })
+      await page.goto('/')
+      await expect(page.locator('.landing__bird .aba-code').first()).toBeVisible()
+      await expectNoOverflow(page)
+    })
 
     test('home', async ({ page }) => {
       await page.goto('/')
