@@ -11,6 +11,7 @@ import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
 import { useBirdsQuery, useCurrentUser, useNearbyPublicQuery, useRegionsQuery, useSavedCodes, useSeenCodes, useSeasonalityQuery, useSavedRouteQuery, useSpeciesObservationsQuery, useWhereToFindQuery } from '../../hooks/queries'
 import { focusFor } from '../../mapFocus'
+import { unitFor } from '../../distance'
 import { countyLabel, useLinkRegion } from '../../linkRegion'
 import { useToggleSavedMutation, useToggleSeenMutation } from '../../hooks/mutations'
 import { shareThing } from '../../share'
@@ -65,6 +66,7 @@ const evidence = (place: Place) => {
 const Sighting = () => {
   const { code = '', subId = '' } = useParams<{ code: string; subId: string }>()
   const user = useCurrentUser()
+  const distanceUnit = unitFor(user.state)
   // An alert or link for another county opens on that county.
   const { region, state, own, query } = useLinkRegion(user)
   const navigate = useNavigate()
@@ -102,8 +104,8 @@ const Sighting = () => {
   const nearbyPlace = useMemo(() => (where.data?.places ?? []).find(p => p.locId === openNearby) ?? null, [where.data, openNearby])
   const nearby = useNearbyPublicQuery(nearbyPlace?.lat ?? null, nearbyPlace?.lng ?? null, Boolean(nearbyPlace))
   const focus = useMemo(() => nearbyPlace && nearbyPlace.lat !== null && nearbyPlace.lng !== null && nearby.data
-    ? { ...focusFor({ lat: nearbyPlace.lat, lng: nearbyPlace.lng, label: nearbyPlace.locName ?? nearbyPlace.locId }, nearby.data), activeId: activeNearby, onTargetClick: (id: string) => setActiveNearby(current => current === id ? null : id) }
-    : null, [nearbyPlace, nearby.data, activeNearby])
+    ? { ...focusFor({ lat: nearbyPlace.lat, lng: nearbyPlace.lng, label: nearbyPlace.locName ?? nearbyPlace.locId }, nearby.data, distanceUnit), activeId: activeNearby, onTargetClick: (id: string) => setActiveNearby(current => current === id ? null : id) }
+    : null, [nearbyPlace, nearby.data, activeNearby, distanceUnit])
   const closeNearby = () => { setOpenNearby(null); setActiveNearby(null) }
 
   // The frame is docked once the page has scrolled it up under the bar. Until then the list does

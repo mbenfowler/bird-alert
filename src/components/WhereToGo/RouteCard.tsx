@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import PlaceSearch, { type Suggestion } from '../PlaceSearch/PlaceSearch'
 import { ChevronIcon, CloseIcon, DragIcon, LocateIcon } from '../Icons/Icons'
+import { longDistance, shortDistance, useDistanceUnit, type DistanceUnit } from '../../distance'
 import { MAX_ROUTE_STOPS, move, roadKm, samePlace, shortestOrder, type PlanPoint } from '../../routePlan'
 import type { GoPlace } from '../../types'
 
@@ -37,7 +38,7 @@ interface RouteCardProps {
 }
 
 const birdsWord = (n: number) => `${n % 1 === 0 ? n : n.toFixed(1)} ${n === 1 ? 'bird' : 'birds'}`
-const legText = (leg: Leg) => leg ? `↓ ${leg.minutes} min drive · ${leg.miles} mi` : '↓ drive'
+const legText = (leg: Leg, unit: DistanceUnit) => leg ? `↓ ${leg.minutes} min drive · ${shortDistance(leg.miles, unit)}` : '↓ drive'
 
 /**
  * The morning route: suggested from the watch list, or the person's own. Editing adds stops from
@@ -47,6 +48,7 @@ const legText = (leg: Leg) => leg ? `↓ ${leg.minutes} min drive · ${leg.miles
 const RouteCard = (props: RouteCardProps) => {
   const { state, places, speciesCount, lifers = false, stops, start, preview = null, arriving, drive, covers, url, custom, saveFailed = false, editing, showRoute } = props
   const { onEditing, onStops, onStart, onReset, onStopClick, onToggleRoute, onShare } = props
+  const unit = useDistanceUnit()
   const byId = new Map(places.map(p => [p.locId, p]))
   const [settingStart, setSettingStart] = useState(false)
   const [locating, setLocating] = useState<'idle' | 'busy' | 'failed'>('idle')
@@ -143,7 +145,7 @@ const RouteCard = (props: RouteCardProps) => {
         <ol className='go__stops' ref={listRef}>
           {stops.map((stop, i) => {
             const place = stop.locId ? byId.get(stop.locId) : undefined
-            const leg = i > 0 || start ? <span className='go__leg'>{legText(arriving[i] ?? null)}</span> : null
+            const leg = i > 0 || start ? <span className='go__leg'>{legText(arriving[i] ?? null, unit)}</span> : null
             return (
               <li key={stop.locId ?? `${stop.lat},${stop.lng}`} className={`go__stop ${dragging === i ? 'is-dragging' : ''}`}>
                 {leg}
@@ -174,7 +176,7 @@ const RouteCard = (props: RouteCardProps) => {
           })}
           {preview && (
             <li className='go__stop is-preview' aria-live='polite'>
-              {(stops.length > 0 || start) && <span className='go__leg'>↓ about {Math.round(roadKm(stops[stops.length - 1] ?? start!, preview) / 1.609 * 10) / 10} mi</span>}
+              {(stops.length > 0 || start) && <span className='go__leg'>↓ about {shortDistance(Math.round(roadKm(stops[stops.length - 1] ?? start!, preview) / 1.609344 * 10) / 10, unit)}</span>}
               <div className='go__stop-row'>
                 <span className='go__stop-main'>
                   <span className='go__stop-n'>{stops.length + 1}</span>
@@ -189,7 +191,7 @@ const RouteCard = (props: RouteCardProps) => {
       {stops.length > 0 && (
         <p className='go__covers'>
           Together these cover about {lifers ? `${covers % 1 === 0 ? covers : covers.toFixed(1)} of the ${speciesCount} possible ${speciesCount === 1 ? 'lifer' : 'lifers'}` : `${birdsWord(covers)} of your ${speciesCount}`}.
-          {drive ? ` ${drive.minutes} minutes of driving, ${drive.miles} miles.` : ''}
+          {drive ? ` ${drive.minutes} minutes of driving, ${longDistance(drive.miles, unit)}.` : ''}
           {firstBest ? ` Start at ${stops[0].name}, best ${firstBest}.` : ''}
           {unscored ? ' Stops from outside your list’s places aren’t counted.' : ''}
         </p>

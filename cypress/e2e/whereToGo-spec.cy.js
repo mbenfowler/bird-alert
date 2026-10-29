@@ -1,4 +1,4 @@
-import { login } from '../support/login'
+import { login, TEST_USER } from '../support/login'
 
 describe('Where to go', () => {
   beforeEach(() => {
@@ -204,5 +204,13 @@ describe('Where to go', () => {
     cy.wait('@emptyGo')
     cy.get('.go__empty').should('contain', 'still gathering').and('contain', 'within an hour or two')
     cy.get('.go__nomap').should('have.text', 'No places to show yet.')
+  })
+
+  it('gives a Canadian the distances in kilometres', () => {
+    cy.intercept('GET', '**/api/auth/me', { statusCode: 200, body: { ...TEST_USER, state: 'ON' } })
+    cy.visit('http://localhost:3000/go')
+    cy.wait('@whereToGo')
+    cy.get('.go__stops li').eq(1).find('.go__leg').should('have.text', '↓ 9 min drive · 5 km')
+    cy.get('.go__covers').should('contain', '9 minutes of driving, 5 kilometres')
   })
 })
