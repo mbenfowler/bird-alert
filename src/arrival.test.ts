@@ -14,3 +14,18 @@ describe('arrivalFor', () => {
     expect(arrivalFor('https://bird-alert.vercel.app/reset/abc123token', 'not a url', 1)).toEqual({ landing: 'other', at: 1 })
   })
 })
+
+describe('arrival', () => {
+  it('still has this visit\'s note when the browser keeps nothing in storage (Facebook\'s in-app browser)', async () => {
+    const { noteArrival, arrival } = await import('./arrival')
+    const original = Object.getOwnPropertyDescriptor(window, 'localStorage')!
+    Object.defineProperty(window, 'localStorage', { configurable: true, get: () => { throw new Error('blocked') } })
+    try {
+      window.history.replaceState(null, '', '/?utm_source=fb-ebird')
+      noteArrival()
+      expect(arrival()).toMatchObject({ landing: 'home', utm: 'fb-ebird' })
+    } finally {
+      Object.defineProperty(window, 'localStorage', original)
+    }
+  })
+})
