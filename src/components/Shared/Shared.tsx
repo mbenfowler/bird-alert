@@ -9,6 +9,7 @@ import { formatObsDt } from '../../format'
 import StillThere from '../StillThere/StillThere'
 import AbaCode from '../AbaCode/AbaCode'
 import type { SharedRoute, SharedSighting } from '../../types'
+import { longDistance, shortDistance, useDistanceUnit } from '../../distance'
 import './Shared.css'
 
 /** The invitation under a shared page, for someone who doesn't have the app yet. */
@@ -25,6 +26,7 @@ const Invite = ({ what }: { what: string }) => {
 
 const RouteView = ({ share }: { share: SharedRoute }) => {
   const stops = share.stops
+  const unit = useDistanceUnit()
   const path = share.drive?.geometry?.length ? share.drive.geometry : stops.map(s => [s.lat, s.lng] as [number, number])
   const points = useMemo(() => stops.map((s, i) => ({ id: `stop-${i}`, lat: s.lat, lng: s.lng, title: `${i + 1}. ${s.name}`, subtitle: s.detail ?? undefined })), [stops])
   const url = mapsUrl(stops.map(s => ({ locId: s.locId, name: s.name, lat: s.lat, lng: s.lng })))
@@ -33,13 +35,13 @@ const RouteView = ({ share }: { share: SharedRoute }) => {
       <p className='shared__kicker'>A shared birding route</p>
       <h1 className='fredericka shared__title'>{share.title ?? `A morning route${share.regionName ? ` in ${share.regionName}` : ''}`}</h1>
       <p className='shared__lede'>
-        {stops.length} {stops.length === 1 ? 'stop' : 'stops'}{share.drive?.minutes ? ` · ${share.drive.minutes} minutes of driving, ${share.drive.miles} miles` : ''}.{share.covers ? ` ${share.covers}` : ''}
+        {stops.length} {stops.length === 1 ? 'stop' : 'stops'}{share.drive?.minutes ? ` · ${share.drive.minutes} minutes of driving, ${longDistance(share.drive.miles, unit)}` : ''}.{share.covers ? ` ${share.covers}` : ''}
       </p>
       <div className='shared__grid'>
         <ol className='shared__stops'>
           {stops.map((s, i) => (
             <li key={`${s.lat},${s.lng}`}>
-              {i > 0 && <span className='shared__leg'>↓ {share.drive?.legs?.[i - 1] ? `${share.drive.legs[i - 1]!.minutes} min drive · ${share.drive.legs[i - 1]!.miles} mi` : 'drive'}</span>}
+              {i > 0 && <span className='shared__leg'>↓ {share.drive?.legs?.[i - 1] ? `${share.drive.legs[i - 1]!.minutes} min drive · ${shortDistance(share.drive.legs[i - 1]!.miles, unit)}` : 'drive'}</span>}
               <div className='shared__stop'>
                 <span className='shared__n'>{i + 1}</span>
                 <span>

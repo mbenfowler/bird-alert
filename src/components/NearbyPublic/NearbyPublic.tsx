@@ -3,6 +3,7 @@ import { CompassIcon } from '../Icons/Icons'
 import { LoadingState } from '../Loading/Loading'
 import type { NearbyPublic as NearbyData, NearbyHotspot, NearbyPark } from '../../types'
 import type { PlanPoint } from '../../routePlan'
+import { shortDistance, unitWord, useDistanceUnit, type DistanceUnit } from '../../distance'
 import './NearbyPublic.css'
 
 const mapsHref = (lat: number, lng: number, name: string) => {
@@ -17,8 +18,8 @@ const lastBirded = (iso: string | null) => {
 }
 
 /** "9 min drive · 4.8 mi", or the straight-line distance when the road could not be had. */
-const reach = (t: { miles: number; drive?: { minutes: number; miles: number } | null }) =>
-  t.drive ? `${t.drive.minutes} min drive · ${t.drive.miles} mi` : `${t.miles} mi as the crow flies`
+const reach = (t: { miles: number; drive?: { minutes: number; miles: number } | null }, unit: DistanceUnit) =>
+  t.drive ? `${t.drive.minutes} min drive · ${shortDistance(t.drive.miles, unit)}` : `${shortDistance(t.miles, unit)} as the crow flies`
 
 interface NearbyPublicProps {
   placeName: string
@@ -47,6 +48,7 @@ interface NearbyPublicProps {
  * The page owns the open state so it can focus the map on the same places.
  */
 const NearbyPublic = ({ placeName, open, onOpen, data, isPending, isError, activeId = null, onPick, onClose, route }: NearbyPublicProps) => {
+  const unit = useDistanceUnit()
   if (!open) {
     return (
       <div className='nearby'>
@@ -83,7 +85,7 @@ const NearbyPublic = ({ placeName, open, onOpen, data, isPending, isError, activ
       </div>
       {isPending ? <LoadingState variant='inline' label='Looking for public land nearby' />
         : isError ? <p className='nearby__note'>Could not look up public land near {placeName} right now.</p>
-        : !hotspots.length && !parks.length ? <p className='nearby__note'>No public land within a few miles of {placeName} is on file.</p>
+        : !hotspots.length && !parks.length ? <p className='nearby__note'>No public land within a few {unitWord(unit)} of {placeName} is on file.</p>
         : (
           <ul className='nearby__list' aria-label={`Public land near ${placeName}`}>
             {hotspots.map((h, i) => {
@@ -93,7 +95,7 @@ const NearbyPublic = ({ placeName, open, onOpen, data, isPending, isError, activ
                 <button type='button' className='nearby__n' aria-pressed={activeId === h.locId} aria-label={`Show the road to ${h.name} on the map`} onClick={() => onPick?.(h.locId)}>{i + 1}</button>
                 <a href={mapsHref(h.lat, h.lng, h.name)} target='_blank' rel='noreferrer'>
                   <strong>{h.name.replace(/^Lake Lanier--/, '')}</strong>
-                  <span className='nearby__reach'>{reach(h)}</span>
+                  <span className='nearby__reach'>{reach(h, unit)}</span>
                   <span>{h.checklists ?? 0} {h.checklists === 1 ? 'checklist' : 'checklists'} all time{h.species ? `, ${h.species} species` : ''} · {lastBirded(h.latest)}</span>
                   {h.lightlyBirded && <em>lightly birded, a sneaky pick</em>}
                 </a>
@@ -108,7 +110,7 @@ const NearbyPublic = ({ placeName, open, onOpen, data, isPending, isError, activ
                 <button type='button' className='nearby__n' aria-pressed={activeId === `${p.name}-${p.lat}`} aria-label={`Show the road to ${p.name} on the map`} onClick={() => onPick?.(`${p.name}-${p.lat}`)}>{hotspots.length + i + 1}</button>
                 <a href={mapsHref(p.lat, p.lng, p.name)} target='_blank' rel='noreferrer'>
                   <strong>{p.name}</strong>
-                  <span className='nearby__reach'>{reach(p)}</span>
+                  <span className='nearby__reach'>{reach(p, unit)}</span>
                   <span>not an eBird hotspot</span>
                   <em>unlisted, nobody is counting here</em>
                 </a>

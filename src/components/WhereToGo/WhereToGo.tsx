@@ -8,6 +8,7 @@ import { errorMessage } from '../../apiCalls'
 import RouteCard from './RouteCard'
 import { useCurrentUser, useDriveQuery, useNearbyPublicQuery, useRegionsQuery, useSavedCodes, useSeenCodes, useSpeciesListQuery, useWhereToGoQuery } from '../../hooks/queries'
 import { focusFor } from '../../mapFocus'
+import { unitFor } from '../../distance'
 import { chanceColour } from '../../chance'
 import { MAX_ROUTE_STOPS, coverage, samePlace, mapsUrl, type PlanPoint } from '../../routePlan'
 import { useRoutePlan } from '../../hooks/useRoutePlan'
@@ -29,6 +30,7 @@ const birdsWord = (n: number) => `${n % 1 === 0 ? n : n.toFixed(1)} ${n === 1 ? 
  */
 const WhereToGo = () => {
   const user = useCurrentUser()
+  const distanceUnit = unitFor(user.state)
   const region = user.location
   const savedCodes = useSavedCodes()
   // Only the watch-list birds that occur in this county are worth asking about; a long list saved
@@ -82,8 +84,8 @@ const WhereToGo = () => {
   const nearbyPlace = useMemo(() => places.find(p => p.locId === openNearby) ?? null, [places, openNearby])
   const nearby = useNearbyPublicQuery(nearbyPlace?.lat ?? null, nearbyPlace?.lng ?? null, Boolean(nearbyPlace))
   const focus = useMemo(() => nearbyPlace && nearbyPlace.lat !== null && nearbyPlace.lng !== null && nearby.data
-    ? { ...focusFor({ lat: nearbyPlace.lat, lng: nearbyPlace.lng, label: nearbyPlace.locName ?? nearbyPlace.locId }, nearby.data), activeId: activeNearby, onTargetClick: (id: string) => setActiveNearby(current => current === id ? null : id) }
-    : null, [nearbyPlace, nearby.data, activeNearby])
+    ? { ...focusFor({ lat: nearbyPlace.lat, lng: nearbyPlace.lng, label: nearbyPlace.locName ?? nearbyPlace.locId }, nearby.data, distanceUnit), activeId: activeNearby, onTargetClick: (id: string) => setActiveNearby(current => current === id ? null : id) }
+    : null, [nearbyPlace, nearby.data, activeNearby, distanceUnit])
   const closeNearby = () => { setOpenNearby(null); setActiveNearby(null) }
 
   // Docking, as on the species page: the list scrolls by itself only once the frame is under the bar.
@@ -222,7 +224,7 @@ const WhereToGo = () => {
             {!editing && <>
             <h2 className='fredericka go__subhead'>Best places for your birds</h2>
             {!places.length && <p className='list-note go__empty'>{gathering
-              ? `We’re still gathering ${regionName}’s checklists. A newly chosen ${countyWord(user.state)} fills in within an hour or two, and the chances sharpen over the next few days as more checklists come in.`
+              ? `We’re still gathering ${regionName}’s checklists. A newly chosen ${countyWord(user.state)} fills in within a few minutes, and the chances sharpen over the next few days as more checklists come in.`
               : `None of your birds have been reported in ${regionName} lately. Add a few more birds to widen the search.`}</p>}
             <ol className='go__places'>
               {places.map(place => (
