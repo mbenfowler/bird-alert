@@ -10,6 +10,7 @@ import type { PendingPush } from '../../types'
 const APP_BUILD = '2026-10-22.9'
 import { toast, ToastContainer } from 'react-toastify'
 import InstallNudge from '../InstallNudge/InstallNudge'
+import ConfirmNudge from '../ConfirmNudge/ConfirmNudge'
 import { claimThisDevice } from '../../hooks/usePushNotifications'
 import { soundTheAlarm } from '../../alertMode'
 import { useSessionQuery } from '../../hooks/queries'
@@ -170,6 +171,7 @@ const App = () => {
     <>
       <Nav />
       <main className="App">
+        <ConfirmNudge />
         <RouteError resetKey={pathname}>
         <Suspense fallback={<LoadingState />}>
         <Routes>
