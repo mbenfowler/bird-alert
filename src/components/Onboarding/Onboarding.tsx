@@ -5,7 +5,8 @@ import { queryKeys, useArrivalsQuery, useBirdsQuery, useCurrentUser, useNotableT
 import { useImportLifeListMutation, usePatchUserMutation } from '../../hooks/mutations'
 import { usePushNotifications } from '../../hooks/usePushNotifications'
 import { useQueryClient } from '@tanstack/react-query'
-import { US_STATES } from '../../usStates'
+import { countyWord } from '../../usStates'
+import StateOptions from '../StateOptions/StateOptions'
 import type { UserPatch } from '../../types'
 import { isIOS, isStandalone } from '../../install'
 import './Onboarding.css'
@@ -111,10 +112,10 @@ const Onboarding = () => {
             <h1 className='fredericka onboard__title'>Where do you bird?</h1>
             <div className='onboard__pick'>
               <select className='select' aria-label='State' value={pickState} onChange={(e) => { setPickState(e.target.value); setPickCounty('') }}>
-                {US_STATES.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
+                <StateOptions />
               </select>
-              <select className='select' aria-label='County' value={pickCounty} onChange={(e) => setPickCounty(e.target.value)}>
-                <option value=''>County</option>
+              <select className='select' aria-label={countyWord(pickState) === 'area' ? 'Area' : 'County'} value={pickCounty} onChange={(e) => setPickCounty(e.target.value)}>
+                <option value=''>{countyWord(pickState) === 'area' ? 'Area' : 'County'}</option>
                 {(regions.data ?? []).map(r => <option key={r.code} value={r.code}>{r.name}</option>)}
               </select>
             </div>

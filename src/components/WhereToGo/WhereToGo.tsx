@@ -15,6 +15,7 @@ import { shareThing } from '../../share'
 import type { GoPlace } from '../../types'
 import AccuracyBadge from '../AccuracyBadge/AccuracyBadge'
 import './WhereToGo.css'
+import { countyWord } from '../../usStates'
 
 const LIFER_MODE_KEY = 'bird-alert:go-lifers'
 const readLiferMode = () => { try { return localStorage.getItem(LIFER_MODE_KEY) === '1' } catch { return false } }
@@ -48,7 +49,7 @@ const WhereToGo = () => {
   const { custom, setCustom, start, setStart, saveFailed } = useRoutePlan(region)
   const go = useWhereToGoQuery(region, codes, start)
   const regions = useRegionsQuery(user.state)
-  const regionName = regions.data?.find(r => r.code === region)?.name ?? 'your county'
+  const regionName = regions.data?.find(r => r.code === region)?.name ?? `your ${countyWord(user.state)}`
   const [selected, setSelected] = useState<string | null>(null)
   // One private place at a time can open its public lands; the map focuses on them meanwhile.
   const [openNearby, setOpenNearby] = useState<string | null>(null)

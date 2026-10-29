@@ -4,6 +4,7 @@ import { useDebouncedValue } from '../../hooks/useDebouncedValue'
 import { usePlaceSearchQuery, useRegionsQuery } from '../../hooks/queries'
 import type { PlanPoint } from '../../routePlan'
 import './PlaceSearch.css'
+import { countyName } from '../../usStates'
 
 export interface Suggestion { point: PlanPoint; detail: string }
 
@@ -67,7 +68,7 @@ const PlaceSearch = ({ state, label, placeholder, onPick, suggestions = [], sugg
               <ul className='place-search__results'>
                 {hotspots.map(h => {
                   const where = county(h.county)
-                  const detail = [where && `${where} County`, h.species !== null && `${h.species} species all time`].filter(Boolean).join(' · ')
+                  const detail = [where && countyName(where, state), h.species !== null && `${h.species} species all time`].filter(Boolean).join(' · ')
                   return (
                     <li key={h.locId}>
                       <button type='button' onClick={() => pick({ locId: h.locId, name: h.name, lat: h.lat, lng: h.lng, note: detail || null })}>

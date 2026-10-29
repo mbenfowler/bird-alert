@@ -5,7 +5,8 @@ import { getUserExists, login, signup, requestPasswordReset, errorMessage } from
 import { useRegionsQuery, useSessionQuery } from '../../hooks/queries'
 import { useSetSession } from '../../hooks/mutations'
 import { addPasskey, cancelPasskeyAutofill, passkeysSupported, signInWithPasskey, unlockName, wasCancelled } from '../../passkeys'
-import { US_STATES } from '../../usStates'
+import { countyName as fullCountyName, countyWord, stateName as fullStateName, stateOfRegion } from '../../usStates'
+import StateOptions from '../StateOptions/StateOptions'
 import type { User } from '../../types'
 import './Login.css'
 
@@ -14,7 +15,7 @@ const OFFER_DISMISSED_KEY = 'bird-alert:passkey-offer-dismissed'
 const LANDING_REGION_KEY = 'bird-alert:landing-region'
 
 const readLandingCounty = () => {
-  try { const v = localStorage.getItem(LANDING_REGION_KEY) ?? ''; return /^US-[A-Z]{2}-[A-Z0-9]{1,5}$/.test(v) ? v : '' } catch { return '' }
+  try { const v = localStorage.getItem(LANDING_REGION_KEY) ?? ''; return stateOfRegion(v) ? v : '' } catch { return '' }
 }
 const offerDismissed = () => { try { return localStorage.getItem(OFFER_DISMISSED_KEY) === '1' } catch { return false } }
 
@@ -43,11 +44,11 @@ const Login = () => {
   // The county from the splash page comes along to a new account; it can be changed here.
   const [county, setCounty] = useState(readLandingCounty)
   const [changingCounty, setChangingCounty] = useState(false)
-  const countyState = county ? county.split('-')[1] : ''
+  const countyState = (county && stateOfRegion(county)) || ''
   const [pickState, setPickState] = useState(countyState || 'GA')
   const regions = useRegionsQuery(changingCounty ? pickState : countyState)
   const countyName = regions.data?.find(r => r.code === county)?.name
-  const stateName = US_STATES.find(([code]) => code === countyState)?.[1]
+  const stateName = fullStateName(countyState)
 
   // Already logged in (and not mid-offer)? Nothing to do here.
   useEffect(() => { if (user && !offer) navigate('/', { replace: true }) }, [user, offer, navigate])
@@ -106,7 +107,7 @@ const Login = () => {
     if (!exists && password.length < PASSWORD_MIN_LENGTH) { setError(`Passwords need at least ${PASSWORD_MIN_LENGTH} characters`); return }
     setIsBusy(true)
     try {
-      const place = !exists && county ? { state: county.split('-')[1], location: county } : null
+      const place = !exists && county ? { state: countyState, location: county } : null
       finish(exists ? await login(address, password) : await signup(address, password, place))
     } catch (err) { setError(errorMessage(err)) } finally { setIsBusy(false) }
   }
@@ -177,14 +178,14 @@ const Login = () => {
           </div>
 
           {step === 'signup' && county && !changingCounty && (
-            <p className='login-county'>Your county: <strong>{countyName ? `${countyName} County` : county}{stateName ? `, ${stateName}` : ''}</strong> <button type='button' className='login-link' onClick={() => setChangingCounty(true)}>change</button></p>
+            <p className='login-county'>Your {countyWord(countyState)}: <strong>{countyName ? fullCountyName(countyName, countyState) : county}{stateName ? `, ${stateName}` : ''}</strong> <button type='button' className='login-link' onClick={() => setChangingCounty(true)}>change</button></p>
           )}
           {step === 'signup' && changingCounty && (
             <div className='login-county-pick'>
               <select className='select' aria-label='State' value={pickState} onChange={(e) => { setPickState(e.target.value); setCounty('') }}>
-                {US_STATES.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
+                <StateOptions />
               </select>
-              <select className='select' aria-label='County' value={county} onChange={(e) => setCounty(e.target.value)}>
+              <select className='select' aria-label={countyWord(pickState) === 'area' ? 'Area' : 'County'} value={county} onChange={(e) => setCounty(e.target.value)}>
                 <option value=''>Choose later</option>
                 {(regions.data ?? []).map(r => <option key={r.code} value={r.code}>{r.name}</option>)}
               </select>

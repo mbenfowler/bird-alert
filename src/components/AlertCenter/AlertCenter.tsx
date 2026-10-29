@@ -8,6 +8,7 @@ import { LoadingState } from '../Loading/Loading'
 import type { EmailPreference, EmailPreviewKind, EmailPreviewResult, PushPreference } from '../../types'
 import './AlertCenter.css'
 import AlertModeSettings from '../AlertModeSettings/AlertModeSettings'
+import { countyWord } from '../../usStates'
 
 const PUSH_KINDS: { field: PushPreference; label: string; hint: string }[] = [
   { field: 'push_watchlist_enabled', label: 'Watch list sightings', hint: 'One notification an hour listing every bird of yours reported since the last check.' },
@@ -21,7 +22,7 @@ const MIN_LIFE_LIST = 10
 const EMAIL_PREFERENCES: { field: EmailPreference; label: string; hint: string; preview: EmailPreviewKind; nothing: string }[] = [
   { field: 'alert_digest_email_enabled', label: 'Daily email digest', hint: 'One email a morning when a bird on your watch list was seen nearby.', preview: 'watchlist', nothing: 'none of your watch-list birds were reported nearby in the last day.' },
   { field: 'rare_sightings_email_enabled', label: 'Uncommon sightings email', hint: "eBird's notable sightings for your area, once a day.", preview: 'rare', nothing: 'no notable sightings nearby in the last day.' },
-  { field: 'migration_email_enabled', label: 'Weekly migration email', hint: 'Sundays: who arrived this week, who moved on, and who to expect next.', preview: 'migration', nothing: 'no migration news for your county yet.' }
+  { field: 'migration_email_enabled', label: 'Weekly migration email', hint: 'Sundays: who arrived this week, who moved on, and who to expect next.', preview: 'migration', nothing: 'no migration news for your area yet.' }
 ]
 
 const pushHint: Record<string, string> = {
@@ -102,7 +103,7 @@ const AlertCenter = () => {
         render: ({ data }: { data: EmailPreviewResult }) => data.sent ? `Sent to ${user.email}. Check your inbox.`
           : data.reason === 'nothing' ? `Nothing to send right now: ${nothing}`
           : data.reason === 'unconfirmed' ? 'Confirm your email address first; the confirmation link is in your inbox.'
-          : 'Set your county in settings first.',
+          : `Set your ${countyWord(user.state)} in settings first.`,
         position: 'bottom-center'
       },
       error: { render: ({ data }) => errorMessage(data), position: 'bottom-center' }
