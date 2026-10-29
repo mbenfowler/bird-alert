@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react'
+import { useSessionQuery } from '../../hooks/queries'
+import { countryOf } from '../../usStates'
 import './AbaCode.css'
 
 // Plain words, not the ABA's own labels (Rare, Casual, Accidental): read cold, "casual" sounds
@@ -18,13 +20,16 @@ const MEANS: Record<number, string> = {
  */
 const AbaCode = ({ code, explain = false }: { code?: number | null; explain?: boolean }) => {
   const ref = useRef<HTMLDetailsElement>(null)
+  // The ABA Area is the US and Canada; to someone birding in Mexico its codes would mislead.
+  const state = useSessionQuery().data?.state
+  const inMexico = Boolean(state) && countryOf(state!) === 'MX'
   useEffect(() => {
     if (!explain) return
     const close = (e: PointerEvent) => { if (ref.current?.open && !ref.current.contains(e.target as Node)) ref.current.open = false }
     document.addEventListener('pointerdown', close)
     return () => document.removeEventListener('pointerdown', close)
   }, [explain])
-  if (!code || !WORDS[code]) return null
+  if (inMexico || !code || !WORDS[code]) return null
   // "ABA Code 5 ·" never breaks; on a narrow card the words wrap after it instead of widening the card.
   const label = <><span className='aba-code__code'>ABA Code {code} ·</span> <span>{WORDS[code]}</span></>
   if (!explain) return <span className='aba-code' title={`ABA Checklist Code ${code}: ${MEANS[code]}`}>{label}</span>

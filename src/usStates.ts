@@ -17,32 +17,50 @@ export const CA_PROVINCES: [string, string][] = [
   ['QC', 'Quebec'], ['SK', 'Saskatchewan'], ['YT', 'Yukon']
 ]
 
+/** Mexico's states, as eBird codes them (MX-XXX, three letters, so never a US or Canadian code). Mexico City is DIF. */
+export const MX_STATES: [string, string][] = [
+  ['AGU', 'Aguascalientes'], ['BCN', 'Baja California'], ['BCS', 'Baja California Sur'], ['CAM', 'Campeche'], ['CHP', 'Chiapas'],
+  ['CHH', 'Chihuahua'], ['COA', 'Coahuila'], ['COL', 'Colima'], ['DUR', 'Durango'], ['GUA', 'Guanajuato'], ['GRO', 'Guerrero'],
+  ['HID', 'Hidalgo'], ['JAL', 'Jalisco'], ['DIF', 'Mexico City'], ['MIC', 'Michoacán'], ['MOR', 'Morelos'], ['NAY', 'Nayarit'],
+  ['NLE', 'Nuevo León'], ['OAX', 'Oaxaca'], ['PUE', 'Puebla'], ['QUE', 'Querétaro'], ['ROO', 'Quintana Roo'], ['SLP', 'San Luis Potosí'],
+  ['SIN', 'Sinaloa'], ['SON', 'Sonora'], ['MEX', 'State of Mexico'], ['TAB', 'Tabasco'], ['TAM', 'Tamaulipas'], ['TLA', 'Tlaxcala'],
+  ['VER', 'Veracruz'], ['YUC', 'Yucatán'], ['ZAC', 'Zacatecas']
+]
+
 const PROVINCE_CODES = new Set(CA_PROVINCES.map(([code]) => code))
+const MX_CODES = new Set(MX_STATES.map(([code]) => code))
 
-/** 'CA' for a Canadian province or territory, else 'US'. */
-export const countryOf = (state: string): 'US' | 'CA' => (PROVINCE_CODES.has(state) ? 'CA' : 'US')
+export type Country = 'US' | 'CA' | 'MX'
 
-/** eBird's code for a state or province: 'GA' -> 'US-GA', 'ON' -> 'CA-ON'. */
+/** 'CA' for a Canadian province or territory, 'MX' for a Mexican state, else 'US'. */
+export const countryOf = (state: string): Country => (PROVINCE_CODES.has(state) ? 'CA' : MX_CODES.has(state) ? 'MX' : 'US')
+
+/** eBird's code for a state or province: 'GA' -> 'US-GA', 'ON' -> 'CA-ON', 'JAL' -> 'MX-JAL'. */
 export const subnational1 = (state: string) => `${countryOf(state)}-${state}`
 
-/** "Georgia" or "Ontario". */
-export const stateName = (state: string) => (countryOf(state) === 'CA' ? CA_PROVINCES : US_STATES).find(([code]) => code === state)?.[1]
+/** "Georgia", "Ontario" or "Jalisco". */
+export const stateName = (state: string) => ({ US: US_STATES, CA: CA_PROVINCES, MX: MX_STATES })[countryOf(state)].find(([code]) => code === state)?.[1]
 
-const COUNTY_REGION = /^(?:US-([A-Z]{2})-\d{3}|CA-([A-Z]{2})-[A-Z0-9]{1,5})$/
+const COUNTY_REGION = /^(?:US-([A-Z]{2})-\d{3}|CA-([A-Z]{2})-[A-Z0-9]{1,5}|MX-([A-Z]{3})-\d{3})$/
 
-/** The state or province of a county-level region ('US-GA-139' -> 'GA', 'CA-ON-TO' -> 'ON'), or null. */
+/** The state or province of a county-level region ('US-GA-139' -> 'GA', 'CA-ON-TO' -> 'ON', 'MX-JAL-039' -> 'JAL'), or null. */
 export const stateOfRegion = (region: string): string | null => {
   const m = COUNTY_REGION.exec(region)
   if (!m) return null
   if (m[2]) return PROVINCE_CODES.has(m[2]) ? m[2] : null
+  if (m[3]) return MX_CODES.has(m[3]) ? m[3] : null
   return m[1]!
 }
 
 /**
  * What the app calls a county-level region: a county in the US; in Canada eBird's are census
- * divisions ("Toronto", "Algoma"), which nobody calls counties, so there it's an area.
+ * divisions ("Toronto", "Algoma"), which nobody calls counties, so there it's an area; in Mexico
+ * they are municipalities ("Zapopan"; in Mexico City, its boroughs).
  */
-export const countyWord = (state: string) => (countryOf(state) === 'CA' ? 'area' : 'county')
+export const countyWord = (state: string) => ({ US: 'county', CA: 'area', MX: 'municipality' } as const)[countryOf(state)]
 
-/** "Hall County" in the US; "Toronto" in Canada, where the name stands alone. */
-export const countyName = (name: string, state: string) => (countryOf(state) === 'CA' ? name : `${name} County`)
+/** The same word for a label: "County", "Area" or "Municipality". */
+export const countyLabel = (state: string) => { const w = countyWord(state); return w[0]!.toUpperCase() + w.slice(1) }
+
+/** "Hall County" in the US; "Toronto" or "Zapopan" elsewhere, where the name stands alone. */
+export const countyName = (name: string, state: string) => (countryOf(state) === 'US' ? `${name} County` : name)

@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { longDistance, shortDistance, unitFor } from './distance'
 
 describe('distances', () => {
-  it('uses kilometres for a Canadian province and miles for a US state or no state', () => {
+  it('uses kilometres for a Canadian province or Mexican state and miles for a US state or no state', () => {
     expect(unitFor('ON')).toBe('km')
+    expect(unitFor('JAL')).toBe('km')
     expect(unitFor('GA')).toBe('mi')
     expect(unitFor('')).toBe('mi')
     expect(unitFor(undefined)).toBe('mi')
