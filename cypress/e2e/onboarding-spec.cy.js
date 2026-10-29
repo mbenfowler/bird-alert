@@ -61,4 +61,13 @@ describe('Setup after signing up', () => {
     cy.wait('@patch').its('request.body').should('deep.equal', { onboarded: true })
     cy.url().should('eq', 'http://localhost:3000/')
   })
+
+  it('an area with no recent reports says so instead of loading forever', () => {
+    cy.intercept('GET', '**/api/ebird/notable*', { body: [] })
+    cy.intercept('GET', '**/api/ebird/arriving*', { body: { learning: true, arrivals: [] } })
+    cy.intercept('GET', '**/api/ebird/observations*', { body: [] })
+    cy.visit('http://localhost:3000/welcome')
+    cy.contains('.onboard__lede', 'No recent reports to show yet')
+    cy.contains('Finding birds near you').should('not.exist')
+  })
 })

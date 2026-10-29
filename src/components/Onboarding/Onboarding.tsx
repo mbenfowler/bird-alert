@@ -144,7 +144,7 @@ const Onboarding = () => {
                   )
                 })}
               </ul>
-            ) : <p className='onboard__lede'>{recent.isPending || birds.isPending ? 'Finding birds near you…' : 'No recent reports to show yet. You can star birds from the home page any time.'}</p>}
+            ) : <p className='onboard__lede'>{recent.isPending || (candidates.length > 0 && birds.isPending) ? 'Finding birds near you…' : 'No recent reports to show yet. You can star birds from the home page any time.'}</p>}
             <button type='button' className='pill-button pill-button--primary onboard__next onboard__next--stick' disabled={saving} onClick={() => { void saveBirds() }}>
               {saving ? 'Saving…' : starred.size ? `Next (${starred.size})` : 'Next'}
             </button>
