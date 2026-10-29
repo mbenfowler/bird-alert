@@ -86,3 +86,11 @@
 .alert-sightings__table tbody tr {
     cursor: pointer;
 }
+
+/* The narrowest phones (320px): tighter cells keep the table on screen. */
+@media (max-width: 359px) {
+    .alert-sightings__table th,
+    .alert-sightings__table td {
+        padding: 8px 6px;
+    }
+}
