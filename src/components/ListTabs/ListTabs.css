@@ -32,3 +32,10 @@
     outline: 3px solid var(--focus);
     outline-offset: 2px;
 }
+
+/* The narrowest phones (320px): "Life list (123)" and its neighbour only fit with tighter padding. */
+@media (max-width: 359px) {
+    .list-tabs__tab {
+        padding: 0 10px;
+    }
+}
