@@ -216,6 +216,8 @@ export interface WhereToGo {
   places: GoPlace[]
   /** How each band has held up lately; a band is shown once `enough` predictions are graded. */
   grades?: WhereToFind['grades']
+  /** Opened checklists on file for the area's last two weeks; few means the area was chosen only lately. */
+  onFile?: { checklists: number }
   route: { stops: GoStop[]; covers: number; url: string | null; drive?: Drive | null; origin?: { lat: number; lng: number } | null }
 }
 
