@@ -50,7 +50,10 @@ export const useSessionQuery = () =>
         throw error
       }
     },
-    staleTime: Infinity,
+    // Re-read when the app comes back to the foreground after a while, so a phone that kept the app
+    // open for days picks up a location or alert change made on another device (#53).
+    staleTime: 15 * MINUTE,
+    refetchOnWindowFocus: true,
     retry: false
   })
 
