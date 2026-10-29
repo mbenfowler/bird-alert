@@ -202,7 +202,7 @@ describe('Where to go', () => {
     })
     cy.visit('http://localhost:3000/go')
     cy.wait('@emptyGo')
-    cy.get('.go__empty').should('contain', 'still gathering').and('contain', 'within an hour or two')
+    cy.get('.go__empty').should('contain', 'still gathering').and('contain', 'within a few minutes')
     cy.get('.go__nomap').should('have.text', 'No places to show yet.')
   })
 

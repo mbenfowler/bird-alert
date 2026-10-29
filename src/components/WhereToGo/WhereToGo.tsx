@@ -224,7 +224,7 @@ const WhereToGo = () => {
             {!editing && <>
             <h2 className='fredericka go__subhead'>Best places for your birds</h2>
             {!places.length && <p className='list-note go__empty'>{gathering
-              ? `We’re still gathering ${regionName}’s checklists. A newly chosen ${countyWord(user.state)} fills in within an hour or two, and the chances sharpen over the next few days as more checklists come in.`
+              ? `We’re still gathering ${regionName}’s checklists. A newly chosen ${countyWord(user.state)} fills in within a few minutes, and the chances sharpen over the next few days as more checklists come in.`
               : `None of your birds have been reported in ${regionName} lately. Add a few more birds to widen the search.`}</p>}
             <ol className='go__places'>
               {places.map(place => (
