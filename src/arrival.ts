@@ -25,21 +25,27 @@ export const arrivalFor = (href: string, referrer: string, now = Date.now()): Ar
   return out
 }
 
+// This visit's note, kept in memory too: Facebook's in-app browser on iPhone keeps nothing in
+// storage between landing and signing up, but the page itself lives on, so this still remembers.
+let thisVisit: Arrival | null = null
+
 /** Notes this visit, unless an earlier one in the last 30 days already is. */
 export const noteArrival = () => {
+  thisVisit = arrivalFor(window.location.href, document.referrer)
   try {
     const kept = JSON.parse(localStorage.getItem(KEY) || 'null') as Arrival | null
     if (kept && Date.now() - kept.at < KEEP_MS) return
-    localStorage.setItem(KEY, JSON.stringify(arrivalFor(window.location.href, document.referrer)))
-  } catch { /* storage unavailable: nothing kept */ }
+    localStorage.setItem(KEY, JSON.stringify(thisVisit))
+  } catch { /* storage unavailable: the in-memory note stands in */ }
 }
 
-/** The note, for a signup; null when there is none. */
+/** The note, for a signup: the stored one (an earlier visit counts first), else this visit's; null when there is none. */
 export const arrival = (): Omit<Arrival, 'at'> | null => {
-  try {
-    const kept = JSON.parse(localStorage.getItem(KEY) || 'null') as Arrival | null
-    if (!kept) return null
-    const { at, ...rest } = kept
-    return Date.now() - at < KEEP_MS ? rest : null
-  } catch { return null }
+  let kept: Arrival | null = null
+  try { kept = JSON.parse(localStorage.getItem(KEY) || 'null') as Arrival | null } catch { /* storage unavailable */ }
+  const note = kept && Date.now() - kept.at < KEEP_MS ? kept : thisVisit
+  if (!note) return null
+  const rest: Omit<Arrival, 'at'> & { at?: number } = { ...note }
+  delete rest.at
+  return rest
 }
