@@ -1,6 +1,7 @@
 import { QueryClient } from '@tanstack/react-query'
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister'
 import type { PersistQueryClientOptions } from '@tanstack/react-query-persist-client'
+import { ApiError } from './apiCalls'
 
 declare module '@tanstack/react-query' {
   interface Register {
@@ -13,11 +14,15 @@ export const MINUTE = 60_000
 export const DAY = 24 * 60 * MINUTE
 export const WEEK = 7 * DAY
 
+/** A 503 is eBird throttling us, which clears in well under a minute: keep trying for about 30 seconds. */
+const busy = (error: unknown) => error instanceof ApiError && error.status === 503
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * MINUTE,
-      retry: 1,
+      retry: (failures, error) => failures < (busy(error) ? 3 : 1),
+      retryDelay: (attempt, error) => (busy(error) ? 5000 * (attempt + 1) : Math.min(1000 * 2 ** attempt, 30_000)),
       refetchOnWindowFocus: false
     }
   }
