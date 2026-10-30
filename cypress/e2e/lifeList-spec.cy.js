@@ -10,7 +10,7 @@ describe('Life list', () => {
     cy.get('#seen-snogoo').should('not.be.checked').click()
     cy.wait('@postSeen').its('request.body').should('deep.equal', { speciesCode: 'snogoo' })
     cy.get('#seen-snogoo').should('be.checked')
-    cy.contains('.Toastify', 'Snow Goose added to your life list!').should('exist')
+    cy.contains('.lifer-toast', 'Lifer! Snow Goose').should('exist')
     cy.get('#seen-snogoo').click()
     cy.wait('@deleteSeen').its('request.url').should('include', 'speciesCode=snogoo')
     cy.get('#seen-snogoo').should('not.be.checked')
