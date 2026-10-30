@@ -8,6 +8,8 @@ import { LoadingState } from '../Loading/Loading'
 import type { EmailPreference, EmailPreviewKind, EmailPreviewResult, PushPreference } from '../../types'
 import './AlertCenter.css'
 import AlertModeSettings from '../AlertModeSettings/AlertModeSettings'
+import InstallSteps from '../InstallSteps/InstallSteps'
+import { isIOS, isStandalone } from '../../install'
 import { countyWord } from '../../usStates'
 
 const PUSH_KINDS: { field: PushPreference; label: string; hint: string }[] = [
@@ -123,6 +125,7 @@ const AlertCenter = () => {
             <label htmlFor='push_enabled'>Push notifications on this device</label>
             <p className='notification__hint'>{pushHint[push.state]}</p>
             {push.error && <p className='notification__hint notification__hint--error' role='alert'>{push.error}</p>}
+            {isIOS() && !isStandalone() && <InstallSteps compact />}
           </div>
           <div className='notification__controls'>
             {push.state === 'busy' && <LoadingState variant='inline' label='Updating push notifications' />}
