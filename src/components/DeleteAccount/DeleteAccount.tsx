@@ -3,18 +3,21 @@ import { useNavigate } from 'react-router'
 import { toast } from 'react-toastify'
 import { errorMessage } from '../../apiCalls'
 import { useDeleteAccountMutation } from '../../hooks/mutations'
+import { soundDangerZone } from '../../alertMode'
+import { unlockAudio } from '../../alertSounds'
 import './DeleteAccount.css'
 
 /**
  * At the foot of settings, out of the way: a quiet link that opens a plain explanation and the
- * one button that deletes the account. Nothing goes until that second tap.
+ * one button that deletes the account. Nothing goes until that second tap. Opening it sounds the
+ * app's red alert, so it's plain this is the danger zone.
  */
 const DeleteAccount = () => {
   const [asking, setAsking] = useState(false)
   const remove = useDeleteAccountMutation()
   const navigate = useNavigate()
 
-  if (!asking) return <button type='button' className='delete-account__ask' onClick={() => setAsking(true)}>Delete my account</button>
+  if (!asking) return <button type='button' className='delete-account__ask' onClick={() => { unlockAudio(); soundDangerZone(); setAsking(true) }}>Delete my account</button>
 
   const confirm = () => remove.mutate(undefined, {
     onSuccess: () => { toast.success('Your account has been deleted.', { position: 'bottom-center' }); navigate('/login', { replace: true }) }
