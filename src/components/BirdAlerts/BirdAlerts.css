@@ -254,10 +254,12 @@
    another: staggered, each card had to cross the screen in the moment before the next set off,
    and read as a jump. The spread stops growing after 18 cards. Only transform moves, never
    opacity: iOS cancels a tap that coincides with content becoming visible (it reads it as a hover
-   that revealed something, and sends no click), and a slide doesn't trip it. The row clips the
-   cards on their way in. */
-.is-expanded .alerts-list > a,
-.is-expanded .alerts-list > .alerts-item {
+   that revealed something, and sends no click), and a slide doesn't trip it. What slides is what's
+   inside each card's slot, not the slot: the row snaps to its cards, and a moving slot drags the
+   row's scroll along with it, pinning the first card in place while the rest arrive. The row clips
+   the cards on their way in. */
+.is-expanded .alerts-list > a > *,
+.is-expanded .alerts-list > .alerts-item > * {
   --spread: calc(min(var(--i, 0), 18) * 48px);
   animation: alert-in 1.1s cubic-bezier(0.25, 0.6, 0.3, 1) both;
 }
@@ -341,9 +343,11 @@
   .alerts-count, .is-expanded .alerts-bar::after, .is-collapsed .alerts-bar::after, .alert-new__dot {
     animation: none;
   }
+  .is-expanded .alerts-list > a > *, .is-expanded .alerts-list > .alerts-item > * {
+    animation: none;
+  }
   .is-expanded .alerts-list > a, .is-expanded .alerts-list > .alerts-item {
     animation: alert-fade 0.2s ease both;
-    animation-delay: 0s;
   }
 }
 

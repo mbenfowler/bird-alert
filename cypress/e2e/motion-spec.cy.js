@@ -8,7 +8,8 @@ const notableRow = (base) => Array.from({ length: 9 }, (_, i) => ({
   obsDt: i < 3 ? '2026-10-30 09:00' : '2026-10-27 08:00'
 }))
 
-const slides = ($a) => expect(getComputedStyle($a[0]).animationName).to.eq('alert-in')
+// The card inside each slot slides; the slot itself stays put (see BirdAlerts.css).
+const slides = ($a) => expect(getComputedStyle($a[0].querySelector('.card')).animationName).to.eq('alert-in')
 
 describe('Motion', () => {
   it('alert cards slide in from the right on load, and again when another tab is picked', () => {
@@ -33,11 +34,15 @@ describe('Motion', () => {
     cy.get('.alerts-list > a').should('have.length', 9).each(($a) => slides($a))
     // Frozen at its first frame, the whole row is off the right edge, spaced wider than it sits.
     cy.window().then((win) => {
-      const cards = [...win.document.querySelectorAll('.alerts-list > a')]
+      const list = win.document.querySelector('.alerts-list')
+      const cards = [...list.querySelectorAll('.alerts-list > a .card')]
       const anims = cards.map((card) => card.getAnimations().find((a) => a.animationName === 'alert-in'))
       anims.forEach((a) => { a.pause(); a.currentTime = 0 })
       const lefts = cards.map((card) => card.getBoundingClientRect().left)
       expect(lefts[0]).to.be.greaterThan(win.innerWidth, 'the first card starts off screen too')
+      anims.forEach((a) => { a.currentTime = 400 })
+      expect(list.scrollLeft, 'the row does not scroll after the moving cards').to.eq(0)
+      expect(cards[0].getBoundingClientRect().left).to.be.greaterThan(100, 'mid-way, the first card is still on its way')
       anims.forEach((a) => a.finish())
       const settled = cards.map((card) => card.getBoundingClientRect().left)
       expect(settled[0]).to.be.lessThan(40, 'and it ends where it sits')
