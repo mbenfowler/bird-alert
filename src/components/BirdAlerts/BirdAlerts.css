@@ -247,21 +247,19 @@
   }
 }
 
-/* The row pulls in like a train: when the panel opens or a tab is picked (the row is keyed by tab,
-   so it remounts), every card starts beyond the right edge of the screen, spaced a little wider
-   than it sits, and all of them glide left together, braking smoothly as the gaps close, so even
-   the first card is seen crossing the whole width. They move together rather than one after
-   another: staggered, each card had to cross the screen in the moment before the next set off,
-   and read as a jump. The spread stops growing after 18 cards. Only transform moves, never
-   opacity: iOS cancels a tap that coincides with content becoming visible (it reads it as a hover
-   that revealed something, and sends no click), and a slide doesn't trip it. What slides is what's
-   inside each card's slot, not the slot: the row snaps to its cards, and a moving slot drags the
-   row's scroll along with it, pinning the first card in place while the rest arrive. The row clips
-   the cards on their way in. */
+/* The cards pull in like a train: when the panel opens or a tab is picked (the row is keyed by tab,
+   so it remounts), every card starts beyond the right edge of the screen and glides left to where it
+   sits, each setting off a beat after the one before and braking smoothly, so even the first card is
+   seen crossing the whole width. The stagger stops growing after 18 cards. Only transform moves,
+   never opacity: iOS cancels a tap that coincides with content becoming visible (it reads it as a
+   hover that revealed something, and sends no click), and a slide doesn't trip it. What slides is
+   what's inside each card's slot, not the slot: the row snaps to its cards, and a moving slot drags
+   the row's scroll along with it, pinning the first card in place while the rest arrive. The row
+   clips the cards on their way in. */
 .is-expanded .alerts-list > a > *,
 .is-expanded .alerts-list > .alerts-item > * {
-  --spread: calc(min(var(--i, 0), 18) * 48px);
-  animation: alert-in 1.1s cubic-bezier(0.25, 0.6, 0.3, 1) both;
+  animation: alert-in 0.9s cubic-bezier(0.25, 0.6, 0.3, 1) both;
+  animation-delay: calc(min(var(--i, 0), 18) * 80ms);
 }
 
 .is-collapsed .alerts-list > a,
@@ -271,7 +269,7 @@
 }
 
 @keyframes alert-in {
-  from { transform: translateX(calc(100vw + var(--spread, 0px))); }
+  from { transform: translateX(100vw); }
   to { transform: translateX(0); }
 }
 
@@ -345,6 +343,7 @@
   }
   .is-expanded .alerts-list > a > *, .is-expanded .alerts-list > .alerts-item > * {
     animation: none;
+    animation-delay: 0s;
   }
   .is-expanded .alerts-list > a, .is-expanded .alerts-list > .alerts-item {
     animation: alert-fade 0.2s ease both;

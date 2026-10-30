@@ -32,7 +32,7 @@ describe('Motion', () => {
     cy.get('#notable').click()
     cy.wait('@row')
     cy.get('.alerts-list > a').should('have.length', 9).each(($a) => slides($a))
-    // Frozen at its first frame, the whole row is off the right edge, spaced wider than it sits.
+    // Frozen at its first frame, the whole row is off the right edge.
     cy.window().then((win) => {
       const list = win.document.querySelector('.alerts-list')
       const cards = [...list.querySelectorAll('.alerts-list > a .card')]
@@ -46,8 +46,8 @@ describe('Motion', () => {
       anims.forEach((a) => a.finish())
       const settled = cards.map((card) => card.getBoundingClientRect().left)
       expect(settled[0]).to.be.lessThan(40, 'and it ends where it sits')
-      expect(lefts[1] - lefts[0]).to.be.greaterThan(settled[1] - settled[0], 'the gaps close as the row comes in')
-      expect(anims.every((a) => a.effect.getTiming().delay === 0), 'the whole row moves together').to.eq(true)
+      expect(anims.map((a) => a.effect.getTiming().delay), 'each card sets off a beat after the one before')
+        .to.deep.eq([0, 80, 160, 240, 320, 400, 480, 560, 640])
     })
   })
 
