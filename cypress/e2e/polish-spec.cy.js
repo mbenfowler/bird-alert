@@ -15,11 +15,12 @@ describe('Polish', () => {
         if (n.classList?.contains('pop-burst')) win.__bursts.push(n.className)
       }))).observe(win.document.body, { childList: true })
     })
-    cy.get('#snogoo').click()
+    // Ross's Goose isn't on the fixture's watch list, so this tap stars it.
+    cy.get('#rosgoo').should('not.be.checked').click()
     cy.window().its('__bursts').should('deep.equal', ['pop-burst pop-burst--sparks'])
     // The sparks land and their layer clears itself away, and the star's mark with it.
     cy.get('.pop-burst', { timeout: 4000 }).should('not.exist')
-    cy.get('#snogoo').should('not.have.class', 'is-popping')
+    cy.get('#rosgoo').should('not.have.class', 'is-popping')
   })
 
   it('cards load behind skeletons shaped like them, which give way to the birds', () => {
