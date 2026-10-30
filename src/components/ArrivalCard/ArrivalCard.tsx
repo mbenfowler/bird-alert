@@ -1,5 +1,7 @@
+import type { ChangeEvent } from 'react'
 import { toast } from 'react-toastify'
 import { errorMessage } from '../../apiCalls'
+import { popStar } from '../Pop/pop'
 import { useSavedCodes } from '../../hooks/queries'
 import { useToggleSavedMutation } from '../../hooks/mutations'
 import type { Arrival, Bird } from '../../types'
@@ -20,8 +22,9 @@ const ArrivalCard = ({ arrival }: { arrival: Arrival }) => {
   const isWatched = savedCodes.has(arrival.speciesCode)
   const bird: Bird = { speciesCode: arrival.speciesCode, comName: arrival.comName, sciName: arrival.sciName, birdImg: arrival.birdImg, wikiURL: arrival.wikiURL }
 
-  const watch = () => {
+  const watch = (event: ChangeEvent<HTMLInputElement>) => {
     const save = !isWatched
+    popStar(event.currentTarget, save)
     toggleSaved.mutate({ bird, save }, {
       onSuccess: () => toast.success(save ? 'Bird saved to watch list!' : 'Bird removed from watch list!', { position: 'bottom-center' }),
       onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
