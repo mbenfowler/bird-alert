@@ -21,9 +21,10 @@ describe('Polish: motion', () => {
   })
 
   it('moving to another page fades it in, without reloading it', () => {
-    cy.get('.route-view').should('not.have.attr', 'data-last-transition')
+    // A fresh load starts without a fade; signing in above already moved from /login to home.
     cy.visit('http://localhost:3000/')
     cy.get('.birds-list .card', { timeout: 15000 })
+    cy.get('.route-view').should('not.have.attr', 'data-last-transition')
     cy.get('#settingsText').click({ force: true })
     cy.url().should('include', '/settings')
     cy.get('.route-view').should('have.attr', 'data-last-transition', '/settings')
