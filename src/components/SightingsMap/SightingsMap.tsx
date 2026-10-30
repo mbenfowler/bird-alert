@@ -34,7 +34,9 @@ interface SightingsMapProps {
   /** A route through stops, drawn as one line when the page asks for it. */
   route?: { path: [number, number][]; stops: { lat: number; lng: number; label: string }[]; start?: { lat: number; lng: number; label: string } | null
     /** A place being considered: a ghost stop on the end, reached by a dashed line. Never re-frames the map. */
-    preview?: { lat: number; lng: number; label: string; from: [number, number] } | null } | null
+    preview?: { lat: number; lng: number; label: string; from: [number, number] } | null
+    /** The roads for an edited route are still on their way: keep the line as it was until they come. */
+    settling?: boolean } | null
   /** Fallback centre when there are no points. */
   center?: [number, number]
   height?: number | string
@@ -166,6 +168,143 @@ const DrawPaths = ({ drawKey, paths, markers, markerDelays = [] }: { drawKey: st
   return null
 }
 
+type LatLng = [number, number]
+type Route = NonNullable<SightingsMapProps['route']>
+/** The line last drawn, kept by the map so a route hidden and shown again (or edited) carries on from it. */
+type DrawnRoute = { path: LatLng[]; stops: number }
+
+/** How far a path runs, in degrees: enough to say what share of a route a leg is. */
+const pathLength = (path: LatLng[]) => path.reduce((sum, p, i) => i ? sum + Math.hypot(p[0] - path[i - 1][0], p[1] - path[i - 1][1]) : 0, 0)
+
+/** True when `path` carries on from where `before` ended: a stop added on the end. */
+const extends_ = (path: LatLng[], before: LatLng[]) => before.length >= 2 && path.length > before.length &&
+  before.slice(0, -1).every((p, i) => Math.abs(p[0] - path[i][0]) < 1e-6 && Math.abs(p[1] - path[i][1]) < 1e-6)
+
+/** Watches whether the map is mid-flight, from before anything else asks it to move. */
+const TrackMoves = ({ moving }: { moving: RefObject<boolean> }) => {
+  const map = useMap()
+  useEffect(() => {
+    const on = () => { moving.current = true }
+    const off = () => { moving.current = false }
+    map.on('movestart', on)
+    map.on('moveend', off)
+    return () => { map.off('movestart', on); map.off('moveend', off) }
+  }, [map, moving])
+  return null
+}
+
+// The same icon object every render: a new one makes Leaflet swap the marker's element, losing its pop.
+const stopIcons = new Map<number, L.DivIcon>()
+const stopIcon = (n: number) => {
+  if (!stopIcons.has(n)) stopIcons.set(n, L.divIcon({ className: 'map-stop', html: `<span>${n}</span>`, iconSize: [26, 26], iconAnchor: [13, 13] }))
+  return stopIcons.get(n)!
+}
+const START_ICON = L.divIcon({ className: 'map-stop map-stop--start', html: '<span></span>', iconSize: [22, 22], iconAnchor: [11, 11] })
+
+const FIRST_MS = 1500
+const RETRACE_MS = 900
+const LEG_MS = 700
+
+/**
+ * Draws a shown route along its roads, each stop popping up as the line reaches it. It starts only
+ * once the map is on screen (on a phone the button that asks for it sits above the map) and has
+ * stopped flying to frame the route. Edits redraw gracefully: a stop added on the end keeps the line
+ * that was there and runs it on to the new stop; any other change retraces the line, quicker than the
+ * first time. While the page is still fetching the roads of an edited route (`settling`) the old line
+ * stays as it was, so the straight-line stand-in never flashes up. Reduced motion: drawn at once.
+ */
+const RouteDraw = ({ route, moving, drawnRef }: { route: Route; moving: RefObject<boolean>; drawnRef: RefObject<DrawnRoute | null> }) => {
+  const map = useMap()
+  const pathKey = route.path.map(p => p.join(',')).join('|')
+  const stopsKey = route.stops.map(s => `${s.lat},${s.lng}`).join('|')
+  const settling = Boolean(route.settling)
+  useEffect(() => {
+    const box = map.getContainer().closest<HTMLElement>('.sightings-map') ?? map.getContainer()
+    const before = drawnRef.current
+    if (settling) {
+      // Nothing drawn yet: keep the stand-in hidden until the roads come. Otherwise the old line stays.
+      if (!before) box.classList.add('is-route-waiting')
+      return
+    }
+    if (route.path.length < 2) return
+    if (prefersReducedMotion()) {
+      box.classList.remove('is-route-waiting')
+      drawnRef.current = { path: route.path, stops: route.stops.length }
+      box.setAttribute('data-drawn', 'route')
+      return
+    }
+    const mode = !before ? 'first' : extends_(route.path, before.path) ? 'extend' : 'retrace'
+    const total = pathLength(route.path) || 1
+    const from = mode === 'extend' ? Math.min(1, pathLength(before!.path) / total) : 0
+    const ms = mode === 'first' ? FIRST_MS : mode === 'extend' ? LEG_MS : RETRACE_MS
+    const firstNew = mode === 'extend' ? before!.stops : 0
+    const fractions = stopFractions(route.path, route.stops)
+    const lines = () => [...box.querySelectorAll<SVGPathElement>('path.map-route:not(.map-route--preview)')]
+    const stopEls = () => [...box.querySelectorAll<HTMLElement>('.map-stop:not(.map-stop--preview):not(.map-stop--start)')]
+    // Hold the line at what's already been drawn, and the new stops back, until it can run.
+    const hold = () => {
+      // An edit made while the last draw was still running: its pops end here.
+      box.querySelectorAll<HTMLElement>('.map-stop.is-popping').forEach((el) => { el.classList.remove('is-popping'); el.style.animationDelay = '' })
+      lines().forEach((line) => {
+        const length = line.getTotalLength?.() ?? 0
+        if (!length) return
+        line.style.transition = 'none'
+        line.style.strokeDasharray = `${length} ${length}`
+        line.style.strokeDashoffset = String(length * (1 - from))
+      })
+      stopEls().forEach((el, i) => { if (i >= firstNew) el.classList.add('is-waiting') })
+      if (mode === 'first') box.querySelector('.map-stop--start')?.classList.add('is-waiting')
+    }
+    hold()
+    box.classList.remove('is-route-waiting')
+    const timers: number[] = []
+    let visible = false
+    let started = false
+    const run = () => {
+      if (started || !visible || moving.current) return
+      started = true
+      map.off('moveend', run)
+      // The fly-to redrew the line at the new zoom: measure again.
+      hold()
+      lines().forEach((line) => {
+        void line.getBoundingClientRect()
+        line.style.transition = `stroke-dashoffset ${ms}ms ease-in-out`
+        line.style.strokeDashoffset = '0'
+      })
+      const pop = (el: Element | null | undefined, at: number) => {
+        if (!el) return
+        const node = el as HTMLElement
+        node.style.animationDelay = `${Math.round(Math.max(0, at) * ms)}ms`
+        node.classList.remove('is-waiting')
+        node.classList.add('is-popping')
+      }
+      if (mode === 'first') pop(box.querySelector('.map-stop--start'), 0)
+      stopEls().forEach((el, i) => { if (i >= firstNew) pop(el, ((fractions[i] ?? 1) - from) / (1 - from || 1)) })
+      box.setAttribute('data-drawn', mode)
+      drawnRef.current = { path: route.path, stops: route.stops.length }
+      timers.push(window.setTimeout(() => {
+        lines().forEach((line) => { line.style.transition = ''; line.style.strokeDasharray = ''; line.style.strokeDashoffset = '' })
+        box.querySelectorAll<HTMLElement>('.is-popping').forEach((el) => { el.classList.remove('is-popping'); el.style.animationDelay = '' })
+      }, ms + 450))
+    }
+    map.on('moveend', run)
+    const seen = new IntersectionObserver(([entry]) => { visible = entry.intersectionRatio >= 0.5; run() }, { threshold: [0, 0.5, 1] })
+    seen.observe(box)
+    return () => {
+      seen.disconnect()
+      map.off('moveend', run)
+      timers.forEach(window.clearTimeout)
+      if (!started) {
+        // Cut off before it ran: show it all rather than leave it half held.
+        lines().forEach((line) => { line.style.transition = ''; line.style.strokeDasharray = ''; line.style.strokeDashoffset = '' })
+        box.querySelectorAll('.map-stop.is-waiting').forEach((el) => el.classList.remove('is-waiting'))
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, pathKey, stopsKey, settling])
+  return null
+}
+
 /** Opens the highlighted pin's popup once the map has stopped moving, so its auto-pan starts from the settled view. */
 const OpenHighlighted = ({ id, markers }: { id: string; markers: RefObject<Map<string, L.Marker>> }) => {
   const map = useMap()
@@ -212,6 +351,8 @@ const SightingsMap = ({ points, focus = null, route = null, center = [39.8, -98.
   const groups = useMemo(() => groupByPlace(points).sort((a, b) => Number(a.highlight) - Number(b.highlight)), [points])
   const markers = useRef(new Map<string, L.Marker>())
   const highlightedId = groups.find(g => g.highlight)?.id ?? ''
+  const moving = useRef(false)
+  const drawn = useRef<DrawnRoute | null>(null)
   return (
     <div className={`sightings-map ${focus ? 'is-focused' : ''} ${route ? 'has-route' : ''}`} style={{ height }} role='region' aria-label={ariaLabel}>
       <MapContainer center={initial} zoom={points.length ? 12 : 4} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
@@ -219,20 +360,15 @@ const SightingsMap = ({ points, focus = null, route = null, center = [39.8, -98.
           attribution={TILE_ATTRIBUTION}
           url={TILE_URL}
         />
+        <TrackMoves moving={moving} />
         <FitToPoints points={points} focus={focus} route={route} />
-        {/* A route draws itself from the start, each stop appearing as the line reaches it; a focused pin's roads draw out to their pins. */}
-        {route && route.stops.length > 0 && (
-          <DrawPaths drawKey={`route:${[...(route.start ? [route.start] : []), ...route.stops].map(s => `${s.lat},${s.lng}`).join('|')}`}
-            paths='path.map-route:not(.map-route--preview)' markers='.map-stop:not(.map-stop--preview)'
-            markerDelays={[...(route.start ? [0] : []), ...stopFractions(route.path, route.stops)]} />
-        )}
         {focus && <DrawPaths drawKey={`focus:${focus.origin.lat},${focus.origin.lng}|${focus.targets.map(t => t.id).join('|')}`} paths='path.map-road' markers='.map-pin--public' />}
         {route && (
           <>
             <Polyline className='map-route map-route--casing' positions={route.path} pathOptions={{ color: '#fff', weight: 8, opacity: 0.9 }} />
             <Polyline className='map-route' positions={route.path} pathOptions={{ color: '#1a56db', weight: 4, opacity: 0.95 }} />
             {route.start && (
-              <Marker position={[route.start.lat, route.start.lng]} icon={L.divIcon({ className: 'map-stop map-stop--start', html: '<span></span>', iconSize: [22, 22], iconAnchor: [11, 11] })} zIndexOffset={1900}>
+              <Marker position={[route.start.lat, route.start.lng]} icon={START_ICON} zIndexOffset={1900}>
                 <Tooltip direction='top' offset={[0, -12]}>{route.start.label}</Tooltip>
               </Marker>
             )}
@@ -243,10 +379,11 @@ const SightingsMap = ({ points, focus = null, route = null, center = [39.8, -98.
               </>
             )}
             {route.stops.map((stop, i) => (
-              <Marker key={`stop-${i}`} position={[stop.lat, stop.lng]} icon={L.divIcon({ className: 'map-stop', html: `<span>${i + 1}</span>`, iconSize: [26, 26], iconAnchor: [13, 13] })} zIndexOffset={2000}>
+              <Marker key={`stop-${i}`} position={[stop.lat, stop.lng]} icon={stopIcon(i + 1)} zIndexOffset={2000}>
                 <Tooltip direction='top' offset={[0, -14]}>{stop.label}</Tooltip>
               </Marker>
             ))}
+            {route.stops.length > 0 && <RouteDraw route={route} moving={moving} drawnRef={drawn} />}
           </>
         )}
         {focus && focus.targets.map(t => {
