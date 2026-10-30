@@ -1,0 +1,36 @@
+/* In the page flow at the top, not floating: it should be read, not covered or swiped away. */
+.confirm-nudge {
+    width: min(100% - 24px, 720px);
+    margin: 12px auto 0;
+    padding: 12px 14px;
+    box-sizing: border-box;
+    border: 2px solid var(--ink);
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--ink);
+}
+
+.confirm-nudge p {
+    margin: 0 0 10px;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.confirm-nudge__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.confirm-nudge__later {
+    min-height: 44px;
+    padding: 0 8px;
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}

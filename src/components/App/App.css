@@ -199,6 +199,12 @@ button#confirmPasswordReset {
     cursor: pointer;
 }
 
+/* Smaller pills for nudges and inline actions; shared, since lazy pages' styles load only with them. */
+.pill-button--small {
+    padding: 4px 12px;
+    font-size: 0.85rem;
+}
+
 .pill-button--primary {
     background: var(--accent);
     font-weight: 600;
