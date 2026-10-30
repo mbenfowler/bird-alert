@@ -31,18 +31,30 @@ export const saveAlertMode = (settings: AlertModeSettings) => {
 }
 
 let settle: number | undefined
+/** The lights: the glow and the bar at an intensity, for as long as that intensity lasts. */
+const flash = (intensity: Intensity) => {
+  const root = document.documentElement
+  // Restart the animation if one is already running.
+  delete root.dataset.alarm
+  void root.offsetWidth
+  root.dataset.alarm = intensity
+  window.clearTimeout(settle)
+  settle = window.setTimeout(() => { delete root.dataset.alarm }, DURATION_MS[intensity])
+}
+
 /** Sounds the alarm for a notification on this page, by the device's settings (or the ones given, for a preview). */
 export const soundTheAlarm = (title: string, settings: AlertModeSettings = readAlertMode()) => {
   const kind = kindFor(title)
-  const intensity = INTENSITY[kind]
-  if (settings.lights) {
-    const root = document.documentElement
-    // Restart the animation if one is already running.
-    delete root.dataset.alarm
-    void root.offsetWidth
-    root.dataset.alarm = intensity
-    window.clearTimeout(settle)
-    settle = window.setTimeout(() => { delete root.dataset.alarm }, DURATION_MS[intensity])
-  }
+  if (settings.lights) flash(INTENSITY[kind])
   if (settings.sound) void playAlertSound(settings.sounds[kind], { ...birdFromTitle(title), volume: VOLUME[settings.volume], voice: settings.voice })
+}
+
+/**
+ * The danger zone: opening "Delete my account" sounds the siren, the red-alert klaxon whatever
+ * sound the person picked for alerts. Their switches still hold: lights off means no glow, sound
+ * off means silence.
+ */
+export const soundDangerZone = (settings: AlertModeSettings = readAlertMode()) => {
+  if (settings.lights) flash('siren')
+  if (settings.sound) void playAlertSound('red-alert', { bird: '', code: null, volume: VOLUME[settings.volume], voice: settings.voice })
 }

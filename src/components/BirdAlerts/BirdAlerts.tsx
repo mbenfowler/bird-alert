@@ -76,7 +76,8 @@ const BirdAlerts = () => {
           {/* Height animates through grid rows; cards slide in one after another; collapsed content is inert. */}
           <div className='alerts-collapse' aria-hidden={!expanded} inert={!expanded}>
             <div className='alerts-collapse__inner'>
-              <div id='alertsList' className='alerts-list' ref={listRef}>
+              {/* Keyed by tab, so switching tabs deals a fresh row: the cards slide in again. */}
+              <div id='alertsList' key={alertType} className='alerts-list' ref={listRef}>
                 {isLoading && <LoadingState variant='inline' label='Loading sightings' />}
                 {!isLoading && !shown.length && !arrivals.length && <p className='alerts-empty'>{emptyText}</p>}
                 {shown.map((alert, index) => (

@@ -247,15 +247,17 @@
   }
 }
 
-/* Cards enter one after another when the panel opens, and drift up as it closes. Only the first
+/* Cards slide in from the right one after another, overshoot a hair and settle in place, when the
+   panel opens or a tab is picked (the row is keyed by tab, so it remounts); they drift up as it
+   closes. Only the first
    few stagger: the rest are off the edge of the row anyway, and a row of 60 cards each fading in
    55ms after the last keeps something becoming visible for four seconds, during which iOS
    cancels taps elsewhere on the page (it reads a tap that coincides with content appearing as a
    hover that revealed it, and sends no click). */
 .is-expanded .alerts-list > a,
 .is-expanded .alerts-list > .alerts-item {
-  animation: alert-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  animation-delay: calc(min(var(--i, 0), 5) * 55ms);
+  animation: alert-in 0.45s cubic-bezier(0.22, 1.18, 0.36, 1) both;
+  animation-delay: calc(min(var(--i, 0), 5) * 60ms);
 }
 
 .is-collapsed .alerts-list > a,
@@ -265,8 +267,14 @@
 }
 
 @keyframes alert-in {
-  from { opacity: 0; transform: translateY(12px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; transform: translateX(56px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* With reduced motion the cards only fade in, in place. */
+@keyframes alert-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .alerts-empty {
@@ -291,8 +299,12 @@
   .alert-icon, .alerts-toggle, .alerts-toggle svg, .alerts-collapse, .alerts-list > a, .alerts-list > .alerts-item {
     transition: none;
   }
-  .is-expanded .alerts-list > a, .is-expanded .alerts-list > .alerts-item, .alerts-count, .is-expanded .alerts-bar::after, .is-collapsed .alerts-bar::after {
+  .alerts-count, .is-expanded .alerts-bar::after, .is-collapsed .alerts-bar::after {
     animation: none;
+  }
+  .is-expanded .alerts-list > a, .is-expanded .alerts-list > .alerts-item {
+    animation: alert-fade 0.2s ease both;
+    animation-delay: 0s;
   }
 }
 
