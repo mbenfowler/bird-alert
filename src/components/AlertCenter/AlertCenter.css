@@ -234,3 +234,24 @@
   font-size: 0.98rem;
   font-weight: 600;
 }
+
+/* The range sits between push and email, since it shapes both. */
+.alert-range__choices {
+  margin-left: 0;
+}
+
+.alert-range__home .notification__hint {
+  margin: 0 0 8px;
+}
+
+.alert-range__search {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.alert-range__search > :first-child {
+  width: 100%;
+}

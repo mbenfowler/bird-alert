@@ -8,6 +8,7 @@ import { LoadingState } from '../Loading/Loading'
 import type { EmailPreference, EmailPreviewKind, EmailPreviewResult, PushPreference } from '../../types'
 import './AlertCenter.css'
 import AlertModeSettings from '../AlertModeSettings/AlertModeSettings'
+import AlertRange from './AlertRange'
 import { countyWord } from '../../usStates'
 
 const PUSH_KINDS: { field: PushPreference; label: string; hint: string }[] = [
@@ -204,6 +205,8 @@ const AlertCenter = () => {
           {pushOn && <button type='button' className='test-push' onClick={sendTest}>Send a test notification</button>}
         </div>
       </div>
+
+      <AlertRange />
 
       {EMAIL_PREFERENCES.map(({ field, label, hint, preview, nothing }) => (
         <div className='notification' key={field}>

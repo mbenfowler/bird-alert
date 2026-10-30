@@ -22,12 +22,19 @@ export interface User {
   updated_at: string
   /** Whether any passkey is on the account. */
   hasPasskey?: boolean
+  /** How far rare-bird and lifer alerts reach past the county (0, 15 or 30 mi), and from where (null: the county's center). */
+  range_mi?: number
+  home_lat?: number | null
+  home_lng?: number | null
 }
 
 export type EmailPreference = 'alert_digest_email_enabled' | 'rare_sightings_email_enabled' | 'migration_email_enabled'
 export type PushPreference = 'push_watchlist_enabled' | 'push_notable_enabled' | 'push_first_of_season' | 'push_lifer_enabled'
 
 export interface UserPatch {
+  range_mi?: number
+  home_lat?: number | null
+  home_lng?: number | null
   email?: string
   state?: string
   location?: string
