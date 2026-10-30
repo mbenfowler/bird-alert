@@ -3,6 +3,7 @@ import { MapContainer, Marker, Polyline, Popup, TileLayer, Tooltip, useMap } fro
 import L from 'leaflet'
 import { Link } from 'react-router'
 import 'leaflet/dist/leaflet.css'
+import { prefersReducedMotion, stopFractions } from '../../routeDraw'
 import './SightingsMap.css'
 
 export interface MapPoint {
@@ -105,6 +106,66 @@ const FitToPoints = ({ points, focus, route }: { points: MapPoint[]; focus?: Map
   return null
 }
 
+const DRAW_MS = 1500
+
+/**
+ * Draws a shown route (or a focused pin's roads) along its path, the markers along it appearing as
+ * the line reaches them. It waits for the map's fly-to to settle (Leaflet redraws the paths at the
+ * new zoom), hides line and markers meanwhile, then animates each path's dash offset to zero. The
+ * dash styles are cleared afterwards so later zooms and the dashed preview leg draw as before.
+ * Reduced motion: drawn at once.
+ */
+const DrawPaths = ({ drawKey, paths, markers, markerDelays = [] }: { drawKey: string; paths: string; markers: string; markerDelays?: number[] }) => {
+  const map = useMap()
+  const delays = markerDelays.join(',')
+  useEffect(() => {
+    if (!drawKey || prefersReducedMotion()) return
+    const box = map.getContainer().closest('.sightings-map') ?? map.getContainer()
+    box.classList.add('is-draw-waiting')
+    let started = false
+    const timers: number[] = []
+    const start = () => {
+      if (started) return
+      started = true
+      map.off('moveend', start)
+      box.classList.remove('is-draw-waiting')
+      box.classList.add('is-drawing')
+      box.setAttribute('data-drawn', drawKey)
+      box.querySelectorAll<SVGPathElement>(paths).forEach((path) => {
+        const length = path.getTotalLength?.() ?? 0
+        if (!length) return
+        path.style.transition = 'none'
+        path.style.strokeDasharray = `${length} ${length}`
+        path.style.strokeDashoffset = String(length)
+        void path.getBoundingClientRect()
+        path.style.transition = `stroke-dashoffset ${DRAW_MS}ms ease-in-out`
+        path.style.strokeDashoffset = '0'
+      })
+      const list = delays ? delays.split(',').map(Number) : []
+      box.querySelectorAll<HTMLElement>(markers).forEach((marker, i) => {
+        marker.style.animationDelay = `${Math.round((list[i] ?? 1) * DRAW_MS)}ms`
+      })
+      timers.push(window.setTimeout(() => {
+        box.classList.remove('is-drawing')
+        box.querySelectorAll<SVGPathElement>(paths).forEach((path) => {
+          path.style.transition = ''
+          path.style.strokeDasharray = ''
+          path.style.strokeDashoffset = ''
+        })
+      }, DRAW_MS + 450))
+    }
+    // The fly-to that frames the route ends in moveend; if the view didn't need to move, go after it would have.
+    map.once('moveend', start)
+    timers.push(window.setTimeout(start, 750))
+    return () => {
+      map.off('moveend', start)
+      timers.forEach(window.clearTimeout)
+      box.classList.remove('is-draw-waiting', 'is-drawing')
+    }
+  }, [map, drawKey, paths, markers, delays])
+  return null
+}
+
 /** Opens the highlighted pin's popup once the map has stopped moving, so its auto-pan starts from the settled view. */
 const OpenHighlighted = ({ id, markers }: { id: string; markers: RefObject<Map<string, L.Marker>> }) => {
   const map = useMap()
@@ -159,6 +220,13 @@ const SightingsMap = ({ points, focus = null, route = null, center = [39.8, -98.
           url={TILE_URL}
         />
         <FitToPoints points={points} focus={focus} route={route} />
+        {/* A route draws itself from the start, each stop appearing as the line reaches it; a focused pin's roads draw out to their pins. */}
+        {route && route.stops.length > 0 && (
+          <DrawPaths drawKey={`route:${[...(route.start ? [route.start] : []), ...route.stops].map(s => `${s.lat},${s.lng}`).join('|')}`}
+            paths='path.map-route:not(.map-route--preview)' markers='.map-stop:not(.map-stop--preview)'
+            markerDelays={[...(route.start ? [0] : []), ...stopFractions(route.path, route.stops)]} />
+        )}
+        {focus && <DrawPaths drawKey={`focus:${focus.origin.lat},${focus.origin.lng}|${focus.targets.map(t => t.id).join('|')}`} paths='path.map-road' markers='.map-pin--public' />}
         {route && (
           <>
             <Polyline className='map-route map-route--casing' positions={route.path} pathOptions={{ color: '#fff', weight: 8, opacity: 0.9 }} />
