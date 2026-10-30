@@ -22,11 +22,12 @@ describe('Motion', () => {
   })
 
   it('every card in the row sweeps in from off the right edge, not just the first few', () => {
+    login()
+    cy.get('.alerts-list > a', { timeout: 15000 })
+    // After login(), whose own notable stub would otherwise answer first.
     cy.fixture('notableWeek').then((week) => {
       cy.intercept('GET', '**/api/ebird/notable*', { body: notableRow(week[0]) }).as('row')
     })
-    login()
-    cy.get('.alerts-list > a', { timeout: 15000 })
     cy.get('#notable').click()
     cy.wait('@row')
     cy.get('.alerts-list > a').should('have.length', 9).each(($a) => slides($a))
@@ -35,20 +36,22 @@ describe('Motion', () => {
   })
 
   it('sightings since the last visit are marked New; on a first visit nothing is', () => {
+    login()
+    cy.get('.alerts-list > a', { timeout: 15000 })
+    // After login(), whose own notable stub would otherwise answer first.
     cy.fixture('notableWeek').then((week) => {
       cy.intercept('GET', '**/api/ebird/notable*', { body: notableRow(week[0]) }).as('row')
     })
-    login()
-    cy.get('.alerts-list > a', { timeout: 15000 })
     cy.get('#notable').click()
     cy.wait('@row')
     cy.get('.alert-new').should('not.exist')
 
     // The last visit ended on Oct 28: the three from Oct 30 are new, the six from Oct 27 are not.
-    cy.window().then((win) => win.localStorage.setItem('lastVisit', String(new Date(2026, 9, 28, 12, 0).getTime())))
-    cy.reload()
+    // Planted as the page loads: leaving the old page saves its own visit end first, as in real use.
+    cy.visit('http://localhost:3000/', { onBeforeLoad: (win) => win.localStorage.setItem('lastVisit', String(new Date(2026, 9, 28, 12, 0).getTime())) })
     cy.get('.alerts-list > a', { timeout: 15000 })
     cy.get('#notable').click()
+    cy.wait('@row')
     cy.get('.alerts-list > a.is-new').should('have.length', 3)
     cy.get('.alerts-list > a.is-new').first().find('.alert-new').should('contain', 'New')
     cy.get('.alerts-list > a').last().find('.alert-new').should('not.exist')
