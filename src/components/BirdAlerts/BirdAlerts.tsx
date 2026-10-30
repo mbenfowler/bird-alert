@@ -7,6 +7,7 @@ import { LoadingState } from '../Loading/Loading'
 import { useArrivalsQuery, useCurrentUser, useNotableQuery, useObservationsQuery, useRegionsQuery, useSavedCodes } from '../../hooks/queries'
 import './BirdAlerts.css'
 import { countyWord } from '../../usStates'
+import { isNewSince, previousVisit, watchVisits } from '../../lastVisit'
 
 type AlertType = 'star' | 'notable' | 'arriving'
 
@@ -25,6 +26,9 @@ const BirdAlerts = () => {
     // Each tab's row starts at its first card, however far the previous one was scrolled.
     const listRef = useRef<HTMLDivElement>(null)
     useEffect(() => { listRef.current?.scrollTo({ left: 0 }) }, [alertType])
+    // Sightings reported since the last visit ended get a New mark.
+    const since = previousVisit()
+    useEffect(() => { watchVisits() }, [])
 
     const observations = useObservationsQuery(region)
     const savedCodes = useSavedCodes()
@@ -80,12 +84,16 @@ const BirdAlerts = () => {
               <div id='alertsList' key={alertType} className='alerts-list' ref={listRef}>
                 {isLoading && <LoadingState variant='inline' label='Loading sightings' />}
                 {!isLoading && !shown.length && !arrivals.length && <p className='alerts-empty'>{emptyText}</p>}
-                {shown.map((alert, index) => (
-                  <Link key={`${alert.subId}-${alert.speciesCode}`} style={{ '--i': index } as React.CSSProperties} to={`/sighting/${alert.speciesCode}/${alert.subId}`}>
+                {shown.map((alert, index) => {
+                  const isNew = isNewSince(alert.obsDt, since)
+                  return (
+                  <Link key={`${alert.subId}-${alert.speciesCode}`} className={isNew ? 'is-new' : undefined} style={{ '--i': index } as React.CSSProperties} to={`/sighting/${alert.speciesCode}/${alert.subId}`}>
+                    {isNew && <span className='alert-new'><span className='alert-new__dot' aria-hidden='true' />New<span className='visually-hidden'> since your last visit</span></span>}
                     <AlertCard alert={alert} />
                     <span className='visually-hidden'>, open sighting details</span>
                   </Link>
-                ))}
+                  )
+                })}
                 {arrivals.map((arrival, index) => (
                   <div key={arrival.speciesCode} className='alerts-item' style={{ '--i': index } as React.CSSProperties}>
                     <ArrivalCard arrival={arrival} />

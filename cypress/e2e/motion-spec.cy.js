@@ -1,18 +1,57 @@
 import { login } from '../support/login'
 import { stubAuth } from '../support/stubs'
 
+// Nine notable sightings on two days, more than the six an earlier version animated.
+const notableRow = (base) => Array.from({ length: 9 }, (_, i) => ({
+  ...base,
+  subId: `SM${i}`,
+  obsDt: i < 3 ? '2026-10-30 09:00' : '2026-10-27 08:00'
+}))
+
+const slides = ($a) => expect(getComputedStyle($a[0]).animationName).to.eq('alert-in')
+
 describe('Motion', () => {
   it('alert cards slide in from the right on load, and again when another tab is picked', () => {
     login()
-    cy.get('.alerts-list > a', { timeout: 15000 }).first()
-      .should(($a) => expect(getComputedStyle($a[0]).animationName).to.eq('alert-in'))
+    cy.get('.alerts-list > a', { timeout: 15000 }).first().should(slides)
     cy.intercept('GET', '**/api/ebird/notable*', { fixture: 'notableWeek' })
     cy.get('#notable').click()
-    cy.get('.alerts-list > a').first()
-      .should(($a) => expect(getComputedStyle($a[0]).animationName).to.eq('alert-in'))
+    cy.get('.alerts-list > a').first().should(slides)
     cy.get('#star').click()
-    cy.get('.alerts-list > a').first()
-      .should(($a) => expect(getComputedStyle($a[0]).animationName).to.eq('alert-in'))
+    cy.get('.alerts-list > a').first().should(slides)
+  })
+
+  it('every card in the row sweeps in from off the right edge, not just the first few', () => {
+    cy.fixture('notableWeek').then((week) => {
+      cy.intercept('GET', '**/api/ebird/notable*', { body: notableRow(week[0]) }).as('row')
+    })
+    login()
+    cy.get('.alerts-list > a', { timeout: 15000 })
+    cy.get('#notable').click()
+    cy.wait('@row')
+    cy.get('.alerts-list > a').should('have.length', 9).each(($a) => slides($a))
+    cy.get('.alerts-list > a').last()
+      .should(($a) => expect(getComputedStyle($a[0]).animationDelay).to.eq('0.56s'), 'the ninth card waits its turn')
+  })
+
+  it('sightings since the last visit are marked New; on a first visit nothing is', () => {
+    cy.fixture('notableWeek').then((week) => {
+      cy.intercept('GET', '**/api/ebird/notable*', { body: notableRow(week[0]) }).as('row')
+    })
+    login()
+    cy.get('.alerts-list > a', { timeout: 15000 })
+    cy.get('#notable').click()
+    cy.wait('@row')
+    cy.get('.alert-new').should('not.exist')
+
+    // The last visit ended on Oct 28: the three from Oct 30 are new, the six from Oct 27 are not.
+    cy.window().then((win) => win.localStorage.setItem('lastVisit', String(new Date(2026, 9, 28, 12, 0).getTime())))
+    cy.reload()
+    cy.get('.alerts-list > a', { timeout: 15000 })
+    cy.get('#notable').click()
+    cy.get('.alerts-list > a.is-new').should('have.length', 3)
+    cy.get('.alerts-list > a.is-new').first().find('.alert-new').should('contain', 'New')
+    cy.get('.alerts-list > a').last().find('.alert-new').should('not.exist')
   })
 
   it('opening Delete my account sounds the red alert: the siren glow, and the klaxon unless sound is off', () => {
