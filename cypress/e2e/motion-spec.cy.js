@@ -6,6 +6,7 @@ describe('Motion', () => {
     login()
     cy.get('.alerts-list > a', { timeout: 15000 }).first()
       .should(($a) => expect(getComputedStyle($a[0]).animationName).to.eq('alert-in'))
+    cy.intercept('GET', '**/api/ebird/notable*', { fixture: 'notableWeek' })
     cy.get('#notable').click()
     cy.get('.alerts-list > a').first()
       .should(($a) => expect(getComputedStyle($a[0]).animationName).to.eq('alert-in'))
