@@ -51,6 +51,18 @@
   flex-shrink: 0;
 }
 
+/* Where the switch would be, on an iPhone outside the Home Screen app. */
+.notification__app-only {
+  max-width: 7.5em;
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  opacity: 0.8;
+  font-size: 0.78rem;
+  line-height: 1.25;
+  text-align: center;
+}
+
 .test-push {
   align-self: flex-start;
   margin: -4px 0 0 16px;

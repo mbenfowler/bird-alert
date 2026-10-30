@@ -113,6 +113,7 @@ const AlertCenter = () => {
   }
 
   const pushOn = push.state === 'on'
+  const needsInstall = isIOS() && !isStandalone()
   const pushDisabled = push.state === 'checking' || push.state === 'unsupported' || push.state === 'denied' || push.state === 'busy'
 
   return (
@@ -123,13 +124,16 @@ const AlertCenter = () => {
         <div className='notification'>
           <div className='notification__text'>
             <label htmlFor='push_enabled'>Push notifications on this device</label>
-            <p className='notification__hint'>{pushHint[push.state]}</p>
+            {/* In a Safari tab on an iPhone push can't be had at all: the steps say how, not a dead switch. */}
+            {!needsInstall && <p className='notification__hint'>{pushHint[push.state]}</p>}
             {push.error && <p className='notification__hint notification__hint--error' role='alert'>{push.error}</p>}
-            {isIOS() && !isStandalone() && <InstallSteps compact />}
+            {needsInstall && <InstallSteps compact />}
           </div>
           <div className='notification__controls'>
             {push.state === 'busy' && <LoadingState variant='inline' label='Updating push notifications' />}
-            <input className='switch' type='checkbox' id='push_enabled' name='push_enabled' checked={pushOn} disabled={pushDisabled} onChange={togglePush} />
+            {needsInstall
+              ? <span className='notification__app-only'>Home Screen app only</span>
+              : <input className='switch' type='checkbox' id='push_enabled' name='push_enabled' checked={pushOn} disabled={pushDisabled} onChange={togglePush} />}
           </div>
         </div>
         {status.data?.lastRun && (
