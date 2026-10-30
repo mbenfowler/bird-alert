@@ -1,5 +1,6 @@
 import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share, Passkey, Chase, PersistenceClass } from './types'
 import { arrival } from './arrival'
+import { isStandalone } from './install'
 
 // Every request goes to the same-origin `/api` prefix. In development Vite proxies it to the
 // backend (vite.config.ts); in production Vercel rewrites it (vercel.json). The backend holds
@@ -36,20 +37,23 @@ interface RequestOptions {
     method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
     body?: unknown
     params?: Record<string, string>
+    headers?: Record<string, string>
 }
 
-const api = <T,>(path: string, { method = 'GET', body, params }: RequestOptions = {}): Promise<T> => {
+const api = <T,>(path: string, { method = 'GET', body, params, headers }: RequestOptions = {}): Promise<T> => {
     const query = params ? `?${new URLSearchParams(params)}` : ''
     return fetch(`${API_BASE}${path}${query}`, {
         method,
         credentials: 'same-origin',
-        headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
+        headers: body !== undefined || headers ? { ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}), ...headers } : undefined,
         body: body !== undefined ? JSON.stringify(body) : undefined
     }).then(res => parseResponse<T>(res))
 }
 
 // ---- auth ----
-export const getCurrentUser = () => api<User>('/auth/me')
+// Says whether this is the app installed to the home screen or a browser tab, for the owner's numbers
+// on how many people install it (the step iPhones need for push alerts).
+export const getCurrentUser = () => api<User>('/auth/me', { headers: { 'X-App-Mode': isStandalone() ? 'app' : 'browser' } })
 export const getUserExists = (email: string) => api<{ userExists: boolean }>('/auth/exists', { params: { email } })
 export const login = (email: string, password: string) => api<User>('/auth/login', { method: 'POST', body: { email, password } })
 export const signup = (email: string, password: string, place?: { state: string; location: string } | null) =>
