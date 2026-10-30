@@ -9,6 +9,7 @@ import { countyLabel, countyWord, stateName, subnational1 } from '../../usStates
 import StateOptions from '../StateOptions/StateOptions'
 import type { UserPatch } from '../../types'
 import { isIOS, isStandalone } from '../../install'
+import { popStar } from '../Pop/pop'
 import './Onboarding.css'
 
 const TILES = 12
@@ -140,7 +141,7 @@ const Onboarding = () => {
                   const on = starred.has(code)
                   return (
                     <li key={code}>
-                      <button type='button' className={`onboard__tile ${on ? 'is-on' : ''}`} aria-pressed={on} onClick={() => toggle(code)}>
+                      <button type='button' className={`onboard__tile ${on ? 'is-on' : ''}`} aria-pressed={on} onClick={(e) => { popStar(e.currentTarget, !on); toggle(code) }}>
                         <img src={bird!.birdImg!} alt='' loading='lazy' />
                         {on && <span className='onboard__check' aria-hidden='true'>★</span>}
                         <span className='onboard__name'>{bird!.comName}</span>
