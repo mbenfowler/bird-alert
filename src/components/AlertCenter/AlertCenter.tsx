@@ -132,7 +132,7 @@ const AlertCenter = () => {
           <div className='notification__controls'>
             {push.state === 'busy' && <LoadingState variant='inline' label='Updating push notifications' />}
             {needsInstall
-              ? <span className='notification__app-only'>Home Screen app only</span>
+              ? <span className='notification__app-only'>Turns on in the Home Screen app</span>
               : <input className='switch' type='checkbox' id='push_enabled' name='push_enabled' checked={pushOn} disabled={pushDisabled} onChange={togglePush} />}
           </div>
         </div>
@@ -145,7 +145,8 @@ const AlertCenter = () => {
           </p>
         )}
 
-        {/* Sub-options sit greyed out until push is on for this device. */}
+        {/* Sub-options sit greyed out until push is on for this device; on an iPhone tab, say what unlocks them. */}
+        {needsInstall && <p className='notification-sub__note'>These unlock once push is on in the Home Screen app (step 3 above).</p>}
         <div className='notification-sub' aria-disabled={!pushOn}>
           {PUSH_KINDS.map(({ field, label, hint }) => (
             <div key={field}>

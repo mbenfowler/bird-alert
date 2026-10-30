@@ -120,6 +120,7 @@ describe('Settings', () => {
     cy.visit('http://localhost:3000/settings', { onBeforeLoad: (win) => Object.defineProperty(win.navigator, 'userAgent', { value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.0 Mobile/15E148 Safari/604.1' }) })
     cy.get('.install-steps__list li').should('have.length', 3)
     cy.get('#push_enabled').should('not.exist')
-    cy.contains('.notification__app-only', 'Home Screen app only')
+    cy.contains('.notification__app-only', 'Turns on in the Home Screen app')
+    cy.contains('.notification-sub__note', 'These unlock once push is on in the Home Screen app')
   })
 })

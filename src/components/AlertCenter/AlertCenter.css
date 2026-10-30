@@ -113,6 +113,19 @@
   transition: opacity 0.2s ease;
 }
 
+.notification-sub__note {
+  margin: 0;
+  padding: 10px 16px 0 28px;
+  border-top: 1px solid var(--rule);
+  background: #fafafa;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.notification-sub__note + .notification-sub {
+  border-top: 0;
+}
+
 .notification-sub[aria-disabled="true"] {
   opacity: 0.5;
 }
