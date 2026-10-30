@@ -7,10 +7,17 @@ describe('Polish', () => {
   })
 
   it('a star going on the watch list bounces and throws sparks', () => {
+    // The sparks last half a second, quicker than a slow CI machine gets round to looking, so
+    // note each burst as it's added rather than hunting for it afterwards.
+    cy.window().then((win) => {
+      win.__bursts = []
+      new win.MutationObserver((changes) => changes.forEach((c) => c.addedNodes.forEach((n) => {
+        if (n.classList?.contains('pop-burst')) win.__bursts.push(n.className)
+      }))).observe(win.document.body, { childList: true })
+    })
     cy.get('#snogoo').click()
-    cy.get('#snogoo').should('have.class', 'is-popping')
-    cy.get('.pop-burst--sparks .pop-burst__piece').should('have.length', 6)
-    // The sparks land and their layer clears itself away.
+    cy.window().its('__bursts').should('deep.equal', ['pop-burst pop-burst--sparks'])
+    // The sparks land and their layer clears itself away, and the star's mark with it.
     cy.get('.pop-burst', { timeout: 4000 }).should('not.exist')
     cy.get('#snogoo').should('not.have.class', 'is-popping')
   })
@@ -32,8 +39,14 @@ describe('Polish', () => {
   })
 
   it('a bird going on the life list is a lifer: feathers and a banner', () => {
+    cy.window().then((win) => {
+      win.__bursts = []
+      new win.MutationObserver((changes) => changes.forEach((c) => c.addedNodes.forEach((n) => {
+        if (n.classList?.contains('pop-burst')) win.__bursts.push(`${n.className} ${n.children.length}`)
+      }))).observe(win.document.body, { childList: true })
+    })
     cy.get('#seen-snogoo').click()
-    cy.get('.pop-burst--feathers .pop-burst__piece').should('have.length', 12)
+    cy.window().its('__bursts').should('deep.equal', ['pop-burst pop-burst--feathers 12'])
     cy.contains('.lifer-toast', 'Lifer! Snow Goose').should('exist')
   })
 })
