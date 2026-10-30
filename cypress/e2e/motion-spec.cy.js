@@ -31,8 +31,19 @@ describe('Motion', () => {
     cy.get('#notable').click()
     cy.wait('@row')
     cy.get('.alerts-list > a').should('have.length', 9).each(($a) => slides($a))
-    cy.get('.alerts-list > a').last()
-      .should(($a) => expect(getComputedStyle($a[0]).animationDelay).to.eq('0.56s'), 'the ninth card waits its turn')
+    // Frozen at its first frame, the whole row is off the right edge, spaced wider than it sits.
+    cy.window().then((win) => {
+      const cards = [...win.document.querySelectorAll('.alerts-list > a')]
+      const anims = cards.map((card) => card.getAnimations().find((a) => a.animationName === 'alert-in'))
+      anims.forEach((a) => { a.pause(); a.currentTime = 0 })
+      const lefts = cards.map((card) => card.getBoundingClientRect().left)
+      expect(lefts[0]).to.be.greaterThan(win.innerWidth, 'the first card starts off screen too')
+      anims.forEach((a) => a.finish())
+      const settled = cards.map((card) => card.getBoundingClientRect().left)
+      expect(settled[0]).to.be.lessThan(40, 'and it ends where it sits')
+      expect(lefts[1] - lefts[0]).to.be.greaterThan(settled[1] - settled[0], 'the gaps close as the row comes in')
+      expect(anims.every((a) => a.effect.getTiming().delay === 0), 'the whole row moves together').to.eq(true)
+    })
   })
 
   it('sightings since the last visit are marked New; on a first visit nothing is', () => {

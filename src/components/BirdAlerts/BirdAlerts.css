@@ -247,18 +247,19 @@
   }
 }
 
-/* The cards sweep in from off the right edge of the screen, one after another like a train, travel
-   all the way to where they sit, overshoot a hair and settle: when the panel opens or a tab is
-   picked (the row is keyed by tab, so it remounts). Every card goes, including those past the edge
-   of the row. Only transform moves, never opacity: the cards are visible the whole time, just
-   elsewhere. iOS cancels a tap that coincides with content becoming visible (it reads it as a hover
-   that revealed something, and sends no click), which is why an earlier fade-in only staggered the
-   first few cards; a slide doesn't trip it. The stagger stops growing after 18 cards, so the last
-   lands within about two seconds. The row clips the cards on their way in. */
+/* The row pulls in like a train: when the panel opens or a tab is picked (the row is keyed by tab,
+   so it remounts), every card starts beyond the right edge of the screen, spaced a little wider
+   than it sits, and all of them glide left together, braking smoothly as the gaps close, so even
+   the first card is seen crossing the whole width. They move together rather than one after
+   another: staggered, each card had to cross the screen in the moment before the next set off,
+   and read as a jump. The spread stops growing after 18 cards. Only transform moves, never
+   opacity: iOS cancels a tap that coincides with content becoming visible (it reads it as a hover
+   that revealed something, and sends no click), and a slide doesn't trip it. The row clips the
+   cards on their way in. */
 .is-expanded .alerts-list > a,
 .is-expanded .alerts-list > .alerts-item {
-  animation: alert-in 0.7s cubic-bezier(0.2, 1.12, 0.3, 1) both;
-  animation-delay: calc(min(var(--i, 0), 18) * 70ms);
+  --spread: calc(min(var(--i, 0), 18) * 48px);
+  animation: alert-in 1.1s cubic-bezier(0.25, 0.6, 0.3, 1) both;
 }
 
 .is-collapsed .alerts-list > a,
@@ -268,7 +269,7 @@
 }
 
 @keyframes alert-in {
-  from { transform: translateX(100vw); }
+  from { transform: translateX(calc(100vw + var(--spread, 0px))); }
   to { transform: translateX(0); }
 }
 
