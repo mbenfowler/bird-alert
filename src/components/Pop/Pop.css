@@ -1,0 +1,51 @@
+/* The burst layer: fixed to the tapped control's centre, above everything, never in the way. */
+.pop-burst {
+    position: fixed;
+    width: 0;
+    height: 0;
+    z-index: 2000;
+    pointer-events: none;
+}
+
+.pop-burst__piece {
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+/* Sparks: little gold diamonds, the star's own colour. */
+.pop-burst--sparks .pop-burst__piece {
+    width: 9px;
+    height: 9px;
+    background: var(--accent);
+    border: 1px solid var(--accent-ink);
+    border-radius: 1px;
+}
+
+/* Feathers: slim leaves in gold, the life list's green and the wordmark's orange, each with a quill line. */
+.pop-burst--feathers .pop-burst__piece {
+    width: 8px;
+    height: 20px;
+    border-radius: 50% 50% 50% 50% / 70% 70% 30% 30%;
+    background:
+        linear-gradient(90deg, transparent 45%, rgba(0, 0, 0, 0.35) 45%, rgba(0, 0, 0, 0.35) 55%, transparent 55%),
+        var(--feather, var(--accent));
+}
+
+.pop-burst--feathers .pop-burst__piece:nth-child(3n + 2) { --feather: #0f7b3a; }
+.pop-burst--feathers .pop-burst__piece:nth-child(3n) { --feather: #ff6a00; }
+
+/* The Lifer! banner: the app's gold and ink, a step bigger than an ordinary toast. */
+.Toastify__toast.lifer-toast {
+    background: var(--accent);
+    color: var(--ink);
+    border: 2px solid var(--ink);
+    border-radius: 14px;
+    font-size: 1.05rem;
+}
+
+.lifer-toast__text strong {
+    font-family: 'Fredericka the Great', Georgia, serif;
+    font-size: 1.3rem;
+    margin-right: 6px;
+}
