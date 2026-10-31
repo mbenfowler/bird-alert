@@ -32,7 +32,7 @@ const GoPage = () => {
           ))}
         </div>
       </div>
-      {tab === 'best' ? <BestHotspots /> : <WhereToGo />}
+      {tab === 'best' ? <BestHotspots onOpenRoute={() => setTab('birds')} /> : <WhereToGo />}
     </>
   )
 }

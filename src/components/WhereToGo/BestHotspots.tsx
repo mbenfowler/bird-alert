@@ -7,6 +7,8 @@ import { errorMessage } from '../../apiCalls'
 import { useBestHotspotsQuery, useCurrentUser, useRegionsQuery } from '../../hooks/queries'
 import { useDocked } from '../../hooks/useDocked'
 import { countyWord } from '../../usStates'
+import { useGoPlan } from '../../hooks/useGoPlan'
+import { MAX_ROUTE_STOPS } from '../../routePlan'
 import './WhereToGo.css'
 
 const PERIODS = [
@@ -27,9 +29,11 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
  * single list. Bird Alert only began gathering a county when someone chose it, so a window reaching
  * further back than that says how much it really covers. The period is kept in the address.
  */
-const BestHotspots = () => {
+const BestHotspots = ({ onOpenRoute }: { onOpenRoute: () => void }) => {
   const user = useCurrentUser()
   const region = user.location
+  // The same route as For your birds: a hotspot added here is a stop there.
+  const { stops, toggle } = useGoPlan(region)
   const [params, setParams] = useSearchParams()
   const period = PERIODS.find(p => String(p.days) === params.get('days')) ?? PERIODS.find(p => p.days === DEFAULT_DAYS)!
   const setDays = (days: number) => setParams((prev) => { const next = new URLSearchParams(prev); next.set('days', String(days)); return next }, { replace: true })
@@ -75,6 +79,9 @@ const BestHotspots = () => {
           {shortWindow !== null && onFile?.firstDay && (
             <p className='list-note best__note'>Bird Alert started gathering {regionName}’s checklists on {shortDay(onFile.firstDay)}, so this covers {plural(shortWindow, 'day')} so far.</p>
           )}
+          {stops.length > 0 && (
+            <p className='go__summary best__route'>Your route has {plural(stops.length, 'stop')}. <button type='button' className='link-button' onClick={onOpenRoute}>See your route</button></p>
+          )}
           {onFile && onFile.detailed < onFile.checklists && onFile.detailed > 0 && (
             <p className='go__summary best__basis'>Species come from the {onFile.detailed.toLocaleString()} of {onFile.checklists.toLocaleString()} checklists on file that have their full species list.</p>
           )}
@@ -106,6 +113,17 @@ const BestHotspots = () => {
                       {h.bestList && <>Best list <a href={`https://ebird.org/checklist/${h.bestList.subId}`} target='_blank' rel='noreferrer'>{h.bestList.species} species on {shortDay(h.bestList.day)}</a> · </>}
                       <a href={`https://ebird.org/hotspot/${h.locId}`} target='_blank' rel='noreferrer'>Hotspot on eBird</a>
                     </p>
+                    {(() => {
+                      const on = stops.some(st => st.locId === h.locId)
+                      const full = !on && stops.length >= MAX_ROUTE_STOPS
+                      return (
+                        <button type='button' className={`pill-button go__quick-add ${on ? 'is-on' : ''}`} aria-pressed={on}
+                          disabled={full} title={full ? `A route takes up to ${MAX_ROUTE_STOPS} stops` : undefined}
+                          onClick={() => toggle({ locId: h.locId, name: h.name, lat: h.lat, lng: h.lng })}>
+                          {on ? '✓ On route' : '+ Add to route'}
+                        </button>
+                      )
+                    })()}
                   </li>
                 ))}
               </ol>

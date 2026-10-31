@@ -59,4 +59,22 @@ describe('Best hotspots', () => {
     cy.wait('@whereToGo')
     cy.get('.go__route-head').should('have.text', 'A morning route')
   })
+
+  it('a hotspot goes on the same route as For your birds, or comes off it, with one tap', () => {
+    cy.visit('http://localhost:3000/go?tab=best')
+    cy.wait('@best')
+    // The suggested route already stops at Lake Lanier.
+    cy.get('.best__list > li').first().find('.go__quick-add').should('have.text', '✓ On route')
+    cy.get('.best__route').should('contain', 'Your route has 2 stops')
+    cy.get('.best__list > li').eq(1).find('.go__quick-add').should('have.text', '+ Add to route').click()
+    cy.get('.best__list > li').eq(1).find('.go__quick-add').should('have.text', '✓ On route').and('have.attr', 'aria-pressed', 'true')
+    cy.get('.best__route').should('contain', 'Your route has 3 stops')
+    cy.get('@putRoute.all').should((puts) => {
+      const last = [...puts].reverse().find((p) => 'stops' in p.request.body)
+      expect(last?.request.body.stops.map((s) => s.name)).to.include('Yahoola Creek Park')
+    })
+    cy.contains('.best__route button', 'See your route').click()
+    cy.contains('.go-tabs button', 'For your birds').should('have.attr', 'aria-pressed', 'true')
+    cy.get('.go__stops > li').should('have.length', 3).last().should('contain', 'Yahoola Creek Park')
+  })
 })

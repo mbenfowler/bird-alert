@@ -6,21 +6,18 @@ import ErrorMessage from '../Error/ErrorMessage'
 import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
 import RouteCard from './RouteCard'
-import { useCurrentUser, useDriveQuery, useNearbyPublicQuery, useRegionsQuery, useSavedCodes, useSeenCodes, useSpeciesListQuery, useWhereToGoQuery } from '../../hooks/queries'
+import { useCurrentUser, useDriveQuery, useNearbyPublicQuery, useRegionsQuery } from '../../hooks/queries'
 import { focusFor } from '../../mapFocus'
 import { unitFor } from '../../distance'
 import { chanceColour } from '../../chance'
 import { MAX_ROUTE_STOPS, coverage, samePlace, mapsUrl, type PlanPoint } from '../../routePlan'
-import { useRoutePlan } from '../../hooks/useRoutePlan'
+import { useGoPlan } from '../../hooks/useGoPlan'
 import { useDocked } from '../../hooks/useDocked'
 import { shareThing } from '../../share'
 import type { GoPlace } from '../../types'
 import AccuracyBadge from '../AccuracyBadge/AccuracyBadge'
 import './WhereToGo.css'
 import { countyWord } from '../../usStates'
-
-const LIFER_MODE_KEY = 'bird-alert:go-lifers'
-const readLiferMode = () => { try { return localStorage.getItem(LIFER_MODE_KEY) === '1' } catch { return false } }
 
 const birdsWord = (n: number) => `${n % 1 === 0 ? n : n.toFixed(1)} ${n === 1 ? 'bird' : 'birds'}`
 
@@ -33,24 +30,7 @@ const WhereToGo = () => {
   const user = useCurrentUser()
   const distanceUnit = unitFor(user.state)
   const region = user.location
-  const savedCodes = useSavedCodes()
-  // Only the watch-list birds that occur in this county are worth asking about; a long list saved
-  // across many places would otherwise go over the wire for nothing.
-  const speciesList = useSpeciesListQuery(region)
-  // Lifers first: every bird of the county that isn't on the life list, in place of the watch list.
-  const seen = useSeenCodes()
-  const [liferMode, setLiferModeState] = useState(readLiferMode)
-  const setLiferMode = (on: boolean) => { setLiferModeState(on); try { localStorage.setItem(LIFER_MODE_KEY, on ? '1' : '0') } catch { /* this visit only */ } }
-  const lifers = liferMode && seen.codes.size > 0
-  const codes = useMemo(() => {
-    if (lifers) return (speciesList.data ?? []).filter(code => !seen.codes.has(code)).sort()
-    const here = speciesList.data ? new Set(speciesList.data) : null
-    return [...savedCodes].filter(code => !here || here.has(code)).sort()
-  }, [lifers, savedCodes, seen.codes, speciesList.data])
-  // The person's own stops for this county (null follows the suggestion) and where the day starts,
-  // kept on the account. The suggested route counts the drive from the start.
-  const { custom, setCustom, start, setStart, saveFailed } = useRoutePlan(region)
-  const go = useWhereToGoQuery(region, codes, start)
+  const { custom, setCustom, start, setStart, saveFailed, seen, lifers, setLiferMode, codes, go, route, stops } = useGoPlan(region)
   const regions = useRegionsQuery(user.state)
   const regionName = regions.data?.find(r => r.code === region)?.name ?? `your ${countyWord(user.state)}`
   const [selected, setSelected] = useState<string | null>(null)
@@ -62,9 +42,6 @@ const WhereToGo = () => {
   // A public land the mouse rests on, shown on the end of the route until the mouse moves off.
   const [phantom, setPhantom] = useState<PlanPoint | null>(null)
 
-  const route = go.data?.route
-  const suggested = useMemo<PlanPoint[]>(() => (route?.stops ?? []).map(s => ({ locId: s.locId, name: s.locName ?? s.locId, lat: s.lat, lng: s.lng })), [route])
-  const stops = custom ?? suggested
   // A route of one's own is driven here; the suggested one comes with its drive.
   const drivePoints = useMemo(() => [...(start ? [start] : []), ...stops].map(p => ({ lat: p.lat, lng: p.lng })), [start, stops])
   const ownDrive = useDriveQuery(drivePoints, custom !== null && stops.length > 0)
