@@ -1,0 +1,11 @@
+{
+  "region": "US-GA-139",
+  "days": 30,
+  "since": "2026-10-01",
+  "onFile": { "checklists": 64, "detailed": 41, "firstDay": "2026-10-18" },
+  "hotspots": [
+    { "locId": "L999", "name": "Lake Lanier Olympic Park", "lat": 34.2995, "lng": -83.9214, "species": 58, "checklists": 21, "bestList": { "species": 34, "subId": "S201", "day": "2026-10-24" } },
+    { "locId": "L22341308", "name": "Yahoola Creek Park", "lat": 34.5296831, "lng": -83.960756, "species": 41, "checklists": 9, "bestList": { "species": 27, "subId": "S202", "day": "2026-10-20" } },
+    { "locId": "L5", "name": "Wahoo Creek Park", "lat": 34.37, "lng": -83.8, "species": 22, "checklists": 1, "bestList": null }
+  ]
+}

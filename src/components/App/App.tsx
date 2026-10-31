@@ -33,7 +33,7 @@ const PassReset = lazy(() => import('../PassReset/PassReset'))
 const Sighting = lazy(() => import('../Sighting/Sighting'))
 const MapPage = lazy(() => import('../MapPage/MapPage'))
 const AlertSightings = lazy(() => import('../AlertSightings/AlertSightings'))
-const WhereToGo = lazy(() => import('../WhereToGo/WhereToGo'))
+const GoPage = lazy(() => import('../WhereToGo/GoPage'))
 const Landing = lazy(() => import('../Landing/Landing'))
 const Shared = lazy(() => import('../Shared/Shared'))
 const Onboarding = lazy(() => import('../Onboarding/Onboarding'))
@@ -201,7 +201,7 @@ const App = () => {
           <Route path='/map' element={requireUser(<MapPage />)} />
           <Route path='/sighting/:code/:subId' element={requireUser(<Sighting />)} />
           <Route path='/sightings' element={requireUser(<AlertSightings />)} />
-          <Route path='/go' element={requireUser(<WhereToGo />)} />
+          <Route path='/go' element={requireUser(<GoPage />)} />
           <Route path='/share/:kind/:id' element={<Shared />} />
           <Route path='/welcome' element={requireUser(<Onboarding />)} />
           <Route path='/reset/:token' element={<PassReset />} />

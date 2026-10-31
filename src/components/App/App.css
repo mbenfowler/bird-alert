@@ -325,3 +325,66 @@ html[data-alarm] #titleAlert {
     html[data-alarm='full'] nav, html[data-alarm='siren'] nav { animation: none; background-color: #c8200e; }
     html[data-alarm] #titleAlert { animation: none; }
 }
+
+/* A segmented choice of a few options (alert timing, alert range, the Where to go tabs and periods):
+   radio labels or buttons in one pill. */
+.timing {
+  display: inline-flex;
+  margin: 0 0 8px 20px;
+  padding: 0;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.timing:disabled {
+  opacity: 0.45;
+}
+
+.timing__option {
+  position: relative;
+  padding: 6px 14px;
+  font-size: 0.9rem;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.timing__option + .timing__option {
+  border-left: 2px solid var(--line);
+}
+
+.timing__option input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.timing__option.is-selected {
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+.timing__option:has(input:focus-visible) {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+}
+
+button.timing__option {
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+button.timing__option.is-selected {
+  background: var(--accent);
+}
+
+button.timing__option:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+}

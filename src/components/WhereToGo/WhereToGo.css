@@ -566,3 +566,55 @@
     color: var(--muted);
     font-size: 0.85rem;
 }
+
+/* The two ways to look: tabs above the page, in its width. */
+.go-tabs {
+    width: min(100%, 1400px);
+    margin: 0 auto;
+    padding: 12px 12px 0;
+    box-sizing: border-box;
+}
+
+.go .timing,
+.go-tabs .timing {
+    margin: 0;
+}
+
+.go-tabs__switch .timing__option {
+    padding: 8px 18px;
+    font-size: 0.95rem;
+}
+
+/* Best hotspots: the period choice, then an honest word on how much is on file. */
+.go .go__periods {
+    margin-top: 10px;
+}
+
+.go .best__note {
+    margin: 10px 0 0;
+    text-align: left;
+}
+
+.best__basis {
+    font-size: 0.85rem;
+}
+
+.best__rank {
+    flex: none;
+    min-width: 1.6em;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: var(--ink);
+    color: #fff;
+    font-family: system-ui, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.best__links {
+    margin: 4px 0 0;
+    font-size: 0.88rem;
+    color: var(--muted);
+}
+

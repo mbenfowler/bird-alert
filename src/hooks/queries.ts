@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions,
-  getSavedBirds, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase } from '../apiCalls'
+  getSavedBirds, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
 import type { PersistenceClass, User } from '../types'
 
@@ -32,6 +32,7 @@ export const queryKeys = {
   chase: (locId: string, code: string, cls?: string) => ['chase', locId, code, cls ?? 'rare'] as const,
   whereToFind: (region: string, code: string) => ['where-to-find', region, code] as const,
   whereToGo: (region: string, codes: string[], from?: { lat: number; lng: number } | null) => ['where-to-go', region, codesKey(codes), from ? `${from.lat.toFixed(2)},${from.lng.toFixed(2)}` : ''] as const,
+  bestHotspots: (region: string, days: number) => ['best-hotspots', region, days] as const,
   savedRoute: (region: string) => ['saved-route', region] as const,
   placeSearch: (state: string, q: string, addresses: boolean) => ['place-search', state, q.trim().toLowerCase(), addresses] as const,
   drive: (points: { lat: number; lng: number }[]) => ['drive', points.map(p => `${p.lat.toFixed(4)},${p.lng.toFixed(4)}`).join(';')] as const,
@@ -279,6 +280,16 @@ export const useWhereToGoQuery = (region: string, codes: string[], from?: { lat:
     // A new starting point keeps the old route up while the new one comes in.
     placeholderData: keepPreviousData,
     enabled: Boolean(region) && codes.length > 0
+  })
+
+/** The county's hotspots ranked by species reported lately; another period keeps the last list up until it comes. */
+export const useBestHotspotsQuery = (region: string, days: number) =>
+  useQuery({
+    queryKey: queryKeys.bestHotspots(region, days),
+    queryFn: () => getBestHotspots(region, days),
+    staleTime: 10 * MINUTE,
+    placeholderData: keepPreviousData,
+    enabled: Boolean(region)
   })
 
 /** The route kept on the account for this county; looked at again whenever the page is opened. */

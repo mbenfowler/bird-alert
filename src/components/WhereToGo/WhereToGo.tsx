@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router'
 import SightingsMap, { type MapPoint } from '../SightingsMap/SightingsMap'
 import NearbyPublic from '../NearbyPublic/NearbyPublic'
@@ -12,6 +12,7 @@ import { unitFor } from '../../distance'
 import { chanceColour } from '../../chance'
 import { MAX_ROUTE_STOPS, coverage, samePlace, mapsUrl, type PlanPoint } from '../../routePlan'
 import { useRoutePlan } from '../../hooks/useRoutePlan'
+import { useDocked } from '../../hooks/useDocked'
 import { shareThing } from '../../share'
 import type { GoPlace } from '../../types'
 import AccuracyBadge from '../AccuracyBadge/AccuracyBadge'
@@ -89,21 +90,7 @@ const WhereToGo = () => {
   const closeNearby = () => { setOpenNearby(null); setActiveNearby(null) }
 
   // Docking, as on the species page: the list scrolls by itself only once the frame is under the bar.
-  const frameRef = useRef<HTMLDivElement>(null)
-  const [docked, setDocked] = useState(false)
-  useEffect(() => {
-    const update = () => {
-      const frame = frameRef.current
-      if (!frame) return
-      const bar = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-height')) || 55
-      const gap = Number.parseFloat(getComputedStyle(frame).getPropertyValue('--dock-gap')) || 0
-      setDocked(frame.getBoundingClientRect().top <= bar + gap + 1)
-    }
-    update()
-    window.addEventListener('scroll', update, { passive: true })
-    window.addEventListener('resize', update)
-    return () => { window.removeEventListener('scroll', update); window.removeEventListener('resize', update) }
-  }, [places.length])
+  const { frameRef, docked } = useDocked(places.length)
 
   // Starting an edit, or showing the route, brings the map under the bar: on a phone the button
   // sits above the map, and the route draws itself only once the map is in view.
@@ -115,7 +102,7 @@ const WhereToGo = () => {
     const bar = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-height')) || 55
     const gap = Number.parseFloat(getComputedStyle(frame).getPropertyValue('--dock-gap')) || 0
     window.scrollTo({ top: window.scrollY + frame.getBoundingClientRect().top - bar - gap, behavior: 'smooth' })
-  }, [routeShown])
+  }, [routeShown, frameRef])
 
   const modeSwitch = seen.codes.size > 0 && (
     <label className='go__mode'>
