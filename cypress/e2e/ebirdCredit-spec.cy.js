@@ -23,9 +23,10 @@ describe('eBird credit', () => {
     cy.get('.ebird-credit').should('not.exist')
   })
 
-  it('credits eBird on the public front page too, which shows live sightings', () => {
+  it('credits eBird once on the public front page, in the page\'s own words', () => {
     stubAuth({ loggedIn: false })
     cy.visit('http://localhost:3000/')
-    credit()
+    cy.contains('Sightings and hotspots come from').find('a[href="https://ebird.org"]').should('exist')
+    cy.get('.ebird-credit').should('not.exist')
   })
 })

@@ -215,7 +215,8 @@ const App = () => {
         </Suspense>
         </RouteError>
         </div>
-        {!NO_EBIRD_DATA.has(section) && <EbirdCredit />}
+        {/* The front page credits eBird (and xeno-canto) in its own words. */}
+        {!NO_EBIRD_DATA.has(section) && !(section === '' && user === null) && <EbirdCredit />}
         <ToastContainer />
         {user && <PullToRefresh />}
         <div className='alarm-glow' aria-hidden='true' />
