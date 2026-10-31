@@ -148,7 +148,7 @@ const BestHotspots = ({ onOpenRoute }: { onOpenRoute: () => void }) => {
             <p className='list-note best__note'>Bird Alert started gathering {regionName}’s checklists on {shortDay(onFile.firstDay)}, so this covers {plural(shortWindow, 'day')} so far.</p>
           )}
           {stops.length > 0 && (
-            <p className='go__summary best__route'>Your route has {plural(stops.length, 'stop')}. <button type='button' className='link-button' onClick={onOpenRoute}>See your route</button></p>
+            <p className='go__summary best__route'>Your route has {plural(stops.length, 'stop')}. <button type='button' className='link-button link-text' onClick={onOpenRoute}>See your route</button></p>
           )}
           {onFile && onFile.detailed < onFile.checklists && onFile.detailed > 0 && (
             <p className='go__summary best__basis'>{species ? 'How reliably' : 'Species'} {species ? 'comes' : 'come'} from the {onFile.detailed.toLocaleString()} of {onFile.checklists.toLocaleString()} checklists on file that have their full species list.</p>

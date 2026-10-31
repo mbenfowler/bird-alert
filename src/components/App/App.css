@@ -114,6 +114,13 @@ video {
     cursor: pointer;
 }
 
+/* A button that reads as a link in running text: the link colour, underlined. */
+.link-button.link-text {
+    color: var(--link);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
 button.submit,
 button#confirmPasswordReset {
     font: inherit;

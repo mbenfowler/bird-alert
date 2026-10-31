@@ -24,7 +24,15 @@ const Nav = () => {
     useEffect(() => {
         const nav = navRef.current
         if (!nav) return
-        const publish = () => document.documentElement.style.setProperty('--nav-height', `${nav.offsetHeight}px`)
+        // Only a real change is published: a page sized from it can bring a scrollbar in or out, which
+        // resizes the bar, and re-publishing an unchanged height every time made that a loop.
+        let last = ''
+        const publish = () => {
+            const height = `${nav.offsetHeight}px`
+            if (height === last) return
+            last = height
+            document.documentElement.style.setProperty('--nav-height', height)
+        }
         publish()
         if (typeof ResizeObserver === 'undefined') return
         const observer = new ResizeObserver(publish)
