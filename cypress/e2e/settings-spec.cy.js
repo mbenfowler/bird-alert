@@ -116,6 +116,21 @@ describe('Settings', () => {
     cy.contains('Your account has been deleted.')
   })
 
+  it('sets how far rare-bird and lifer alerts reach, measured from the county center', () => {
+    cy.contains('How far rare birds and lifers reach')
+    cy.get('.alert-range__choices').within(() => {
+      cy.contains('label', 'Just my county')
+      cy.contains('label', '30 mi').should('have.class', 'is-selected')
+      cy.contains('label', '15 mi').click()
+    })
+    cy.wait('@patchUser').its('request.body').should('deep.equal', { range_mi: 15 })
+    cy.get('.alert-range__home').should('contain', 'Measured from the center of')
+    cy.contains('button', 'Use a spot of my own').click()
+    cy.get('.alert-range__search').should('exist')
+    cy.get('.alert-range__search').contains('button', 'Cancel').click()
+    cy.get('.alert-range__search').should('not.exist')
+  })
+
   it('on an iPhone browser tab, the push settings give way to the Home Screen steps', () => {
     cy.visit('http://localhost:3000/settings', { onBeforeLoad: (win) => Object.defineProperty(win.navigator, 'userAgent', { value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.0 Mobile/15E148 Safari/604.1' }) })
     cy.get('.install-steps__list li').should('have.length', 3)

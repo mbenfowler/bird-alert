@@ -35,3 +35,6 @@ yarn-error.log*
 # playwright artifacts
 /test-results
 /playwright-report
+
+# Claude Code agent worktrees
+.claude/worktrees/
