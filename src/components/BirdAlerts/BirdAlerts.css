@@ -217,10 +217,7 @@
   mask-image: linear-gradient(to right, transparent, #000 20px, #000 calc(100% - 20px), transparent);
 }
 
-.alerts-list > a,
 .alerts-list > .alerts-item {
-  text-decoration: none;
-  color: inherit;
   scroll-snap-align: start;
   flex-shrink: 0;
   opacity: 1;
@@ -231,16 +228,16 @@
 /* Every card in the row is the same fixed width whatever its type (this outranks the generic .card
    rule, which is full-width for the main list). On phones a card is narrower than the screen, so
    the next card's edge shows and the row reads as something to scroll. */
-.alerts-list > a > .card,
-.alerts-list > .alerts-item > .card {
+.alerts-list > .alerts-item > .card,
+.alerts-list > .alerts-item > .alert-link > .card {
   width: 280px;
   min-width: 280px;
   max-width: 280px;
 }
 
 @media screen and (max-width: 480px) {
-  .alerts-list > a > .card,
-  .alerts-list > .alerts-item > .card {
+  .alerts-list > .alerts-item > .card,
+  .alerts-list > .alerts-item > .alert-link > .card {
     width: 76vw;
     min-width: 76vw;
     max-width: 76vw;
@@ -256,13 +253,11 @@
    what's inside each card's slot, not the slot: the row snaps to its cards, and a moving slot drags
    the row's scroll along with it, pinning the first card in place while the rest arrive. The row
    clips the cards on their way in. */
-.is-expanded .alerts-list > a > *,
 .is-expanded .alerts-list > .alerts-item > * {
   animation: alert-in 0.9s cubic-bezier(0.25, 0.6, 0.3, 1) both;
   animation-delay: calc(min(var(--i, 0), 18) * 80ms);
 }
 
-.is-collapsed .alerts-list > a,
 .is-collapsed .alerts-list > .alerts-item {
   opacity: 0;
   transform: translateY(-10px);
@@ -273,10 +268,59 @@
   to { transform: translateX(0); }
 }
 
-/* New since the last visit: a small tag in the card's corner whose dot pulses a few times, then stays. */
-.alerts-list > a {
-  position: relative;
+/* A sighting's slot holds the card's link and, stacked in the same cell, a share button in the card's
+   bottom corner. The slot is only as tall as its card, so the corner is the card's, not the row's. */
+.alerts-item--sighting {
+  display: grid;
+  align-self: flex-start;
 }
+
+.alerts-item--sighting > * {
+  grid-area: 1 / 1;
+}
+
+.alert-link {
+  position: relative;
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* The place, the card's last line, keeps clear of the share button. */
+.alerts-item--sighting .alert-card p:last-child {
+  padding-right: 40px;
+}
+
+.alert-share {
+  position: relative;
+  z-index: 1;
+  align-self: end;
+  justify-self: end;
+  /* Inside the card: its 6px margin plus room from the border. */
+  margin: 0 10px 16px 0;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+
+.alert-share:hover {
+  background: var(--accent);
+}
+
+.alert-share:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* New since the last visit: a small tag in the card's corner whose dot pulses a few times, then stays. */
 
 .alert-new {
   position: absolute;
@@ -335,17 +379,17 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .alert-icon, .alerts-toggle, .alerts-toggle svg, .alerts-collapse, .alerts-list > a, .alerts-list > .alerts-item {
+  .alert-icon, .alerts-toggle, .alerts-toggle svg, .alerts-collapse, .alerts-list > .alerts-item {
     transition: none;
   }
   .alerts-count, .is-expanded .alerts-bar::after, .is-collapsed .alerts-bar::after, .alert-new__dot {
     animation: none;
   }
-  .is-expanded .alerts-list > a > *, .is-expanded .alerts-list > .alerts-item > * {
+  .is-expanded .alerts-list > .alerts-item > * {
     animation: none;
     animation-delay: 0s;
   }
-  .is-expanded .alerts-list > a, .is-expanded .alerts-list > .alerts-item {
+  .is-expanded .alerts-list > .alerts-item {
     animation: alert-fade 0.2s ease both;
   }
 }

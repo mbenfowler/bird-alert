@@ -42,7 +42,7 @@ describe('Migration season', () => {
     cy.get('#star').click()
     cy.get('.alerts-title').should('contain', 'Watch list sightings')
     cy.get('.arrival-card').should('not.exist')
-    cy.get('.alerts-list > a').should('have.length.at.least', 1)
+    cy.get('.alerts-list .alert-link').should('have.length.at.least', 1)
   })
 
   it('shows which months a species is around on the sighting page', () => {

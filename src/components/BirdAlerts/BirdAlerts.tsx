@@ -2,12 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import AlertCard from '../AlertCard/AlertCard'
 import ArrivalCard from '../ArrivalCard/ArrivalCard'
-import { AlertIcon, ChevronIcon, CompassIcon, MapIcon, MigrationIcon, StarIcon } from '../Icons/Icons'
+import { AlertIcon, ChevronIcon, CompassIcon, MapIcon, MigrationIcon, ShareIcon, StarIcon } from '../Icons/Icons'
 import { LoadingState } from '../Loading/Loading'
 import { useArrivalsQuery, useCurrentUser, useNotableQuery, useObservationsQuery, useRegionsQuery, useSavedCodes } from '../../hooks/queries'
 import './BirdAlerts.css'
 import { countyWord } from '../../usStates'
 import { isNewSince, previousVisit, watchVisits } from '../../lastVisit'
+import { shareThing } from '../../share'
+import type { Observation } from '../../types'
 
 type AlertType = 'star' | 'notable' | 'arriving'
 
@@ -57,6 +59,10 @@ const BirdAlerts = () => {
       : 'Everything that was around this time last year has already been reported.'
 
     const pick = (type: AlertType) => { setAlertType(type); setExpanded(true) }
+    // The same link as the sighting page's Share: a page with the bird's picture and a map card.
+    const shareSighting = (alert: Observation) => {
+      void shareThing({ kind: 'sighting', speciesCode: alert.speciesCode, locId: alert.locId, locName: alert.locName, lat: alert.lat, lng: alert.lng, obsDt: alert.obsDt, howMany: alert.howMany ?? null, subId: alert.subId, regionName }, `${alert.comName} at ${alert.locName}`)
+    }
 
     return (
       <section id='birdAlerts' className={expanded ? 'is-expanded' : 'is-collapsed'} aria-labelledby='alertsHeading'>
@@ -87,11 +93,16 @@ const BirdAlerts = () => {
                 {shown.map((alert, index) => {
                   const isNew = isNewSince(alert.obsDt, since)
                   return (
-                  <Link key={`${alert.subId}-${alert.speciesCode}`} className={isNew ? 'is-new' : undefined} style={{ '--i': index } as React.CSSProperties} to={`/sighting/${alert.speciesCode}/${alert.subId}`}>
-                    {isNew && <span className='alert-new'><span className='alert-new__dot' aria-hidden='true' />New<span className='visually-hidden'> since your last visit</span></span>}
-                    <AlertCard alert={alert} />
-                    <span className='visually-hidden'>, open sighting details</span>
-                  </Link>
+                  // The card opens the sighting; the share button sits beside the link, not in it (a
+                  // button inside a link would open the sighting too).
+                  <div key={`${alert.subId}-${alert.speciesCode}`} className='alerts-item alerts-item--sighting' style={{ '--i': index } as React.CSSProperties}>
+                    <Link className={`alert-link ${isNew ? 'is-new' : ''}`} to={`/sighting/${alert.speciesCode}/${alert.subId}`}>
+                      {isNew && <span className='alert-new'><span className='alert-new__dot' aria-hidden='true' />New<span className='visually-hidden'> since your last visit</span></span>}
+                      <AlertCard alert={alert} />
+                      <span className='visually-hidden'>, open sighting details</span>
+                    </Link>
+                    <button type='button' className='alert-share' aria-label={`Share this ${alert.comName} sighting`} title='Share' onClick={() => shareSighting(alert)}><ShareIcon /></button>
+                  </div>
                   )
                 })}
                 {arrivals.map((arrival, index) => (

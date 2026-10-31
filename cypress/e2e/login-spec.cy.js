@@ -12,7 +12,7 @@ describe("Login flow for a user that already has location set", () => {
       .get(':nth-child(2) > .nav-img').should('be.visible')
       .get('.alerts-header').should('contain', 'Watch list sightings')
       .get('.alerts-count').should('contain', '1')
-      .get('.alerts-list > a > .card').should('be.visible')
+      .get('.alerts-list .alert-link > .card').should('be.visible')
         .and('contain', 'Canada Goose')
         .and('contain', 'Dec 1, 1:49 PM')
         .and('contain', "Rusty's Gainesville Yard")
