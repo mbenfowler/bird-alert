@@ -11,6 +11,7 @@ const APP_BUILD = '2026-10-22.9'
 import { toast, ToastContainer } from 'react-toastify'
 import InstallNudge from '../InstallNudge/InstallNudge'
 import ConfirmNudge from '../ConfirmNudge/ConfirmNudge'
+import EbirdCredit from '../EbirdCredit/EbirdCredit'
 import PullToRefresh from '../PullToRefresh/PullToRefresh'
 import { prefersReducedMotion } from '../../routeDraw'
 import { claimThisDevice } from '../../hooks/usePushNotifications'
@@ -40,6 +41,8 @@ const Onboarding = lazy(() => import('../Onboarding/Onboarding'))
 
 // Routes reachable without a session. Everything else redirects to /login once we know there is no user.
 const PUBLIC_PATH_PREFIXES = ['/login', '/reset/', '/confirm/', '/unsubscribe/', '/share/']
+// Pages about the account alone; every other page is built from eBird's sightings and credits it.
+const NO_EBIRD_DATA = new Set(['login', 'settings', 'reset', 'confirm', 'unsubscribe'])
 
 const App = () => {
   const session = useSessionQuery()
@@ -212,6 +215,7 @@ const App = () => {
         </Suspense>
         </RouteError>
         </div>
+        {!NO_EBIRD_DATA.has(section) && <EbirdCredit />}
         <ToastContainer />
         {user && <PullToRefresh />}
         <div className='alarm-glow' aria-hidden='true' />

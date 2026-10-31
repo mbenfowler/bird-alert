@@ -1,0 +1,14 @@
+/* Under the page, clear of the coffee button in the corner. */
+.ebird-credit {
+  margin: 28px auto 0;
+  padding: 0 16px 88px;
+  max-width: 640px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  text-align: center;
+  opacity: 0.75;
+}
+
+.ebird-credit a {
+  color: inherit;
+}
