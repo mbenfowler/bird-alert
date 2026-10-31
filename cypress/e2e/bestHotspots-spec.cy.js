@@ -86,9 +86,9 @@ describe('Best hotspots', () => {
   it('a bird narrows the ranking to the hotspots where it was reported, and clears again', () => {
     cy.visit('http://localhost:3000/go?tab=best')
     cy.wait('@best')
-    // The search offers only the county's birds: Emperor Goose matches, but isn't on Hall's list.
+    // The search offers only the county's birds, from its whole list: Hall's four geese, never Emperor Goose.
     cy.get('.best__bird-picker input').type('goose')
-    cy.get('.best__bird-picker .place-search__results button').should('have.length', 2).and('not.contain', 'Emperor Goose')
+    cy.get('.best__bird-picker .place-search__results button').should('have.length', 4).and('not.contain', 'Emperor Goose')
     cy.contains('.best__bird-picker .place-search__results button', 'Canada Goose').click()
     cy.wait('@best').its('request.url').should('include', 'species=cangoo').and('include', 'days=30')
     cy.url().should('include', 'species=cangoo').and('include', 'tab=best')
@@ -147,5 +147,38 @@ describe('Best hotspots', () => {
     cy.get('.go__summary').first().should('contain', 'by how reliably')
     cy.get('.best__list > li strong').then(($s) => expect([...$s].map((el) => el.textContent)).to.deep.equal(['Yahoola Creek Park', 'Lake Lanier Olympic Park', 'Longwood Park']))
     cy.get('.sightings-map .map-pin__count').should('have.length', 3)
+  })
+
+  it('the bird search keeps up with typing from the county list, and never shows an answer for older text', () => {
+    // Names for the whole list are in hand: results need no search request per keystroke.
+    cy.visit('http://localhost:3000/go?tab=best')
+    cy.wait('@best')
+    cy.get('.best__bird-picker input').type('snow')
+    cy.get('.best__bird-picker .place-search__results button').should('have.length', 1).and('contain', 'Snow Goose')
+    cy.get('.best__bird-picker input').clear()
+    cy.get('.best__bird-picker input').type('cana')
+    cy.get('.best__bird-picker .place-search__results button').should('have.length', 1).and('contain', 'Canada Goose')
+    cy.get('@search.all').should('have.length', 0)
+  })
+
+  it('while the list is still loading, an answer for earlier text never shows under newer text', () => {
+    // The names never arrive, so the server search stands in; its answer for "snow" is slow.
+    cy.intercept('GET', '**/api/birds?codes=*', () => new Promise(() => {}))
+    const asked = { snow: false }
+    cy.intercept('GET', '**/api/birds?q=snow*', (req) => {
+      asked.snow = true
+      req.reply({ delay: 1500, body: [{ speciesCode: 'snogoo', comName: 'Snow Goose', sciName: 'Anser caerulescens' }] })
+    }).as('slowSearch')
+    cy.visit('http://localhost:3000/go?tab=best')
+    cy.wait('@best')
+    cy.get('.best__bird-picker input').type('cana')
+    cy.get('.best__bird-picker .place-search__results button').should('contain', 'Canada Goose')
+    cy.get('.best__bird-picker input').clear()
+    cy.get('.best__bird-picker input').type('snow')
+    // While "snow" is being looked up, the geese found for "cana" are gone, not left standing under it.
+    cy.wrap(asked).its('snow').should('eq', true)
+    cy.get('.best__bird-picker').then(($p) => expect($p.text()).not.to.contain('Canada Goose'))
+    cy.wait('@slowSearch')
+    cy.get('.best__bird-picker .place-search__results button').should('have.length', 1).and('contain', 'Snow Goose')
   })
 })

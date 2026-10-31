@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { keepPreviousData, queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, queryOptions, useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions,
   getSavedBirds, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase } from '../apiCalls'
@@ -126,6 +126,29 @@ export const birdsQueryOptions = (codes: string[]) =>
 
 export const useBirdsQuery = (codes: string[]) =>
   useQuery({ ...birdsQueryOptions(codes), placeholderData: keepPreviousData })
+
+/** The server looks up at most this many birds at once. */
+const BIRDS_PER_REQUEST = 50
+
+/**
+ * Every bird on a region's list, names and all, fetched once in pages the server accepts and kept
+ * for the week like any bird page: enough to search the list as you type without asking the server
+ * per keystroke. `ready` once every page is in.
+ */
+export const useRegionBirds = (region: string) => {
+  const speciesList = useSpeciesListQuery(region)
+  const pages = useMemo(() => {
+    const codes = speciesList.data ?? []
+    return Array.from({ length: Math.ceil(codes.length / BIRDS_PER_REQUEST) }, (_, i) => codes.slice(i * BIRDS_PER_REQUEST, (i + 1) * BIRDS_PER_REQUEST))
+  }, [speciesList.data])
+  return useQueries({
+    queries: pages.map(codes => birdsQueryOptions(codes)),
+    combine: (results) => ({
+      birds: results.flatMap(r => r.data ?? []),
+      ready: Boolean(speciesList.data) && results.every(r => r.data)
+    })
+  })
+}
 
 export const useObservationsQuery = (region: string) =>
   useQuery({
