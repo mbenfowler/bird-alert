@@ -1,3 +1,9 @@
+/* The page fills at least the screen, so the credit waits below the fold while a page loads
+   rather than floating up under the spinner. */
+.route-view {
+  min-height: calc(100dvh - var(--nav-height, 55px));
+}
+
 /* Under the page, clear of the coffee button in the corner. */
 .ebird-credit {
   margin: 28px auto 0;
