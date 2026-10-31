@@ -18,6 +18,14 @@ const PERIODS = [
   { days: 90, label: 'Past 3 months', phrase: 'the past 3 months' }
 ]
 const DEFAULT_DAYS = 30
+/** How many hotspots the list shows; for a bird the server sends every one, so either order can pick from all. */
+const SHOWN = 25
+
+type BirdSort = 'recent' | 'reliable'
+const BIRD_SORTS: { sort: BirdSort; label: string }[] = [
+  { sort: 'recent', label: 'Seen most recently' },
+  { sort: 'reliable', label: 'Most reliable' }
+]
 
 const shortDay = (day: string) => new Date(`${day}T12:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
@@ -52,6 +60,14 @@ const BestHotspots = ({ onOpenRoute }: { onOpenRoute: () => void }) => {
     else next.delete('species')
     return next
   }, { replace: true })
+  // For a bird: the latest report first (fresh news is what you chase), or most reliable (for planning).
+  const sort: BirdSort = params.get('sort') === 'reliable' ? 'reliable' : 'recent'
+  const setSort = (next: BirdSort) => setParams((prev) => {
+    const out = new URLSearchParams(prev)
+    if (next === 'reliable') out.set('sort', 'reliable')
+    else out.delete('sort')
+    return out
+  }, { replace: true })
   const best = useBestHotspotsQuery(region, period.days, !species)
   const forBird = useSpeciesHotspotsQuery(region, period.days, species)
   const birds = useBirdsQuery(species ? [species] : [])
@@ -63,7 +79,11 @@ const BestHotspots = ({ onOpenRoute }: { onOpenRoute: () => void }) => {
   const [selected, setSelected] = useState<string | null>(null)
 
   const rows = useMemo<Row[]>(() => species
-    ? (forBird.data?.hotspots ?? []).map(h => ({
+    // The server ranks every hotspot by how reliably; the latest report re-sorts them (ties keep that order).
+    ? [...(forBird.data?.hotspots ?? [])]
+        .sort((a, b) => sort === 'recent' ? (b.lastSeen?.day ?? '').localeCompare(a.lastSeen?.day ?? '') : 0)
+        .slice(0, SHOWN)
+        .map(h => ({
         locId: h.locId, name: h.name, lat: h.lat, lng: h.lng,
         counts: `On ${h.reports} of ${plural(h.detailed, 'checklist')} (${Math.round(h.frequency * 100)}%)`,
         links: <>{h.lastSeen && <>Last seen {ebirdLink(`https://ebird.org/checklist/${h.lastSeen.subId}`, `${shortDay(h.lastSeen.day)}${h.lastSeen.howMany ? `, ${plural(h.lastSeen.howMany, 'bird')}` : ''}`)} · </>}{ebirdLink(`https://ebird.org/hotspot/${h.locId}`, 'Hotspot on eBird')}</>
@@ -72,7 +92,7 @@ const BestHotspots = ({ onOpenRoute }: { onOpenRoute: () => void }) => {
         locId: h.locId, name: h.name, lat: h.lat, lng: h.lng,
         counts: `${h.species} species · ${plural(h.checklists, 'checklist')}`,
         links: <>{h.bestList && <>Best list {ebirdLink(`https://ebird.org/checklist/${h.bestList.subId}`, `${h.bestList.species} species on ${shortDay(h.bestList.day)}`)} · </>}{ebirdLink(`https://ebird.org/hotspot/${h.locId}`, 'Hotspot on eBird')}</>
-      })), [species, forBird.data, best.data])
+      })), [species, sort, forBird.data, best.data])
   const points = useMemo<MapPoint[]>(() => rows.map((h, i) => ({
     id: h.locId,
     lat: h.lat,
@@ -94,9 +114,16 @@ const BestHotspots = ({ onOpenRoute }: { onOpenRoute: () => void }) => {
 
   const birdFilter = species
     ? (
-      <p className='best__bird'>
-        <span className='best__bird-chip'>{birdName ?? species}<button type='button' aria-label={`Show every bird again, not just ${birdName ?? species}`} onClick={() => setSpecies(null)}>✕</button></span>
-      </p>
+      <>
+        <p className='best__bird'>
+          <span className='best__bird-chip'>{birdName ?? species}<button type='button' aria-label={`Show every bird again, not just ${birdName ?? species}`} onClick={() => setSpecies(null)}>✕</button></span>
+        </p>
+        <div className='timing go__periods best__sort' role='group' aria-label='Order'>
+          {BIRD_SORTS.map(o => (
+            <button key={o.sort} type='button' className={`timing__option ${o.sort === sort ? 'is-selected' : ''}`} aria-pressed={o.sort === sort} onClick={() => setSort(o.sort)}>{o.label}</button>
+          ))}
+        </div>
+      </>
     )
     : <BirdPicker region={region} regionName={regionName} onPick={setSpecies} />
 
@@ -113,7 +140,7 @@ const BestHotspots = ({ onOpenRoute }: { onOpenRoute: () => void }) => {
         <div className='go__title-row'>
           <h1 className='fredericka go__title'>Best hotspots</h1>
           <p className='go__summary'>{species
-            ? `Hotspots in ${regionName} where ${birdName ?? 'this bird'} was reported in ${period.phrase}, by how reliably.`
+            ? `Hotspots in ${regionName} where ${birdName ?? 'this bird'} was reported in ${period.phrase}, ${sort === 'recent' ? 'latest report first' : 'by how reliably'}.`
             : `${regionName}’s hotspots ranked by the species reported there in ${period.phrase}.`}</p>
           {periodChips}
           {birdFilter}

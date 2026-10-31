@@ -83,7 +83,7 @@ describe('Best hotspots', () => {
     cy.get('.go__stops > li').should('have.length', 3).last().should('contain', 'Yahoola Creek Park')
   })
 
-  it('a bird narrows the ranking to the hotspots where it was reported, most reliably first, and clears again', () => {
+  it('a bird narrows the ranking to the hotspots where it was reported, and clears again', () => {
     cy.visit('http://localhost:3000/go?tab=best')
     cy.wait('@best')
     // The search offers only the county's birds: Emperor Goose matches, but isn't on Hall's list.
@@ -94,7 +94,7 @@ describe('Best hotspots', () => {
     cy.url().should('include', 'species=cangoo').and('include', 'tab=best')
     cy.get('.best__bird-chip').should('contain', 'Canada Goose')
     cy.get('.best__bird-picker').should('not.exist')
-    cy.get('.go__summary').first().should('have.text', 'Hotspots in Hall where Canada Goose was reported in the past month, by how reliably.')
+    cy.get('.go__summary').first().should('have.text', 'Hotspots in Hall where Canada Goose was reported in the past month, latest report first.')
     cy.get('.best__list > li').should('have.length', 2)
     cy.get('.best__list > li').first().within(() => {
       cy.contains('strong', 'Yahoola Creek Park')
@@ -128,5 +128,24 @@ describe('Best hotspots', () => {
     cy.wait('@best').its('request.url').should('include', 'species=cangoo').and('include', 'days=90')
     cy.get('.best__bird-chip').should('contain', 'Canada Goose')
     cy.contains('.go__periods button', 'Past 3 months').should('have.attr', 'aria-pressed', 'true')
+  })
+
+  it('for a bird, the latest report comes first, and Most reliable puts the steadiest hotspot first', () => {
+    // A hotspot with one recent checklist, and a steadier one last reported days earlier.
+    cy.fixture('bestHotspotsSpecies').then((forBird) => {
+      const [steady, other] = forBird.hotspots
+      const fresh = { ...other, locId: 'L77', name: 'Longwood Park', lat: 34.31, lng: -83.83, reports: 1, detailed: 1, frequency: 1, lastSeen: { day: '2026-10-30', subId: 'S777', howMany: 4 } }
+      cy.intercept('GET', '**/api/ebird/best-hotspots*species=*', { ...forBird, hotspots: [steady, other, fresh] }).as('forBird')
+    })
+    cy.visit('http://localhost:3000/go?tab=best&species=cangoo')
+    cy.wait('@forBird')
+    cy.contains('.best__sort button', 'Seen most recently').should('have.attr', 'aria-pressed', 'true')
+    cy.get('.best__list > li strong').then(($s) => expect([...$s].map((el) => el.textContent)).to.deep.equal(['Longwood Park', 'Yahoola Creek Park', 'Lake Lanier Olympic Park']))
+    cy.get('.best__list > li').first().find('.best__counts').should('have.text', 'On 1 of 1 checklist (100%)')
+    cy.contains('.best__sort button', 'Most reliable').click()
+    cy.url().should('include', 'sort=reliable')
+    cy.get('.go__summary').first().should('contain', 'by how reliably')
+    cy.get('.best__list > li strong').then(($s) => expect([...$s].map((el) => el.textContent)).to.deep.equal(['Yahoola Creek Park', 'Lake Lanier Olympic Park', 'Longwood Park']))
+    cy.get('.sightings-map .map-pin__count').should('have.length', 3)
   })
 })
