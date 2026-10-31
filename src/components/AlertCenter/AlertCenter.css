@@ -51,18 +51,6 @@
   flex-shrink: 0;
 }
 
-/* Where the switch would be, on an iPhone outside the Home Screen app. */
-.notification__app-only {
-  max-width: 7.5em;
-  padding: 3px 10px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  opacity: 0.8;
-  font-size: 0.78rem;
-  line-height: 1.25;
-  text-align: center;
-}
-
 .test-push {
   align-self: flex-start;
   margin: -4px 0 0 16px;
@@ -111,19 +99,6 @@
   border-top: 1px solid var(--rule);
   background: #fafafa;
   transition: opacity 0.2s ease;
-}
-
-.notification-sub__note {
-  margin: 0;
-  padding: 10px 16px 0 28px;
-  border-top: 1px solid var(--rule);
-  background: #fafafa;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.notification-sub__note + .notification-sub {
-  border-top: 0;
 }
 
 .notification-sub[aria-disabled="true"] {
@@ -258,4 +233,14 @@
   display: block;
   font-size: 0.98rem;
   font-weight: 600;
+}
+
+/* On an iPhone browser tab: only the way to the Home Screen app, where the push settings are. */
+.install-group {
+  padding: 14px 16px;
+}
+
+.install-group__title {
+  margin: 0 0 6px;
+  font-size: 1rem;
 }

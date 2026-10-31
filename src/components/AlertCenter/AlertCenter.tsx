@@ -120,20 +120,24 @@ const AlertCenter = () => {
     <section className="alert-center">
       <h2 className='fredericka'>Alert center</h2>
 
+      {/* In a Safari tab on an iPhone push can't be had at all, so none of its settings show: just how
+          to get the Home Screen app, where they all are. */}
+      {needsInstall ? (
+        <div className='notification-group install-group'>
+          <h3 className='install-group__title'>Get alerts on your iPhone</h3>
+          <InstallSteps compact />
+        </div>
+      ) : (
       <div className={`notification-group ${pushOn ? 'is-on' : ''}`}>
         <div className='notification'>
           <div className='notification__text'>
             <label htmlFor='push_enabled'>Push notifications on this device</label>
-            {/* In a Safari tab on an iPhone push can't be had at all: the steps say how, not a dead switch. */}
-            {!needsInstall && <p className='notification__hint'>{pushHint[push.state]}</p>}
+            <p className='notification__hint'>{pushHint[push.state]}</p>
             {push.error && <p className='notification__hint notification__hint--error' role='alert'>{push.error}</p>}
-            {needsInstall && <InstallSteps compact />}
           </div>
           <div className='notification__controls'>
             {push.state === 'busy' && <LoadingState variant='inline' label='Updating push notifications' />}
-            {needsInstall
-              ? <span className='notification__app-only'>Turns on in the Home Screen app</span>
-              : <input className='switch' type='checkbox' id='push_enabled' name='push_enabled' checked={pushOn} disabled={pushDisabled} onChange={togglePush} />}
+            <input className='switch' type='checkbox' id='push_enabled' name='push_enabled' checked={pushOn} disabled={pushDisabled} onChange={togglePush} />
           </div>
         </div>
         {status.data?.lastRun && (
@@ -145,8 +149,7 @@ const AlertCenter = () => {
           </p>
         )}
 
-        {/* Sub-options sit greyed out until push is on for this device; on an iPhone tab, say what unlocks them. */}
-        {needsInstall && <p className='notification-sub__note'>These unlock once push is on in the Home Screen app (step 3 above).</p>}
+        {/* Sub-options sit greyed out until push is on for this device. */}
         <div className='notification-sub' aria-disabled={!pushOn}>
           {PUSH_KINDS.map(({ field, label, hint }) => (
             <div key={field}>
@@ -212,6 +215,7 @@ const AlertCenter = () => {
           {pushOn && <button type='button' className='test-push' onClick={sendTest}>Send a test notification</button>}
         </div>
       </div>
+      )}
 
       {EMAIL_PREFERENCES.map(({ field, label, hint, preview, nothing }) => (
         <div className='notification' key={field}>
