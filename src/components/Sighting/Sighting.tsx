@@ -19,6 +19,7 @@ import { ShareIcon } from '../Icons/Icons'
 import type { Observation, Place, PersistenceClass } from '../../types'
 import { formatObsDt } from '../../format'
 import { article, chanceStyle } from '../../chance'
+import { offerPush } from '../../pushAsk'
 import AccuracyBadge from '../AccuracyBadge/AccuracyBadge'
 import StillThere from '../StillThere/StillThere'
 import AbaCode from '../AbaCode/AbaCode'
@@ -152,7 +153,8 @@ const Sighting = () => {
     if (!bird) return
     popStar(event.currentTarget, !isWatched)
     toggleSaved.mutate({ bird, save: !isWatched }, {
-      onSuccess: () => toast.success(isWatched ? 'Removed from your watch list.' : 'Added to your watch list!', { position: 'bottom-center' }),
+      // Saving may be the moment to offer alerts on this device; the ask replaces the toast when it shows.
+      onSuccess: () => { void (isWatched ? Promise.resolve(false) : offerPush(bird.comName)).then((asked) => { if (!asked) toast.success(isWatched ? 'Removed from your watch list.' : 'Added to your watch list!', { position: 'bottom-center' }) }) },
       onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
     })
   }
