@@ -105,15 +105,17 @@ const WhereToGo = () => {
     return () => { window.removeEventListener('scroll', update); window.removeEventListener('resize', update) }
   }, [places.length])
 
-  // Starting an edit brings the map and the route under the bar together.
+  // Starting an edit, or showing the route, brings the map under the bar: on a phone the button
+  // sits above the map, and the route draws itself only once the map is in view.
+  const routeShown = editing || showRoute
   useEffect(() => {
-    if (!editing) return
+    if (!routeShown) return
     const frame = frameRef.current
     if (!frame) return
     const bar = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-height')) || 55
     const gap = Number.parseFloat(getComputedStyle(frame).getPropertyValue('--dock-gap')) || 0
     window.scrollTo({ top: window.scrollY + frame.getBoundingClientRect().top - bar - gap, behavior: 'smooth' })
-  }, [editing])
+  }, [routeShown])
 
   const modeSwitch = seen.codes.size > 0 && (
     <label className='go__mode'>
@@ -147,7 +149,9 @@ const WhereToGo = () => {
   const last = stops.length ? stops[stops.length - 1] : start
   const routeOnMap = ((showRoute || editing) && stops.length > 0 && drivePoints.length >= 2) || preview
     ? {
-        path: drivePoints.length >= 2 ? drive?.geometry ?? straightPath : [],
+        // An edited route keeps its last roads while the new ones come (settling), then draws on.
+        path: drivePoints.length >= 2 ? (custom ? ownDrive.data?.geometry : drive?.geometry) ?? straightPath : [],
+        settling: custom !== null && ownDrive.isFetching,
         stops: stops.map(s => ({ lat: s.lat, lng: s.lng, label: s.name })),
         start: start ? { lat: start.lat, lng: start.lng, label: `Start: ${start.name}` } : null,
         preview: preview && last ? { lat: preview.lat, lng: preview.lng, label: preview.name, from: [last.lat, last.lng] as [number, number] } : null

@@ -1,0 +1,47 @@
+/* The pull indicator: a bird in a disc that drops in under the bar and turns as it's pulled, then
+   spins while the page fetches. Moved by style in PullToRefresh, so it starts tucked away. */
+.pull-refresh {
+    position: fixed;
+    top: calc(var(--safe-top) - 44px);
+    left: 50%;
+    z-index: 950;
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    background: var(--surface);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transform: translate(-50%, 0);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.pull-refresh img {
+    width: 24px;
+    height: 24px;
+    /* The icon has a square backing that looks odd turned; round it off. */
+    border-radius: 50%;
+    transform: rotate(var(--turn, 0deg));
+}
+
+/* Past the threshold the disc goes gold: let go now and it refreshes. */
+.pull-refresh.is-ready,
+.pull-refresh.is-refreshing {
+    background: var(--accent);
+}
+
+.pull-refresh.is-refreshing img {
+    animation: pull-refresh-spin 700ms linear infinite;
+}
+
+@keyframes pull-refresh-spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pull-refresh.is-refreshing img {
+        animation: none;
+    }
+}

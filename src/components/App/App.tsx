@@ -11,6 +11,8 @@ const APP_BUILD = '2026-10-22.9'
 import { toast, ToastContainer } from 'react-toastify'
 import InstallNudge from '../InstallNudge/InstallNudge'
 import ConfirmNudge from '../ConfirmNudge/ConfirmNudge'
+import PullToRefresh from '../PullToRefresh/PullToRefresh'
+import { prefersReducedMotion } from '../../routeDraw'
 import { claimThisDevice } from '../../hooks/usePushNotifications'
 import { soundTheAlarm } from '../../alertMode'
 import { useSessionQuery } from '../../hooks/queries'
@@ -58,6 +60,21 @@ const App = () => {
   useEffect(() => {
     if (navigationType === 'PUSH') window.scrollTo(0, 0)
   }, [pathname, navigationType])
+
+  // Moving to another page fades the new one in (a sighting swapping for another stays put). An
+  // animation on the element, not a remount, so nothing reloads; opacity only, since a transform
+  // would knock the pages' fixed and sticky parts loose while it runs. Reduced motion: no fade.
+  const routeView = useRef<HTMLDivElement>(null)
+  const section = pathname.split('/')[1] ?? ''
+  const firstSection = useRef(section)
+  useEffect(() => {
+    const el = routeView.current
+    if (!el || section === firstSection.current) return
+    firstSection.current = section
+    el.dataset.lastTransition = `/${section}`
+    if (prefersReducedMotion() || !el.animate) return
+    el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'ease-out' })
+  }, [section])
   useEffect(() => {
     if (user === null && !isPublicPath) navigate('/login', { replace: true })
   }, [user, isPublicPath, navigate])
@@ -172,6 +189,7 @@ const App = () => {
       <Nav />
       <main className="App">
         <ConfirmNudge />
+        <div className='route-view' ref={routeView}>
         <RouteError resetKey={pathname}>
         <Suspense fallback={<LoadingState />}>
         <Routes>
@@ -193,7 +211,9 @@ const App = () => {
         </Routes>
         </Suspense>
         </RouteError>
+        </div>
         <ToastContainer />
+        {user && <PullToRefresh />}
         <div className='alarm-glow' aria-hidden='true' />
         {user && <InstallNudge />}
       </main>
