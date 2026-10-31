@@ -9,6 +9,7 @@ import type { Bird } from '../../types'
 import { SoundCredit, SoundToggle } from '../SoundButton/SoundButton'
 import { useBirdSound } from '../../hooks/useBirdSound'
 import { celebrateLifer, popStar } from '../Pop/pop'
+import { offerPush } from '../../pushAsk'
 
 interface CardProps {
     bird: Bird
@@ -30,7 +31,8 @@ const Card = ({ bird }: CardProps) => {
         const save = !isChecked
         popStar(event.currentTarget, save)
         toggleSaved.mutate({ bird, save }, {
-            onSuccess: () => toast.success(save ? 'Bird saved to watch list!' : 'Bird removed from watch list!', { position: 'bottom-center' }),
+            // Saving may be the moment to offer alerts on this device; the ask replaces the toast when it shows.
+            onSuccess: () => { void (save ? offerPush(bird.comName) : Promise.resolve(false)).then((asked) => { if (!asked) toast.success(save ? 'Bird saved to watch list!' : 'Bird removed from watch list!', { position: 'bottom-center' }) }) },
             onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
         })
     }

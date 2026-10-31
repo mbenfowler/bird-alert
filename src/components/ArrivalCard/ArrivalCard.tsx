@@ -2,6 +2,7 @@ import type { ChangeEvent } from 'react'
 import { toast } from 'react-toastify'
 import { errorMessage } from '../../apiCalls'
 import { popStar } from '../Pop/pop'
+import { offerPush } from '../../pushAsk'
 import { useSavedCodes } from '../../hooks/queries'
 import { useToggleSavedMutation } from '../../hooks/mutations'
 import type { Arrival, Bird } from '../../types'
@@ -26,7 +27,8 @@ const ArrivalCard = ({ arrival }: { arrival: Arrival }) => {
     const save = !isWatched
     popStar(event.currentTarget, save)
     toggleSaved.mutate({ bird, save }, {
-      onSuccess: () => toast.success(save ? 'Bird saved to watch list!' : 'Bird removed from watch list!', { position: 'bottom-center' }),
+      // Saving may be the moment to offer alerts on this device; the ask replaces the toast when it shows.
+      onSuccess: () => { void (save ? offerPush(bird.comName) : Promise.resolve(false)).then((asked) => { if (!asked) toast.success(save ? 'Bird saved to watch list!' : 'Bird removed from watch list!', { position: 'bottom-center' }) }) },
       onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
     })
   }
