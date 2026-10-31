@@ -5,7 +5,8 @@ import { stubAuth } from '../support/stubs'
 const checkA11y = () => {
   // Let entrance animations finish; axe measures colours mid-fade otherwise.
   // Every animation that ends (cards sliding in, the page fading in), not the endless ones like a spinner.
-  cy.document().then((doc) => Promise.all(doc.getAnimations()
+  // Some run several seconds (the New dot pulses four times), longer than a command's usual 4 s.
+  cy.document().then({ timeout: 15000 }, (doc) => Promise.all(doc.getAnimations()
     .filter((a) => a.playState === 'running' && Number.isFinite(a.effect?.getComputedTiming().endTime))
     .map((a) => a.finished.catch(() => null))))
   cy.injectAxe()
