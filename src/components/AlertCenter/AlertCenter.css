@@ -234,3 +234,13 @@
   font-size: 0.98rem;
   font-weight: 600;
 }
+
+/* On an iPhone browser tab: only the way to the Home Screen app, where the push settings are. */
+.install-group {
+  padding: 14px 16px;
+}
+
+.install-group__title {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}

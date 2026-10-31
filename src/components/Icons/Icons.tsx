@@ -77,3 +77,11 @@ export const ShareIcon = (props: SVGProps<SVGSVGElement>) => (
     <path d='M12 3v12M7.5 7.5 12 3l4.5 4.5M8 11H6a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-2' />
   </svg>
 )
+
+/** Safari's "Add to Home Screen": a rounded square with a plus. */
+export const AddToHomeIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true' {...props}>
+    <rect x='4' y='4' width='16' height='16' rx='4' />
+    <path d='M12 8v8M8 12h8' />
+  </svg>
+)
