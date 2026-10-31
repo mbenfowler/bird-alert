@@ -191,7 +191,13 @@
 
 /* The range sits between push and email, since it shapes both. */
 .alert-range__choices {
-  margin-left: 0;
+  /* As wide as its choices, in line with the text above, not stretched across the card. */
+  align-self: flex-start;
+  margin: 0 16px 10px;
+}
+
+.alert-range__home {
+  padding: 0 16px 6px;
 }
 
 .alert-range__home .notification__hint {
