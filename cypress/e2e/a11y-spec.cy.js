@@ -4,10 +4,10 @@ import { stubAuth } from '../support/stubs'
 // Fails on serious and critical axe violations. Logs each violation so the CI output names the element.
 const checkA11y = () => {
   // Let entrance animations finish; axe measures colours mid-fade otherwise.
-  cy.get('body').then(($body) => {
-    if ($body.find('.alerts-list > a').length) cy.get('.alerts-list > a').last().should('have.css', 'opacity', '1')
-    if ($body.find('.alerts-list > .alerts-item').length) cy.get('.alerts-list > .alerts-item').last().should('have.css', 'opacity', '1')
-  })
+  // Every animation that ends (cards sliding in, the page fading in), not the endless ones like a spinner.
+  cy.document().then((doc) => Promise.all(doc.getAnimations()
+    .filter((a) => a.playState === 'running' && Number.isFinite(a.effect?.getComputedTiming().endTime))
+    .map((a) => a.finished.catch(() => null))))
   cy.injectAxe()
   cy.checkA11y(undefined, { includedImpacts: ['critical', 'serious'] }, (violations) => {
     violations.forEach((v) => cy.task('log', `${v.impact} ${v.id}: ${v.help} -> ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`))
