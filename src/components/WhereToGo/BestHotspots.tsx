@@ -1,14 +1,15 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router'
 import SightingsMap, { type MapPoint } from '../SightingsMap/SightingsMap'
 import ErrorMessage from '../Error/ErrorMessage'
 import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
-import { useBestHotspotsQuery, useCurrentUser, useRegionsQuery } from '../../hooks/queries'
+import { useBestHotspotsQuery, useBirdsQuery, useCurrentUser, useRegionsQuery, useSpeciesHotspotsQuery } from '../../hooks/queries'
 import { useDocked } from '../../hooks/useDocked'
 import { countyWord } from '../../usStates'
 import { useGoPlan } from '../../hooks/useGoPlan'
 import { MAX_ROUTE_STOPS } from '../../routePlan'
+import BirdPicker from './BirdPicker'
 import './WhereToGo.css'
 
 const PERIODS = [
@@ -23,11 +24,18 @@ const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(
 const daysFrom = (from: string, to: string) => Math.round((Date.parse(`${to}T12:00:00`) - Date.parse(`${from}T12:00:00`)) / 86_400_000) + 1
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 
+/** One ranked hotspot as the list and map show it, whichever ranking it came from. */
+interface Row { locId: string; name: string; lat: number; lng: number; counts: string; links: ReactNode }
+
+const ebirdLink = (href: string, text: ReactNode) => <a href={href} target='_blank' rel='noreferrer'>{text}</a>
+
 /**
  * The county's hotspots ranked by how many species were reported there over the past week, month
  * or three months, from the checklists on file, with how many checklists that rests on and the best
  * single list. Bird Alert only began gathering a county when someone chose it, so a window reaching
- * further back than that says how much it really covers. The period is kept in the address.
+ * further back than that says how much it really covers. With a bird picked, the hotspots where it
+ * was reported, ranked by how reliably: the share of checklists that had it. The period and the
+ * bird are kept in the address, so a bird's own page can link straight to its ranking.
  */
 const BestHotspots = ({ onOpenRoute }: { onOpenRoute: () => void }) => {
   const user = useCurrentUser()
@@ -37,22 +45,44 @@ const BestHotspots = ({ onOpenRoute }: { onOpenRoute: () => void }) => {
   const [params, setParams] = useSearchParams()
   const period = PERIODS.find(p => String(p.days) === params.get('days')) ?? PERIODS.find(p => p.days === DEFAULT_DAYS)!
   const setDays = (days: number) => setParams((prev) => { const next = new URLSearchParams(prev); next.set('days', String(days)); return next }, { replace: true })
-  const best = useBestHotspotsQuery(region, period.days)
+  const species = params.get('species')
+  const setSpecies = (code: string | null) => setParams((prev) => {
+    const next = new URLSearchParams(prev)
+    if (code) next.set('species', code)
+    else next.delete('species')
+    return next
+  }, { replace: true })
+  const best = useBestHotspotsQuery(region, period.days, !species)
+  const forBird = useSpeciesHotspotsQuery(region, period.days, species)
+  const birds = useBirdsQuery(species ? [species] : [])
+  const birdName = (forBird.data?.species.code === species ? forBird.data?.species.comName : undefined)
+    ?? birds.data?.find(b => b.speciesCode === species)?.comName ?? null
+  const shown = species ? forBird : best
   const regions = useRegionsQuery(user.state)
   const regionName = regions.data?.find(r => r.code === region)?.name ?? `your ${countyWord(user.state)}`
   const [selected, setSelected] = useState<string | null>(null)
 
-  const hotspots = useMemo(() => best.data?.hotspots ?? [], [best.data])
-  const points = useMemo<MapPoint[]>(() => hotspots.map((h, i) => ({
+  const rows = useMemo<Row[]>(() => species
+    ? (forBird.data?.hotspots ?? []).map(h => ({
+        locId: h.locId, name: h.name, lat: h.lat, lng: h.lng,
+        counts: `On ${h.reports} of ${plural(h.detailed, 'checklist')} (${Math.round(h.frequency * 100)}%)`,
+        links: <>{h.lastSeen && <>Last seen {ebirdLink(`https://ebird.org/checklist/${h.lastSeen.subId}`, `${shortDay(h.lastSeen.day)}${h.lastSeen.howMany ? `, ${plural(h.lastSeen.howMany, 'bird')}` : ''}`)} · </>}{ebirdLink(`https://ebird.org/hotspot/${h.locId}`, 'Hotspot on eBird')}</>
+      }))
+    : (best.data?.hotspots ?? []).map(h => ({
+        locId: h.locId, name: h.name, lat: h.lat, lng: h.lng,
+        counts: `${h.species} species · ${plural(h.checklists, 'checklist')}`,
+        links: <>{h.bestList && <>Best list {ebirdLink(`https://ebird.org/checklist/${h.bestList.subId}`, `${h.bestList.species} species on ${shortDay(h.bestList.day)}`)} · </>}{ebirdLink(`https://ebird.org/hotspot/${h.locId}`, 'Hotspot on eBird')}</>
+      })), [species, forBird.data, best.data])
+  const points = useMemo<MapPoint[]>(() => rows.map((h, i) => ({
     id: h.locId,
     lat: h.lat,
     lng: h.lng,
     n: i + 1,
     title: `${i + 1}. ${h.name}`,
-    subtitle: `${h.species} species · ${plural(h.checklists, 'checklist')}`,
+    subtitle: h.counts,
     highlight: h.locId === selected
-  })), [hotspots, selected])
-  const { frameRef, docked } = useDocked(hotspots.length)
+  })), [rows, selected])
+  const { frameRef, docked } = useDocked(rows.length)
 
   const periodChips = (
     <div className='timing go__periods' role='group' aria-label='Period'>
@@ -62,11 +92,19 @@ const BestHotspots = ({ onOpenRoute }: { onOpenRoute: () => void }) => {
     </div>
   )
 
-  if (best.isError) return <ErrorMessage networkError={errorMessage(best.error)} />
+  const birdFilter = species
+    ? (
+      <p className='best__bird'>
+        <span className='best__bird-chip'>{birdName ?? species}<button type='button' aria-label={`Show every bird again, not just ${birdName ?? species}`} onClick={() => setSpecies(null)}>✕</button></span>
+      </p>
+    )
+    : <BirdPicker region={region} regionName={regionName} onPick={setSpecies} />
 
-  const onFile = best.data?.onFile
+  if (shown.isError) return <ErrorMessage networkError={errorMessage(shown.error)} />
+
+  const onFile = shown.data?.onFile
   // A window reaching back before the first checklist on file covers less than it says: say how much.
-  const shortWindow = best.data && onFile?.firstDay && onFile.firstDay > best.data.since ? daysFrom(onFile.firstDay, today()) : null
+  const shortWindow = shown.data && onFile?.firstDay && onFile.firstDay > shown.data.since ? daysFrom(onFile.firstDay, today()) : null
   const gathering = (onFile?.checklists ?? Infinity) < 20
 
   return (
@@ -74,8 +112,11 @@ const BestHotspots = ({ onOpenRoute }: { onOpenRoute: () => void }) => {
       <header className='go__hero'>
         <div className='go__title-row'>
           <h1 className='fredericka go__title'>Best hotspots</h1>
-          <p className='go__summary'>{regionName}’s hotspots ranked by the species reported there in {period.phrase}.</p>
+          <p className='go__summary'>{species
+            ? `Hotspots in ${regionName} where ${birdName ?? 'this bird'} was reported in ${period.phrase}, by how reliably.`
+            : `${regionName}’s hotspots ranked by the species reported there in ${period.phrase}.`}</p>
           {periodChips}
+          {birdFilter}
           {shortWindow !== null && onFile?.firstDay && (
             <p className='list-note best__note'>Bird Alert started gathering {regionName}’s checklists on {shortDay(onFile.firstDay)}, so this covers {plural(shortWindow, 'day')} so far.</p>
           )}
@@ -83,36 +124,35 @@ const BestHotspots = ({ onOpenRoute }: { onOpenRoute: () => void }) => {
             <p className='go__summary best__route'>Your route has {plural(stops.length, 'stop')}. <button type='button' className='link-button' onClick={onOpenRoute}>See your route</button></p>
           )}
           {onFile && onFile.detailed < onFile.checklists && onFile.detailed > 0 && (
-            <p className='go__summary best__basis'>Species come from the {onFile.detailed.toLocaleString()} of {onFile.checklists.toLocaleString()} checklists on file that have their full species list.</p>
+            <p className='go__summary best__basis'>{species ? 'How reliably' : 'Species'} {species ? 'comes' : 'come'} from the {onFile.detailed.toLocaleString()} of {onFile.checklists.toLocaleString()} checklists on file that have their full species list.</p>
           )}
         </div>
       </header>
 
-      {best.isPending ? <LoadingState label='Ranking hotspots…' /> : (
+      {shown.isPending ? <LoadingState label='Ranking hotspots…' /> : (
         <div className={`go__frame ${docked ? 'is-docked' : ''}`} ref={frameRef}>
           <div className='go__map'>
             {points.length
-              ? <SightingsMap points={points} height='100%' ariaLabel={`Map of the best hotspots in ${regionName}`} openHighlighted
+              ? <SightingsMap points={points} height='100%' ariaLabel={species ? `Map of the hotspots in ${regionName} for ${birdName ?? 'this bird'}` : `Map of the best hotspots in ${regionName}`} openHighlighted
                   onPinClick={(hit) => { if (hit[0]) setSelected(hit[0].id) }} />
               : <p className='list-note go__nomap'>No hotspots to show yet.</p>}
           </div>
           <div className='go__list-col'>
             <div className='go__scroll'>
-              {!hotspots.length && <p className='list-note go__empty'>{gathering
+              {!rows.length && <p className='list-note go__empty'>{gathering
                 ? `We’re still gathering ${regionName}’s checklists. A newly chosen ${countyWord(user.state)} fills in within a few minutes.`
-                : `No hotspot checklists in ${regionName} in ${period.phrase}.`}</p>}
+                : species
+                  ? `No hotspot checklists in ${regionName} reported ${birdName ?? 'this bird'} in ${period.phrase}.`
+                  : `No hotspot checklists in ${regionName} in ${period.phrase}.`}</p>}
               <ol className='go__places best__list'>
-                {hotspots.map((h, i) => (
+                {rows.map((h, i) => (
                   <li key={h.locId} className={`go__place ${h.locId === selected ? 'is-current' : ''}`}>
                     <button type='button' className='go__place-head' onClick={() => setSelected(h.locId)} aria-current={h.locId === selected ? 'true' : undefined}>
                       <span className='best__rank'>{i + 1}</span>
                       <strong>{h.name}</strong>
-                      <span className='go__place-meta best__counts'>{h.species} species · {plural(h.checklists, 'checklist')}</span>
+                      <span className='go__place-meta best__counts'>{h.counts}</span>
                     </button>
-                    <p className='best__links'>
-                      {h.bestList && <>Best list <a href={`https://ebird.org/checklist/${h.bestList.subId}`} target='_blank' rel='noreferrer'>{h.bestList.species} species on {shortDay(h.bestList.day)}</a> · </>}
-                      <a href={`https://ebird.org/hotspot/${h.locId}`} target='_blank' rel='noreferrer'>Hotspot on eBird</a>
-                    </p>
+                    <p className='best__links'>{h.links}</p>
                     {(() => {
                       const on = stops.some(st => st.locId === h.locId)
                       const full = !on && stops.length >= MAX_ROUTE_STOPS
