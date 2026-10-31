@@ -1,4 +1,4 @@
-import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share, Passkey, Chase, PersistenceClass } from './types'
+import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, BestHotspots, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share, Passkey, Chase, PersistenceClass } from './types'
 import { arrival } from './arrival'
 import { isStandalone } from './install'
 
@@ -153,6 +153,8 @@ export const getBirdSound = (code: string) => api<BirdSound>('/sound', { params:
 /** The watch list's places folded together, ranked by the birds a visit can expect, with a short route. */
 export const getWhereToGo = (region: string, codes: string[], from?: { lat: number; lng: number } | null) =>
   api<WhereToGo>('/ebird/where-to-go', { params: { region, codes: codes.join(','), ...(from ? { from: `${from.lat.toFixed(2)},${from.lng.toFixed(2)}` } : {}) } })
+/** The county's hotspots ranked by species reported in the last `days`. */
+export const getBestHotspots = (region: string, days: number) => api<BestHotspots>('/ebird/best-hotspots', { params: { region, days: String(days) } })
 /** Hotspots in the state by name; towns and addresses too when `addresses` (only on submit). */
 export const getPlaceSearch = (state: string, q: string, addresses: boolean) =>
   api<PlaceSearch>('/ebird/place-search', { params: { state, q, ...(addresses ? { addresses: '1' } : {}) } })

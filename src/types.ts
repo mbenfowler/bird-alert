@@ -228,6 +228,26 @@ export interface WhereToGo {
   route: { stops: GoStop[]; covers: number; url: string | null; drive?: Drive | null; origin?: { lat: number; lng: number } | null }
 }
 
+/** A county's hotspots ranked by species reported over the last `days`, from the checklists on file. */
+export interface BestHotspots {
+  region: string
+  days: number
+  since: string
+  /** What the ranking rests on: checklists on file in the window, how many have their species, and the first day on file. */
+  onFile: { checklists: number; detailed: number; firstDay: string | null }
+  hotspots: BestHotspot[]
+}
+
+export interface BestHotspot {
+  locId: string
+  name: string
+  lat: number
+  lng: number
+  species: number
+  checklists: number
+  bestList: { species: number; subId: string; day: string } | null
+}
+
 /** Public land near a point: eBird hotspots with their all-time effort, and parks eBird does not list. */
 /** The drive by road: minutes, miles and the road itself as [lat, lng] points for the map. */
 export interface Drive { minutes: number; miles: number; geometry: [number, number][]; legs?: { minutes: number; miles: number }[] }
