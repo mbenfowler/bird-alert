@@ -100,6 +100,15 @@ export interface Observation {
   subId: string
   /** ABA Checklist code, on notable sightings (3, 4 and 5 are shown); null when not on the list. */
   aba?: number | null
+  /** What a notable report rests on, when the server says. */
+  evidence?: Evidence | null
+}
+
+/** Whether an eBird reviewer has confirmed a report, whether it has a photo or recording, and how many birders reported it. */
+export interface Evidence {
+  confirmed: boolean
+  media: boolean
+  birders: number
 }
 
 export interface Region {

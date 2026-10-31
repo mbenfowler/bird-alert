@@ -1,6 +1,7 @@
 import type { Observation } from '../../types'
 import { formatObsDt } from '../../format'
 import AbaCode from '../AbaCode/AbaCode'
+import Evidence from '../Evidence/Evidence'
 import './AlertCard.css'
 
 interface AlertCardProps {
@@ -12,6 +13,7 @@ const AlertCard = ({ alert }: AlertCardProps) => (
     <h3>{alert.comName}{alert.aba && alert.aba >= 3 && alert.aba <= 5 ? <> <AbaCode code={alert.aba} /></> : null}</h3>
     <p>{formatObsDt(alert.obsDt)}</p>
     <p>{alert.locName}</p>
+    <Evidence evidence={alert.evidence} compact />
   </div>
 )
 

@@ -23,6 +23,7 @@ import { offerPush } from '../../pushAsk'
 import AccuracyBadge from '../AccuracyBadge/AccuracyBadge'
 import StillThere from '../StillThere/StillThere'
 import AbaCode from '../AbaCode/AbaCode'
+import Evidence from '../Evidence/Evidence'
 import { celebrateLifer, popStar } from '../Pop/pop'
 import './Sighting.css'
 
@@ -232,6 +233,8 @@ const Sighting = () => {
                   <span>{formatObsDt(current.obsDt)}{current.howMany ? ` · ${current.howMany} seen` : ''}</span>
                 </p>
               : <p className='sighting__meta'><span>This report is older than 30 days, so its details are no longer in eBird's recent feed.</span></p>}
+            {/* The checklist itself is the View on eBird button just below. */}
+            {current && <Evidence evidence={current.evidence} />}
             <div className='sighting__actions'>
               {current && <a className='pill-button pill-button--primary pill-button--small' href={mapsHref(current)} target='_blank' rel='noreferrer'>Open in Maps</a>}
               <a className='pill-button pill-button--small' href={ebirdHref} target='_blank' rel='noreferrer'>View on eBird</a>
