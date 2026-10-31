@@ -7,7 +7,7 @@ describe('Sighting page and region map', () => {
   })
 
   it('opens a sighting from the alerts panel with photo, details, map and links out', () => {
-    cy.get('.alerts-list > a').first().click()
+    cy.get('.alerts-list .alert-link').first().click()
     cy.url().should('include', '/sighting/cangoo/S155544243')
     cy.get('.sighting__title h1').should('contain', 'Canada Goose')
     cy.get('.sighting__photo').should('have.attr', 'src').and('include', 'unsplash')

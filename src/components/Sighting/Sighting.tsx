@@ -15,6 +15,7 @@ import { unitFor } from '../../distance'
 import { countyLabel, useLinkRegion } from '../../linkRegion'
 import { useToggleSavedMutation, useToggleSeenMutation } from '../../hooks/mutations'
 import { shareThing } from '../../share'
+import { ShareIcon } from '../Icons/Icons'
 import type { Observation, Place, PersistenceClass } from '../../types'
 import { formatObsDt } from '../../format'
 import { article, chanceStyle } from '../../chance'
@@ -182,7 +183,7 @@ const Sighting = () => {
             {bird && <button type='button' className='pill-button' onClick={watch} disabled={toggleSaved.isPending} aria-pressed={isWatched}>{isWatched ? '★ On your watch list' : '☆ Add to watch list'}</button>}
             {bird && current && <button type='button' className='pill-button' onClick={() => {
               void shareThing({ kind: 'sighting', speciesCode: bird.speciesCode, locId: current.locId, locName: current.locName, lat: current.lat, lng: current.lng, obsDt: current.obsDt, howMany: current.howMany ?? null, subId: current.subId, regionName }, `${bird.comName} at ${current.locName}`)
-            }}>Share</button>}
+            }}><ShareIcon className='pill-button__icon' />Share sighting</button>}
             {bird && (() => {
               const isSeen = seen.codes.has(bird.speciesCode)
               return <button type='button' className={`pill-button ${isSeen ? 'pill-button--seen' : ''}`} disabled={!seen.loaded} aria-pressed={isSeen}

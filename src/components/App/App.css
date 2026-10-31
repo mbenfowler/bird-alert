@@ -206,6 +206,12 @@ button#confirmPasswordReset {
     cursor: pointer;
 }
 
+/* An icon leading a pill's label. */
+.pill-button__icon {
+    margin-right: 6px;
+    font-size: 1.1em;
+}
+
 /* Smaller pills for nudges and inline actions; shared, since lazy pages' styles load only with them. */
 .pill-button--small {
     padding: 4px 12px;
