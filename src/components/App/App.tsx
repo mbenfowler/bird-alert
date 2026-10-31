@@ -11,6 +11,7 @@ const APP_BUILD = '2026-10-22.9'
 import { toast, ToastContainer } from 'react-toastify'
 import InstallNudge from '../InstallNudge/InstallNudge'
 import ConfirmNudge from '../ConfirmNudge/ConfirmNudge'
+import PushAsk from '../PushAsk/PushAsk'
 import EbirdCredit from '../EbirdCredit/EbirdCredit'
 import PullToRefresh from '../PullToRefresh/PullToRefresh'
 import { prefersReducedMotion } from '../../routeDraw'
@@ -221,6 +222,8 @@ const App = () => {
         {user && <PullToRefresh />}
         <div className='alarm-glow' aria-hidden='true' />
         {user && <InstallNudge />}
+        {/* After saving a bird, on a device without alerts: a one-time ask to turn them on. */}
+        {user && <PushAsk />}
       </main>
     </>
   )
