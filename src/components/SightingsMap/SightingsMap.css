@@ -157,3 +157,41 @@
 .map-pin--active .map-pin__count {
     color: #fff;
 }
+
+/* Drawing a focused pin's roads: hidden while the map flies to frame them, then the line runs out
+   from the pin (stroke-dashoffset, set in SightingsMap) and each public land's pin pops up as the
+   line reaches it. `scale` rather than `transform`, which Leaflet uses to place markers. */
+.sightings-map.is-draw-waiting path.map-road,
+.sightings-map.is-draw-waiting .map-pin--public {
+    opacity: 0;
+}
+
+.sightings-map.is-drawing .map-pin--public {
+    animation: map-marker-pop 360ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* A route: its line is hidden until it has roads to draw, its new stops wait out of sight until the
+   line reaches them (RouteDraw in SightingsMap), then pop. */
+.sightings-map.is-route-waiting path.map-route:not(.map-route--preview) {
+    opacity: 0;
+}
+
+.map-stop.is-waiting {
+    opacity: 0;
+}
+
+.map-stop.is-popping {
+    animation: map-marker-pop 360ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes map-marker-pop {
+    from { opacity: 0; scale: 0.2; }
+    to { opacity: 1; scale: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sightings-map.is-drawing .map-pin--public,
+    .map-stop.is-popping {
+        animation: none;
+    }
+}
