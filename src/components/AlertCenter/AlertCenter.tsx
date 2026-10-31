@@ -9,6 +9,8 @@ import type { EmailPreference, EmailPreviewKind, EmailPreviewResult, PushPrefere
 import './AlertCenter.css'
 import AlertModeSettings from '../AlertModeSettings/AlertModeSettings'
 import AlertRange from './AlertRange'
+import InstallSteps from '../InstallSteps/InstallSteps'
+import { isIOS, isStandalone } from '../../install'
 import { countyWord } from '../../usStates'
 
 const PUSH_KINDS: { field: PushPreference; label: string; hint: string }[] = [
@@ -112,12 +114,21 @@ const AlertCenter = () => {
   }
 
   const pushOn = push.state === 'on'
+  const needsInstall = isIOS() && !isStandalone()
   const pushDisabled = push.state === 'checking' || push.state === 'unsupported' || push.state === 'denied' || push.state === 'busy'
 
   return (
     <section className="alert-center">
       <h2 className='fredericka'>Alert center</h2>
 
+      {/* In a Safari tab on an iPhone push can't be had at all, so none of its settings show: just how
+          to get the Home Screen app, where they all are. */}
+      {needsInstall ? (
+        <div className='notification-group install-group'>
+          <h3 className='install-group__title'>Get alerts on your iPhone</h3>
+          <InstallSteps compact />
+        </div>
+      ) : (
       <div className={`notification-group ${pushOn ? 'is-on' : ''}`}>
         <div className='notification'>
           <div className='notification__text'>
@@ -205,6 +216,7 @@ const AlertCenter = () => {
           {pushOn && <button type='button' className='test-push' onClick={sendTest}>Send a test notification</button>}
         </div>
       </div>
+      )}
 
       <AlertRange />
 

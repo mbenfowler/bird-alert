@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { toast } from 'react-toastify'
 import SightingsMap, { type MapPoint } from '../SightingsMap/SightingsMap'
@@ -21,6 +21,7 @@ import { article, chanceStyle } from '../../chance'
 import AccuracyBadge from '../AccuracyBadge/AccuracyBadge'
 import StillThere from '../StillThere/StillThere'
 import AbaCode from '../AbaCode/AbaCode'
+import { celebrateLifer, popStar } from '../Pop/pop'
 import './Sighting.css'
 
 const mapsHref = (o: Observation) => {
@@ -146,8 +147,9 @@ const Sighting = () => {
 
   const name = bird?.comName ?? current?.comName ?? code
   const isWatched = savedCodes.has(code)
-  const watch = () => {
+  const watch = (event: ReactMouseEvent<HTMLButtonElement>) => {
     if (!bird) return
+    popStar(event.currentTarget, !isWatched)
     toggleSaved.mutate({ bird, save: !isWatched }, {
       onSuccess: () => toast.success(isWatched ? 'Removed from your watch list.' : 'Added to your watch list!', { position: 'bottom-center' }),
       onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
@@ -184,10 +186,14 @@ const Sighting = () => {
             {bird && (() => {
               const isSeen = seen.codes.has(bird.speciesCode)
               return <button type='button' className={`pill-button ${isSeen ? 'pill-button--seen' : ''}`} disabled={!seen.loaded} aria-pressed={isSeen}
-                onClick={() => toggleSeen.mutate({ speciesCode: bird.speciesCode, seen: !isSeen }, {
-                  onSuccess: () => toast.success(isSeen ? 'Removed from your life list.' : 'Added to your life list!', { position: 'bottom-center' }),
-                  onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
-                })}>{isSeen ? '✓ On your life list' : 'Seen it?'}</button>
+                onClick={(event) => {
+                  // Going on the life list is celebrated at the tap; coming off is said once it's done.
+                  if (!isSeen) celebrateLifer(event.currentTarget, bird.comName)
+                  toggleSeen.mutate({ speciesCode: bird.speciesCode, seen: !isSeen }, {
+                    onSuccess: () => { if (isSeen) toast.success('Removed from your life list.', { position: 'bottom-center' }) },
+                    onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
+                  })
+                }}>{isSeen ? '✓ On your life list' : 'Seen it?'}</button>
             })()}
             {bird?.wikiURL && <a className='pill-button' href={bird.wikiURL} target='_blank' rel='noreferrer'>Wikipedia</a>}
           </div>

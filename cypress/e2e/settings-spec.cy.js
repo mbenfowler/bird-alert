@@ -130,4 +130,14 @@ describe('Settings', () => {
     cy.get('.alert-range__search').contains('button', 'Cancel').click()
     cy.get('.alert-range__search').should('not.exist')
   })
+
+  it('on an iPhone browser tab, the push settings give way to the Home Screen steps', () => {
+    cy.visit('http://localhost:3000/settings', { onBeforeLoad: (win) => Object.defineProperty(win.navigator, 'userAgent', { value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.0 Mobile/15E148 Safari/604.1' }) })
+    cy.get('.install-steps__list li').should('have.length', 3)
+    cy.get('#push_enabled').should('not.exist')
+    cy.contains('.install-group h3', 'Get alerts on your iPhone')
+    cy.get('#push_watchlist_enabled').should('not.exist')
+    // Email settings work anywhere, so they stay.
+    cy.get('#alert_digest_email_enabled').should('exist')
+  })
 })

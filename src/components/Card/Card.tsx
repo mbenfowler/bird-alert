@@ -1,3 +1,4 @@
+import type { ChangeEvent } from 'react'
 import { toast } from 'react-toastify'
 import './Card.css'
 import { useQueryClient } from '@tanstack/react-query'
@@ -7,6 +8,7 @@ import { useToggleSavedMutation, useToggleSeenMutation } from '../../hooks/mutat
 import type { Bird } from '../../types'
 import { SoundCredit, SoundToggle } from '../SoundButton/SoundButton'
 import { useBirdSound } from '../../hooks/useBirdSound'
+import { celebrateLifer, popStar } from '../Pop/pop'
 
 interface CardProps {
     bird: Bird
@@ -24,8 +26,9 @@ const Card = ({ bird }: CardProps) => {
     // Checked state comes straight from the watch list, so every card agrees with the saved view.
     const isChecked = savedCodes.has(bird.speciesCode)
 
-    const handleChange = () => {
+    const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
         const save = !isChecked
+        popStar(event.currentTarget, save)
         toggleSaved.mutate({ bird, save }, {
             onSuccess: () => toast.success(save ? 'Bird saved to watch list!' : 'Bird removed from watch list!', { position: 'bottom-center' }),
             onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
@@ -66,12 +69,12 @@ const Card = ({ bird }: CardProps) => {
                 : <div className='card-link'>{body}</div>}
             {/* The life list: the star's twin at the other corner, a tick for a bird you've seen. */}
             <input type="checkbox" className='card-seen' checked={isSeen} disabled={!seen.loaded} id={`seen-${bird.speciesCode}`} aria-label={`Seen ${bird.comName}`} title={isSeen ? 'On your life list' : 'Seen it? Add to your life list'}
-                onChange={() => {
+                onChange={(event) => {
                     const seenNow = !isSeen
                     toggleSeen.mutate({ speciesCode: bird.speciesCode, seen: seenNow }, { onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' }) })
                     // Taking a bird off the life list is easy to do by accident; offer it back. Said at
                     // once, and undone without this card, which the life list page drops straight away.
-                    if (seenNow) toast.success(`${bird.comName} added to your life list!`, { position: 'bottom-center' })
+                    if (seenNow) celebrateLifer(event.currentTarget, bird.comName)
                     else toast(({ closeToast }) => (
                         <span className='toast-undo'>Removed {bird.comName} from your life list <button type='button' onClick={() => { void postSeenBird(bird.speciesCode).finally(() => queryClient.invalidateQueries({ queryKey: queryKeys.seen })); closeToast() }}>Undo</button></span>
                     ), { position: 'bottom-center' })
