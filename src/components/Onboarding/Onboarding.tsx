@@ -9,6 +9,7 @@ import { countyLabel, countyWord, stateName, subnational1 } from '../../usStates
 import StateOptions from '../StateOptions/StateOptions'
 import type { UserPatch } from '../../types'
 import { isIOS, isStandalone } from '../../install'
+import InstallSteps from '../InstallSteps/InstallSteps'
 import { popStar } from '../Pop/pop'
 import './Onboarding.css'
 
@@ -163,7 +164,7 @@ const Onboarding = () => {
             <h1 className='fredericka onboard__title'>How should we tell you?</h1>
             {/* On iPhone, Safari only offers notifications once the app is on the Home Screen, so say that before anything else. */}
             {isIOS() && !isStandalone()
-              ? <p className='onboard__note'>To get notifications on iPhone, add Bird Alert! to your Home Screen first (Share → Add to Home Screen).</p>
+              ? <InstallSteps />
               : pushSupported && (push.state === 'on'
                   ? <p className='onboard__ok'>✓ Notifications are on for this device</p>
                   : <button type='button' className='pill-button onboard__push' onClick={() => { void push.enable() }} disabled={push.state === 'busy' || push.state === 'denied'}>

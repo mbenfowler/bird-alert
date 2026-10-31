@@ -82,4 +82,14 @@ describe('Setup after signing up', () => {
     cy.contains('.onboard__tile', 'Northern Cardinal')
     cy.contains('.onboard__lede', 'Nothing has been reported in your county lately, so these are from across Georgia.')
   })
+
+  it('on an iPhone browser tab, the alerts step shows the three Home Screen steps', () => {
+    const iphone = { onBeforeLoad: (win) => Object.defineProperty(win.navigator, 'userAgent', { value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.0 Mobile/15E148 Safari/604.1' }) }
+    cy.visit('http://localhost:3000/welcome', iphone)
+    cy.contains('button', 'Next').click()
+    cy.get('.install-steps').should('contain', 'On iPhone, alerts need Bird Alert! on your Home Screen')
+    cy.get('.install-steps__list li').should('have.length', 3)
+    cy.get('.install-steps__list li').eq(1).should('contain', 'Add to Home Screen')
+    cy.get('.install-steps__list li').eq(2).should('contain', 'sign in once more')
+  })
 })
