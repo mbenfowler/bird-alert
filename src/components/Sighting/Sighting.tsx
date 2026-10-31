@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { toast } from 'react-toastify'
 import SightingsMap, { type MapPoint } from '../SightingsMap/SightingsMap'
 import SeasonStrip from '../SeasonStrip/SeasonStrip'
@@ -250,6 +250,8 @@ const Sighting = () => {
                   <span>{CLASS_LABEL[where.data.class]}</span>
                   <span>{where.data.bestTime.source === 'reports' ? `Best ${where.data.bestTime.label}` : `Usually best: ${where.data.bestTime.label.toLowerCase()}`}</span>
                 </p>
+                {/* Best hotspots ranks one's own county, so the link only shows there. */}
+                {own && <p className='sighting__best-link'><Link to={`/go?tab=best&species=${encodeURIComponent(code)}&days=90`}>Best hotspots for {name} →</Link></p>}
                 <AccuracyBadge grades={where.data.grades} />
                 <ol className='sighting__list sighting__places'>
                   {places.map(place => {

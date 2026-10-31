@@ -238,6 +238,26 @@ export interface BestHotspots {
   hotspots: BestHotspot[]
 }
 
+/** The same, for one bird: the hotspots where it was reported, ranked by how reliably (a cautious share of checklists). */
+export interface SpeciesHotspots extends Omit<BestHotspots, 'hotspots'> {
+  species: { code: string; comName: string }
+  hotspots: SpeciesHotspot[]
+}
+
+export interface SpeciesHotspot {
+  locId: string
+  name: string
+  lat: number
+  lng: number
+  /** Every checklist at the hotspot in the window; `detailed` have their species, `reports` of those have the bird. */
+  checklists: number
+  detailed: number
+  reports: number
+  /** reports / detailed, 0..1 */
+  frequency: number
+  lastSeen: { day: string; subId: string; howMany: number | null } | null
+}
+
 export interface BestHotspot {
   locId: string
   name: string

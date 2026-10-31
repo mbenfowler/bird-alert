@@ -375,6 +375,12 @@
 }
 
 /* Where to find it: class and best time on one line, then places with a band, evidence and a note. */
+.sighting__best-link {
+    margin: -4px 0 12px;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
 .sighting__odds {
     display: flex;
     flex-wrap: wrap;

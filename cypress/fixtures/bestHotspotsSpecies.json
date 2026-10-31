@@ -1,0 +1,11 @@
+{
+  "region": "US-GA-139",
+  "days": 30,
+  "since": "2026-10-01",
+  "onFile": { "checklists": 64, "detailed": 41, "firstDay": "2026-10-18" },
+  "species": { "code": "cangoo", "comName": "Canada Goose" },
+  "hotspots": [
+    { "locId": "L22341308", "name": "Yahoola Creek Park", "lat": 34.5296831, "lng": -83.960756, "checklists": 5, "detailed": 4, "reports": 3, "frequency": 0.75, "lastSeen": { "day": "2026-10-24", "subId": "S301", "howMany": 12 } },
+    { "locId": "L999", "name": "Lake Lanier Olympic Park", "lat": 34.2995, "lng": -83.9214, "checklists": 21, "detailed": 14, "reports": 6, "frequency": 0.4286, "lastSeen": { "day": "2026-10-22", "subId": "S302", "howMany": null } }
+  ]
+}
