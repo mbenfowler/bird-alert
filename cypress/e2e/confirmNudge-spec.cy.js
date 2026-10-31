@@ -25,3 +25,14 @@ describe('Confirm-your-email nudge', () => {
     cy.get('.confirm-nudge').should('not.exist')
   })
 })
+
+describe('Session check', () => {
+  it('says whether this is the installed app or a browser tab', () => {
+    login()
+    cy.get('.birds-list .card', { timeout: 15000 })
+    cy.get('@me.all').then((calls) => {
+      const modes = calls.map((c) => c.request.headers['x-app-mode'])
+      expect(modes).to.include('browser')
+    })
+  })
+})
