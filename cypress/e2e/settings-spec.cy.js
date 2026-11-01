@@ -131,13 +131,25 @@ describe('Settings', () => {
     cy.get('.alert-range__search').should('not.exist')
   })
 
+  it('rare-bird alerts can wait for proof, off by default, and the switch works without push', () => {
+    cy.get('#push_enabled').should('not.be.checked')
+    cy.contains('label', 'Only once there’s proof')
+    cy.contains('.alert-range__proof', 'a photo, an eBird reviewer’s OK, or a second birder').and('contain', 'Watch-list alerts aren’t affected')
+    cy.get('#rare_alerts_need_proof').should('not.be.checked').and('not.be.disabled')
+    cy.get('#rare_alerts_need_proof').click()
+    cy.wait('@patchUser').its('request.body').should('deep.equal', { rare_alerts_need_proof: true })
+    cy.get('#rare_alerts_need_proof').should('be.checked')
+    cy.contains('Alert preferences updated!')
+  })
+
   it('on an iPhone browser tab, the push settings give way to the Home Screen steps', () => {
     cy.visit('http://localhost:3000/settings', { onBeforeLoad: (win) => Object.defineProperty(win.navigator, 'userAgent', { value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.0 Mobile/15E148 Safari/604.1' }) })
     cy.get('.install-steps__list li').should('have.length', 3)
     cy.get('#push_enabled').should('not.exist')
     cy.contains('.install-group h3', 'Get alerts on your iPhone')
     cy.get('#push_watchlist_enabled').should('not.exist')
-    // Email settings work anywhere, so they stay.
+    // Email settings work anywhere, so they stay, and so does the rare-bird proof switch, which shapes the email too.
     cy.get('#alert_digest_email_enabled').should('exist')
+    cy.get('#rare_alerts_need_proof').should('exist')
   })
 })

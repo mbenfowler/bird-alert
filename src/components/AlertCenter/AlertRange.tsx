@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { toast } from 'react-toastify'
+import { errorMessage } from '../../apiCalls'
 import { useCurrentUser, useRegionsQuery } from '../../hooks/queries'
 import { usePatchUserMutation } from '../../hooks/mutations'
 import { useDistanceUnit } from '../../distance'
@@ -11,7 +13,8 @@ const RANGES = [0, 15, 30] as const
 /**
  * How far rare-bird and lifer alerts reach past the county line, and the spot it's measured from.
  * A bird one county over is one you could still go for, or one coming your way; the alerts say
- * how far it is. Watch-list alerts stay in the county.
+ * how far it is. Watch-list alerts stay in the county. Below it, whether rare-bird alerts wait for
+ * proof. Shown whether or not push is on here, since both settings shape the emails too.
  */
 const AlertRange = () => {
   const user = useCurrentUser()
@@ -56,6 +59,22 @@ const AlertRange = () => {
           )}
         </div>
       )}
+      {/* For people who'd rather not drive for an unproven report; off by default, since most would
+          rather hear early and judge the evidence on the alert themselves. Push and email alike. */}
+      <div className='notification notification--sub alert-range__proof'>
+        <div className='notification__text'>
+          <label htmlFor='rare_alerts_need_proof'>Only once there&rsquo;s proof</label>
+          <p className='notification__hint'>Rare-bird alerts wait until a report has a photo, an eBird reviewer&rsquo;s OK, or a second birder. Watch-list alerts aren&rsquo;t affected.</p>
+        </div>
+        <div className='notification__controls'>
+          <input className='switch switch--small' type='checkbox' id='rare_alerts_need_proof' name='rare_alerts_need_proof'
+            checked={Boolean(user.rare_alerts_need_proof)} disabled={patch.isPending}
+            onChange={(e) => patch.mutate({ rare_alerts_need_proof: e.target.checked }, {
+              onSuccess: () => toast.success('Alert preferences updated!', { position: 'bottom-center' }),
+              onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
+            })} />
+        </div>
+      </div>
     </div>
   )
 }

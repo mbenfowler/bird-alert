@@ -216,6 +216,12 @@
   width: 100%;
 }
 
+/* Waiting for proof: its own row under the range, set off by a rule. */
+.alert-range .alert-range__proof {
+  padding: 10px 16px 12px;
+  border-top: 1px solid var(--rule);
+}
+
 /* On an iPhone browser tab: only the way to the Home Screen app, where the push settings are. */
 .install-group {
   padding: 14px 16px;
