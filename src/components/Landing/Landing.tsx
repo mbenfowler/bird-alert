@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { useBirdsQuery, useNotableThisWeekQuery, useObservationsQuery, useRegionsQuery } from '../../hooks/queries'
-import { countyName as fullCountyName, countyLabel, countyWord, stateName as fullStateName, subnational1 } from '../../usStates'
+import { countyName as fullCountyName, countyLabel, countyWord, stateName as fullStateName, stateOfCode, subnational1 } from '../../usStates'
 import StateOptions from '../StateOptions/StateOptions'
 import type { Observation } from '../../types'
 import './Landing.css'
@@ -53,7 +53,7 @@ const byBird = (rows: Observation[]) => {
 const Landing = () => {
   const [region, setRegionState] = useState(readRegion)
   const setRegion = (code: string) => { setRegionState(code); try { localStorage.setItem(REGION_KEY, code) } catch { /* this visit only */ } }
-  const state = region.split('-')[1]
+  const state = stateOfCode(region)
   const regions = useRegionsQuery(state)
   const stateName = fullStateName(state)
   const countyName = regions.data?.find(r => r.code === region)?.name
@@ -71,7 +71,8 @@ const Landing = () => {
     // A new state starts on its first county once the list arrives; until then keep the old one.
     setRegion(subnational1(code))
   }
-  const stateRegion = /^(US|CA)-[A-Z]{2}$/.test(region)
+  // A whole state or province is two parts ('US-CO', 'MX-JAL', 'ZA-WC'); a county has three.
+  const stateRegion = region.split('-').length === 2
   const countyChoices = regions.data ?? []
 
   return (
@@ -188,7 +189,7 @@ const Landing = () => {
       <section className='landing__steps' aria-label='How it works'>
         <h2 className='fredericka'>Three minutes to set up</h2>
         <ol>
-          <li><strong>Pick your county (or area, in Canada).</strong> Everything is local: your sightings, your hotspots, your migrants.</li>
+          <li><strong>Pick your county (an area in Canada, a municipality in Mexico or South Africa).</strong> Everything is local: your sightings, your hotspots, your migrants.</li>
           <li><strong>Star the birds you want.</strong> Or let the notable list and the arrivals pick for you.</li>
           <li><strong>Go.</strong> Alerts come to your phone; Where to go has the morning planned.</li>
         </ol>
