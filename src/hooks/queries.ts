@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query'
 import {
-  ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions,
+  ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions, getCountries, getProvinces,
   getSavedBirds, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
 import type { PersistenceClass, User } from '../types'
@@ -164,6 +164,28 @@ export const useNotableQuery = (region: string, enabled = true) =>
     queryFn: () => getNotableObservations(region),
     staleTime: 5 * MINUTE,
     enabled: Boolean(region) && enabled
+  })
+
+/** Every country eBird covers; kept a week, like the region lists. */
+export const useCountriesQuery = (enabled = true) =>
+  useQuery({
+    queryKey: ['countries'],
+    queryFn: getCountries,
+    staleTime: WEEK,
+    gcTime: 4 * WEEK,
+    meta: { persist: true },
+    enabled
+  })
+
+/** A country's provinces, each with the code the app keeps for it. */
+export const useProvincesQuery = (country: string) =>
+  useQuery({
+    queryKey: ['provinces', country],
+    queryFn: () => getProvinces(country),
+    staleTime: WEEK,
+    gcTime: 4 * WEEK,
+    meta: { persist: true },
+    enabled: Boolean(country)
   })
 
 export const useRegionsQuery = (state: string) =>

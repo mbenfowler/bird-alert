@@ -1,4 +1,4 @@
-import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, BestHotspots, SpeciesHotspots, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share, Passkey, Chase, PersistenceClass } from './types'
+import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, Place, Province, Area,SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, BestHotspots, SpeciesHotspots, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share, Passkey, Chase, PersistenceClass } from './types'
 import { arrival } from './arrival'
 import { isStandalone } from './install'
 
@@ -116,6 +116,13 @@ export const getNotableObservations = (region: string) => api<Observation[]>('/e
 export const getSpeciesObservations = (region: string, code: string) =>
     api<Observation[]>('/ebird/species-observations', { params: { region, code, back: '30' } })
 export const getRegions = (state: string) => api<Region[]>('/ebird/regions', { params: { state } })
+/** Every country eBird covers, and a country's provinces. */
+export const getCountries = () => api<Place[]>('/ebird/countries')
+export const getProvinces = (country: string) => api<Province[]>('/ebird/provinces', { params: { country } })
+/** The area a point falls in (the point isn't kept), or null when eBird has nothing near. */
+export const getAreaAt = (lat: number, lng: number) => api<Area | null>('/ebird/area-at', { params: { lat: lat.toFixed(4), lng: lng.toFixed(4) } })
+/** Areas for a town, address or county typed by name, anywhere. */
+export const getAreaSearch = (q: string) => api<{ areas: Area[] }>('/ebird/area-search', { params: { q } })
 export const getArrivals = (region: string) => api<Arrivals>('/ebird/arriving', { params: { region } })
 export const getSeasonality = (region: string, code: string) => api<{ months: SeasonMonth[] }>('/ebird/seasonality', { params: { region, code } })
 /** Places the species has been reported lately in the region, ranked by the chance a visit pays off. */

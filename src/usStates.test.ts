@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { countryOf, countyLabel, countyName, countyWord, stateName, stateOfRegion, subnational1 } from './usStates'
+import { countryOf, countyLabel, countyName, countyWord, keptState, rememberStateNames, stateName, stateOfCode, stateOfRegion, subnational1 } from './usStates'
 
 describe('states and provinces', () => {
   it('tells a province from a state and builds eBird codes for both', () => {
@@ -44,5 +44,24 @@ describe('states and provinces', () => {
     expect(countyName('Hall', 'GA')).toBe('Hall County')
     expect(countyWord('ON')).toBe('area')
     expect(countyWord('GA')).toBe('county')
+  })
+  it('works anywhere eBird covers: full province codes, any county shape, and kept codes reading as before', () => {
+    expect(countryOf('GB-ENG')).toBe('GB')
+    expect(subnational1('GB-ENG')).toBe('GB-ENG')
+    expect(keptState('US-GA')).toBe('GA')
+    expect(keptState('GB-ENG')).toBe('GB-ENG')
+    expect(stateOfRegion('GB-ENG-LND')).toBe('GB-ENG')
+    expect(stateOfRegion('BR-AC-001')).toBe('BR-AC')
+    expect(stateOfRegion('AU-ACT')).toBe('AU-ACT')
+    expect(stateOfRegion('US-GA')).toBeNull()
+    expect(stateOfRegion('ZA-WC')).toBeNull()
+    expect(['US-GA-139', 'CA-ON-TO', 'MX-JAL-039', 'ZA-WC-21'].map(stateOfRegion)).toEqual(['GA', 'ON', 'JAL', 'ZA-WC'])
+    expect(stateOfCode('GB-ENG-LND')).toBe('GB-ENG')
+    expect(stateOfCode('US-GA-139')).toBe('GA')
+    expect(countyWord('GB-ENG')).toBe('county')
+    expect(countyWord('AU-NSW')).toBe('area')
+    expect(stateName('GB-ENG')).toBeUndefined()
+    rememberStateNames([['GB-ENG', 'England']])
+    expect(stateName('GB-ENG')).toBe('England')
   })
 })

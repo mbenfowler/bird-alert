@@ -117,6 +117,34 @@ export interface Evidence {
 export interface Region {
   code: string
   name: string
+  /** The province itself, standing in as the one area where eBird has no counties for it. */
+  whole?: boolean
+}
+
+/** A country eBird covers. */
+export interface Place {
+  code: string
+  name: string
+}
+
+/** A province, with the code the app keeps for it ('GA', 'GB-ENG') and eBird's own ('US-GA', 'GB-ENG'). */
+export interface Province {
+  code: string
+  region: string
+  name: string
+}
+
+/** Where someone birds: an eBird county-level area, its kept state, and how eBird names it. */
+export interface Area {
+  location: string
+  state: string
+  country: string
+  name: string
+  /** "San Mateo, California, United States". */
+  label: string
+  countyWord: string
+  /** The town or address it was found by, for a search. */
+  place?: string
 }
 
 /** A species expected about now, judged by this time last year, that has not been reported in the last two weeks. */

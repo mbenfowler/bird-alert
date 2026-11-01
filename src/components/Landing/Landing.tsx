@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { useBirdsQuery, useNotableThisWeekQuery, useObservationsQuery, useRegionsQuery } from '../../hooks/queries'
-import { countyName as fullCountyName, countyLabel, countyWord, stateName as fullStateName, stateOfCode, subnational1 } from '../../usStates'
-import StateOptions from '../StateOptions/StateOptions'
+import { countyName as fullCountyName, countyWord, stateName as fullStateName, stateOfCode, stateOfRegion } from '../../usStates'
+import AreaPicker from '../AreaPicker/AreaPicker'
 import type { Observation } from '../../types'
 import './Landing.css'
 import AbaCode from '../AbaCode/AbaCode'
@@ -67,13 +67,8 @@ const Landing = () => {
   const recent = useObservationsQuery(region)
   const speciesLately = useMemo(() => new Set((recent.data ?? []).map(o => o.speciesCode)).size, [recent.data])
 
-  const pickState = (code: string) => {
-    // A new state starts on its first county once the list arrives; until then keep the old one.
-    setRegion(subnational1(code))
-  }
-  // A whole state or province is two parts ('US-CO', 'MX-JAL', 'ZA-WC'); a county has three.
-  const stateRegion = region.split('-').length === 2
-  const countyChoices = regions.data ?? []
+  // Another place: by location, by name, or by browsing, anywhere eBird covers.
+  const [changing, setChanging] = useState(false)
 
   return (
     <div className='landing'>
@@ -101,19 +96,9 @@ const Landing = () => {
             </div>
           </header>
           <div className='landing__pickers'>
-            <label>
-              <span className='visually-hidden'>State</span>
-              <select className='select' value={state} onChange={(e) => pickState(e.target.value)}>
-                <StateOptions />
-              </select>
-            </label>
-            <label>
-              <span className='visually-hidden'>{countyLabel(state)}</span>
-              <select className='select' value={stateRegion ? '' : region} onChange={(e) => e.target.value && setRegion(e.target.value)} disabled={!countyChoices.length}>
-                {stateRegion && <option value=''>All of {stateName}</option>}
-                {countyChoices.map(r => <option key={r.code} value={r.code}>{r.name}</option>)}
-              </select>
-            </label>
+            {changing
+              ? <AreaPicker current={stateOfRegion(region) ? { state, location: region } : null} onPick={(area) => { setRegion(area.location); setChanging(false) }} />
+              : <button type='button' className='link-button link-text landing__change' onClick={() => setChanging(true)}>Change place</button>}
           </div>
           {notable.isPending ? (
               <ul className='landing__birds' aria-busy='true'>{Array.from({ length: 4 }, (_, i) => <li key={i} className='landing__bird is-loading'><span className='landing__thumb' /><span className='landing__bar' /></li>)}</ul>

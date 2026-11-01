@@ -4,8 +4,8 @@ import { toast } from 'react-toastify'
 import { resendConfirmationEmail, requestPasswordReset, errorMessage } from '../../apiCalls'
 import { useCurrentUser, useRegionsQuery } from '../../hooks/queries'
 import { usePatchUserMutation } from '../../hooks/mutations'
-import { countyLabel, countyWord } from '../../usStates'
-import StateOptions from '../StateOptions/StateOptions'
+import { countyName, countyWord, stateName } from '../../usStates'
+import AreaPicker from '../AreaPicker/AreaPicker'
 import './Form.css'
 
 const toastAt = { position: 'bottom-center' } as const
@@ -20,13 +20,16 @@ const Form = () => {
         email:    user.email || ''
     })
 
-    // Region options follow the selected state (cached for a week per state).
+    // The area is shown by name ("Hall County, Georgia") and changed through the area picker.
     const regions = useRegionsQuery(form.state)
+    const [changingArea, setChangingArea] = useState(false)
+    const [pickedLabel, setPickedLabel] = useState<string | null>(null)
+    const currentName = regions.data?.find(r => r.code === form.location)?.name
+    const areaLabel = pickedLabel ?? (currentName ? [countyName(currentName, form.state), stateName(form.state)].filter(Boolean).join(', ') : null)
 
     const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target
-        // A new state invalidates the old region.
-        setForm(prev => (name === 'state' ? { ...prev, state: value, location: '' } : { ...prev, [name]: value }))
+        setForm(prev => ({ ...prev, [name]: value }))
     }
 
     const handleResendConfirmation = () => {
@@ -75,23 +78,19 @@ const Form = () => {
                 <input type="email" name='email' autoComplete='email' value={form.email} onChange={handleChange} />
             </label>
             <button type='button' className='link-button password-reset-text' id='sendPasswordResetEmail' onClick={handlePasswordReset}>Send me a password reset email</button>
-            <label className='field'>
-                <span className='field__label'>State or province</span>
-                <select name="state" value={form.state} onChange={handleChange}>
-                    <option value="">Select your state or province</option>
-                    <StateOptions />
-                </select>
-            </label>
-            {regions.isError && <p className='passwordErrorText' role='alert'>Could not load regions: {errorMessage(regions.error)}</p>}
-            {!!regions.data?.length &&
-                <label className='field'>
-                    <span className='field__label'>{countyLabel(form.state)}</span>
-                    <select name="location" value={form.location} onChange={handleChange}>
-                        <option value="">Select your {countyWord(form.state)}</option>
-                        {regions.data.map(region => <option key={region.code} value={region.code}>{region.name} - {region.code}</option>)}
-                    </select>
-                </label>
-            }
+            <div className='field'>
+                <span className='field__label'>Where you bird</span>
+                {!changingArea && (
+                    <p className='settings-card__area'>
+                        <strong data-testid='current-area'>{areaLabel || (form.location ? form.location : `No ${countyWord(form.state || 'GA')} chosen yet`)}</strong>{' '}
+                        <button type='button' className='link-button link-text' onClick={() => setChangingArea(true)}>Change</button>
+                    </p>
+                )}
+                {changingArea && (
+                    <AreaPicker current={form.location ? { state: form.state, location: form.location } : null}
+                        onPick={(area) => { setForm(prev => ({ ...prev, state: area.state, location: area.location })); setPickedLabel(area.label); setChangingArea(false) }} />
+                )}
+            </div>
             <div className='settings-card__actions'>
                 <button type='submit' className='pill-button pill-button--primary'>Lock in details</button>
             </div>

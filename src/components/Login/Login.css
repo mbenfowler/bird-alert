@@ -141,9 +141,14 @@
 }
 
 .login-county-pick {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
     gap: 8px;
+}
+
+.login-county-pick > .login-link {
+    align-self: flex-start;
 }
 
 .login-county-pick select {

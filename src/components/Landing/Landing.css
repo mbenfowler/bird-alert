@@ -134,27 +134,11 @@
 }
 
 .landing__pickers {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 8px;
+    display: block;
 }
 
-.landing__pickers select {
-    width: 100%;
-    height: 44px;
-    padding: 0 12px;
-    border-radius: 12px;
-    border: 2px solid var(--line);
-    background-color: var(--surface);
-    color: var(--ink);
-    font: inherit;
-    font-size: 16px;
-    font-weight: 600;
-}
-
-.landing__pickers select:focus-visible {
-    outline: 3px solid var(--focus);
-    outline-offset: 1px;
+.landing__change {
+    font-size: 0.9rem;
 }
 
 .landing__birds {
