@@ -6,6 +6,7 @@ import { useCurrentUser } from '../../hooks/queries'
 import { dismissPushAsk, onPushAsk, withArticle, type PushAskVariant } from '../../pushAsk'
 import InstallSteps from '../InstallSteps/InstallSteps'
 import './PushAsk.css'
+import { t } from '../../i18n'
 
 /**
  * The ask that follows saving a bird when this device doesn't get alerts yet (see pushAsk.ts): one
@@ -36,13 +37,13 @@ const Sheet = ({ name, variant, onClose }: { name: string; variant: PushAskVaria
   }, [])
   return (
     <aside className='push-ask' role='dialog' aria-modal='false' aria-labelledby='push-ask-question' tabIndex={-1} ref={sheet}>
-      <p className='push-ask__question' id='push-ask-question'>Want a ping the moment {withArticle(name)} is reported near you?</p>
+      <p className='push-ask__question' id='push-ask-question'>{t('pushAsk.question', { bird: withArticle(name) })}</p>
       {variant === 'install'
         ? (
           <>
             <InstallSteps compact />
             <div className='push-ask__actions'>
-              <button type='button' className='push-ask__later' onClick={notNow}>Not now</button>
+              <button type='button' className='push-ask__later' onClick={notNow}>{t('pushAsk.notNow')}</button>
             </div>
           </>
         )
@@ -63,28 +64,28 @@ const EnableActions = ({ name, onDone, onNotNow }: { name: string; onDone: () =>
     if (!asked || push.state !== 'on' || finished.current) return
     finished.current = true
     if (user.push_watchlist_enabled === false) patch.mutate({ push_watchlist_enabled: true })
-    toast.success(`Alerts are on. You’ll hear about ${name} here.`, { position: 'bottom-center' })
+    toast.success(t('pushAsk.on', { name }), { position: 'bottom-center' })
     onDone()
   }, [asked, push.state, user.push_watchlist_enabled, patch, name, onDone])
   if (asked && push.state === 'denied') {
     return (
       <>
-        <p className='push-ask__note' role='alert'>Notifications are blocked for Bird Alert in this browser’s settings. Allow them there, then turn alerts on in Settings.</p>
+        <p className='push-ask__note' role='alert'>{t('pushAsk.blocked')}</p>
         <div className='push-ask__actions'>
-          <button type='button' className='pill-button pill-button--small' onClick={onDone}>OK</button>
+          <button type='button' className='pill-button pill-button--small' onClick={onDone}>{t('common.ok')}</button>
         </div>
       </>
     )
   }
   return (
     <>
-      {asked && push.error && <p className='push-ask__note' role='alert'>That didn’t work: {push.error}</p>}
+      {asked && push.error && <p className='push-ask__note' role='alert'>{t('pushAsk.failed', { error: push.error })}</p>}
       <div className='push-ask__actions'>
         <button type='button' className='pill-button pill-button--primary' disabled={push.state === 'busy' || push.state === 'checking'}
           onClick={() => { setAsked(true); void push.enable() }}>
-          {push.state === 'busy' ? 'Turning on…' : 'Turn on alerts'}
+          {push.state === 'busy' ? t('pushAsk.turningOn') : t('pushAsk.turnOn')}
         </button>
-        <button type='button' className='push-ask__later' onClick={onNotNow}>Not now</button>
+        <button type='button' className='push-ask__later' onClick={onNotNow}>{t('pushAsk.notNow')}</button>
       </div>
     </>
   )

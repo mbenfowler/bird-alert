@@ -2,15 +2,12 @@ import { useEffect, useRef } from 'react'
 import { useSessionQuery } from '../../hooks/queries'
 import { countryOf } from '../../usStates'
 import './AbaCode.css'
+import { t } from '../../i18n'
+import { Trans } from 'react-i18next'
 
 // Plain words, not the ABA's own labels (Rare, Casual, Accidental): read cold, "casual" sounds
 // commoner than "rare" when it's the rarer of the two.
-const WORDS: Record<number, string> = { 3: 'a few each year', 4: 'not every year', 5: 'a few records ever' }
-const MEANS: Record<number, string> = {
-  3: 'seen in very low numbers, but every year, in the ABA Area (the US, Canada and St. Pierre et Miquelon)',
-  4: 'not seen every year in the ABA Area, with six or more records in all',
-  5: 'recorded five or fewer times ever in the ABA Area'
-}
+const CODES = new Set([3, 4, 5])
 
 /**
  * How rare a bird is across the whole ABA Area, from the ABA Checklist's code: shown for codes 3
@@ -29,16 +26,16 @@ const AbaCode = ({ code, explain = false }: { code?: number | null; explain?: bo
     document.addEventListener('pointerdown', close)
     return () => document.removeEventListener('pointerdown', close)
   }, [explain])
-  if (outsideAbaArea || !code || !WORDS[code]) return null
+  if (outsideAbaArea || !code || !CODES.has(code)) return null
   // "ABA Code 5 ·" never breaks; on a narrow card the words wrap after it instead of widening the card.
-  const label = <><span className='aba-code__code'>ABA Code {code} ·</span> <span>{WORDS[code]}</span></>
-  if (!explain) return <span className='aba-code' title={`ABA Checklist Code ${code}: ${MEANS[code]}`}>{label}</span>
+  const label = <><span className='aba-code__code'>{t('aba.chip', { code })}</span> <span>{t(`aba.words${code}`)}</span></>
+  if (!explain) return <span className='aba-code' title={t('aba.title', { code, means: t(`aba.means${code}`) })}>{label}</span>
   return (
     <details className='aba-code-note' ref={ref}>
       <summary className='aba-code'>{label}</summary>
       <div className='aba-code-note__panel'>
-        <p><strong>ABA Code {code}:</strong> {MEANS[code]}.</p>
-        <p className='aba-code-note__credit'>From the ABA Checklist, used with permission of the American Birding Association.</p>
+        <p><Trans i18nKey='aba.note' values={{ code, means: t(`aba.means${code}`) }} components={{ b: <strong /> }} /></p>
+        <p className='aba-code-note__credit'>{t('aba.credit')}</p>
       </div>
     </details>
   )

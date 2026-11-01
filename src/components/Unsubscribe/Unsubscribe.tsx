@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useParams } from 'react-router'
 import { unsubscribe, errorMessage } from '../../apiCalls'
+import { t } from '../../i18n'
 
 type Status = 'pending' | 'done' | 'failed'
 
@@ -20,18 +21,18 @@ const Unsubscribe = () => {
 
   return (
     <section>
-      {status === 'pending' && <h2>Unsubscribing...</h2>}
+      {status === 'pending' && <h2>{t('unsubscribe.working')}</h2>}
       {status === 'failed' &&
         <>
-          <h2>Something went wrong:</h2>
+          <h2>{t('common.wentWrong')}</h2>
           <p>{error}</p>
-          <Link to='/'><button>Return home</button></Link>
+          <Link to='/'><button>{t('common.returnHome')}</button></Link>
         </>}
       {status === 'done' &&
         <section className='confirm-section'>
-          <h2>Successfully unsubscribed!</h2>
-          <p>You can re-enable this digest from the Alert center within your user settings.</p>
-          <Link to='/'><button>Return home</button></Link>
+          <h2>{t('unsubscribe.done')}</h2>
+          <p>{t('unsubscribe.reenable')}</p>
+          <Link to='/'><button>{t('common.returnHome')}</button></Link>
         </section>}
     </section>
   )

@@ -6,6 +6,8 @@ import AreaPicker from '../AreaPicker/AreaPicker'
 import type { Observation } from '../../types'
 import './Landing.css'
 import AbaCode from '../AbaCode/AbaCode'
+import { t } from '../../i18n'
+import { Trans } from 'react-i18next'
 
 const REGION_KEY = 'bird-alert:landing-region'
 const DEFAULT_REGION = 'US-GA-139'
@@ -18,10 +20,10 @@ const ago = (obsDt: string) => {
   const then = new Date(obsDt.replace(' ', 'T')).getTime()
   if (!Number.isFinite(then)) return ''
   const hours = Math.max(0, Math.round((Date.now() - then) / 3600000))
-  if (hours < 1) return 'just now'
-  if (hours < 24) return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`
+  if (hours < 1) return t('landing.justNow')
+  if (hours < 24) return t('still.hoursAgo', { count: hours })
   const days = Math.round(hours / 24)
-  return days === 1 ? 'yesterday' : `${days} days ago`
+  return days === 1 ? t('landing.yesterday') : t('landing.daysAgo', { count: days })
 }
 
 /**
@@ -32,7 +34,7 @@ const placeLabel = (o: Observation) => {
   if (!o.locationPrivate) return o.locName.replace(/^Lake Lanier--/, '')
   // "…, Gainesville US-GA (…)" in the US; "…, Toronto, Ontario, CA (…)" in Canada.
   const town = o.locName.match(/,\s*([^,]+?)\s+US-[A-Z]{2}\b/)?.[1] ?? o.locName.match(/,\s*([^,]+?),\s*[^,]+,\s*CA\b/)?.[1]
-  return town ? `A private yard near ${town}` : 'A private yard'
+  return town ? t('landing.yardNear', { town }) : t('landing.yard')
 }
 
 /** Notable reports folded to one row per bird: its newest report and how many there were. */
@@ -74,36 +76,33 @@ const Landing = () => {
     <div className='landing'>
       <section className='landing__hero'>
         <div className='landing__pitch'>
-          <p className='landing__kicker'>Free, for birders who’d rather be out there</p>
-          <h1 className='fredericka landing__title'>Know where the birds are this morning.</h1>
-          <p className='landing__lede'>
-            Live sightings near you, your honest chances at each spot, and a short route that finds the most of your birds.
-            Get a nudge the moment one you’re after is reported.
-          </p>
+          <p className='landing__kicker'>{t('landing.kicker')}</p>
+          <h1 className='fredericka landing__title'>{t('landing.title')}</h1>
+          <p className='landing__lede'>{t('landing.lede')}</p>
           <div className='landing__ctas'>
-            <Link className='pill-button pill-button--primary landing__cta' to='/login'>Start free</Link>
-            <Link className='pill-button landing__cta' to='/login'>Log in</Link>
+            <Link className='pill-button pill-button--primary landing__cta' to='/login'>{t('landing.start')}</Link>
+            <Link className='pill-button landing__cta' to='/login'>{t('nav.login')}</Link>
           </div>
-          <p className='landing__fine'>No app store, no ads. Works on your phone’s home screen.</p>
+          <p className='landing__fine'>{t('landing.fine')}</p>
         </div>
 
         <section className='landing__live' aria-labelledby='liveTitle'>
           <header className='landing__live-head'>
             <p className='landing__live-dot' aria-hidden='true'><span /></p>
             <div>
-              <h2 id='liveTitle' className='landing__live-title'>Notable this week{placeName ? ` in ${placeName}` : ''}</h2>
-              <p className='landing__live-sub'>Uncommon birds reported to eBird in the last 7 days</p>
+              <h2 id='liveTitle' className='landing__live-title'>{placeName ? t('landing.notableIn', { place: placeName }) : t('landing.notable')}</h2>
+              <p className='landing__live-sub'>{t('landing.liveSub')}</p>
             </div>
           </header>
           <div className='landing__pickers'>
             {changing
               ? <AreaPicker current={stateOfRegion(region) ? { state, location: region } : null} onPick={(area) => { setRegion(area.location); setChanging(false) }} />
-              : <button type='button' className='link-button link-text landing__change' onClick={() => setChanging(true)}>Change place</button>}
+              : <button type='button' className='link-button link-text landing__change' onClick={() => setChanging(true)}>{t('landing.changePlace')}</button>}
           </div>
           {notable.isPending ? (
               <ul className='landing__birds' aria-busy='true'>{Array.from({ length: 4 }, (_, i) => <li key={i} className='landing__bird is-loading'><span className='landing__thumb' /><span className='landing__bar' /></li>)}</ul>
-            ) : notable.isError ? <p className='landing__live-note'>eBird didn’t answer just now. Try again in a minute.</p>
-            : !rows.length ? <p className='landing__live-note'>Nothing unusual reported in {placeName ?? `this ${countyWord(state)}`} this week. A quiet week is a good week to look anyway.</p>
+            ) : notable.isError ? <p className='landing__live-note'>{t('landing.ebirdDown')}</p>
+            : !rows.length ? <p className='landing__live-note'>{t('landing.quiet', { place: placeName ?? t('landing.thisArea', { word: countyWord(state) }) })}</p>
             : (
               <ul className='landing__birds'>
                 {rows.map(({ latest: o, reports, places }) => (
@@ -112,77 +111,77 @@ const Landing = () => {
                     <span className='landing__bird-text'>
                       <strong>{o.comName}{o.aba && o.aba >= 3 && o.aba <= 5 ? <> <AbaCode code={o.aba} /></> : null}</strong>
                       <span>{placeLabel(o)}</span>
-                      <span className='landing__bird-meta'>{ago(o.obsDt)}{reports > 1 ? ` · ${reports} reports${places.size > 1 ? `, ${places.size} places` : ''}` : ''}</span>
+                      <span className='landing__bird-meta'>{ago(o.obsDt)}{reports > 1 ? ` · ${places.size > 1 ? t('landing.reportsPlaces', { reports, places: places.size }) : t('landing.reports', { count: reports })}` : ''}</span>
                     </span>
-                    <a className='landing__ebird' href={`https://ebird.org/checklist/${encodeURIComponent(o.subId)}`} target='_blank' rel='noreferrer' aria-label={`The ${o.comName} checklist on eBird`}>eBird ↗</a>
+                    <a className='landing__ebird' href={`https://ebird.org/checklist/${encodeURIComponent(o.subId)}`} target='_blank' rel='noreferrer' aria-label={t('landing.checklistLabel', { name: o.comName })}>{t('landing.ebirdLink')}</a>
                   </li>
                 ))}
               </ul>
             )}
-          {total > SHOWN && <p className='landing__live-more'>+{total - SHOWN} more this week.</p>}
+          {total > SHOWN && <p className='landing__live-more'>{t('landing.more', { count: total - SHOWN })}</p>}
           {speciesLately > 0 && (
-            <p className='landing__stat'><strong>{speciesLately}</strong> species reported in {placeName ?? `this ${countyWord(state)}`} in the last two weeks, and the app knows where each one was.</p>
+            <p className='landing__stat'><Trans i18nKey='landing.stat' count={speciesLately} values={{ count: speciesLately, place: placeName ?? t('landing.thisArea', { word: countyWord(state) }) }} components={{ b: <strong /> }} /></p>
           )}
-          <Link className='landing__live-cta' to='/login'>Get told when the birds you want show up here →</Link>
+          <Link className='landing__live-cta' to='/login'>{t('landing.liveCta')}</Link>
         </section>
       </section>
 
-      <section className='landing__features' aria-label='What it does'>
+      <section className='landing__features' aria-label={t('landing.featuresLabel')}>
         <article className='landing__feature'>
           <div className='landing__mock landing__mock--odds' aria-hidden='true'>
-            <p className='mock__place'>Chicopee Lake</p>
-            <p className='mock__odds'><span className='mock__pct'>86%</span> chance to see it here</p>
-            <p className='mock__meta'>best 8 am to 10 am · on 12 of 14 checklists</p>
+            <p className='mock__place'>{t('landing.mock.place1')}</p>
+            <p className='mock__odds'><Trans i18nKey='landing.mock.odds' components={{ pct: <span className='mock__pct' /> }} /></p>
+            <p className='mock__meta'>{t('landing.mock.oddsMeta')}</p>
           </div>
-          <h3>Your odds, honestly</h3>
-          <p>Every spot gets a real chance figure from recent checklists, faded as reports get old, and checked against what birders actually find.</p>
+          <h3>{t('landing.oddsTitle')}</h3>
+          <p>{t('landing.oddsText')}</p>
         </article>
         <article className='landing__feature'>
           <div className='landing__mock landing__mock--route' aria-hidden='true'>
             <ol>
-              <li><span>1</span>Chicopee Lake</li>
-              <li className='mock__leg'>↓ 6 min</li>
-              <li><span>2</span>Elachee Nature Center</li>
-              <li className='mock__leg'>↓ 18 min</li>
-              <li><span>3</span>North Hall Park</li>
+              <li><span>1</span>{t('landing.mock.place1')}</li>
+              <li className='mock__leg'>{t('landing.mock.leg', { n: 6 })}</li>
+              <li><span>2</span>{t('landing.mock.place2')}</li>
+              <li className='mock__leg'>{t('landing.mock.leg', { n: 18 })}</li>
+              <li><span>3</span>{t('landing.mock.place3')}</li>
             </ol>
-            <p className='mock__meta'>about 9 of your birds · 42 min of driving</p>
+            <p className='mock__meta'>{t('landing.mock.routeMeta')}</p>
           </div>
-          <h3>A morning route</h3>
-          <p>Where to go for the most of your birds, in the order that wastes the least driving. Edit it, add any hotspot, send it to Maps.</p>
+          <h3>{t('landing.routeTitle')}</h3>
+          <p>{t('landing.routeText')}</p>
         </article>
         <article className='landing__feature'>
           <div className='landing__mock landing__mock--push' aria-hidden='true'>
-            <p className='mock__app'><img src='/images/bird.png' alt='' width='18' height='18' /> Bird Alert! · now</p>
-            <p className='mock__push-title'>⭐ Painted Bunting spotted nearby!</p>
-            <p className='mock__meta'>Chicopee Lake · 8:10 am · 2 seen</p>
+            <p className='mock__app'><img src='/images/bird.png' alt='' width='18' height='18' /> {t('landing.mock.app')}</p>
+            <p className='mock__push-title'>{t('landing.mock.pushTitle')}</p>
+            <p className='mock__meta'>{t('landing.mock.pushMeta')}</p>
           </div>
-          <h3>Alerts that matter</h3>
-          <p>Your watch list, eBird’s rarities, the first migrant of the season back in town. Quiet hours respected, never the same bird twice.</p>
+          <h3>{t('landing.alertsTitle')}</h3>
+          <p>{t('landing.alertsText')}</p>
         </article>
         <article className='landing__feature'>
           <div className='landing__mock landing__mock--lifer' aria-hidden='true'>
-            <p className='mock__push-title'>🎯 Lifer chance: Sedge Wren</p>
-            <p className='mock__meta'>reported 9 miles away · not on your life list</p>
-            <p className='mock__chip'>✓ 284 on your life list</p>
+            <p className='mock__push-title'>{t('landing.mock.liferTitle')}</p>
+            <p className='mock__meta'>{t('landing.mock.liferMeta')}</p>
+            <p className='mock__chip'>{t('landing.mock.liferChip')}</p>
           </div>
-          <h3>Lifers first</h3>
-          <p>Bring your eBird life list in one go. The app points you at birds you’ve never seen, and tells you when one turns up.</p>
+          <h3>{t('landing.lifersTitle')}</h3>
+          <p>{t('landing.lifersText')}</p>
         </article>
       </section>
 
-      <section className='landing__steps' aria-label='How it works'>
-        <h2 className='fredericka'>Three minutes to set up</h2>
+      <section className='landing__steps' aria-label={t('landing.stepsLabel')}>
+        <h2 className='fredericka'>{t('landing.stepsTitle')}</h2>
         <ol>
-          <li><strong>Pick your county (an area in Canada, a municipality in Mexico or South Africa).</strong> Everything is local: your sightings, your hotspots, your migrants.</li>
-          <li><strong>Star the birds you want.</strong> Or let the notable list and the arrivals pick for you.</li>
-          <li><strong>Go.</strong> Alerts come to your phone; Where to go has the morning planned.</li>
+          <li><Trans i18nKey='landing.step1' components={{ b: <strong /> }} /></li>
+          <li><Trans i18nKey='landing.step2' components={{ b: <strong /> }} /></li>
+          <li><Trans i18nKey='landing.step3' components={{ b: <strong /> }} /></li>
         </ol>
-        <Link className='pill-button pill-button--primary landing__cta' to='/login'>Start free</Link>
+        <Link className='pill-button pill-button--primary landing__cta' to='/login'>{t('landing.start')}</Link>
       </section>
 
       <footer className='landing__foot'>
-        <p>Sightings and hotspots come from <a href='https://ebird.org' target='_blank' rel='noreferrer'>eBird</a>, the Cornell Lab’s community of birders. Bird sounds from <a href='https://xeno-canto.org' target='_blank' rel='noreferrer'>xeno-canto</a>.</p>
+        <p><Trans i18nKey='landing.credit' components={{ ebird: <a href='https://ebird.org' target='_blank' rel='noreferrer' />, xc: <a href='https://xeno-canto.org' target='_blank' rel='noreferrer' /> }} /></p>
       </footer>
     </div>
   )

@@ -18,8 +18,10 @@ import type { GoPlace } from '../../types'
 import AccuracyBadge from '../AccuracyBadge/AccuracyBadge'
 import './WhereToGo.css'
 import { countyWord } from '../../usStates'
+import { number, t } from '../../i18n'
+import { Trans } from 'react-i18next'
 
-const birdsWord = (n: number) => `${n % 1 === 0 ? n : n.toFixed(1)} ${n === 1 ? 'bird' : 'birds'}`
+const birdsWord = (n: number) => t('route.birds', { count: n, n: number(n, { maximumFractionDigits: 1 }) })
 
 /**
  * Where to go for the whole watch list: the places that offer the most of your birds, a short
@@ -32,7 +34,7 @@ const WhereToGo = () => {
   const region = user.location
   const { custom, setCustom, start, setStart, saveFailed, seen, lifers, setLiferMode, codes, go, route, stops } = useGoPlan(region)
   const regions = useRegionsQuery(user.state)
-  const regionName = regions.data?.find(r => r.code === region)?.name ?? `your ${countyWord(user.state)}`
+  const regionName = regions.data?.find(r => r.code === region)?.name ?? t('range.yourCounty', { word: countyWord(user.state) })
   const [selected, setSelected] = useState<string | null>(null)
   // One private place at a time can open its public lands; the map focuses on them meanwhile.
   const [openNearby, setOpenNearby] = useState<string | null>(null)
@@ -84,23 +86,23 @@ const WhereToGo = () => {
   const modeSwitch = seen.codes.size > 0 && (
     <label className='go__mode'>
       <input className='switch switch--small' type='checkbox' checked={lifers} onChange={(e) => setLiferMode(e.target.checked)} />
-      <span><strong>Lifers first</strong> <span className='go__mode-hint'>{lifers ? 'Places ranked by birds not on your life list' : 'Rank places by birds you’ve never seen'}</span></span>
+      <span><strong>{t('go.lifersFirst')}</strong> <span className='go__mode-hint'>{lifers ? t('go.lifersOn') : t('go.lifersOff')}</span></span>
     </label>
   )
 
   if (!codes.length) {
     return (
       <section className='go'>
-        <h1 className='fredericka go__title'>Where to go</h1>
+        <h1 className='fredericka go__title'>{t('go.tabsLabel')}</h1>
         {modeSwitch}
         {lifers
-          ? <p className='list-note'>Every bird on {regionName}’s list is already on your life list. Nice work.</p>
-          : <p className='list-note'>Add birds to your watch list and this page will say where to find them. <Link to='/'>Pick some from the home page.</Link></p>}
+          ? <p className='list-note'><Trans i18nKey='go.allSeen' values={{ regionName }} /></p>
+          : <p className='list-note'><Trans i18nKey='go.noBirds' components={{ home: <Link to='/' /> }} /></p>}
       </section>
     )
   }
   if (go.isError) return <ErrorMessage networkError={errorMessage(go.error)} />
-  if (go.isPending) return <LoadingState label='Working out where to go…' />
+  if (go.isPending) return <LoadingState label={t('go.working')} />
 
   const { species } = go.data
   // An area chosen in the last hour or so has no checklists on file yet; say so rather than look empty.
@@ -117,7 +119,7 @@ const WhereToGo = () => {
         path: drivePoints.length >= 2 ? (custom ? ownDrive.data?.geometry : drive?.geometry) ?? straightPath : [],
         settling: custom !== null && ownDrive.isFetching,
         stops: stops.map(s => ({ lat: s.lat, lng: s.lng, label: s.name })),
-        start: start ? { lat: start.lat, lng: start.lng, label: `Start: ${start.name}` } : null,
+        start: start ? { lat: start.lat, lng: start.lng, label: t('go.startLabel', { name: start.name }) } : null,
         preview: preview && last ? { lat: preview.lat, lng: preview.lng, label: preview.name, from: [last.lat, last.lng] as [number, number] } : null
       }
     : null
@@ -149,12 +151,12 @@ const WhereToGo = () => {
               void shareThing({
                 kind: 'route',
                 regionName,
-                covers: lifers ? null : `Covers about ${birdsWord(covered)} of a ${species.length}-bird watch list.`,
+                covers: lifers ? null : t('go.shareCovers', { birds: birdsWord(covered), count: species.length }),
                 stops: stops.map(s => {
                   const place = s.locId ? byId.get(s.locId) : undefined
                   return {
                     name: s.name, lat: s.lat, lng: s.lng, locId: s.locId,
-                    detail: place ? `${birdsWord(place.expected)} expected${place.bestTime ? ` · best ${place.bestTime}` : ''}` : s.note ?? null,
+                    detail: place ? (place.bestTime ? t('route.expectedBest', { birds: birdsWord(place.expected), best: place.bestTime }) : t('route.expected', { birds: birdsWord(place.expected) })) : s.note ?? null,
                     birds: (place?.birds ?? []).slice(0, 4).map(b => `${b.comName} ${b.chance}%`)
                   }
                 }),
@@ -162,7 +164,7 @@ const WhereToGo = () => {
                 drive: drive ? (start
                   ? (() => { const legs = arriving.slice(1); return legs.length && legs.every(Boolean) ? { minutes: legs.reduce((n, l) => n + l!.minutes, 0), miles: Math.round(legs.reduce((n, l) => n + l!.miles, 0) * 10) / 10, legs, geometry: [] } : null })()
                   : { minutes: drive.minutes, miles: drive.miles, legs: arriving.slice(1), geometry: drive.geometry }) : null
-              }, `A birding route in ${regionName}`)
+              }, t('go.shareTitle', { regionName }))
             }} />
   ) : null
 
@@ -170,9 +172,9 @@ const WhereToGo = () => {
     <section className={`go ${editing ? 'is-editing-route' : ''}`}>
       <header className='go__hero'>
         <div className='go__title-row'>
-          <h1 className='fredericka go__title'>Where to go</h1>
+          <h1 className='fredericka go__title'>{t('go.tabsLabel')}</h1>
           {modeSwitch}
-          <p className='go__summary'>{lifers ? `${possibleLifers} possible ${possibleLifers === 1 ? 'lifer' : 'lifers'} reported lately` : `${species.length} ${species.length === 1 ? 'bird' : 'birds'} on your watch list`} · {places.length} {places.length === 1 ? 'place' : 'places'} in {regionName} with reports in the last 30 days</p>
+          <p className='go__summary'>{lifers ? t('go.possibleLifers', { count: possibleLifers }) : t('go.watchCount', { count: species.length })} · {t('go.placesIn', { count: places.length, regionName })}</p>
           <AccuracyBadge grades={go.data.grades} />
         </div>
         {!editing && routeCard}
@@ -181,42 +183,42 @@ const WhereToGo = () => {
       <div className={`go__frame ${docked ? 'is-docked' : ''}`} ref={frameRef}>
         <div className='go__map'>
           {points.length
-            ? <SightingsMap points={points} focus={focus} route={focus && !preview ? null : routeOnMap} height='100%' ariaLabel={`Map of places for your watch list in ${regionName}`} openHighlighted={!focus}
+            ? <SightingsMap points={points} focus={focus} route={focus && !preview ? null : routeOnMap} height='100%' ariaLabel={t('go.mapLabel', { regionName })} openHighlighted={!focus}
                 onPinClick={(hit) => { const p = places.find(x => x.locId === hit[0]?.id); if (!p) return; if (openNearby && p.locId !== openNearby) closeNearby(); select(p) }} />
-            : <p className='list-note go__nomap'>{places.length ? 'None of these places have coordinates yet.' : 'No places to show yet.'}</p>}
+            : <p className='list-note go__nomap'>{places.length ? t('go.noCoords') : t('go.noPlaces')}</p>}
         </div>
         <div className='go__list-col'>
           <div className='go__scroll'>
             {/* Editing, the route takes the list's place beside the map, so each change shows as it is made. */}
             {editing && routeCard}
             {!editing && <>
-            <h2 className='fredericka go__subhead'>Best places for your birds</h2>
+            <h2 className='fredericka go__subhead'>{t('go.bestPlaces')}</h2>
             {!places.length && <p className='list-note go__empty'>{gathering
-              ? `We’re still gathering ${regionName}’s checklists. A newly chosen ${countyWord(user.state)} fills in within a few minutes, and the chances sharpen over the next few days as more checklists come in.`
-              : `None of your birds have been reported in ${regionName} lately. Add a few more birds to widen the search.`}</p>}
+              ? t('go.gathering', { regionName, word: countyWord(user.state) })
+              : t('go.noneReported', { regionName })}</p>}
             <ol className='go__places'>
               {places.map(place => (
                 <li key={place.locId} className={`go__place ${place.locId === selected ? 'is-current' : ''}`}>
                   <button type='button' className='go__place-head' onClick={() => select(place)} aria-current={place.locId === selected ? 'true' : undefined}>
                     <span className='go__expected'>{birdsWord(place.expected)}</span>
                     <strong>{place.locName ?? place.locId}</strong>
-                    {place.isHotspot === false && <span className='place__private'>private</span>}
-                    {place.seenToday && <span className='go__today'>today</span>}
-                    {place.bestTime && <span className='go__place-meta'>best {place.bestTime}</span>}
+                    {place.isHotspot === false && <span className='place__private'>{t('sighting.private')}</span>}
+                    {place.seenToday && <span className='go__today'>{t('sighting.today')}</span>}
+                    {place.bestTime && <span className='go__place-meta'>{t('go.best', { when: place.bestTime })}</span>}
                   </button>
                   <div className='go__birds'>
                     {place.birds.slice(0, 8).map(b => (
                       <Link key={b.speciesCode} className='go__bird' style={{ '--chance': chanceColour(b.chance) } as CSSProperties} to={`/sighting/${b.speciesCode}/${b.lastSeen?.subId ?? ''}`}>{b.comName} {b.chance}%</Link>
                     ))}
-                    {place.birds.length > 8 && <span className='go__more'>+{place.birds.length - 8} more</span>}
+                    {place.birds.length > 8 && <span className='go__more'>{t('go.more', { count: place.birds.length - 8 })}</span>}
                   </div>
                   {place.isHotspot !== false && place.lat !== null && place.lng !== null && (() => {
                     const on = stops.some(st => st.locId === place.locId)
                     return (
                       <button type='button' className={`pill-button go__quick-add ${on ? 'is-on' : ''}`} aria-pressed={on}
-                        disabled={!on && stops.length >= MAX_ROUTE_STOPS} title={!on && stops.length >= MAX_ROUTE_STOPS ? `A route takes up to ${MAX_ROUTE_STOPS} stops` : undefined}
+                        disabled={!on && stops.length >= MAX_ROUTE_STOPS} title={!on && stops.length >= MAX_ROUTE_STOPS ? t('best.routeFull', { count: MAX_ROUTE_STOPS }) : undefined}
                         onClick={() => toggleStop(place)}>
-                        {on ? '✓ On route' : '+ Add to route'}
+                        {on ? t('go.onRoute') : t('go.addRoute')}
                       </button>
                     )
                   })()}

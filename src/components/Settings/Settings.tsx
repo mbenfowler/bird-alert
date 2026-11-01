@@ -7,6 +7,7 @@ import Feedback from '../Feedback/Feedback'
 import DeleteAccount from '../DeleteAccount/DeleteAccount'
 import { useLogoutMutation } from '../../hooks/mutations'
 import './Settings.css'
+import { t } from '../../i18n'
 
 const Settings = () => {
     const logoutMutation = useLogoutMutation()
@@ -21,7 +22,7 @@ const Settings = () => {
             <AlertCenter />
             <Feedback />
             <div className='settings-footer'>
-                <button type='button' className='pill-button' id='logoutButton' onClick={handleLogout} disabled={logoutMutation.isPending}>Log out</button>
+                <button type='button' className='pill-button' id='logoutButton' onClick={handleLogout} disabled={logoutMutation.isPending}>{t('settings.logout')}</button>
                 <DeleteAccount />
             </div>
         </section>

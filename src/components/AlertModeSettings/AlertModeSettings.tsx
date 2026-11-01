@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { readAlertMode, saveAlertMode, soundTheAlarm, type AlertModeSettings as Settings } from '../../alertMode'
-import { alertVoices, birdFromTitle, EXAMPLE, KIND_LABEL, playAlertSound, SOUND_GROUPS, SOUNDS, soundById, unlockAudio, type AlertKind } from '../../alertSounds'
+import { alertVoices, birdFromTitle, EXAMPLE, groupLabel, kindLabel, playAlertSound, SOUND_GROUPS, SOUNDS, soundById, soundName, unlockAudio, type AlertKind } from '../../alertSounds'
 import './AlertModeSettings.css'
+import { t } from '../../i18n'
+import { Trans } from 'react-i18next'
 
 const KINDS: AlertKind[] = ['watchlist', 'notable', 'lifer', 'mega']
 const isSpoken = (id: string) => id.startsWith('say-') || id === 'red-alert-say'
@@ -26,7 +28,7 @@ const Credit = ({ soundId }: { soundId: string }) => {
   if (!credit) return null
   return (
     <p className='alert-mode__credit'>
-      Recording: <a href={`https://xeno-canto.org/${credit.xcId}`} target='_blank' rel='noreferrer'>XC{credit.xcId}</a> · {credit.recordist} · {credit.license}
+      <Trans i18nKey='alertMode.recording' values={{ xc: credit.xcId, recordist: credit.recordist, license: credit.license }} components={{ link: <a href={`https://xeno-canto.org/${credit.xcId}`} target='_blank' rel='noreferrer' /> }} />
     </p>
   )
 }
@@ -53,14 +55,14 @@ const AlertModeSettings = ({ disabled }: { disabled: boolean }) => {
   return (
     <div className='alert-mode' aria-disabled={disabled}>
       <div className='alert-mode__row'>
-        <label><input className='switch switch--small' type='checkbox' checked={settings.lights} disabled={disabled} onChange={(e) => change({ lights: e.target.checked })} /> Lights</label>
-        <label><input className='switch switch--small' type='checkbox' checked={settings.sound} disabled={disabled} onChange={(e) => change({ sound: e.target.checked })} /> Sound</label>
+        <label><input className='switch switch--small' type='checkbox' checked={settings.lights} disabled={disabled} onChange={(e) => change({ lights: e.target.checked })} /> {t('alertMode.lights')}</label>
+        <label><input className='switch switch--small' type='checkbox' checked={settings.sound} disabled={disabled} onChange={(e) => change({ sound: e.target.checked })} /> {t('alertMode.sound')}</label>
         <fieldset className='alert-mode__volume' disabled={disabled || !settings.sound}>
-          <legend className='visually-hidden'>Volume</legend>
+          <legend className='visually-hidden'>{t('alertMode.volume')}</legend>
           {(['quiet', 'normal'] as const).map((v) => (
             <label key={v} className={settings.volume === v ? 'is-selected' : undefined}>
               <input type='radio' name='alert-mode-volume' value={v} checked={settings.volume === v} onChange={() => change({ volume: v })} />
-              {v === 'quiet' ? 'Quiet' : 'Normal'}
+              {v === 'quiet' ? t('alertMode.quiet') : t('alertMode.normal')}
             </label>
           ))}
         </fieldset>
@@ -68,16 +70,16 @@ const AlertModeSettings = ({ disabled }: { disabled: boolean }) => {
       <ul className='alert-mode__sounds'>
         {KINDS.map((kind) => (
           <li key={kind}>
-            <label htmlFor={`alert-sound-${kind}`}>{KIND_LABEL[kind]}</label>
+            <label htmlFor={`alert-sound-${kind}`}>{kindLabel(kind)}</label>
             <div className='alert-mode__pick'>
               <select id={`alert-sound-${kind}`} value={settings.sounds[kind]} disabled={disabled || !settings.sound} onChange={(e) => change({ sounds: { [kind]: e.target.value } as Record<AlertKind, string> })}>
                 {SOUND_GROUPS.map((group) => (
-                  <optgroup key={group} label={group}>
-                    {SOUNDS.filter((s) => s.group === group).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  <optgroup key={group} label={groupLabel(group)}>
+                    {SOUNDS.filter((s) => s.group === group).map((s) => <option key={s.id} value={s.id}>{soundName(s)}</option>)}
                   </optgroup>
                 ))}
               </select>
-              <button type='button' className='alert-mode__play' aria-label={`Hear the ${KIND_LABEL[kind]} sound`} disabled={disabled || !settings.sound || settings.sounds[kind] === 'none'} onClick={() => preview(kind)}>▶</button>
+              <button type='button' className='alert-mode__play' aria-label={t('alertMode.hearKind', { kind: kindLabel(kind) })} disabled={disabled || !settings.sound || settings.sounds[kind] === 'none'} onClick={() => preview(kind)}>▶</button>
             </div>
             <Credit soundId={settings.sounds[kind]} />
           </li>
@@ -86,17 +88,17 @@ const AlertModeSettings = ({ disabled }: { disabled: boolean }) => {
       {/* Spoken sounds use this device's own voices; the best one is picked unless another is chosen. */}
       {speaks && voices.length > 0 && (
         <div className='alert-mode__voice'>
-          <label htmlFor='alert-voice'>Voice</label>
+          <label htmlFor='alert-voice'>{t('alertMode.voice')}</label>
           <div className='alert-mode__pick'>
             <select id='alert-voice' value={settings.voice ?? ''} disabled={disabled || !settings.sound} onChange={(e) => change({ voice: e.target.value || null })}>
-              <option value=''>{voices[0]!.label} (default)</option>
+              <option value=''>{t('alertMode.defaultVoice', { voice: voices[0]!.label })}</option>
               {voices.slice(1).map((v) => <option key={v.name} value={v.name}>{v.label}</option>)}
             </select>
-            <button type='button' className='alert-mode__play' aria-label='Hear this voice' disabled={disabled || !settings.sound} onClick={() => { unlockAudio(); void playAlertSound('say-bird-alert', { bird: 'Roadside Hawk', code: 4, volume: settings.volume === 'quiet' ? 0.45 : 1, voice: settings.voice }) }}>▶</button>
+            <button type='button' className='alert-mode__play' aria-label={t('alertMode.hearVoice')} disabled={disabled || !settings.sound} onClick={() => { unlockAudio(); void playAlertSound('say-bird-alert', { bird: 'Roadside Hawk', code: 4, volume: settings.volume === 'quiet' ? 0.45 : 1, voice: settings.voice }) }}>▶</button>
           </div>
         </div>
       )}
-      <button type='button' className='test-push test-push--inline' disabled={disabled || (!settings.lights && !settings.sound)} onClick={() => { unlockAudio(); soundTheAlarm(EXAMPLE.mega.title, settings) }}>Try the full alarm</button>
+      <button type='button' className='test-push test-push--inline' disabled={disabled || (!settings.lights && !settings.sound)} onClick={() => { unlockAudio(); soundTheAlarm(EXAMPLE.mega.title, settings) }}>{t('alertMode.tryAlarm')}</button>
     </div>
   )
 }

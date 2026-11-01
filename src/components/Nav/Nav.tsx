@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router'
 import { useSessionQuery } from '../../hooks/queries'
 import { useLogoutMutation } from '../../hooks/mutations'
 import './Nav.css'
+import { t } from '../../i18n'
 
 const canHover = typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches
 
@@ -44,21 +45,21 @@ const Nav = () => {
         <nav ref={navRef}>
             <Link className='text-link' to='/'><span id='titleBird'>Bird </span><span id='titleAlert'>Alert!</span></Link>
             {/* Someone without an account, anywhere but the login page itself, gets a way in. */}
-            {loggedOut && pathname !== '/login' && <Link to='/login' className='pill-button nav-login'>Log in</Link>}
+            {loggedOut && pathname !== '/login' && <Link to='/login' className='pill-button nav-login'>{t('nav.login')}</Link>}
             {user &&
                 <div>
                     {/* The icons are backgrounds on the links, not <img> elements: on iOS an image inside a link
                         carries drag and preview gestures that were swallowing most taps on these two. */}
-                    <Link to='/saved' className='nav-icon nav-icon--saved' aria-label='Saved birds' draggable={false}><span className='nav-img' aria-hidden='true' /></Link>
+                    <Link to='/saved' className='nav-icon nav-icon--saved' aria-label={t('nav.saved')} draggable={false}><span className='nav-img' aria-hidden='true' /></Link>
                     <div id='settings'>
                         {/* The hover menu exists only where hovering does. On touch screens it was hidden by a clip
                             under the gear, and iOS then dropped most taps on the gear; Log out lives on the settings page. */}
                         {canHover &&
                             <div id="settingsActions">
-                                <Link to='/settings'><p id='settingsText'>Settings</p></Link>
-                                <button type='button' className='link-button' onClick={handleLogout} disabled={logoutMutation.isPending}><p>Logout</p></button>
+                                <Link to='/settings'><p id='settingsText'>{t('nav.settings')}</p></Link>
+                                <button type='button' className='link-button' onClick={handleLogout} disabled={logoutMutation.isPending}><p>{t('nav.logout')}</p></button>
                             </div>}
-                        <Link to='/settings' className='nav-icon nav-icon--settings' aria-label='Settings' draggable={false}>
+                        <Link to='/settings' className='nav-icon nav-icon--settings' aria-label={t('nav.settings')} draggable={false}>
                             <span className='nav-img' aria-hidden='true' />
                         </Link>
                     </div>

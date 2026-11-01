@@ -1,5 +1,6 @@
 import { AddToHomeIcon, ShareIcon } from '../Icons/Icons'
 import './InstallSteps.css'
+import { Trans } from 'react-i18next'
 
 /**
  * On iPhone, Safari only lets a site send notifications once it's on the Home Screen, and a single
@@ -8,11 +9,11 @@ import './InstallSteps.css'
  */
 const InstallSteps = ({ compact = false }: { compact?: boolean }) => (
   <div className={`install-steps ${compact ? 'install-steps--compact' : ''}`}>
-    <p className='install-steps__lede'><strong>On iPhone, alerts need Bird Alert! on your Home Screen.</strong> It takes about ten seconds:</p>
+    <p className='install-steps__lede'><Trans i18nKey='install.lede' components={{ b: <strong /> }} /></p>
     <ol className='install-steps__list'>
-      <li><span className='install-steps__icon'><ShareIcon /></span><span>Tap <strong>Share</strong> in Safari’s toolbar.</span></li>
-      <li><span className='install-steps__icon'><AddToHomeIcon /></span><span>Scroll down and tap <strong>Add to Home Screen</strong>, then <strong>Add</strong>.</span></li>
-      <li><span className='install-steps__icon install-steps__icon--app'><img src='/images/bird.png' alt='' /></span><span>Open <strong>Bird Alert!</strong> from your Home Screen, sign in once more, and turn on alerts.</span></li>
+      <li><span className='install-steps__icon'><ShareIcon /></span><span><Trans i18nKey='install.step1' components={{ b: <strong /> }} /></span></li>
+      <li><span className='install-steps__icon'><AddToHomeIcon /></span><span><Trans i18nKey='install.step2' components={{ b: <strong /> }} /></span></li>
+      <li><span className='install-steps__icon install-steps__icon--app'><img src='/images/bird.png' alt='' /></span><span><Trans i18nKey='install.step3' components={{ b: <strong /> }} /></span></li>
     </ol>
   </div>
 )

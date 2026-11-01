@@ -4,6 +4,8 @@ import { toast } from 'react-toastify'
 import { errorMessage, resendConfirmationEmail } from '../../apiCalls'
 import { useSessionQuery } from '../../hooks/queries'
 import './ConfirmNudge.css'
+import { t } from '../../i18n'
+import { Trans } from 'react-i18next'
 
 const KEY = 'confirmNudge'
 // Setup and sign-in have their own flow; settings already says it beside the address.
@@ -26,7 +28,7 @@ const ConfirmNudge = () => {
   const resend = () => {
     setSending(true)
     resendConfirmationEmail()
-      .then(() => toast.success(`Sent. Look for “Confirm your email for Bird Alert” at ${user.email}.`, { position: 'bottom-center' }))
+      .then(() => toast.success(t('confirmNudge.sent', { email: user.email }), { position: 'bottom-center' }))
       .catch((error) => toast.error(errorMessage(error), { position: 'bottom-center' }))
       .finally(() => setSending(false))
   }
@@ -34,11 +36,11 @@ const ConfirmNudge = () => {
 
   return (
     <aside className='confirm-nudge' role='status'>
-      <p><strong>Confirm your email to get alerts by email.</strong> We sent a link to <strong>{user.email}</strong>. Not there? Check Spam and Promotions.</p>
+      <p><Trans i18nKey='confirmNudge.text' values={{ email: user.email }} components={{ b: <strong /> }} /></p>
       <div className='confirm-nudge__actions'>
-        <button type='button' className='pill-button pill-button--small pill-button--primary' onClick={resend} disabled={sending}>{sending ? 'Sending…' : 'Resend'}</button>
-        <Link className='pill-button pill-button--small' to='/settings'>Wrong address?</Link>
-        <button type='button' className='confirm-nudge__later' onClick={hide}>Later</button>
+        <button type='button' className='pill-button pill-button--small pill-button--primary' onClick={resend} disabled={sending}>{sending ? t('common.sending') : t('confirmNudge.resend')}</button>
+        <Link className='pill-button pill-button--small' to='/settings'>{t('confirmNudge.wrong')}</Link>
+        <button type='button' className='confirm-nudge__later' onClick={hide}>{t('confirmNudge.later')}</button>
       </div>
     </aside>
   )

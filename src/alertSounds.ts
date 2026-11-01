@@ -4,13 +4,15 @@
  * levelled, kept in public/sounds/alerts (credits in CREDITS.txt there and in BIRD_CALLS here);
  * spoken ones use the device's own voice and say the bird's name. All free.
  */
+import { t } from './i18n'
 export type AlertKind = 'watchlist' | 'notable' | 'mega' | 'lifer'
 export type SoundGroup = 'Sci-fi' | 'Bird calls' | 'Spoken' | 'Classic' | 'Off'
 export interface PlayContext { bird: string; code: number | null; volume: number; voice?: string | null }
 export interface BirdCallCredit { xcId: number; recordist: string; license: string }
 interface AlertSound { id: string; name: string; group: SoundGroup; play: (ctx: PlayContext) => Promise<void> | void; credit?: BirdCallCredit }
 
-export const KIND_LABEL: Record<AlertKind, string> = { watchlist: 'Watch list', notable: 'Notable', mega: 'ABA Code 4–5', lifer: 'Lifer chance' }
+/** The kind's name in the settings, from the catalog. */
+export const kindLabel = (kind: AlertKind) => t(`alertSounds.kind.${kind}`)
 export const DEFAULT_SOUNDS: Record<AlertKind, string> = { watchlist: 'chime', notable: 'bridge-chirp', lifer: 'say-binoculars', mega: 'red-alert-say' }
 /** What a preview pretends arrived, per kind. */
 export const EXAMPLE: Record<AlertKind, { title: string }> = {
@@ -121,7 +123,7 @@ const redAlert = synth((a, t, v) => {
 
 // ---- spoken ----
 /** Spelled out, so every voice says the number the same way. */
-const CODE_WORDS: Record<number, string> = { 3: 'three', 4: 'four', 5: 'five' }
+const CODE_WORDS = new Set([3, 4, 5])
 
 /**
  * The voices worth hearing, picked by ear on a Mac: Daniel (the default), plus five of the
@@ -216,7 +218,7 @@ export const SOUNDS: AlertSound[] = [
   { id: 'transporter', name: 'Transporter shimmer', group: 'Sci-fi', play: transporter },
   { id: 'proximity', name: 'Proximity alarm', group: 'Sci-fi', play: proximity },
   { id: 'red-alert', name: 'Red alert klaxon', group: 'Sci-fi', play: redAlert },
-  { id: 'red-alert-say', name: 'Red alert + announcement', group: 'Sci-fi', play: async (ctx) => { await redAlert(ctx); await say(({ bird }) => `Red alert. ${bird}.`)(ctx) } },
+  { id: 'red-alert-say', name: 'Red alert + announcement', group: 'Sci-fi', play: async (ctx) => { await redAlert(ctx); await say(({ bird }) => t('alertSounds.say.redAlert', { bird }))(ctx) } },
   call('hawk', 'Red-tailed Hawk (the movie “eagle” scream)', 'rethaw'),
   call('eagle', 'Bald Eagle', 'baleag'),
   call('osprey', 'Osprey', 'osprey'),
@@ -226,16 +228,21 @@ export const SOUNDS: AlertSound[] = [
   call('crane', 'Sandhill Crane', 'sancra'),
   call('raven', 'Common Raven', 'comrav'),
   call('crow', 'American Crow', 'amecro'),
-  { id: 'say-bird-alert', name: '“Bird alert! … nearby.”', group: 'Spoken', play: say(({ bird }) => `Bird alert! ${bird} nearby.`) },
-  { id: 'say-not-a-drill', name: '“This is not a drill.”', group: 'Spoken', play: say(({ bird }) => `This is not a drill. ${bird} reported nearby.`) },
-  { id: 'say-binoculars', name: '“Grab your binoculars!”', group: 'Spoken', play: say(({ bird }) => `Grab your binoculars! ${bird}!`) },
+  { id: 'say-bird-alert', name: '“Bird alert! … nearby.”', group: 'Spoken', play: say(({ bird }) => t('alertSounds.say.birdAlert', { bird })) },
+  { id: 'say-not-a-drill', name: '“This is not a drill.”', group: 'Spoken', play: say(({ bird }) => t('alertSounds.say.notADrill', { bird })) },
+  { id: 'say-binoculars', name: '“Grab your binoculars!”', group: 'Spoken', play: say(({ bird }) => t('alertSounds.say.binoculars', { bird })) },
   // The bird's own ABA code when it has one (3-5), otherwise the phrase as it's known: "code four".
-  { id: 'say-code', name: '“Code four! Code four!”', group: 'Spoken', play: say(({ bird, code }) => { const n = CODE_WORDS[code ?? 4] ?? 'four'; return `Code ${n}! Code ${n}! ${bird}!` }) },
-  { id: 'say-mission', name: '“Mission control, we have a…”', group: 'Spoken', play: say(({ bird }) => `Mission control, we have a ${bird}.`) },
-  { id: 'say-drop', name: '“Drop everything.”', group: 'Spoken', play: say(({ bird }) => `Drop everything. ${bird}.`) },
+  { id: 'say-code', name: '“Code four! Code four!”', group: 'Spoken', play: say(({ bird, code }) => t('alertSounds.say.code', { bird, n: t(`alertSounds.number.${CODE_WORDS.has(code ?? 4) ? code ?? 4 : 4}`) })) },
+  { id: 'say-mission', name: '“Mission control, we have a…”', group: 'Spoken', play: say(({ bird }) => t('alertSounds.say.mission', { bird })) },
+  { id: 'say-drop', name: '“Drop everything.”', group: 'Spoken', play: say(({ bird }) => t('alertSounds.say.drop', { bird })) },
   { id: 'none', name: 'None (lights only)', group: 'Off', play: () => undefined }
 ]
 export const SOUND_GROUPS: SoundGroup[] = ['Classic', 'Sci-fi', 'Bird calls', 'Spoken', 'Off']
+const GROUP_KEY: Record<SoundGroup, string> = { Classic: 'classic', 'Sci-fi': 'scifi', 'Bird calls': 'birdCalls', Spoken: 'spoken', Off: 'off' }
+/** A group's heading in the sound list, from the catalog. */
+export const groupLabel = (group: SoundGroup) => t(`alertSounds.group.${GROUP_KEY[group]}`)
+/** A sound's name in the list, from the catalog (the English names here are its catalog entries). */
+export const soundName = (sound: { id: string }) => t(`alertSounds.name.${sound.id}`)
 export const soundById = (id: string) => SOUNDS.find((s) => s.id === id) ?? SOUNDS.find((s) => s.id === 'none')!
 
 let playing = false

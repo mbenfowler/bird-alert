@@ -3,6 +3,8 @@ import { useLocation } from 'react-router'
 import { isIOS, isStandalone } from '../../install'
 import { ShareIcon } from '../Icons/Icons'
 import './InstallNudge.css'
+import { t } from '../../i18n'
+import { Trans } from 'react-i18next'
 
 const KEY = 'installNudge'
 // Safari and the Home Screen app keep separate storage, so Safari can't tell it was installed:
@@ -33,9 +35,9 @@ const InstallNudge = () => {
   return (
     <aside className='install-nudge' role='status'>
       <p>
-        <strong>Get alerts on this iPhone:</strong> tap Share <ShareIcon className='install-nudge__icon' /> then <strong>Add to Home Screen</strong>.
+        <Trans i18nKey='installNudge.text' components={{ b: <strong />, icon: <ShareIcon className='install-nudge__icon' /> }} />
       </p>
-      <button type='button' className='pill-button pill-button--small' onClick={() => { write('dismissed'); setShow(false) }}>Got it</button>
+      <button type='button' className='pill-button pill-button--small' onClick={() => { write('dismissed'); setShow(false) }}>{t('installNudge.gotIt')}</button>
     </aside>
   )
 }

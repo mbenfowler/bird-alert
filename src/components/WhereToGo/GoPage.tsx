@@ -1,6 +1,7 @@
 import { useSearchParams } from 'react-router'
 import WhereToGo from './WhereToGo'
 import BestHotspots from './BestHotspots'
+import { t } from '../../i18n'
 
 export type GoTab = 'birds' | 'best'
 
@@ -13,8 +14,8 @@ const useGoTab = () => {
 }
 
 const TABS: { tab: GoTab; label: string }[] = [
-  { tab: 'birds', label: 'For your birds' },
-  { tab: 'best', label: 'Best hotspots' }
+  { tab: 'birds', label: 'go.tabBirds' },
+  { tab: 'best', label: 'go.tabBest' }
 ]
 
 /**
@@ -26,9 +27,9 @@ const GoPage = () => {
   return (
     <>
       <div className='go-tabs'>
-        <div className='timing go-tabs__switch' role='group' aria-label='Where to go'>
-          {TABS.map(({ tab: t, label }) => (
-            <button key={t} type='button' className={`timing__option ${tab === t ? 'is-selected' : ''}`} aria-pressed={tab === t} onClick={() => setTab(t)}>{label}</button>
+        <div className='timing go-tabs__switch' role='group' aria-label={t('go.tabsLabel')}>
+          {TABS.map(({ tab: which, label }) => (
+            <button key={which} type='button' className={`timing__option ${tab === which ? 'is-selected' : ''}`} aria-pressed={tab === which} onClick={() => setTab(which)}>{t(label)}</button>
           ))}
         </div>
       </div>

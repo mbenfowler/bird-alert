@@ -16,7 +16,7 @@ import { countyLabel, useLinkRegion } from '../../linkRegion'
 import { useToggleSavedMutation, useToggleSeenMutation } from '../../hooks/mutations'
 import { shareThing } from '../../share'
 import { ShareIcon } from '../Icons/Icons'
-import type { Observation, Place, PersistenceClass } from '../../types'
+import type { Observation, Place, PlaceBand, PersistenceClass } from '../../types'
 import { formatObsDt } from '../../format'
 import { article, chanceStyle } from '../../chance'
 import { offerPush } from '../../pushAsk'
@@ -26,6 +26,7 @@ import AbaCode from '../AbaCode/AbaCode'
 import Evidence from '../Evidence/Evidence'
 import { celebrateLifer, popStar } from '../Pop/pop'
 import './Sighting.css'
+import { clockTime, t } from '../../i18n'
 
 const mapsHref = (o: Observation) => {
   const apple = /iPhone|iPad|iPod|Macintosh/i.test(navigator.userAgent)
@@ -34,28 +35,30 @@ const mapsHref = (o: Observation) => {
     : `https://www.google.com/maps/search/?api=1&query=${o.lat}%2C${o.lng}`
 }
 
-const CLASS_LABEL: Record<PersistenceClass, string> = {
-  resident: 'Here all year',
-  seasonal: 'A seasonal visitor here',
-  passage: 'Passing through',
-  rare: 'Rare here'
-}
+const classLabel = (cls: PersistenceClass) => t(`sighting.class.${cls}`)
+const BAND_KEY: Record<PlaceBand, string> = { High: 'high', Good: 'good', Fair: 'fair', 'Long shot': 'longShot' }
 
-const ago = (daysAgo: number) => daysAgo === 0 ? 'today' : daysAgo === 1 ? 'yesterday' : `${daysAgo} days ago`
+const ago = (daysAgo: number) => daysAgo === 0 ? t('sighting.today') : daysAgo === 1 ? t('landing.yesterday') : t('landing.daysAgo', { count: daysAgo })
+/** "8:10 AM" for a report's local day and time. */
+const timeOf = (day: string, time: string) => {
+  const [h, m] = time.split(':').map(Number)
+  const [y, mo, d] = day.split('-').map(Number)
+  return clockTime(new Date(y!, mo! - 1, d!, h, m))
+}
 
 
 /** The sentence under a place: the chance and when to go (the place's own hours, else the species'). */
 const chanceLine = (place: Place, speciesTime: string | null) => {
   if (place.chance === undefined) return null
   const when = place.bestTime?.label ?? speciesTime
-  return `You have ${article(place.chance)} ${place.chance}% chance to see it here${when ? `, best ${when}` : ''}`
+  return when ? t('sighting.chanceBest', { article: article(place.chance), n: place.chance, when }) : t('sighting.chance', { article: article(place.chance), n: place.chance })
 }
 
 /** The evidence behind the number: how often, how recently, and how much the place is birded. */
 const evidence = (place: Place) => {
-  const parts = [`${place.days} ${place.days === 1 ? 'day' : 'days'} in 30`, `last ${ago(place.lastSeen.daysAgo)}${place.lastSeen.time ? ` ${formatObsDt(`${place.lastSeen.day} ${place.lastSeen.time}`).split(', ')[1] ?? ''}` : ''}`.trim()]
-  if (place.effort.detection !== null) parts.push(`on ${place.effort.withSpecies} of ${place.effort.checklists} checklists`)
-  else if (place.effort.checklists > 0) parts.push(`${place.effort.checklists} ${place.effort.checklists === 1 ? 'checklist' : 'checklists'} lately`)
+  const parts = [t('sighting.daysIn30', { count: place.days }), place.lastSeen.time ? t('sighting.lastAt', { ago: ago(place.lastSeen.daysAgo), time: timeOf(place.lastSeen.day, place.lastSeen.time) }) : t('sighting.last', { ago: ago(place.lastSeen.daysAgo) })]
+  if (place.effort.detection !== null) parts.push(t('sighting.onChecklists', { found: place.effort.withSpecies, count: place.effort.checklists }))
+  else if (place.effort.checklists > 0) parts.push(t('sighting.checklistsLately', { count: place.effort.checklists }))
   return parts.join(' · ')
 }
 
@@ -100,7 +103,7 @@ const Sighting = () => {
     lat: o.lat,
     lng: o.lng,
     title: o.locName,
-    subtitle: `${formatObsDt(o.obsDt)}${o.howMany ? ` · ${o.howMany} seen` : ''}`,
+    subtitle: `${formatObsDt(o.obsDt)}${o.howMany ? ` · ${t('sighting.seenCount', { count: o.howMany })}` : ''}`,
     // No Details link in the popup: the chosen report is already described under the map.
     highlight: current ? o.subId === current.subId && o.lat === current.lat && o.lng === current.lng : false
   })), [all, current])
@@ -146,7 +149,7 @@ const Sighting = () => {
   }, [all.length, seasonality.data])
 
   if (observations.isError) return <ErrorMessage networkError={errorMessage(observations.error)} />
-  if (observations.isPending || birds.isPending) return <LoadingState label='Loading sighting…' />
+  if (observations.isPending || birds.isPending) return <LoadingState label={t('sighting.loading')} />
 
   const name = bird?.comName ?? current?.comName ?? code
   const isWatched = savedCodes.has(code)
@@ -155,7 +158,7 @@ const Sighting = () => {
     popStar(event.currentTarget, !isWatched)
     toggleSaved.mutate({ bird, save: !isWatched }, {
       // Saving may be the moment to offer alerts on this device; the ask replaces the toast when it shows.
-      onSuccess: () => { void (isWatched ? Promise.resolve(false) : offerPush(bird.comName)).then((asked) => { if (!asked) toast.success(isWatched ? 'Removed from your watch list.' : 'Added to your watch list!', { position: 'bottom-center' }) }) },
+      onSuccess: () => { void (isWatched ? Promise.resolve(false) : offerPush(bird.comName)).then((asked) => { if (!asked) toast.success(isWatched ? t('sighting.unwatched') : t('sighting.watched'), { position: 'bottom-center' }) }) },
       onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
     })
   }
@@ -171,22 +174,22 @@ const Sighting = () => {
   return (
     <section className='sighting'>
       <header className='sighting__hero'>
-        <img className='sighting__photo' src={img} alt={`a ${name}`} />
+        <img className='sighting__photo' src={img} alt={t('card.photoAlt', { name })} />
         <div className='sighting__title'>
           <h1 className='fredericka'>{name}</h1>
           {bird?.sciName && <p className='sighting__sci'>{bird.sciName}</p>}
           {bird?.aba && bird.aba >= 3 && bird.aba <= 5 && <p className='sighting__aba'><AbaCode code={bird.aba} explain /></p>}
           <p className='sighting__blurb'>
-            {all.length ? `Reported ${all.length === 1 ? 'once' : `${all.length} times`} in ${regionName} in the last 30 days.` : `No reports in ${regionName} in the last 30 days.`}
+            {all.length ? t('sighting.reported', { count: all.length, regionName }) : t('sighting.noReports', { regionName })}
           </p>
           {/* The recording's credit, which its license asks for, above the buttons so the row never moves. */}
           {(sound.state === 'playing' || sound.state === 'paused') && <p className='sighting__credit'><SoundCredit sound={sound.sound} /></p>}
           <div className='sighting__actions'>
             {bird && <SoundPill state={sound.state} name={name} onToggle={() => { void sound.toggle() }} />}
-            {bird && <button type='button' className='pill-button' onClick={watch} disabled={toggleSaved.isPending} aria-pressed={isWatched}>{isWatched ? '★ On your watch list' : '☆ Add to watch list'}</button>}
+            {bird && <button type='button' className='pill-button' onClick={watch} disabled={toggleSaved.isPending} aria-pressed={isWatched}>{isWatched ? t('sighting.onWatch') : t('sighting.addWatch')}</button>}
             {bird && current && <button type='button' className='pill-button' onClick={() => {
-              void shareThing({ kind: 'sighting', speciesCode: bird.speciesCode, locId: current.locId, locName: current.locName, lat: current.lat, lng: current.lng, obsDt: current.obsDt, howMany: current.howMany ?? null, subId: current.subId, regionName }, `${bird.comName} at ${current.locName}`)
-            }}><ShareIcon className='pill-button__icon' />Share sighting</button>}
+              void shareThing({ kind: 'sighting', speciesCode: bird.speciesCode, locId: current.locId, locName: current.locName, lat: current.lat, lng: current.lng, obsDt: current.obsDt, howMany: current.howMany ?? null, subId: current.subId, regionName }, t('sighting.shareTitle', { name: bird.comName, place: current.locName }))
+            }}><ShareIcon className='pill-button__icon' />{t('sighting.share')}</button>}
             {bird && (() => {
               const isSeen = seen.codes.has(bird.speciesCode)
               return <button type='button' className={`pill-button ${isSeen ? 'pill-button--seen' : ''}`} disabled={!seen.loaded} aria-pressed={isSeen}
@@ -194,27 +197,27 @@ const Sighting = () => {
                   // Going on the life list is celebrated at the tap; coming off is said once it's done.
                   if (!isSeen) celebrateLifer(event.currentTarget, bird.comName)
                   toggleSeen.mutate({ speciesCode: bird.speciesCode, seen: !isSeen }, {
-                    onSuccess: () => { if (isSeen) toast.success('Removed from your life list.', { position: 'bottom-center' }) },
+                    onSuccess: () => { if (isSeen) toast.success(t('sighting.lifeRemoved'), { position: 'bottom-center' }) },
                     onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
                   })
-                }}>{isSeen ? '✓ On your life list' : 'Seen it?'}</button>
+                }}>{isSeen ? t('sighting.onLife') : t('sighting.seenIt')}</button>
             })()}
-            {bird?.wikiURL && <a className='pill-button' href={bird.wikiURL} target='_blank' rel='noreferrer'>Wikipedia</a>}
+            {bird?.wikiURL && <a className='pill-button' href={bird.wikiURL} target='_blank' rel='noreferrer'>{t('sighting.wikipedia')}</a>}
           </div>
         </div>
         {seasonality.data?.months && (
           <div className='sighting__season'>
-            <h2 className='fredericka sighting__season-head'>When {name} is around</h2>
+            <h2 className='fredericka sighting__season-head'>{t('sighting.whenAround', { name })}</h2>
             <SeasonStrip months={seasonality.data.months} name={name} regionName={regionName} />
           </div>
         )}
         {bird?.tips && (
           <div className='sighting__tips'>
-            <h2 className='fredericka sighting__season-head'>Where to look</h2>
+            <h2 className='fredericka sighting__season-head'>{t('sighting.whereLook')}</h2>
             <dl className='sighting__tips-list'>
-              <div><dt>Habitat</dt><dd>{bird.tips.habitat}</dd></div>
-              <div><dt>How to find it</dt><dd>{bird.tips.look}</dd></div>
-              <div><dt>Best time</dt><dd>{bird.tips.time}</dd></div>
+              <div><dt>{t('sighting.habitat')}</dt><dd>{bird.tips.habitat}</dd></div>
+              <div><dt>{t('sighting.howFind')}</dt><dd>{bird.tips.look}</dd></div>
+              <div><dt>{t('sighting.bestTime')}</dt><dd>{bird.tips.time}</dd></div>
             </dl>
           </div>
         )}
@@ -223,21 +226,21 @@ const Sighting = () => {
       <div className={`sighting__frame ${docked ? 'is-docked' : ''}`} ref={frameRef}>
         <div className='sighting__map'>
           {all.length
-            ? <SightingsMap points={points} focus={focus} height='100%' ariaLabel={`Map of recent ${name} sightings in your region`} openHighlighted={!focus}
+            ? <SightingsMap points={points} focus={focus} height='100%' ariaLabel={t('sighting.mapLabel', { name })} openHighlighted={!focus}
                 onPinClick={(hit) => { const o = all.find(x => `${x.subId}-${x.lat}-${x.lng}` === hit[0]?.id); if (!o) return; if (openNearby && !(nearbyPlace && (o.subId === nearbyPlace.lastSeen.subId || o.locId === nearbyPlace.locId))) closeNearby(); select(o) }} />
-            : <p className='list-note sighting__nomap'>No reports of this species in your region in the last 30 days.</p>}
+            : <p className='list-note sighting__nomap'>{t('sighting.noneRegion')}</p>}
           <div className='sighting__pick'>
             {current
               ? <p className='sighting__meta'>
                   <strong>{current.locName}</strong>
-                  <span>{formatObsDt(current.obsDt)}{current.howMany ? ` · ${current.howMany} seen` : ''}</span>
+                  <span>{formatObsDt(current.obsDt)}{current.howMany ? ` · ${t('sighting.seenCount', { count: current.howMany })}` : ''}</span>
                 </p>
-              : <p className='sighting__meta'><span>This report is older than 30 days, so its details are no longer in eBird's recent feed.</span></p>}
+              : <p className='sighting__meta'><span>{t('sighting.tooOld')}</span></p>}
             {/* The checklist itself is the View on eBird button just below. */}
             {current && <Evidence evidence={current.evidence} />}
             <div className='sighting__actions'>
-              {current && <a className='pill-button pill-button--primary pill-button--small' href={mapsHref(current)} target='_blank' rel='noreferrer'>Open in Maps</a>}
-              <a className='pill-button pill-button--small' href={ebirdHref} target='_blank' rel='noreferrer'>View on eBird</a>
+              {current && <a className='pill-button pill-button--primary pill-button--small' href={mapsHref(current)} target='_blank' rel='noreferrer'>{t('route.openMaps')}</a>}
+              <a className='pill-button pill-button--small' href={ebirdHref} target='_blank' rel='noreferrer'>{t('sighting.viewEbird')}</a>
             </div>
           </div>
         </div>
@@ -249,15 +252,15 @@ const Sighting = () => {
             {where.data && places.length > 0 ? (
               <>
                 <h2 className='fredericka sighting__subhead'>
-                  Where to find it
+                  {t('sighting.whereFind')}
                   <span className='sighting__count'>{places.length}</span>
                 </h2>
                 <p className='sighting__odds'>
-                  <span>{CLASS_LABEL[where.data.class]}</span>
-                  <span>{where.data.bestTime.source === 'reports' ? `Best ${where.data.bestTime.label}` : `Usually best: ${where.data.bestTime.label.toLowerCase()}`}</span>
+                  <span>{classLabel(where.data.class)}</span>
+                  <span>{where.data.bestTime.source === 'reports' ? t('sighting.best', { when: where.data.bestTime.label }) : t('sighting.usuallyBest', { when: where.data.bestTime.label.toLowerCase() })}</span>
                 </p>
                 {/* Best hotspots ranks one's own county, so the link only shows there. */}
-                {own && <p className='sighting__best-link'><Link to={`/go?tab=best&species=${encodeURIComponent(code)}&days=90`}>Best hotspots for {name} →</Link></p>}
+                {own && <p className='sighting__best-link'><Link to={`/go?tab=best&species=${encodeURIComponent(code)}&days=90`}>{t('sighting.bestHotspots', { name })}</Link></p>}
                 <AccuracyBadge grades={where.data.grades} />
                 <ol className='sighting__list sighting__places'>
                   {places.map(place => {
@@ -268,14 +271,14 @@ const Sighting = () => {
                       <li key={place.locId} className={selected ? 'is-current' : undefined}>
                         <button type='button' onClick={() => { if (report) select(report) }} aria-current={selected ? 'true' : undefined} disabled={!report}>
                           <span className='place__head'>
-                            <span className={`band band--${place.band.toLowerCase().replace(' ', '-')}`} style={chanceStyle(place.chance)}>{place.band}</span>
+                            <span className={`band band--${place.band.toLowerCase().replace(' ', '-')}`} style={chanceStyle(place.chance)}>{t(`sighting.band.${BAND_KEY[place.band]}`)}</span>
                             <strong>{place.locName ?? place.locId}</strong>
-                            {place.isHotspot === false && <span className='place__private' title='A personal location, not a public hotspot'>private</span>}
-                            {(place.merged?.length ?? 0) > 0 && <span className='place__private' title={`Includes nearby personal locations: ${place.merged!.map(m => m.locName ?? m.locId).join(', ')}`}>+{place.merged!.length} nearby</span>}
+                            {place.isHotspot === false && <span className='place__private' title={t('sighting.privateTitle')}>{t('sighting.private')}</span>}
+                            {(place.merged?.length ?? 0) > 0 && <span className='place__private' title={t('sighting.mergedTitle', { places: place.merged!.map(m => m.locName ?? m.locId).join(', ') })}>{t('sighting.mergedCount', { count: place.merged!.length })}</span>}
                           </span>
                           {chanceLine(place, where.data.bestTime.source === 'reports' ? where.data.bestTime.label : null) && <span className='place__chance'>{chanceLine(place, where.data.bestTime.source === 'reports' ? where.data.bestTime.label : null)}</span>}
                           <span className='place__evidence'>{evidence(place)}</span>
-                          {note && <span className='place__note'>“{note.text}”{note.observer ? ` — ${note.observer}` : ''}, {formatObsDt(note.time ? `${note.day} ${note.time}` : note.day)}</span>}
+                          {note && <span className='place__note'>{note.observer ? t('sighting.noteBy', { text: note.text, observer: note.observer, when: formatObsDt(note.time ? `${note.day} ${note.time}` : note.day) }) : t('sighting.note', { text: note.text, when: formatObsDt(note.time ? `${note.day} ${note.time}` : note.day) })}</span>}
                         </button>
                         {place.isHotspot === false && place.lat !== null && (
                           <NearbyPublic placeName={place.locName ?? place.locId} open={openNearby === place.locId}
@@ -291,10 +294,10 @@ const Sighting = () => {
             ) : (
               <>
                 <h2 className='fredericka sighting__subhead'>
-                  Reported in the last 30 days
+                  {t('sighting.reported30')}
                   <span className='sighting__count'>{all.length}</span>
                 </h2>
-                {where.isPending && <p className='list-note'>Working out where to look…</p>}
+                {where.isPending && <p className='list-note'>{t('sighting.working')}</p>}
                 {all.length > 0 && (
                   <ol className='sighting__list'>
                     {all.map(o => {
@@ -303,7 +306,7 @@ const Sighting = () => {
                         <li key={`${o.subId}-${o.lat}-${o.lng}`} className={selected ? 'is-current' : undefined}>
                           <button type='button' onClick={() => select(o)} aria-current={selected ? 'true' : undefined}>
                             <strong>{o.locName}</strong>
-                            <span>{formatObsDt(o.obsDt)}{o.howMany ? ` · ${o.howMany} seen` : ''}</span>
+                            <span>{formatObsDt(o.obsDt)}{o.howMany ? ` · ${t('sighting.seenCount', { count: o.howMany })}` : ''}</span>
                           </button>
                         </li>
                       )

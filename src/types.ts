@@ -18,6 +18,8 @@ export interface User {
   push_quiet_start: number | null
   push_quiet_end: number | null
   timezone: string | null
+  /** BCP-47 ('es-MX', 'fr-CA'); null follows the browser. Bird names follow it now, the rest of the app once its catalog exists. */
+  locale?: string | null
   created_at: string
   updated_at: string
   /** Whether any passkey is on the account. */
@@ -52,6 +54,7 @@ export interface UserPatch {
   push_quiet_start?: number | null
   push_quiet_end?: number | null
   timezone?: string
+  locale?: string | null
   onboarded?: true
 }
 

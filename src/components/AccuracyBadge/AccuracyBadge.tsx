@@ -1,8 +1,10 @@
 import { useEffect, useRef } from 'react'
 import type { BandGrade, PlaceBand } from '../../types'
 import './AccuracyBadge.css'
+import { t } from '../../i18n'
+import { Trans } from 'react-i18next'
 
-const BANDS: [PlaceBand, string][] = [['High', '60% or better'], ['Good', '40–59%'], ['Fair', '20–39%']]
+const BANDS: [PlaceBand, string][] = [['High', 'accuracy.high'], ['Good', 'accuracy.good'], ['Fair', 'accuracy.fair']]
 
 /**
  * A quiet badge saying the chances are checked against what birders go on to report; tapping it
@@ -21,16 +23,16 @@ const AccuracyBadge = ({ grades }: { grades?: Partial<Record<PlaceBand, BandGrad
   if (!grades || !rows.length) return null
   return (
     <details className='accuracy' ref={ref}>
-      <summary className='accuracy__badge'>✓ Checked against real reports</summary>
+      <summary className='accuracy__badge'>{t('accuracy.badge')}</summary>
       <div className='accuracy__panel'>
-        <p>Every day the app writes down its chances, then checks the next checklist someone files at that place: was the bird on it?</p>
+        <p>{t('accuracy.how')}</p>
         <ul>
           {rows.map(([band, range]) => {
             const g = grades[band]!
-            return <li key={band}>When it said <strong>{range}</strong>, the next visit found the bird <strong>{g.rate}%</strong> of the time <span>({g.n} predictions)</span></li>
+            return <li key={band}><Trans i18nKey='accuracy.row' values={{ range: t(range), rate: g.rate }} components={{ b: <strong /> }} /> <span>{t('accuracy.predictions', { count: g.n })}</span></li>
           })}
         </ul>
-        <p className='accuracy__foot'>Over the last two months around here.</p>
+        <p className='accuracy__foot'>{t('accuracy.foot')}</p>
       </div>
     </details>
   )

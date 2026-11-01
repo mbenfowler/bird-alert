@@ -7,6 +7,7 @@ import { countryOf, countyName, rememberStateNames } from '../../usStates'
 import type { Area } from '../../types'
 import '../PlaceSearch/PlaceSearch.css'
 import './AreaPicker.css'
+import { t } from '../../i18n'
 
 export interface PickedArea {
   location: string
@@ -63,14 +64,14 @@ const AreaPicker = ({ onPick, startBrowsing = false, current = null }: { onPick:
         try {
           const area = await getAreaAt(coords.latitude, coords.longitude)
           if (area) setNear(area)
-          else setLocateNote('eBird has nothing near you yet. Try a nearby town.')
+          else setLocateNote(t('area.nothingNear'))
         } catch (error) {
           setLocateNote(errorMessage(error))
         } finally { setLocating(false) }
       },
       () => {
         setLocating(false)
-        setLocateNote('Couldn’t get your location. Search for your town instead.')
+        setLocateNote(t('area.locateFailed'))
         inputRef.current?.focus()
       },
       { enableHighAccuracy: false, timeout: 10_000, maximumAge: 10 * 60_000 }
@@ -110,12 +111,12 @@ const AreaPicker = ({ onPick, startBrowsing = false, current = null }: { onPick:
     <div className='area-picker'>
       {canLocate && (
         <button type='button' className='pill-button area-picker__locate' onClick={locate} disabled={locating}>
-          <LocateIcon aria-hidden='true' /> {locating ? 'Finding where you are…' : 'Use my location'}
+          <LocateIcon aria-hidden='true' /> {locating ? t('area.finding') : t('route.useLocation')}
         </button>
       )}
       {near && (
-        <ul className='place-search__results area-picker__results' aria-label='Your area'>
-          <li><button type='button' onClick={() => onPick(pickedFrom(near))}><strong>{areaLabel(near)}</strong><span>Tap to use this {near.countyWord}</span></button></li>
+        <ul className='place-search__results area-picker__results' aria-label={t('area.yours')}>
+          <li><button type='button' onClick={() => onPick(pickedFrom(near))}><strong>{areaLabel(near)}</strong><span>{t('area.tapToUse', { word: near.countyWord })}</span></button></li>
         </ul>
       )}
       {locateNote && <p className='place-search__hint area-picker__note' role='status'>{locateNote}</p>}
@@ -123,12 +124,12 @@ const AreaPicker = ({ onPick, startBrowsing = false, current = null }: { onPick:
       <div className='place-search'>
         {/* Not a <form>: the picker sits inside the sign-up and settings forms, and Enter here must search, not submit those. */}
         <div className='place-search__form' role='search'>
-          <label className='visually-hidden' htmlFor={id}>Town, address or county</label>
+          <label className='visually-hidden' htmlFor={id}>{t('area.searchLabel')}</label>
           <SearchIcon className='place-search__icon' />
-          <input id={id} ref={inputRef} className='place-search__input' type='search' placeholder={canLocate ? 'or type a town or county' : 'Type a town or county'}
+          <input id={id} ref={inputRef} className='place-search__input' type='search' placeholder={canLocate ? t('area.orType') : t('area.type')}
             autoComplete='off' enterKeyHint='search' value={text} onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') submit(e) }} />
-          {text && <button type='button' className='place-search__clear' aria-label='Clear search' onClick={() => { setText(''); setSubmitted('') }}><CloseIcon /></button>}
+          {text && <button type='button' className='place-search__clear' aria-label={t('common.clearSearch')} onClick={() => { setText(''); setSubmitted('') }}><CloseIcon /></button>}
         </div>
         {submitted.length >= 3 && (
           <div className='place-search__group' aria-live='polite'>
@@ -136,49 +137,49 @@ const AreaPicker = ({ onPick, startBrowsing = false, current = null }: { onPick:
               <ul className='place-search__results'>
                 {found.map(a => (
                   <li key={a.location}>
-                    <button type='button' onClick={() => onPick(pickedFrom(a))}><strong>{areaLabel(a)}</strong>{a.place && <span>via {a.place}</span>}</button>
+                    <button type='button' onClick={() => onPick(pickedFrom(a))}><strong>{areaLabel(a)}</strong>{a.place && <span>{t('area.via', { place: a.place })}</span>}</button>
                   </li>
                 ))}
               </ul>
             )}
-            {search.isFetching && <p className='place-search__hint'>Searching…</p>}
+            {search.isFetching && <p className='place-search__hint'>{t('common.searching')}</p>}
             {search.isError && <p className='place-search__hint'>{errorMessage(search.error)}</p>}
-            {!search.isFetching && search.isSuccess && !found.length && <p className='place-search__hint'>Nothing found for “{submitted}”. Try a nearby town, or browse below.</p>}
+            {!search.isFetching && search.isSuccess && !found.length && <p className='place-search__hint'>{t('area.nothing', { text: submitted })}</p>}
           </div>
         )}
-        {text.trim().length >= 3 && text.trim() !== submitted && <p className='place-search__hint'>Press Enter to search.</p>}
+        {text.trim().length >= 3 && text.trim() !== submitted && <p className='place-search__hint'>{t('area.pressEnter')}</p>}
       </div>
 
-      {!browsing && <button type='button' className='link-button link-text area-picker__browse' onClick={() => setBrowsing(true)}>Browse by country</button>}
+      {!browsing && <button type='button' className='link-button link-text area-picker__browse' onClick={() => setBrowsing(true)}>{t('area.browse')}</button>}
       {browsing && (
         <div className='area-picker__browse-lists'>
           <label className='field'>
-            <span className='field__label'>Country</span>
+            <span className='field__label'>{t('area.country')}</span>
             <select className='select' name='country' value={country} onChange={(e) => { setCountry(e.target.value); setProvince(''); setArea('') }}>
-              {!countries.data && <option value={country}>{country === 'US' ? 'United States' : country}</option>}
+              {!countries.data && <option value={country}>{country === 'US' ? t('area.unitedStates') : country}</option>}
               {ordered.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
             </select>
           </label>
           <label className='field'>
-            <span className='field__label'>State or province</span>
+            <span className='field__label'>{t('area.province')}</span>
             <select className='select' name='state' value={province} onChange={(e) => { setProvince(e.target.value); setArea('') }} disabled={!provinces.data?.length}>
-              <option value=''>{provinces.data && !provinces.data.length ? 'Not available yet' : 'Choose one'}</option>
+              <option value=''>{provinces.data && !provinces.data.length ? t('area.notAvailable') : t('area.choose')}</option>
               {(provinces.data ?? []).map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
             </select>
           </label>
           {whole ? (
-            <button type='button' className='pill-button pill-button--primary' onClick={() => browsePick(whole.code)}>Use all of {whole.name}</button>
+            <button type='button' className='pill-button pill-button--primary' onClick={() => browsePick(whole.code)}>{t('area.useAll', { name: whole.name })}</button>
           ) : (
             <label className='field'>
-              <span className='field__label'>Area</span>
+              <span className='field__label'>{t('area.area')}</span>
               <select className='select' name='location' value={area} disabled={!areas.data?.length}
                 onChange={(e) => { setArea(e.target.value); if (e.target.value) browsePick(e.target.value) }}>
-                <option value=''>Choose one</option>
+                <option value=''>{t('area.choose')}</option>
                 {(areas.data ?? []).map(r => <option key={r.code} value={r.code}>{r.name}</option>)}
               </select>
             </label>
           )}
-          {(countries.isError || provinces.isError || areas.isError) && <p className='place-search__hint' role='alert'>eBird’s lists didn’t load just now. Try again in a minute.</p>}
+          {(countries.isError || provinces.isError || areas.isError) && <p className='place-search__hint' role='alert'>{t('area.listsFailed')}</p>}
         </div>
       )}
     </div>

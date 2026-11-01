@@ -1,10 +1,11 @@
 import { Link } from 'react-router'
 import './NotFound.css'
+import { t } from '../../i18n'
 
 const NotFound = () => (
     <section id='notFound'>
-        <p>This page doesn't exist</p>
-        <Link to='/'><button className='navigate-button'>Return home</button></Link>
+        <p>{t('notFound.missing')}</p>
+        <Link to='/'><button className='navigate-button'>{t('notFound.home')}</button></Link>
     </section>
 )
 
