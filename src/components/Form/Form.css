@@ -34,7 +34,8 @@
     font-size: 0.9rem;
 }
 
-.settings-card input,
+/* The place search styles its own field (a pill with room for its icon); everything else here is square. */
+.settings-card input:not(.place-search__input),
 .settings-card select {
     width: 100%;
     min-height: 44px;
@@ -48,7 +49,7 @@
     font-size: 1rem;
 }
 
-.settings-card input {
+.settings-card input:not(.place-search__input) {
     -webkit-appearance: none;
     appearance: none;
 }
