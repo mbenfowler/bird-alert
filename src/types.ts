@@ -26,6 +26,8 @@ export interface User {
   range_mi?: number
   home_lat?: number | null
   home_lng?: number | null
+  /** Rare-bird alerts (push and email) wait until a report has proof: a reviewer's OK, a photo, or a second birder. */
+  rare_alerts_need_proof?: boolean
 }
 
 export type EmailPreference = 'alert_digest_email_enabled' | 'rare_sightings_email_enabled' | 'migration_email_enabled'
@@ -33,6 +35,7 @@ export type PushPreference = 'push_watchlist_enabled' | 'push_notable_enabled' |
 
 export interface UserPatch {
   range_mi?: number
+  rare_alerts_need_proof?: boolean
   home_lat?: number | null
   home_lng?: number | null
   email?: string
