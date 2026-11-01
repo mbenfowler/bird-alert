@@ -118,8 +118,9 @@ describe('Settings', () => {
     cy.contains('Your account has been deleted.')
   })
 
-  it('sets how far rare-bird and lifer alerts reach, measured from the county center', () => {
-    cy.contains('How far rare birds and lifers reach')
+  it('sets how far alerts reach, measured from the county center, or the whole state', () => {
+    cy.contains('How far your alerts reach')
+    cy.contains('.alert-range', 'Watch-list, rare-bird and lifer alerts').and('not.contain', 'stay in your county')
     cy.get('.alert-range__choices').within(() => {
       cy.contains('label', 'Just my county')
       cy.contains('label', '30 mi').should('have.class', 'is-selected')
@@ -131,6 +132,11 @@ describe('Settings', () => {
     cy.get('.alert-range__search').should('exist')
     cy.get('.alert-range__search').contains('button', 'Cancel').click()
     cy.get('.alert-range__search').should('not.exist')
+    // The whole state: no distance, so nothing to measure from.
+    cy.contains('.alert-range__choices label', 'All of Georgia').click()
+    cy.wait('@patchUser').its('request.body').should('deep.equal', { range_mi: -1 })
+    cy.contains('.alert-range__choices label', 'All of Georgia').should('have.class', 'is-selected')
+    cy.get('.alert-range__home').should('not.exist')
   })
 
   it('rare-bird alerts can wait for proof, off by default, and the switch works without push', () => {

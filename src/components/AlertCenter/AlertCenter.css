@@ -196,6 +196,35 @@
   margin: 0 16px 10px;
 }
 
+/* Phones: four choices, one a state's name ("All of Newfoundland and Labrador"), don't fit one
+   row, so they sit two by two in a rounded box, each cell centred; an odd last one spans the row. */
+@media (max-width: 560px) {
+  .alert-range__choices {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-self: stretch;
+    border-radius: 14px;
+  }
+  .alert-range__choices .timing__option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .alert-range__choices .timing__option + .timing__option {
+    border-left: 0;
+  }
+  .alert-range__choices .timing__option:nth-child(even) {
+    border-left: 2px solid var(--line);
+  }
+  .alert-range__choices .timing__option:nth-child(n + 3) {
+    border-top: 2px solid var(--line);
+  }
+  .alert-range__choices .timing__option:last-child:nth-child(odd) {
+    grid-column: span 2;
+  }
+}
+
 .alert-range__home {
   padding: 0 16px 6px;
 }
