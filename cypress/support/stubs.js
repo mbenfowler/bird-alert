@@ -4,6 +4,24 @@ import { TEST_USER } from './login'
  * Registers stubs for the auth and user routes without logging in. Returns a mutable state object
  * so a spec can flip `loggedIn` or inspect what the fake server holds.
  */
+const COUNTRIES = [{ code: 'AU', name: 'Australia' }, { code: 'CA', name: 'Canada' }, { code: 'MX', name: 'Mexico' }, { code: 'ZA', name: 'South Africa' }, { code: 'GB', name: 'United Kingdom' }, { code: 'US', name: 'United States' }]
+const PROVINCES = {
+  US: [{ code: 'CA', region: 'US-CA', name: 'California' }, { code: 'CO', region: 'US-CO', name: 'Colorado' }, { code: 'GA', region: 'US-GA', name: 'Georgia' }],
+  CA: [{ code: 'ON', region: 'CA-ON', name: 'Ontario' }],
+  MX: [{ code: 'JAL', region: 'MX-JAL', name: 'Jalisco' }],
+  ZA: [{ code: 'ZA-WC', region: 'ZA-WC', name: 'Western Cape' }],
+  GB: [{ code: 'GB-ENG', region: 'GB-ENG', name: 'England' }],
+  AU: [{ code: 'AU-ACT', region: 'AU-ACT', name: 'Australian Capital Territory' }]
+}
+
+/** Opens the area picker's browse lists and picks a country, a province and (when given) an area. */
+export const browseTo = (country, province, area) => {
+  cy.contains('button', 'Browse by country').click()
+  cy.get('.area-picker select[name="country"]').select(country)
+  cy.get('.area-picker select[name="state"]').select(province)
+  if (area) cy.get('.area-picker select[name="location"]').select(area)
+}
+
 export const stubAuth = ({ userExists = true, user = TEST_USER, loggedIn = false } = {}) => {
   const state = { loggedIn, user }
 
@@ -33,6 +51,9 @@ export const stubAuth = ({ userExists = true, user = TEST_USER, loggedIn = false
   // Catch-all first: Cypress gives the most recently registered matching intercept priority.
   cy.intercept('GET', '**/api/ebird/**', { statusCode: 200, body: [] })
   cy.intercept('GET', '**/api/ebird/regions*', { statusCode: 200, body: [{ code: 'US-GA-139', name: 'Hall' }, { code: 'US-GA-121', name: 'Fulton' }] }).as('regions')
+  // eBird's lists for browsing by country (any country; these are the ones the tests use).
+  cy.intercept('GET', '**/api/ebird/countries', { statusCode: 200, body: COUNTRIES }).as('countries')
+  cy.intercept('GET', '**/api/ebird/provinces*', (req) => req.reply({ statusCode: 200, body: PROVINCES[new URL(req.url).searchParams.get('country')] ?? [] })).as('provinces')
   cy.intercept('GET', '**/api/ebird/where*', { statusCode: 200, fixture: 'where' }).as('where')
   cy.intercept('GET', '**/api/ebird/where-to-go*', { statusCode: 200, fixture: 'whereToGo' }).as('whereToGo')
   cy.intercept('GET', '**/api/ebird/nearby*', { statusCode: 200, fixture: 'nearby' }).as('nearby')

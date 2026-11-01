@@ -1,12 +1,12 @@
 import { useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { errorMessage, postSavedBird } from '../../apiCalls'
-import { queryKeys, useArrivalsQuery, useBirdsQuery, useCurrentUser, useNotableThisWeekQuery, useObservationsQuery, useRegionsQuery } from '../../hooks/queries'
+import { queryKeys, useArrivalsQuery, useBirdsQuery, useCurrentUser, useNotableThisWeekQuery, useObservationsQuery } from '../../hooks/queries'
 import { useImportLifeListMutation, usePatchUserMutation } from '../../hooks/mutations'
 import { usePushNotifications } from '../../hooks/usePushNotifications'
 import { useQueryClient } from '@tanstack/react-query'
-import { countyLabel, countyWord, stateName, subnational1 } from '../../usStates'
-import StateOptions from '../StateOptions/StateOptions'
+import { countyWord, stateName, subnational1 } from '../../usStates'
+import AreaPicker, { type PickedArea } from '../AreaPicker/AreaPicker'
 import type { UserPatch } from '../../types'
 import { isIOS, isStandalone } from '../../install'
 import InstallSteps from '../InstallSteps/InstallSteps'
@@ -33,10 +33,8 @@ const Onboarding = () => {
 
   const finish = (to: string) => patch.mutate({ onboarded: true }, { onSettled: () => navigate(to, { replace: true }) })
 
-  // Step 0, only for someone who arrived without a county.
-  const [pickState, setPickState] = useState(user.state || 'GA')
-  const regions = useRegionsQuery(pickState)
-  const [pickCounty, setPickCounty] = useState('')
+  // Step 0, only for someone who arrived without a county: by location, by name, or by browsing.
+  const [picked, setPicked] = useState<PickedArea | null>(null)
 
   // Step 1: birds around the county now. This week's notables, then arriving migrants, then the most recent reports.
   const region = user.location
@@ -117,17 +115,19 @@ const Onboarding = () => {
         {step === 'county' && (
           <>
             <h1 className='fredericka onboard__title'>Where do you bird?</h1>
-            <div className='onboard__pick'>
-              <select className='select' aria-label='State' value={pickState} onChange={(e) => { setPickState(e.target.value); setPickCounty('') }}>
-                <StateOptions />
-              </select>
-              <select className='select' aria-label={countyLabel(pickState)} value={pickCounty} onChange={(e) => setPickCounty(e.target.value)}>
-                <option value=''>{countyLabel(pickState)}</option>
-                {(regions.data ?? []).map(r => <option key={r.code} value={r.code}>{r.name}</option>)}
-              </select>
-            </div>
-            <button type='button' className='pill-button pill-button--primary onboard__next' disabled={!pickCounty || patch.isPending}
-              onClick={() => patch.mutate({ state: pickState, location: pickCounty }, { onSuccess: () => setStep('birds') })}>Next</button>
+            {picked ? (
+              <p className='onboard__lede onboard__picked'>
+                <strong>{picked.label}</strong>{' '}
+                <button type='button' className='link-button link-text' onClick={() => setPicked(null)}>Change</button>
+              </p>
+            ) : (
+              <div className='onboard__pick'>
+                <AreaPicker onPick={setPicked} />
+              </div>
+            )}
+            {patch.isError && <p className='onboard__lede' role='alert'>{errorMessage(patch.error)}</p>}
+            <button type='button' className='pill-button pill-button--primary onboard__next' disabled={!picked || patch.isPending}
+              onClick={() => picked && patch.mutate({ state: picked.state, location: picked.location }, { onSuccess: () => setStep('birds') })}>Next</button>
           </>
         )}
 

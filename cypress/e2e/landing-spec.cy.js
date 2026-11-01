@@ -1,4 +1,4 @@
-import { stubAuth } from '../support/stubs'
+import { browseTo, stubAuth } from '../support/stubs'
 
 describe('Splash page', () => {
   beforeEach(() => {
@@ -32,24 +32,20 @@ describe('Splash page', () => {
   it('another county is one pick away, and is remembered', () => {
     cy.visit('http://localhost:3000/')
     cy.wait('@notableWeek')
-    cy.get('.landing__pickers select').eq(1).select('Fulton')
+    cy.contains('.landing__pickers button', 'Change place').click()
+    browseTo('United States', 'Georgia', 'Fulton')
     cy.wait('@notableWeek').its('request.url').should('include', 'region=US-GA-121')
+    cy.get('.landing__pickers .area-picker').should('not.exist')
     cy.reload()
     cy.wait('@notableWeek').its('request.url').should('include', 'region=US-GA-121')
-    cy.get('.landing__pickers select').first().select('Colorado')
-    cy.wait('@notableWeek').its('request.url').should('include', 'region=US-CO&')
   })
 
-  it('a Mexican state is in the picker, and its municipalities are offered by name', () => {
+  it('a Mexican state\'s municipalities are offered by name', () => {
     cy.intercept('GET', '**/api/ebird/regions?state=JAL', { body: [{ code: 'MX-JAL-039', name: 'Guadalajara' }, { code: 'MX-JAL-120', name: 'Zapopan' }] }).as('jalisco')
     cy.visit('http://localhost:3000/')
     cy.wait('@notableWeek')
-    cy.get('.landing__pickers select').first().find('optgroup[label="Mexico"] option').should('have.length', 32)
-    cy.get('.landing__pickers select').first().select('Jalisco')
-    cy.wait('@jalisco')
-    cy.wait('@notableWeek').its('request.url').should('include', 'region=MX-JAL&')
-    cy.get('.landing__pickers label').eq(1).should('contain', 'Municipality')
-    cy.get('.landing__pickers select').eq(1).select('Zapopan')
+    cy.contains('.landing__pickers button', 'Change place').click()
+    browseTo('Mexico', 'Jalisco', 'Zapopan')
     cy.wait('@notableWeek').its('request.url').should('include', 'region=MX-JAL-120')
   })
 })

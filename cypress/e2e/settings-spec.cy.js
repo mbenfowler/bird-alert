@@ -7,16 +7,18 @@ describe('Settings', () => {
     cy.visit('http://localhost:3000/settings')
   })
 
-  it('saves a new state and region, then returns home', () => {
-    cy.get('select[name="state"]').should('have.value', 'GA')
-
-    cy.get('select[name="state"]').select('CA')
-    cy.wait('@regions')
-    cy.get('select[name="location"]').should('have.value', '')
-    cy.get('select[name="location"]').select('US-GA-121')
+  it('saves a new area, then returns home', () => {
+    cy.get('[data-testid="current-area"]').should('have.text', 'Hall County, Georgia')
+    cy.contains('#settings-form button', 'Change').click()
+    // Browsing starts from where they are.
+    cy.contains('button', 'Browse by country').click()
+    cy.get('.area-picker select[name="country"]').should('have.value', 'US')
+    cy.get('.area-picker select[name="state"]').should('have.value', 'GA')
+    cy.get('.area-picker select[name="location"]').select('Fulton')
+    cy.get('[data-testid="current-area"]').should('have.text', 'Fulton County, Georgia, United States')
     cy.get('#settings-form button[type="submit"]').click()
 
-    cy.wait('@patchUser').its('request.body').should('deep.include', { state: 'CA', location: 'US-GA-121' })
+    cy.wait('@patchUser').its('request.body').should('deep.include', { state: 'GA', location: 'US-GA-121' })
     cy.url().should('eq', 'http://localhost:3000/')
     cy.contains('Settings saved!')
   })

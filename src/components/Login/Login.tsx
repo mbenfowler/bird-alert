@@ -5,8 +5,8 @@ import { getUserExists, login, signup, requestPasswordReset, errorMessage } from
 import { useRegionsQuery, useSessionQuery } from '../../hooks/queries'
 import { useSetSession } from '../../hooks/mutations'
 import { addPasskey, cancelPasskeyAutofill, passkeysSupported, signInWithPasskey, unlockName, wasCancelled } from '../../passkeys'
-import { countyName as fullCountyName, countyLabel, countyWord, stateName as fullStateName, stateOfRegion } from '../../usStates'
-import StateOptions from '../StateOptions/StateOptions'
+import { countyName as fullCountyName, countyWord, stateName as fullStateName, stateOfRegion } from '../../usStates'
+import AreaPicker from '../AreaPicker/AreaPicker'
 import type { User } from '../../types'
 import './Login.css'
 
@@ -45,8 +45,8 @@ const Login = () => {
   const [county, setCounty] = useState(readLandingCounty)
   const [changingCounty, setChangingCounty] = useState(false)
   const countyState = (county && stateOfRegion(county)) || ''
-  const [pickState, setPickState] = useState(countyState || 'GA')
-  const regions = useRegionsQuery(changingCounty ? pickState : countyState)
+  const [pickedLabel, setPickedLabel] = useState<string | null>(null)
+  const regions = useRegionsQuery(countyState)
   const countyName = regions.data?.find(r => r.code === county)?.name
   const stateName = fullStateName(countyState)
 
@@ -178,17 +178,13 @@ const Login = () => {
           </div>
 
           {step === 'signup' && county && !changingCounty && (
-            <p className='login-county'>Your {countyWord(countyState)}: <strong>{countyName ? fullCountyName(countyName, countyState) : county}{stateName ? `, ${stateName}` : ''}</strong> <button type='button' className='login-link' onClick={() => setChangingCounty(true)}>change</button></p>
+            <p className='login-county'>Your {countyWord(countyState)}: <strong>{pickedLabel ?? (countyName ? fullCountyName(countyName, countyState) : county)}{!pickedLabel && stateName ? `, ${stateName}` : ''}</strong> <button type='button' className='login-link' onClick={() => setChangingCounty(true)}>change</button></p>
           )}
           {step === 'signup' && changingCounty && (
             <div className='login-county-pick'>
-              <select className='select' aria-label='State' value={pickState} onChange={(e) => { setPickState(e.target.value); setCounty('') }}>
-                <StateOptions />
-              </select>
-              <select className='select' aria-label={countyLabel(pickState)} value={county} onChange={(e) => setCounty(e.target.value)}>
-                <option value=''>Choose later</option>
-                {(regions.data ?? []).map(r => <option key={r.code} value={r.code}>{r.name}</option>)}
-              </select>
+              <AreaPicker current={county ? { state: countyState, location: county } : null}
+                onPick={(area) => { setCounty(area.location); setPickedLabel(area.label); setChangingCounty(false) }} />
+              <button type='button' className='login-link' onClick={() => { setCounty(''); setPickedLabel(null); setChangingCounty(false) }}>Choose later</button>
             </div>
           )}
 

@@ -20,9 +20,9 @@ const MEANS: Record<number, string> = {
  */
 const AbaCode = ({ code, explain = false }: { code?: number | null; explain?: boolean }) => {
   const ref = useRef<HTMLDetailsElement>(null)
-  // The ABA Area is the US and Canada; to someone birding in Mexico or South Africa its codes would mislead.
+  // The ABA Area is the US and Canada; to someone birding anywhere else its codes would mislead.
   const state = useSessionQuery().data?.state
-  const outsideAbaArea = Boolean(state) && ['MX', 'ZA'].includes(countryOf(state!))
+  const outsideAbaArea = Boolean(state) && !['US', 'CA'].includes(countryOf(state!))
   useEffect(() => {
     if (!explain) return
     const close = (e: PointerEvent) => { if (ref.current?.open && !ref.current.contains(e.target as Node)) ref.current.open = false }

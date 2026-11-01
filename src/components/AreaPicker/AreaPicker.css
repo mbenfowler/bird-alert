@@ -1,0 +1,67 @@
+/* The three ways to an area, stacked: location, search, then browsing as a quiet fallback. */
+.area-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+
+.area-picker__locate {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.area-picker__locate svg {
+  width: 18px;
+  height: 18px;
+}
+
+.area-picker__results {
+  margin: 0;
+}
+
+.area-picker__note {
+  margin: 0;
+}
+
+.area-picker__browse {
+  align-self: flex-start;
+  font-size: 0.9rem;
+}
+
+.area-picker__browse-lists {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.area-picker__browse-lists .field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.area-picker__browse-lists select {
+  width: 100%;
+  height: 44px;
+  padding-left: 12px;
+  border-radius: 12px;
+  border: 2px solid var(--line);
+  background-color: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.area-picker__browse-lists select:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.area-picker__browse-lists .field__label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}

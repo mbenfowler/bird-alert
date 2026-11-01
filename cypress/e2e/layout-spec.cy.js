@@ -54,7 +54,11 @@ describe('Phone-width layout', () => {
     cy.visit('http://localhost:3000/')
     cy.get('.landing__bird').should('have.length', 2)
     assertNoHorizontalOverflow()
-    cy.get('.landing__pickers select').each(($s) => {
+    // The place picker, opened to its browse lists, still fits and leaves room for the arrows.
+    cy.contains('.landing__pickers button', 'Change place').click()
+    cy.contains('button', 'Browse by country').click()
+    assertNoHorizontalOverflow()
+    cy.get('.landing__pickers select').should('have.length', 3).each(($s) => {
       expect(parseFloat(getComputedStyle($s[0]).paddingRight)).to.be.at.least(32)
     })
   })
