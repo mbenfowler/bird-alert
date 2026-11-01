@@ -12,39 +12,27 @@ import AlertRange from './AlertRange'
 import InstallSteps from '../InstallSteps/InstallSteps'
 import { isIOS, isStandalone } from '../../install'
 import { countyWord } from '../../usStates'
+import { hourLabel, t } from '../../i18n'
 
-const PUSH_KINDS: { field: PushPreference; label: string; hint: string }[] = [
-  { field: 'push_watchlist_enabled', label: 'Watch list sightings', hint: 'One notification an hour listing every bird of yours reported since the last check.' },
-  { field: 'push_notable_enabled', label: 'Notable sightings', hint: "eBird's uncommon birds for your area." },
-  { field: 'push_first_of_season', label: 'First of the season', hint: 'The first report of a migrant returning to your area, once per species each season.' },
-  { field: 'push_lifer_enabled', label: 'Lifer chances', hint: 'A bird that isn’t on your life list reported in your area. Each one at most every three days.' }
-]
+// Labels, hints and the "nothing to send" words are in the catalog under alertCenter.push.<field> and alertCenter.email.<field>.
+const PUSH_KINDS: PushPreference[] = ['push_watchlist_enabled', 'push_notable_enabled', 'push_first_of_season', 'push_lifer_enabled']
 // Lifer alerts measure against the life list; with only a few birds on it, nearly everything is a lifer.
 const MIN_LIFE_LIST = 10
 
-const EMAIL_PREFERENCES: { field: EmailPreference; label: string; hint: string; preview: EmailPreviewKind; nothing: string }[] = [
-  { field: 'alert_digest_email_enabled', label: 'Daily email digest', hint: 'One email a morning when a bird on your watch list was seen nearby.', preview: 'watchlist', nothing: 'none of your watch-list birds were reported nearby in the last day.' },
-  { field: 'rare_sightings_email_enabled', label: 'Uncommon sightings email', hint: "eBird's notable sightings for your area, once a day.", preview: 'rare', nothing: 'no notable sightings nearby in the last day.' },
-  { field: 'migration_email_enabled', label: 'Weekly migration email', hint: 'Sundays: who arrived this week, who moved on, and who to expect next.', preview: 'migration', nothing: 'no migration news for your area yet.' }
+const EMAIL_PREFERENCES: { field: EmailPreference; preview: EmailPreviewKind }[] = [
+  { field: 'alert_digest_email_enabled', preview: 'watchlist' },
+  { field: 'rare_sightings_email_enabled', preview: 'rare' },
+  { field: 'migration_email_enabled', preview: 'migration' }
 ]
 
-const pushHint: Record<string, string> = {
-  checking: 'Checking this browser…',
-  unsupported: 'This browser cannot receive push notifications.',
-  denied: 'Notifications are blocked for this site in your browser settings.',
-  off: 'Turn on to get notified on this device. On iPhone, add Bird Alert to your Home Screen first.',
-  on: 'This device will be notified. Choose what below. Android and Windows show the bird photo, a map and buttons; Mac shows the app icon and buttons; iPhone shows text only.',
-  busy: 'Updating…'
-}
-
-const HOURS = Array.from({ length: 24 }, (_, h) => ({ value: h, label: `${h % 12 || 12} ${h < 12 ? 'AM' : 'PM'}` }))
+const HOURS = Array.from({ length: 24 }, (_, h) => h)
 
 const timeAgo = (iso: string) => {
   const minutes = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60_000))
-  if (minutes < 1) return 'just now'
-  if (minutes < 60) return `${minutes} min ago`
+  if (minutes < 1) return t('landing.justNow')
+  if (minutes < 60) return t('alertCenter.minAgo', { count: minutes })
   const hours = Math.round(minutes / 60)
-  return hours < 48 ? `${hours} hour${hours === 1 ? '' : 's'} ago` : `${Math.round(hours / 24)} days ago`
+  return hours < 48 ? t('still.hoursAgo', { count: hours }) : t('landing.daysAgo', { count: Math.round(hours / 24) })
 }
 
 const AlertCenter = () => {
@@ -64,7 +52,7 @@ const AlertCenter = () => {
   const quietOn = user.push_quiet_start !== null && user.push_quiet_end !== null
   const setQuiet = (changes: { push_quiet_start?: number | null; push_quiet_end?: number | null }) => {
     patchUser.mutate(changes, {
-      onSuccess: () => toast.success('Quiet hours updated!', { position: 'bottom-center' }),
+      onSuccess: () => toast.success(t('alertCenter.quietUpdated'), { position: 'bottom-center' }),
       onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
     })
   }
@@ -73,7 +61,7 @@ const AlertCenter = () => {
   const togglePreference = (e: ChangeEvent<HTMLInputElement>) => {
     const field = e.target.name as EmailPreference | PushPreference
     patchUser.mutate({ [field]: e.target.checked }, {
-      onSuccess: () => toast.success('Alert preferences updated!', { position: 'bottom-center' }),
+      onSuccess: () => toast.success(t('alertCenter.updated'), { position: 'bottom-center' }),
       onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
     })
   }
@@ -81,7 +69,7 @@ const AlertCenter = () => {
   const setNotableTiming = (batched: boolean) => {
     if (batched === Boolean(user.push_notable_batched)) return
     patchUser.mutate({ push_notable_batched: batched }, {
-      onSuccess: () => toast.success(batched ? 'Notable sightings will be batched.' : 'Notable sightings will be sent right away.', { position: 'bottom-center' }),
+      onSuccess: () => toast.success(batched ? t('alertCenter.batched') : t('alertCenter.rightAwayToast'), { position: 'bottom-center' }),
       onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
     })
   }
@@ -92,21 +80,21 @@ const AlertCenter = () => {
 
   const sendTest = () => {
     toast.promise(push.sendTest(), {
-      pending: { render: 'Sending a test notification…', position: 'bottom-center' },
-      success: { render: ({ data }) => (data && data.sent > 0 ? 'Sent to this device. Check your notifications.' : 'This device did not receive it; try turning push off and on.'), position: 'bottom-center' },
+      pending: { render: t('alertCenter.testSending'), position: 'bottom-center' },
+      success: { render: ({ data }) => (data && data.sent > 0 ? t('alertCenter.testSent') : t('alertCenter.testMissed')), position: 'bottom-center' },
       error: { render: ({ data }) => errorMessage(data), position: 'bottom-center' }
     })
   }
 
   // "Send me this now": the real email, today, regardless of the schedule, so it can be seen before opting in.
-  const previewEmail = (kind: EmailPreviewKind, nothing: string) => {
+  const previewEmail = (kind: EmailPreviewKind, field: EmailPreference) => {
     toast.promise(sendEmailPreview(kind), {
-      pending: { render: 'Sending…', position: 'bottom-center' },
+      pending: { render: t('common.sending'), position: 'bottom-center' },
       success: {
-        render: ({ data }: { data: EmailPreviewResult }) => data.sent ? `Sent to ${user.email}. Check your inbox.`
-          : data.reason === 'nothing' ? `Nothing to send right now: ${nothing}`
-          : data.reason === 'unconfirmed' ? 'Confirm your email address first; the confirmation link is in your inbox.'
-          : `Set your ${countyWord(user.state)} in settings first.`,
+        render: ({ data }: { data: EmailPreviewResult }) => data.sent ? t('alertCenter.previewSent', { email: user.email })
+          : data.reason === 'nothing' ? t('alertCenter.previewNothing', { nothing: t(`alertCenter.email.${field}.nothing`) })
+          : data.reason === 'unconfirmed' ? t('alertCenter.previewUnconfirmed')
+          : t('alertCenter.previewNoArea', { word: countyWord(user.state) }),
         position: 'bottom-center'
       },
       error: { render: ({ data }) => errorMessage(data), position: 'bottom-center' }
@@ -119,45 +107,47 @@ const AlertCenter = () => {
 
   return (
     <section className="alert-center">
-      <h2 className='fredericka'>Alert center</h2>
+      <h2 className='fredericka'>{t('alertCenter.title')}</h2>
 
       {/* In a Safari tab on an iPhone push can't be had at all, so none of its settings show: just how
           to get the Home Screen app, where they all are. */}
       {needsInstall ? (
         <div className='notification-group install-group'>
-          <h3 className='install-group__title'>Get alerts on your iPhone</h3>
+          <h3 className='install-group__title'>{t('alertCenter.iphoneTitle')}</h3>
           <InstallSteps compact />
         </div>
       ) : (
       <div className={`notification-group ${pushOn ? 'is-on' : ''}`}>
         <div className='notification'>
           <div className='notification__text'>
-            <label htmlFor='push_enabled'>Push notifications on this device</label>
-            <p className='notification__hint'>{pushHint[push.state]}</p>
+            <label htmlFor='push_enabled'>{t('alertCenter.pushLabel')}</label>
+            <p className='notification__hint'>{t(`alertCenter.pushHint.${push.state}`)}</p>
             {push.error && <p className='notification__hint notification__hint--error' role='alert'>{push.error}</p>}
           </div>
           <div className='notification__controls'>
-            {push.state === 'busy' && <LoadingState variant='inline' label='Updating push notifications' />}
+            {push.state === 'busy' && <LoadingState variant='inline' label={t('alertCenter.updatingPush')} />}
             <input className='switch' type='checkbox' id='push_enabled' name='push_enabled' checked={pushOn} disabled={pushDisabled} onChange={togglePush} />
           </div>
         </div>
         {status.data?.lastRun && (
           <p className='last-checked' data-testid='last-checked'>
-            Last checked {timeAgo(status.data.lastRun.at)}
-            {status.data.lastRun.notified ? ` · ${status.data.lastRun.notified} notified` : ' · nothing new'}
-            {status.data.lastRun.heldForQuietHours ? ` · ${status.data.lastRun.heldForQuietHours} waiting for quiet hours to end` : ''}
-            {status.data.devices > 1 ? ` · ${status.data.devices} devices` : ''}
+            {[
+              t('alertCenter.lastChecked', { when: timeAgo(status.data.lastRun.at) }),
+              status.data.lastRun.notified ? t('alertCenter.notified', { count: status.data.lastRun.notified }) : t('alertCenter.nothingNew'),
+              status.data.lastRun.heldForQuietHours ? t('alertCenter.held', { count: status.data.lastRun.heldForQuietHours }) : null,
+              status.data.devices > 1 ? t('alertCenter.devices', { count: status.data.devices }) : null
+            ].filter(Boolean).join(' · ')}
           </p>
         )}
 
         {/* Sub-options sit greyed out until push is on for this device. */}
         <div className='notification-sub' aria-disabled={!pushOn}>
-          {PUSH_KINDS.map(({ field, label, hint }) => (
+          {PUSH_KINDS.map((field) => (
             <div key={field}>
               <div className='notification notification--sub'>
                 <div className='notification__text'>
-                  <label htmlFor={field}>{label}</label>
-                  <p className='notification__hint'>{hint}{field === 'push_lifer_enabled' && lifeListSize < MIN_LIFE_LIST ? ` Needs ${MIN_LIFE_LIST} or more birds on your life list (above) first.` : ''}</p>
+                  <label htmlFor={field}>{t(`alertCenter.push.${field}.label`)}</label>
+                  <p className='notification__hint'>{t(`alertCenter.push.${field}.hint`)}{field === 'push_lifer_enabled' && lifeListSize < MIN_LIFE_LIST ? ` ${t('alertCenter.liferNeeds', { count: MIN_LIFE_LIST })}` : ''}</p>
                 </div>
                 <div className='notification__controls'>
                   <input className='switch switch--small' type='checkbox' id={field} name={field} checked={Boolean(user[field])} disabled={!pushOn || pendingField === field || (field === 'push_lifer_enabled' && !user[field] && lifeListSize < MIN_LIFE_LIST)} onChange={togglePreference} />
@@ -165,14 +155,14 @@ const AlertCenter = () => {
               </div>
               {field === 'push_notable_enabled' && (
                 <fieldset className='timing' disabled={!pushOn || !user.push_notable_enabled || pendingField === 'push_notable_batched'}>
-                  <legend className='visually-hidden'>How quickly to send notable sightings</legend>
+                  <legend className='visually-hidden'>{t('alertCenter.timingLegend')}</legend>
                   <label className={`timing__option ${!user.push_notable_batched ? 'is-selected' : ''}`}>
                     <input type='radio' name='push_notable_timing' value='asap' checked={!user.push_notable_batched} onChange={() => setNotableTiming(false)} />
-                    Right away
+                    {t('alertCenter.rightAway')}
                   </label>
                   <label className={`timing__option ${user.push_notable_batched ? 'is-selected' : ''}`}>
                     <input type='radio' name='push_notable_timing' value='batched' checked={Boolean(user.push_notable_batched)} onChange={() => setNotableTiming(true)} />
-                    Batch every 6 hours
+                    {t('alertCenter.batch')}
                   </label>
                 </fieldset>
               )}
@@ -180,10 +170,10 @@ const AlertCenter = () => {
           ))}
           <div className='notification notification--sub'>
             <div className='notification__text'>
-              <label htmlFor='push_quiet_enabled'>Quiet hours</label>
+              <label htmlFor='push_quiet_enabled'>{t('alertCenter.quiet')}</label>
               <p className='notification__hint'>
-                {quietOn ? `No pushes between ${HOURS[user.push_quiet_start!].label} and ${HOURS[user.push_quiet_end!].label}; they arrive after.` : 'Pushes can arrive at any hour.'}
-                {user.timezone ? ` Your time zone: ${user.timezone.replace('_', ' ')}.` : ''}
+                {quietOn ? t('alertCenter.quietOn', { from: hourLabel(user.push_quiet_start!), to: hourLabel(user.push_quiet_end!) }) : t('alertCenter.quietOff')}
+                {user.timezone ? ` ${t('alertCenter.timezone', { zone: user.timezone.replace('_', ' ') })}` : ''}
               </p>
             </div>
             <div className='notification__controls'>
@@ -192,15 +182,15 @@ const AlertCenter = () => {
             </div>
           </div>
           {quietOn && (
-            <div className='quiet-range' aria-label='Quiet hours range'>
-              <label>From
+            <div className='quiet-range' aria-label={t('alertCenter.quietRange')}>
+              <label>{t('alertCenter.from')}
                 <select value={user.push_quiet_start ?? 22} disabled={!pushOn || patchUser.isPending} onChange={(e) => setQuiet({ push_quiet_start: Number(e.target.value) })}>
-                  {HOURS.map(h => <option key={h.value} value={h.value}>{h.label}</option>)}
+                  {HOURS.map(h => <option key={h} value={h}>{hourLabel(h)}</option>)}
                 </select>
               </label>
-              <label>to
+              <label>{t('alertCenter.to')}
                 <select value={user.push_quiet_end ?? 6} disabled={!pushOn || patchUser.isPending} onChange={(e) => setQuiet({ push_quiet_end: Number(e.target.value) })}>
-                  {HOURS.map(h => <option key={h.value} value={h.value}>{h.label}</option>)}
+                  {HOURS.map(h => <option key={h} value={h}>{hourLabel(h)}</option>)}
                 </select>
               </label>
             </div>
@@ -208,24 +198,24 @@ const AlertCenter = () => {
           {/* Alert! mode: per device, on by default; only for alerts that arrive while the app is on screen. */}
           <div className='notification notification--sub'>
             <div className='notification__text'>
-              <span className='notification__label' id='alert-mode-label'>Alert! mode</span>
-              <p className='notification__hint'>When an alert arrives while the app is open on screen, the app sounds the alarm for a few seconds, bigger for rarer birds, with a sound you pick for each kind. Sound needs a tap on the page first (your browser&rsquo;s rule).</p>
+              <span className='notification__label' id='alert-mode-label'>{t('alertCenter.alertMode')}</span>
+              <p className='notification__hint'>{t('alertCenter.alertModeHint')}</p>
               <AlertModeSettings disabled={!pushOn} />
             </div>
           </div>
-          {pushOn && <button type='button' className='test-push' onClick={sendTest}>Send a test notification</button>}
+          {pushOn && <button type='button' className='test-push' onClick={sendTest}>{t('alertCenter.sendTest')}</button>}
         </div>
       </div>
       )}
 
       <AlertRange />
 
-      {EMAIL_PREFERENCES.map(({ field, label, hint, preview, nothing }) => (
+      {EMAIL_PREFERENCES.map(({ field, preview }) => (
         <div className='notification' key={field}>
           <div className='notification__text'>
-            <label htmlFor={field}>{label}</label>
-            <p className='notification__hint'>{hint}</p>
-            <button type='button' className='test-push test-push--inline' data-preview={preview} onClick={() => previewEmail(preview, nothing)}>Send me this now</button>
+            <label htmlFor={field}>{t(`alertCenter.email.${field}.label`)}</label>
+            <p className='notification__hint'>{t(`alertCenter.email.${field}.hint`)}</p>
+            <button type='button' className='test-push test-push--inline' data-preview={preview} onClick={() => previewEmail(preview, field)}>{t('alertCenter.sendNow')}</button>
           </div>
           <div className='notification__controls'>
             <input className='switch' type="checkbox" id={field} name={field} checked={Boolean(user[field])} disabled={pendingField === field} onChange={togglePreference} />

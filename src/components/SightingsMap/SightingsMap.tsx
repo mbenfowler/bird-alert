@@ -5,6 +5,7 @@ import { Link } from 'react-router'
 import 'leaflet/dist/leaflet.css'
 import { prefersReducedMotion, stopFractions } from '../../routeDraw'
 import './SightingsMap.css'
+import { t } from '../../i18n'
 
 export interface MapPoint {
   id: string
@@ -423,7 +424,7 @@ const SightingsMap = ({ points, focus = null, route = null, center = [39.8, -98.
                 <div key={point.id} className={index ? 'map-popup__item' : undefined}>
                   <strong>{point.title}</strong>
                   {point.subtitle && <><br />{point.subtitle}</>}
-                  {point.href && <><br /><Link to={point.href}>Details</Link></>}
+                  {point.href && <><br /><Link to={point.href}>{t('map.details')}</Link></>}
                 </div>
               ))}
             </Popup>

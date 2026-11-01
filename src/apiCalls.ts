@@ -1,6 +1,7 @@
 import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, Place, Province, Area,SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, BestHotspots, SpeciesHotspots, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share, Passkey, Chase, PersistenceClass } from './types'
 import { arrival } from './arrival'
 import { isStandalone } from './install'
+import { nameLocale, signupLocale } from './i18n'
 
 // Every request goes to the same-origin `/api` prefix. In development Vite proxies it to the
 // backend (vite.config.ts); in production Vercel rewrites it (vercel.json). The backend holds
@@ -40,12 +41,21 @@ interface RequestOptions {
     headers?: Record<string, string>
 }
 
+// Bird names come back in the person's language. The eBird and bird lists are cached by address,
+// so they carry the language in it (?locale=); everything else says it in a header, which the
+// server uses for its messages (the signed-in person's own lists follow their saved choice).
+const CACHED_BY_URL = /^\/(ebird|birds)(\/|$)/
+
 const api = <T,>(path: string, { method = 'GET', body, params, headers }: RequestOptions = {}): Promise<T> => {
-    const query = params ? `?${new URLSearchParams(params)}` : ''
+    const locale = nameLocale()
+    const byUrl = Boolean(locale) && CACHED_BY_URL.test(path)
+    const allParams = byUrl ? { ...params, locale: locale! } : params
+    const allHeaders = locale && !byUrl ? { ...headers, 'X-Locale': locale } : headers
+    const query = allParams ? `?${new URLSearchParams(allParams)}` : ''
     return fetch(`${API_BASE}${path}${query}`, {
         method,
         credentials: 'same-origin',
-        headers: body !== undefined || headers ? { ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}), ...headers } : undefined,
+        headers: body !== undefined || allHeaders ? { ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}), ...allHeaders } : undefined,
         body: body !== undefined ? JSON.stringify(body) : undefined
     }).then(res => parseResponse<T>(res))
 }
@@ -53,11 +63,13 @@ const api = <T,>(path: string, { method = 'GET', body, params, headers }: Reques
 // ---- auth ----
 // Says whether this is the app installed to the home screen or a browser tab, for the owner's numbers
 // on how many people install it (the step iPhones need for push alerts).
+/** The languages bird names come in: [{ locale, name }]. */
+export const getNameLocales = () => api<{ locale: string; name: string }[]>('/ebird/name-locales')
 export const getCurrentUser = () => api<User>('/auth/me', { headers: { 'X-App-Mode': isStandalone() ? 'app' : 'browser' } })
 export const getUserExists = (email: string) => api<{ userExists: boolean }>('/auth/exists', { params: { email } })
 export const login = (email: string, password: string) => api<User>('/auth/login', { method: 'POST', body: { email, password } })
 export const signup = (email: string, password: string, place?: { state: string; location: string } | null) =>
-  api<User>('/auth/signup', { method: 'POST', body: { email, password, ...(place ?? {}), source: arrival() } })
+  api<User>('/auth/signup', { method: 'POST', body: { email, password, ...(place ?? {}), source: arrival(), ...(signupLocale() ? { locale: signupLocale() } : {}) } })
 // ---- passkeys ----
 export const passkeyLoginOptions = () => api<{ options: unknown; token: string }>('/auth/passkey-login-options', { method: 'POST' })
 export const passkeyLogin = (response: unknown, token: string) => api<User>('/auth/passkey-login', { method: 'POST', body: { response, token } })

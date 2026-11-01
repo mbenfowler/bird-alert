@@ -11,15 +11,17 @@ import AbaCode from '../AbaCode/AbaCode'
 import type { SharedRoute, SharedSighting } from '../../types'
 import { longDistance, shortDistance, useDistanceUnit } from '../../distance'
 import './Shared.css'
+import { t } from '../../i18n'
+import { Trans } from 'react-i18next'
 
 /** The invitation under a shared page, for someone who doesn't have the app yet. */
 const Invite = ({ what }: { what: string }) => {
   const session = useSessionQuery()
-  if (session.data) return <p className='shared__back'><Link to='/'>Back to your birds</Link></p>
+  if (session.data) return <p className='shared__back'><Link to='/'>{t('shared.back')}</Link></p>
   return (
     <aside className='shared__invite'>
-      <p><strong>Bird Alert!</strong> finds {what} near you: live sightings, your chances at each spot, and alerts the moment a bird you want is reported. Free.</p>
-      <Link className='pill-button pill-button--primary' to='/login'>Start free</Link>
+      <p><Trans i18nKey='shared.invite' values={{ what }} components={{ b: <strong /> }} /></p>
+      <Link className='pill-button pill-button--primary' to='/login'>{t('landing.start')}</Link>
     </aside>
   )
 }
@@ -32,16 +34,16 @@ const RouteView = ({ share }: { share: SharedRoute }) => {
   const url = mapsUrl(stops.map(s => ({ locId: s.locId, name: s.name, lat: s.lat, lng: s.lng })))
   return (
     <article className='shared'>
-      <p className='shared__kicker'>A shared birding route</p>
-      <h1 className='fredericka shared__title'>{share.title ?? `A morning route${share.regionName ? ` in ${share.regionName}` : ''}`}</h1>
+      <p className='shared__kicker'>{t('shared.routeKicker')}</p>
+      <h1 className='fredericka shared__title'>{share.title ?? (share.regionName ? t('shared.routeIn', { regionName: share.regionName }) : t('route.suggested'))}</h1>
       <p className='shared__lede'>
-        {stops.length} {stops.length === 1 ? 'stop' : 'stops'}{share.drive?.minutes ? ` · ${share.drive.minutes} minutes of driving, ${longDistance(share.drive.miles, unit)}` : ''}.{share.covers ? ` ${share.covers}` : ''}
+        {share.drive?.minutes ? t('shared.stopsDrive', { count: stops.length, minutes: share.drive.minutes, distance: longDistance(share.drive.miles, unit) }) : t('shared.stops', { count: stops.length })}{share.covers ? ` ${share.covers}` : ''}
       </p>
       <div className='shared__grid'>
         <ol className='shared__stops'>
           {stops.map((s, i) => (
             <li key={`${s.lat},${s.lng}`}>
-              {i > 0 && <span className='shared__leg'>↓ {share.drive?.legs?.[i - 1] ? `${share.drive.legs[i - 1]!.minutes} min drive · ${shortDistance(share.drive.legs[i - 1]!.miles, unit)}` : 'drive'}</span>}
+              {i > 0 && <span className='shared__leg'>{share.drive?.legs?.[i - 1] ? t('route.leg', { minutes: share.drive.legs[i - 1]!.minutes, distance: shortDistance(share.drive.legs[i - 1]!.miles, unit) }) : t('route.legUnknown')}</span>}
               <div className='shared__stop'>
                 <span className='shared__n'>{i + 1}</span>
                 <span>
@@ -54,11 +56,11 @@ const RouteView = ({ share }: { share: SharedRoute }) => {
           ))}
         </ol>
         <div className='shared__map'>
-          <SightingsMap points={points} route={stops.length > 1 ? { path, stops: stops.map(s => ({ lat: s.lat, lng: s.lng, label: s.name })) } : null} height='100%' ariaLabel='Map of the route' />
+          <SightingsMap points={points} route={stops.length > 1 ? { path, stops: stops.map(s => ({ lat: s.lat, lng: s.lng, label: s.name })) } : null} height='100%' ariaLabel={t('shared.routeMap')} />
         </div>
       </div>
-      {url && <p className='shared__actions'><a className='pill-button pill-button--primary' href={url} target='_blank' rel='noreferrer'>Open the route in Maps</a></p>}
-      <Invite what='routes like this' />
+      {url && <p className='shared__actions'><a className='pill-button pill-button--primary' href={url} target='_blank' rel='noreferrer'>{t('shared.openRoute')}</a></p>}
+      <Invite what={t('shared.whatRoutes')} />
     </article>
   )
 }
@@ -68,12 +70,12 @@ const SightingView = ({ share }: { share: SharedSighting }) => {
   const maps = `https://www.google.com/maps/search/?api=1&query=${share.lat}%2C${share.lng}`
   return (
     <article className='shared'>
-      <p className='shared__kicker'>A shared sighting</p>
+      <p className='shared__kicker'>{t('shared.sightingKicker')}</p>
       <div className='shared__bird'>
         {/* The whole bird, however tall the photo: it sits uncropped over a blurred copy of itself. */}
         {share.birdImg && (
           <div className='shared__photo' style={{ '--photo': `url("${share.birdImg.replace(/"/g, '%22')}")` } as CSSProperties}>
-            <img src={share.birdImg} alt={`A ${share.comName}`} width='320' height='240' />
+            <img src={share.birdImg} alt={t('shared.photoAlt', { name: share.comName })} width='320' height='240' />
           </div>
         )}
         <div>
@@ -81,20 +83,20 @@ const SightingView = ({ share }: { share: SharedSighting }) => {
           {share.sciName && <p className='shared__sci'>{share.sciName}</p>}
           {share.aba && share.aba >= 3 && share.aba <= 5 && <p className='shared__aba'><AbaCode code={share.aba} explain /></p>}
           <p className='shared__lede'>
-            {share.howMany && share.howMany > 1 ? `${share.howMany} reported` : 'Reported'} at <strong>{share.locName}</strong>
+            <Trans i18nKey={share.howMany && share.howMany > 1 ? 'shared.reportedMany' : 'shared.reported'} values={{ count: share.howMany ?? 1, place: share.locName }} components={{ b: <strong /> }} />
             {share.obsDt ? `, ${formatObsDt(share.obsDt)}` : ''}{share.regionName ? ` (${share.regionName})` : ''}.
           </p>
           <p className='shared__actions'>
-            <a className='pill-button pill-button--primary' href={maps} target='_blank' rel='noreferrer'>Directions</a>
-            {share.subId && <a className='pill-button' href={`https://ebird.org/checklist/${encodeURIComponent(share.subId)}`} target='_blank' rel='noreferrer'>The checklist on eBird</a>}
+            <a className='pill-button pill-button--primary' href={maps} target='_blank' rel='noreferrer'>{t('shared.directions')}</a>
+            {share.subId && <a className='pill-button' href={`https://ebird.org/checklist/${encodeURIComponent(share.subId)}`} target='_blank' rel='noreferrer'>{t('shared.checklist')}</a>}
           </p>
         </div>
       </div>
       {share.locId && <StillThere locId={share.locId} code={share.speciesCode} to={share} />}
       <div className='shared__map shared__map--single'>
-        <SightingsMap points={points} height='100%' ariaLabel={`Map of where the ${share.comName} was reported`} />
+        <SightingsMap points={points} height='100%' ariaLabel={t('shared.sightingMap', { name: share.comName })} />
       </div>
-      <Invite what={`birds like the ${share.comName}`} />
+      <Invite what={t('shared.whatBirdsLike', { name: share.comName })} />
     </article>
   )
 }
@@ -103,13 +105,13 @@ const SightingView = ({ share }: { share: SharedSighting }) => {
 const Shared = () => {
   const { id = '' } = useParams()
   const share = useShareQuery(id)
-  if (share.isPending) return <LoadingState label='Opening the shared link…' />
+  if (share.isPending) return <LoadingState label={t('shared.opening')} />
   if (share.isError) {
     return (
       <article className='shared'>
-        <h1 className='fredericka shared__title'>This link didn’t open</h1>
+        <h1 className='fredericka shared__title'>{t('shared.failed')}</h1>
         <p className='shared__lede'>{errorMessage(share.error)}</p>
-        <Invite what='birds' />
+        <Invite what={t('shared.whatBirds')} />
       </article>
     )
   }

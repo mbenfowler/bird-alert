@@ -2,8 +2,9 @@ import { useMemo } from 'react'
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions, getCountries, getProvinces,
-  getSavedBirds, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase } from '../apiCalls'
+  getSavedBirds, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase, getNameLocales } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
+import { nameLocale } from '../i18n'
 import type { PersistenceClass, User } from '../types'
 
 /** Short stable fingerprint of a code list, so a changed species list gets its own cache entry. */
@@ -13,30 +14,31 @@ export const codesKey = (codes: string[]) => {
   return `${codes.length}-${hash.toString(36)}`
 }
 
+// Every key but the session carries the bird-name language, so changing it fetches the names anew.
 export const queryKeys = {
   session: ['session'] as const,
-  saved: ['saved'] as const,
-  seen: ['seen'] as const,
-  speciesList: (region: string) => ['species-list', region] as const,
-  birds: (codes: string[]) => ['birds', codes.join(',')] as const,
-  birdPages: (region: string, codes: string[], pageSize: number) => ['bird-pages', region, codesKey(codes), pageSize] as const,
-  observations: (region: string) => ['observations', region] as const,
-  notable: (region: string) => ['notable', region] as const,
-  regions: (state: string) => ['regions', state] as const,
-  search: (term: string) => ['bird-search', term] as const,
+  get saved() { return ['saved', nameLocale()] as const },
+  get seen() { return ['seen', nameLocale()] as const },
+  speciesList: (region: string) => ['species-list', region, nameLocale()] as const,
+  birds: (codes: string[]) => ['birds', codes.join(','), nameLocale()] as const,
+  birdPages: (region: string, codes: string[], pageSize: number) => ['bird-pages', region, codesKey(codes), pageSize, nameLocale()] as const,
+  observations: (region: string) => ['observations', region, nameLocale()] as const,
+  notable: (region: string) => ['notable', region, nameLocale()] as const,
+  regions: (state: string) => ['regions', state, nameLocale()] as const,
+  search: (term: string) => ['bird-search', term, nameLocale()] as const,
   pushStatus: ['push-status'] as const,
-  speciesObservations: (region: string, code: string) => ['species-observations', region, code] as const,
-  arrivals: (region: string) => ['arrivals', region] as const,
-  seasonality: (region: string, code: string) => ['seasonality', region, code] as const,
-  sightings: (region: string, ids: string) => ['sightings', region, ids] as const,
-  chase: (locId: string, code: string, cls?: string) => ['chase', locId, code, cls ?? 'rare'] as const,
-  whereToFind: (region: string, code: string) => ['where-to-find', region, code] as const,
-  whereToGo: (region: string, codes: string[], from?: { lat: number; lng: number } | null) => ['where-to-go', region, codesKey(codes), from ? `${from.lat.toFixed(2)},${from.lng.toFixed(2)}` : ''] as const,
-  bestHotspots: (region: string, days: number, species = '') => ['best-hotspots', region, days, species] as const,
-  savedRoute: (region: string) => ['saved-route', region] as const,
-  placeSearch: (state: string, q: string, addresses: boolean) => ['place-search', state, q.trim().toLowerCase(), addresses] as const,
-  drive: (points: { lat: number; lng: number }[]) => ['drive', points.map(p => `${p.lat.toFixed(4)},${p.lng.toFixed(4)}`).join(';')] as const,
-  nearby: (lat: number, lng: number) => ['nearby', lat.toFixed(3), lng.toFixed(3)] as const
+  speciesObservations: (region: string, code: string) => ['species-observations', region, code, nameLocale()] as const,
+  arrivals: (region: string) => ['arrivals', region, nameLocale()] as const,
+  seasonality: (region: string, code: string) => ['seasonality', region, code, nameLocale()] as const,
+  sightings: (region: string, ids: string) => ['sightings', region, ids, nameLocale()] as const,
+  chase: (locId: string, code: string, cls?: string) => ['chase', locId, code, cls ?? 'rare', nameLocale()] as const,
+  whereToFind: (region: string, code: string) => ['where-to-find', region, code, nameLocale()] as const,
+  whereToGo: (region: string, codes: string[], from?: { lat: number; lng: number } | null) => ['where-to-go', region, codesKey(codes), from ? `${from.lat.toFixed(2)},${from.lng.toFixed(2)}` : '', nameLocale()] as const,
+  bestHotspots: (region: string, days: number, species = '') => ['best-hotspots', region, days, species, nameLocale()] as const,
+  savedRoute: (region: string) => ['saved-route', region, nameLocale()] as const,
+  placeSearch: (state: string, q: string, addresses: boolean) => ['place-search', state, q.trim().toLowerCase(), addresses, nameLocale()] as const,
+  drive: (points: { lat: number; lng: number }[]) => ['drive', points.map(p => `${p.lat.toFixed(4)},${p.lng.toFixed(4)}`).join(';'), nameLocale()] as const,
+  nearby: (lat: number, lng: number) => ['nearby', lat.toFixed(3), lng.toFixed(3), nameLocale()] as const
 }
 
 /** The logged-in user, null when logged out, undefined while the cookie is being checked. */
@@ -76,7 +78,7 @@ export const useSavedCodes = (): Set<string> => {
 /** A county's notable reports this week, for the splash page; public and cached at the edge. */
 export const useNotableThisWeekQuery = (region: string) =>
   useQuery({
-    queryKey: ['notable-week', region] as const,
+    queryKey: ['notable-week', region, nameLocale()] as const,
     queryFn: () => getNotableThisWeek(region),
     staleTime: 5 * MINUTE,
     placeholderData: keepPreviousData,
@@ -85,7 +87,7 @@ export const useNotableThisWeekQuery = (region: string) =>
 
 /** A shared route or sighting; it never changes once made. */
 export const useShareQuery = (id: string) =>
-  useQuery({ queryKey: ['share', id] as const, queryFn: () => getShare(id), staleTime: Infinity, retry: 1, enabled: Boolean(id) })
+  useQuery({ queryKey: ['share', id, nameLocale()] as const, queryFn: () => getShare(id), staleTime: Infinity, retry: 1, enabled: Boolean(id) })
 
 /** The life list. */
 export const useSeenBirdsQuery = (enabled = true) =>
@@ -164,6 +166,16 @@ export const useNotableQuery = (region: string, enabled = true) =>
     queryFn: () => getNotableObservations(region),
     staleTime: 5 * MINUTE,
     enabled: Boolean(region) && enabled
+  })
+
+/** The languages bird names come in, each named in its own language; kept a week. */
+export const useNameLocalesQuery = () =>
+  useQuery({
+    queryKey: ['name-locales'],
+    queryFn: getNameLocales,
+    staleTime: WEEK,
+    gcTime: 4 * WEEK,
+    meta: { persist: true }
   })
 
 /** Every country eBird covers; kept a week, like the region lists. */

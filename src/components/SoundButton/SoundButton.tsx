@@ -1,6 +1,7 @@
 import type { SoundState } from '../../hooks/useBirdSound'
 import type { BirdSound } from '../../types'
 import './SoundButton.css'
+import { t } from '../../i18n'
 
 const PlayIcon = () => <svg viewBox='0 0 24 24' aria-hidden='true' focusable='false'><path d='M8 5v14l11-7z' /></svg>
 const PauseIcon = () => <svg viewBox='0 0 24 24' aria-hidden='true' focusable='false'><path d='M6 5h4v14H6zm8 0h4v14h-4z' /></svg>
@@ -19,7 +20,7 @@ export const SoundCredit = ({ sound, className }: { sound: BirdSound | null; cla
 }
 
 const labelFor = (state: SoundState, name: string) =>
-  state === 'none' ? `No recording of ${name} available` : state === 'playing' ? `Pause the ${name} recording` : `Hear a ${name}`
+  state === 'none' ? t('sound.none', { name }) : state === 'playing' ? t('sound.pause', { name }) : t('sound.hear', { name })
 
 const iconFor = (state: SoundState) => state === 'none' ? <MuteIcon /> : state === 'playing' ? <PauseIcon /> : <PlayIcon />
 
@@ -43,8 +44,8 @@ export const SoundPill = ({ state, name, onToggle, className }: SoundPillProps) 
   return (
     <button type='button' className={`pill-button sound__pill ${className ?? ''}`} onClick={onToggle} aria-pressed={playing} aria-busy={state === 'loading'} disabled={state === 'none'} data-state={state}>
       {iconFor(state)}
-      <span>{state === 'none' ? 'No recording' : playing ? 'Playing…' : state === 'loading' ? 'Loading…' : 'Hear it'}</span>
-      <span className='visually-hidden'>{state === 'none' ? ` of ${name}` : playing ? `, pause the ${name} recording` : `: a ${name} recording`}</span>
+      <span>{state === 'none' ? t('sound.pillNone') : playing ? t('sound.pillPlaying') : state === 'loading' ? t('loading.default') : t('sound.pillHear')}</span>
+      <span className='visually-hidden'>{state === 'none' ? t('sound.pillNoneHidden', { name }) : playing ? t('sound.pillPlayingHidden', { name }) : t('sound.pillHearHidden', { name })}</span>
     </button>
   )
 }

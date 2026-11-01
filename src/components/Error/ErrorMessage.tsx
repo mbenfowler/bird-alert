@@ -1,4 +1,5 @@
 import './Error.css'
+import { t } from '../../i18n'
 
 interface ErrorMessageProps {
     networkError: string
@@ -6,8 +7,8 @@ interface ErrorMessageProps {
 
 const ErrorMessage = ({ networkError }: ErrorMessageProps) => (
     <section className='error'>
-        <p>Something went wrong!</p>
-        <p>Please return to home and try again</p>
+        <p>{t('error.wrong')}</p>
+        <p>{t('error.tryAgain')}</p>
         <p>{networkError}</p>
     </section>
 )

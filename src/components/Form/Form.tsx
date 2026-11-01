@@ -2,11 +2,12 @@ import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { toast } from 'react-toastify'
 import { resendConfirmationEmail, requestPasswordReset, errorMessage } from '../../apiCalls'
-import { useCurrentUser, useRegionsQuery } from '../../hooks/queries'
+import { useCurrentUser, useNameLocalesQuery, useRegionsQuery } from '../../hooks/queries'
 import { usePatchUserMutation } from '../../hooks/mutations'
 import { countyName, countyWord, stateName } from '../../usStates'
 import AreaPicker from '../AreaPicker/AreaPicker'
 import './Form.css'
+import { t } from '../../i18n'
 
 const toastAt = { position: 'bottom-center' } as const
 
@@ -34,16 +35,16 @@ const Form = () => {
 
     const handleResendConfirmation = () => {
         toast.promise(resendConfirmationEmail(), {
-            pending: { render: 'Sending confirmation email...', ...toastAt },
-            success: { render: 'Confirmation email sent!', ...toastAt },
+            pending: { render: t('account.sendingConfirm'), ...toastAt },
+            success: { render: t('account.confirmSent'), ...toastAt },
             error: { render: ({ data }) => errorMessage(data), ...toastAt }
         })
     }
 
     const handlePasswordReset = () => {
         toast.promise(requestPasswordReset(user.email), {
-            pending: { render: 'Sending password reset email...', ...toastAt },
-            success: { render: 'Password reset email sent!', ...toastAt },
+            pending: { render: t('account.sendingReset'), ...toastAt },
+            success: { render: t('account.resetSent'), ...toastAt },
             error: { render: ({ data }) => errorMessage(data), ...toastAt }
         })
     }
@@ -53,37 +54,44 @@ const Form = () => {
         patchUser.mutate(form, {
             onSuccess: (updated) => {
                 if (updated.email !== user.email) {
-                    toast.info('Email changed. Check your inbox for a new confirmation link.', toastAt)
+                    toast.info(t('account.emailChanged'), toastAt)
                 }
-                toast.success('Settings saved!', toastAt)
+                toast.success(t('account.saved'), toastAt)
                 navigate('/')
             },
             onError: (error) => toast.error(errorMessage(error), toastAt)
         })
     }
 
+    // The language saves on its own, at once: bird names switch straight away.
+    const languages = useNameLocalesQuery()
+    const setLanguage = (value: string) => patchUser.mutate({ locale: value || null }, {
+        onSuccess: () => toast.success(t('account.languageSaved'), toastAt),
+        onError: (error) => toast.error(errorMessage(error), toastAt)
+    })
+
     if (patchUser.isPending) return <div className='spinner'></div>
 
     return (
         <form id='settings-form' className='settings-card' onSubmit={handleSubmit}>
-            <h2 className='fredericka'>Your details</h2>
+            <h2 className='fredericka'>{t('account.title')}</h2>
             {!user.email_confirmed &&
                 <p className='settings-card__warning' role='status'>
-                    Please confirm your email address to receive notifications.{' '}
-                    <button type='button' className='link-button link-text' id='resendConfirmationEmail' onClick={handleResendConfirmation}>Resend confirmation email</button>
+                    {t('account.pleaseConfirm')}{' '}
+                    <button type='button' className='link-button link-text' id='resendConfirmationEmail' onClick={handleResendConfirmation}>{t('account.resend')}</button>
                 </p>
             }
             <label className='field' id='emailLabel'>
-                <span className='field__label'>Email</span>
+                <span className='field__label'>{t('account.email')}</span>
                 <input type="email" name='email' autoComplete='email' value={form.email} onChange={handleChange} />
             </label>
-            <button type='button' className='link-button password-reset-text' id='sendPasswordResetEmail' onClick={handlePasswordReset}>Send me a password reset email</button>
+            <button type='button' className='link-button password-reset-text' id='sendPasswordResetEmail' onClick={handlePasswordReset}>{t('account.resetLink')}</button>
             <div className='field'>
-                <span className='field__label'>Where you bird</span>
+                <span className='field__label'>{t('account.where')}</span>
                 {!changingArea && (
                     <p className='settings-card__area'>
-                        <strong data-testid='current-area'>{areaLabel || (form.location ? form.location : `No ${countyWord(form.state || 'GA')} chosen yet`)}</strong>{' '}
-                        <button type='button' className='link-button link-text' onClick={() => setChangingArea(true)}>Change</button>
+                        <strong data-testid='current-area'>{areaLabel || (form.location ? form.location : t('account.noArea', { word: countyWord(form.state || 'GA') }))}</strong>{' '}
+                        <button type='button' className='link-button link-text' onClick={() => setChangingArea(true)}>{t('common.change')}</button>
                     </p>
                 )}
                 {changingArea && (
@@ -91,8 +99,16 @@ const Form = () => {
                         onPick={(area) => { setForm(prev => ({ ...prev, state: area.state, location: area.location })); setPickedLabel(area.label); setChangingArea(false) }} />
                 )}
             </div>
+            <label className='field'>
+                <span className='field__label'>{t('account.language')}</span>
+                <select className='select' name='locale' value={user.locale ?? ''} onChange={(e) => setLanguage(e.target.value)}>
+                    <option value=''>{t('account.languageBrowser')}</option>
+                    {(languages.data ?? []).map(l => <option key={l.locale} value={l.locale}>{l.name}</option>)}
+                </select>
+                <span className='field__hint'>{t('account.languageHint')}</span>
+            </label>
             <div className='settings-card__actions'>
-                <button type='submit' className='pill-button pill-button--primary'>Lock in details</button>
+                <button type='submit' className='pill-button pill-button--primary'>{t('account.lockIn')}</button>
             </div>
         </form>
     )

@@ -8,6 +8,7 @@ import { errorMessage } from '../../apiCalls'
 import { useCurrentUser, useNotableQuery, useObservationsQuery, useRegionsQuery, useSavedCodes, useSpeciesObservationsQuery } from '../../hooks/queries'
 import type { Observation } from '../../types'
 import './MapPage.css'
+import { t } from '../../i18n'
 
 type Feed = 'watchlist' | 'notable'
 
@@ -52,25 +53,25 @@ const MapPage = () => {
     <section className='map-page'>
       <header className='map-page__bar'>
         <h1 className='fredericka'>
-          {code ? `${speciesName ?? code} in ${regionName}` : `${feed === 'watchlist' ? 'Watch list' : 'Notable'} sightings in ${regionName}`}
+          {code ? t('mapPage.species', { name: speciesName ?? code, regionName }) : feed === 'watchlist' ? t('mapPage.watch', { regionName }) : t('mapPage.notable', { regionName })}
         </h1>
         {code
-          ? <Link className='pill-button' to='/map'>All sightings</Link>
-          : <div className='map-page__tabs' role='group' aria-label='Which sightings to show'>
-              <button type='button' className={`alert-icon ${feed === 'watchlist' ? 'button-pressed' : ''}`} aria-pressed={feed === 'watchlist'} aria-label='Watch list sightings' title='Watch list' onClick={() => setFeed('watchlist')}><StarIcon /></button>
-              <button type='button' className={`alert-icon ${feed === 'notable' ? 'button-pressed' : ''}`} aria-pressed={feed === 'notable'} aria-label='Notable sightings' title='Notable' onClick={() => setFeed('notable')}><AlertIcon /></button>
+          ? <Link className='pill-button' to='/map'>{t('mapPage.all')}</Link>
+          : <div className='map-page__tabs' role='group' aria-label={t('mapPage.which')}>
+              <button type='button' className={`alert-icon ${feed === 'watchlist' ? 'button-pressed' : ''}`} aria-pressed={feed === 'watchlist'} aria-label={t('alerts.watchLabel')} title={t('alerts.watchTitle')} onClick={() => setFeed('watchlist')}><StarIcon /></button>
+              <button type='button' className={`alert-icon ${feed === 'notable' ? 'button-pressed' : ''}`} aria-pressed={feed === 'notable'} aria-label={t('mapPage.notableLabel')} title={t('mapPage.notableTitle')} onClick={() => setFeed('notable')}><AlertIcon /></button>
             </div>}
       </header>
       {active.isError && <ErrorMessage networkError={errorMessage(active.error)} />}
-      {active.isPending && <LoadingState label='Loading sightings…' />}
+      {active.isPending && <LoadingState label={t('mapPage.loading')} />}
       {!active.isPending && !active.isError && (
         <>
           <p className='list-note'>
             {points.length
-              ? `${points.length} sighting${points.length === 1 ? '' : 's'} on the map. Tap a pin for details.`
-              : code ? 'No reports of this species in the last 30 days.' : feed === 'notable' ? 'No notable sightings reported in the last month.' : 'No watch-list birds reported in the last two weeks.'}
+              ? t('mapPage.count', { count: points.length })
+              : code ? t('mapPage.noneSpecies') : feed === 'notable' ? t('mapPage.noneNotable') : t('mapPage.noneWatch')}
           </p>
-          <SightingsMap points={points} height='min(70vh, 620px)' ariaLabel={`Map of recent sightings in ${regionName}`} />
+          <SightingsMap points={points} height='min(70vh, 620px)' ariaLabel={t('mapPage.mapLabel', { regionName })} />
         </>
       )}
     </section>

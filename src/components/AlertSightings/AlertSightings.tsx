@@ -8,6 +8,8 @@ import { formatObsDt } from '../../format'
 import { parseSightingRefs, useCurrentUser, useRegionsQuery, useSightingsQuery } from '../../hooks/queries'
 import './AlertSightings.css'
 import { countyLabel, useLinkRegion } from '../../linkRegion'
+import { t } from '../../i18n'
+import { Trans } from 'react-i18next'
 
 /**
  * Where a watch-list push notification lands: every sighting it announced on one small map, with
@@ -39,25 +41,25 @@ const AlertSightings = () => {
 
   return (
     <section className='alert-sightings'>
-      <h1 className='fredericka'>Watch list sightings</h1>
-      {!refs.length && <p className='list-note'>This link did not name any sightings. <Link to='/'>See today's alerts on the home page.</Link></p>}
+      <h1 className='fredericka'>{t('alerts.watchLabel')}</h1>
+      {!refs.length && <p className='list-note'><Trans i18nKey='alertSightings.noRefs' components={{ home: <Link to='/' /> }} /></p>}
       {sightings.isError && <ErrorMessage networkError={errorMessage(sightings.error)} />}
-      {sightings.isPending && refs.length > 0 && <LoadingState label='Loading sightings…' />}
+      {sightings.isPending && refs.length > 0 && <LoadingState label={t('mapPage.loading')} />}
       {sightings.isSuccess && (
         <>
           <p className='list-note'>
             {rows.length
-              ? `${rows.length} bird${rows.length === 1 ? '' : 's'} from your watch list reported in ${regionName}. Tap a pin or a row for the full sighting.`
-              : 'None of these reports are in eBird\'s recent feed any more.'}
-            {missing > 0 && rows.length > 0 ? ` ${missing} ${missing === 1 ? 'is' : 'are'} no longer in the feed.` : ''}
+              ? t('alertSightings.count', { count: rows.length, regionName })
+              : t('alertSightings.gone')}
+            {missing > 0 && rows.length > 0 ? ` ${t('alertSightings.missing', { count: missing })}` : ''}
           </p>
           {rows.length > 0 && (
             <>
-              <SightingsMap points={points} height='min(45vh, 340px)' ariaLabel={`Map of these watch list sightings in ${regionName}`}
+              <SightingsMap points={points} height='min(45vh, 340px)' ariaLabel={t('alertSightings.mapLabel', { regionName })}
                 onPinClick={(hit) => setSelectedPlace(hit[0] ? `${hit[0].lat},${hit[0].lng}` : null)} />
               <table className='alert-sightings__table'>
                 <thead>
-                  <tr><th scope='col'>Bird</th><th scope='col'>When</th><th scope='col'>Seen</th></tr>
+                  <tr><th scope='col'>{t('alertSightings.bird')}</th><th scope='col'>{t('alertSightings.when')}</th><th scope='col'>{t('alertSightings.seen')}</th></tr>
                 </thead>
                 <tbody>
                   {rows.map(o => (

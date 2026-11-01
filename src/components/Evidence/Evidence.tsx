@@ -1,7 +1,6 @@
 import type { Evidence as EvidenceData } from '../../types'
 import './Evidence.css'
-
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
+import { t } from '../../i18n'
 
 /**
  * What a rare-bird report rests on, so a chase can be judged before the drive: whether an eBird
@@ -16,19 +15,19 @@ const Evidence = ({ evidence, compact = false }: { evidence?: EvidenceData | nul
   if (compact) {
     return (
       <p className='evidence evidence--compact'>
-        <span className={confirmed ? 'evidence__confirmed' : 'evidence__unconfirmed'}>{confirmed ? '✓ Confirmed' : 'Unconfirmed'}</span>
-        {media && <span className='evidence__item'><span aria-hidden='true'>📷</span><span className='visually-hidden'>Photo or audio</span></span>}
-        {birders > 1 && <span className='evidence__item'>{plural(birders, 'birder')}</span>}
+        <span className={confirmed ? 'evidence__confirmed' : 'evidence__unconfirmed'}>{confirmed ? t('evidence.confirmedShort') : t('evidence.unconfirmedShort')}</span>
+        {media && <span className='evidence__item'><span aria-hidden='true'>📷</span><span className='visually-hidden'>{t('evidence.mediaShort')}</span></span>}
+        {birders > 1 && <span className='evidence__item'>{t('evidence.birders', { count: birders })}</span>}
       </p>
     )
   }
   return (
-    <ul className='evidence evidence--full' aria-label='What this report rests on'>
+    <ul className='evidence evidence--full' aria-label={t('evidence.label')}>
       <li className={confirmed ? 'evidence__confirmed' : 'evidence__unconfirmed'}>
-        {confirmed ? '✓ Confirmed by an eBird reviewer' : 'Unconfirmed: not yet reviewed by eBird'}
+        {confirmed ? t('evidence.confirmed') : t('evidence.unconfirmed')}
       </li>
-      {media && <li><span aria-hidden='true'>📷 </span>Photo or audio on the checklist</li>}
-      {birders > 1 && <li>Reported by {plural(birders, 'birder')}</li>}
+      {media && <li><span aria-hidden='true'>📷 </span>{t('evidence.media')}</li>}
+      {birders > 1 && <li>{t('evidence.reportedBy', { count: birders })}</li>}
     </ul>
   )
 }

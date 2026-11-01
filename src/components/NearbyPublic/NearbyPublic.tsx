@@ -5,6 +5,7 @@ import type { NearbyPublic as NearbyData, NearbyHotspot, NearbyPark } from '../.
 import type { PlanPoint } from '../../routePlan'
 import { shortDistance, unitWord, useDistanceUnit, type DistanceUnit } from '../../distance'
 import './NearbyPublic.css'
+import { monthYear, t } from '../../i18n'
 
 const mapsHref = (lat: number, lng: number, name: string) => {
   const apple = /iPhone|iPad|iPod|Macintosh/i.test(navigator.userAgent)
@@ -12,14 +13,13 @@ const mapsHref = (lat: number, lng: number, name: string) => {
 }
 
 const lastBirded = (iso: string | null) => {
-  if (!iso) return 'never birded'
-  const d = new Date(`${iso}T12:00:00`)
-  return `last birded ${d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}`
+  if (!iso) return t('nearby.never')
+  return t('nearby.lastBirded', { when: monthYear(iso) })
 }
 
 /** "9 min drive · 4.8 mi", or the straight-line distance when the road could not be had. */
-const reach = (t: { miles: number; drive?: { minutes: number; miles: number } | null }, unit: DistanceUnit) =>
-  t.drive ? `${t.drive.minutes} min drive · ${shortDistance(t.drive.miles, unit)}` : `${shortDistance(t.miles, unit)} as the crow flies`
+const reach = (target: { miles: number; drive?: { minutes: number; miles: number } | null }, unit: DistanceUnit) =>
+  target.drive ? t('nearby.drive', { minutes: target.drive.minutes, distance: shortDistance(target.drive.miles, unit) }) : t('nearby.crow', { distance: shortDistance(target.miles, unit) })
 
 interface NearbyPublicProps {
   placeName: string
@@ -52,7 +52,7 @@ const NearbyPublic = ({ placeName, open, onOpen, data, isPending, isError, activ
   if (!open) {
     return (
       <div className='nearby'>
-        <button type='button' className='nearby__ask' onClick={onOpen}><CompassIcon /> Public land nearby</button>
+        <button type='button' className='nearby__ask' onClick={onOpen}><CompassIcon /> {t('nearby.ask')}</button>
       </div>
     )
   }
@@ -67,52 +67,52 @@ const NearbyPublic = ({ placeName, open, onOpen, data, isPending, isError, activ
       },
       button: (
         <button type='button' className={`nearby__route ${on ? 'is-on' : ''}`} aria-pressed={on} disabled={!on && route.full}
-          aria-label={on ? `Take ${point.name} off the route` : `Add ${point.name} to the route`}
+          aria-label={on ? t('nearby.offRoute', { name: point.name }) : t('nearby.onRoute', { name: point.name })}
           onClick={() => { route.preview(null); route.toggle(point) }}>
-          {on ? '✓' : '+'}<span>Route</span>
+          {on ? '✓' : '+'}<span>{t('nearby.route')}</span>
         </button>
       )
     }
   }
-  const note = `Public land near ${placeName}`
+  const note = t('nearby.near', { placeName })
   const hotspots: NearbyHotspot[] = data?.hotspots ?? []
   const parks: NearbyPark[] = data?.parks ?? []
   return (
     <div className='nearby is-open'>
       <div className='nearby__head'>
-        <strong>Public land near {placeName}</strong>
-        <button type='button' className='nearby__close' onClick={onClose}>Back to all pins</button>
+        <strong>{note}</strong>
+        <button type='button' className='nearby__close' onClick={onClose}>{t('nearby.back')}</button>
       </div>
-      {isPending ? <LoadingState variant='inline' label='Looking for public land nearby' />
-        : isError ? <p className='nearby__note'>Could not look up public land near {placeName} right now.</p>
-        : !hotspots.length && !parks.length ? <p className='nearby__note'>No public land within a few {unitWord(unit)} of {placeName} is on file.</p>
+      {isPending ? <LoadingState variant='inline' label={t('nearby.looking')} />
+        : isError ? <p className='nearby__note'>{t('nearby.failed', { placeName })}</p>
+        : !hotspots.length && !parks.length ? <p className='nearby__note'>{t('nearby.none', { units: unitWord(unit), placeName })}</p>
         : (
-          <ul className='nearby__list' aria-label={`Public land near ${placeName}`}>
+          <ul className='nearby__list' aria-label={note}>
             {hotspots.map((h, i) => {
               const bits = routeBits({ locId: h.locId, name: h.name, lat: h.lat, lng: h.lng, note })
               return (
               <li key={h.locId} className={`nearby__hotspot ${activeId === h.locId ? 'is-active' : ''}`} {...bits.hover}>
-                <button type='button' className='nearby__n' aria-pressed={activeId === h.locId} aria-label={`Show the road to ${h.name} on the map`} onClick={() => onPick?.(h.locId)}>{i + 1}</button>
+                <button type='button' className='nearby__n' aria-pressed={activeId === h.locId} aria-label={t('nearby.showRoad', { name: h.name })} onClick={() => onPick?.(h.locId)}>{i + 1}</button>
                 <a href={mapsHref(h.lat, h.lng, h.name)} target='_blank' rel='noreferrer'>
                   <strong>{h.name.replace(/^Lake Lanier--/, '')}</strong>
                   <span className='nearby__reach'>{reach(h, unit)}</span>
-                  <span>{h.checklists ?? 0} {h.checklists === 1 ? 'checklist' : 'checklists'} all time{h.species ? `, ${h.species} species` : ''} · {lastBirded(h.latest)}</span>
-                  {h.lightlyBirded && <em>lightly birded, a sneaky pick</em>}
+                  <span>{h.species ? t('nearby.effortSpecies', { count: h.checklists ?? 0, species: h.species }) : t('nearby.effort', { count: h.checklists ?? 0 })} · {lastBirded(h.latest)}</span>
+                  {h.lightlyBirded && <em>{t('nearby.sneaky')}</em>}
                 </a>
                 {bits.button}
               </li>
               )
             })}
             {parks.map((p, i) => {
-              const bits = routeBits({ locId: null, name: p.name, lat: p.lat, lng: p.lng, note: `${note} · not an eBird hotspot` })
+              const bits = routeBits({ locId: null, name: p.name, lat: p.lat, lng: p.lng, note: t('nearby.parkNote', { note }) })
               return (
               <li key={`${p.name}-${p.lat}`} className={`nearby__park ${activeId === `${p.name}-${p.lat}` ? 'is-active' : ''}`} {...bits.hover}>
-                <button type='button' className='nearby__n' aria-pressed={activeId === `${p.name}-${p.lat}`} aria-label={`Show the road to ${p.name} on the map`} onClick={() => onPick?.(`${p.name}-${p.lat}`)}>{hotspots.length + i + 1}</button>
+                <button type='button' className='nearby__n' aria-pressed={activeId === `${p.name}-${p.lat}`} aria-label={t('nearby.showRoad', { name: p.name })} onClick={() => onPick?.(`${p.name}-${p.lat}`)}>{hotspots.length + i + 1}</button>
                 <a href={mapsHref(p.lat, p.lng, p.name)} target='_blank' rel='noreferrer'>
                   <strong>{p.name}</strong>
                   <span className='nearby__reach'>{reach(p, unit)}</span>
-                  <span>not an eBird hotspot</span>
-                  <em>unlisted, nobody is counting here</em>
+                  <span>{t('nearby.notHotspot')}</span>
+                  <em>{t('nearby.unlisted')}</em>
                 </a>
                 {bits.button}
               </li>
@@ -120,7 +120,7 @@ const NearbyPublic = ({ placeName, open, onOpen, data, isPending, isError, activ
             })}
           </ul>
         )}
-      <p className='nearby__hint'>The numbers match the pins on the map; tap a number or a pin to light up that road. Tapping any other place's pin goes back to all the pins.</p>
+      <p className='nearby__hint'>{t('nearby.hint')}</p>
     </div>
   )
 }

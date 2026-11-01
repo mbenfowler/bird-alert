@@ -11,6 +11,8 @@ import { useInfiniteScroll } from '../../hooks/useInfiniteScroll'
 import { useDebouncedValue } from '../../hooks/useDebouncedValue'
 import type { SeenBird } from '../../types'
 import './LifeListPage.css'
+import { t } from '../../i18n'
+import { Trans } from 'react-i18next'
 
 const PAGE_SIZE = 12
 type Sort = 'newest' | 'name' | 'taxonomic'
@@ -58,32 +60,32 @@ const LifeListPage = () => {
   return (
     <section id='birdsInArea' className='life-page'>
       <ListTabs lifeCount={count} />
-      <h2 className='fredericka list-heading'>Your life list{count ? `: ${count} ${count === 1 ? 'bird' : 'birds'}` : ''}</h2>
-      {seen.isPending ? <SkeletonList count={4} label='Loading your life list…' />
+      <h2 className='fredericka list-heading'>{count ? t('lifePage.titleCount', { count }) : t('lifePage.title')}</h2>
+      {seen.isPending ? <SkeletonList count={4} label={t('lifePage.loading')} />
         : !count ? (
-          <p className='life-page__empty'>No birds on your life list yet. Tap the ✓ on any bird you’ve seen, or <Link to='/settings'>start from your eBird life list</Link>.</p>
+          <p className='life-page__empty'><Trans i18nKey='lifePage.empty' components={{ settings: <Link to='/settings' /> }} /></p>
         ) : (
           <>
             <div className='life-page__tools'>
               <div className='life-page__search'>
                 <SearchIcon className='life-page__search-icon' />
-                <input type='search' placeholder='Search your life list' aria-label='Search your life list' autoComplete='off' value={search} onChange={(e) => setSearch(e.target.value)} />
-                {search && <button type='button' className='life-page__clear' aria-label='Clear search' onClick={() => setSearch('')}><CloseIcon /></button>}
+                <input type='search' placeholder={t('lifePage.search')} aria-label={t('lifePage.search')} autoComplete='off' value={search} onChange={(e) => setSearch(e.target.value)} />
+                {search && <button type='button' className='life-page__clear' aria-label={t('common.clearSearch')} onClick={() => setSearch('')}><CloseIcon /></button>}
               </div>
               <label className='life-page__sort'>
-                <span>Sort</span>
+                <span>{t('lifePage.sort')}</span>
                 <select className='select' value={sort} onChange={(e) => setSort(e.target.value as Sort)}>
-                  <option value='newest'>Newest first</option>
-                  <option value='name'>A to Z</option>
-                  <option value='taxonomic'>Taxonomic</option>
+                  <option value='newest'>{t('lifePage.newest')}</option>
+                  <option value='name'>{t('lifePage.az')}</option>
+                  <option value='taxonomic'>{t('lifePage.taxonomic')}</option>
                 </select>
               </label>
             </div>
-            {codes && !codes.length && <p className='life-page__empty'>Nothing on your life list matches “{search.trim()}”.</p>}
-            {pages.isPending && codes && codes.length > 0 ? <SkeletonList count={4} label='Loading birds…' /> : <BirdsList birds={birds} />}
+            {codes && !codes.length && <p className='life-page__empty'>{t('lifePage.noMatch', { text: search.trim() })}</p>}
+            {pages.isPending && codes && codes.length > 0 ? <SkeletonList count={4} label={t('loading.birds')} /> : <BirdsList birds={birds} />}
             <div ref={sentinelRef} className='list-sentinel' aria-hidden='true'></div>
-            {pages.isFetchingNextPage && <p className='list-end'>Loading more…</p>}
-            {!pages.hasNextPage && birds.length > 0 && <p className='list-end'>{term ? `${birds.length} matching` : `${count} ${count === 1 ? 'bird' : 'birds'}`} on your life list.</p>}
+            {pages.isFetchingNextPage && <p className='list-end'>{t('common.loadingMore')}</p>}
+            {!pages.hasNextPage && birds.length > 0 && <p className='list-end'>{term ? t('lifePage.endMatching', { count: birds.length }) : t('lifePage.end', { count })}</p>}
           </>
         )}
     </section>

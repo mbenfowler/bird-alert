@@ -4,11 +4,13 @@ import { toast } from 'react-toastify'
 import { getUserExists, login, signup, requestPasswordReset, errorMessage } from '../../apiCalls'
 import { useRegionsQuery, useSessionQuery } from '../../hooks/queries'
 import { useSetSession } from '../../hooks/mutations'
-import { addPasskey, cancelPasskeyAutofill, passkeysSupported, signInWithPasskey, unlockName, wasCancelled } from '../../passkeys'
+import { addPasskey, cancelPasskeyAutofill, isDeviceLock, passkeysSupported, signInWithPasskey, unlockName, wasCancelled } from '../../passkeys'
 import { countyName as fullCountyName, countyWord, stateName as fullStateName, stateOfRegion } from '../../usStates'
 import AreaPicker from '../AreaPicker/AreaPicker'
 import type { User } from '../../types'
 import './Login.css'
+import { t } from '../../i18n'
+import { Trans } from 'react-i18next'
 
 const PASSWORD_MIN_LENGTH = 8
 const OFFER_DISMISSED_KEY = 'bird-alert:passkey-offer-dismissed'
@@ -104,7 +106,7 @@ const Login = () => {
   }
 
   const signIn = async (address: string, exists: boolean) => {
-    if (!exists && password.length < PASSWORD_MIN_LENGTH) { setError(`Passwords need at least ${PASSWORD_MIN_LENGTH} characters`); return }
+    if (!exists && password.length < PASSWORD_MIN_LENGTH) { setError(t('login.tooShort', { count: PASSWORD_MIN_LENGTH })); return }
     setIsBusy(true)
     try {
       const place = !exists && county ? { state: countyState, location: county } : null
@@ -114,8 +116,8 @@ const Login = () => {
 
   const handleForgotPassword = () => {
     toast.promise(requestPasswordReset(email.trim()), {
-      pending: { render: 'Sending a reset link…', position: 'bottom-center' },
-      success: { render: 'Check your email for a reset link.', position: 'bottom-center' },
+      pending: { render: t('login.sendingReset'), position: 'bottom-center' },
+      success: { render: t('login.resetSent'), position: 'bottom-center' },
       error: { render: ({ data }) => errorMessage(data), position: 'bottom-center' }
     })
   }
@@ -124,16 +126,16 @@ const Login = () => {
     const name = unlockName()
     const turnOn = async () => {
       setError(null)
-      try { await addPasskey(); toast.success(`Done. Next time, just use ${name}.`, { position: 'bottom-center' }); navigate('/') } catch (err) { if (!wasCancelled(err)) setError(errorMessage(err)) }
+      try { await addPasskey(); toast.success(t('login.offerDone', { name }), { position: 'bottom-center' }); navigate('/') } catch (err) { if (!wasCancelled(err)) setError(errorMessage(err)) }
     }
     return (
       <main className='login'>
         <section className='login-panel'>
-          <p className='login-kicker'>One more thing</p>
-          <h1 className='fredericka login-title'>Sign in with {name} next time?</h1>
-          <p className='login-lede'>No password to type. Your {name === 'Face ID' || name === 'Touch ID' ? name : 'device'} unlocks Bird Alert! the same way it unlocks your phone, and nothing about your face or fingerprint ever leaves the device.</p>
-          <button type='button' className='pill-button pill-button--primary login-submit' onClick={() => { void turnOn() }}>Use {name}</button>
-          <button type='button' className='login-link' onClick={() => { try { localStorage.setItem(OFFER_DISMISSED_KEY, '1') } catch { /* asked again next time */ } navigate('/') }}>Not now</button>
+          <p className='login-kicker'>{t('login.oneMore')}</p>
+          <h1 className='fredericka login-title'>{t('login.offerTitle', { name })}</h1>
+          <p className='login-lede'>{t('login.offerLede', { device: name === 'Face ID' || name === 'Touch ID' ? name : t('login.device') })}</p>
+          <button type='button' className='pill-button pill-button--primary login-submit' onClick={() => { void turnOn() }}>{t('login.use', { name })}</button>
+          <button type='button' className='login-link' onClick={() => { try { localStorage.setItem(OFFER_DISMISSED_KEY, '1') } catch { /* asked again next time */ } navigate('/') }}>{t('pushAsk.notNow')}</button>
           {error && <p className='login-error' role='alert'>{error}</p>}
         </section>
       </main>
@@ -145,63 +147,63 @@ const Login = () => {
   return (
     <main className='login'>
       <section className='login-panel'>
-        <h1 className='fredericka login-title'>{step === 'signup' ? 'Create your account' : step === 'login' ? 'Welcome back' : 'Log in or sign up'}</h1>
-        <p className='login-lede'>{step === 'signup' ? 'New here? Pick a password and you’re in.' : 'Alerts, routes and your life list, on every device.'}</p>
+        <h1 className='fredericka login-title'>{step === 'signup' ? t('login.createTitle') : step === 'login' ? t('login.welcomeBack') : t('login.title')}</h1>
+        <p className='login-lede'>{step === 'signup' ? t('login.signupLede') : t('login.lede')}</p>
 
         {supported && step === 'email' && (
           <>
             <button type='button' className='pill-button login-passkey' onClick={() => { void passkeyButton() }}>
-              <span aria-hidden='true'>🔑</span> Sign in with {unlockName() === 'your device’s lock' ? 'a passkey' : `${unlockName()} or a passkey`}
+              <span aria-hidden='true'>🔑</span> {isDeviceLock(unlockName()) ? t('login.passkey') : t('login.passkeyOr', { name: unlockName() })}
             </button>
-            <p className='login-or'><span>or use your email</span></p>
+            <p className='login-or'><span>{t('login.orEmail')}</span></p>
           </>
         )}
 
         <form className='login-form' onSubmit={(e) => { void submit(e) }} noValidate>
-          <label className='login-label' htmlFor='loginEmail'>Email</label>
+          <label className='login-label' htmlFor='loginEmail'>{t('account.email')}</label>
           <input id='loginEmail' className='input email' type='email' name='email' inputMode='email' autoComplete='username webauthn' autoCapitalize='none' spellCheck={false}
-            value={email} onChange={handleEmailChange} autoFocus placeholder='you@example.com' />
+            value={email} onChange={handleEmailChange} autoFocus placeholder={t('login.emailPlaceholder')} />
 
           {/* Always in the form, so a password manager can fill both at once; shown once it's needed. */}
           <div className={`login-password ${step === 'email' ? 'is-pending' : ''}`} aria-hidden={step === 'email'}>
-            <label className='login-label' htmlFor='loginPassword'>{step === 'signup' ? `Create a password (${PASSWORD_MIN_LENGTH}+ characters)` : 'Password'}</label>
+            <label className='login-label' htmlFor='loginPassword'>{step === 'signup' ? t('login.createPassword', { count: PASSWORD_MIN_LENGTH }) : t('login.password')}</label>
             <div className='login-password__field'>
               <input id='loginPassword' ref={passwordRef} className='input password' type={showPassword ? 'text' : 'password'} name='password'
                 autoComplete={step === 'signup' ? 'new-password' : 'current-password'} tabIndex={step === 'email' ? -1 : 0}
                 value={password} onChange={(e) => setPassword(e.target.value)} />
               {step !== 'email' && (
-                <button type='button' className='login-eye' aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} onClick={() => setShowPassword(v => !v)}>
-                  {showPassword ? 'Hide' : 'Show'}
+                <button type='button' className='login-eye' aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')} aria-pressed={showPassword} onClick={() => setShowPassword(v => !v)}>
+                  {showPassword ? t('alerts.hide') : t('alerts.show')}
                 </button>
               )}
             </div>
           </div>
 
           {step === 'signup' && county && !changingCounty && (
-            <p className='login-county'>Your {countyWord(countyState)}: <strong>{pickedLabel ?? (countyName ? fullCountyName(countyName, countyState) : county)}{!pickedLabel && stateName ? `, ${stateName}` : ''}</strong> <button type='button' className='login-link' onClick={() => setChangingCounty(true)}>change</button></p>
+            <p className='login-county'><Trans i18nKey='login.yourCounty' values={{ word: countyWord(countyState), place: pickedLabel ?? [countyName ? fullCountyName(countyName, countyState) : county, stateName].filter(Boolean).join(', ') }} components={{ b: <strong /> }} /> <button type='button' className='login-link' onClick={() => setChangingCounty(true)}>{t('login.change')}</button></p>
           )}
           {step === 'signup' && changingCounty && (
             <div className='login-county-pick'>
               <AreaPicker current={county ? { state: countyState, location: county } : null}
                 onPick={(area) => { setCounty(area.location); setPickedLabel(area.label); setChangingCounty(false) }} />
-              <button type='button' className='login-link' onClick={() => { setCounty(''); setPickedLabel(null); setChangingCounty(false) }}>Choose later</button>
+              <button type='button' className='login-link' onClick={() => { setCounty(''); setPickedLabel(null); setChangingCounty(false) }}>{t('login.chooseLater')}</button>
             </div>
           )}
 
           <button type='submit' className='pill-button pill-button--primary login-submit' disabled={isBusy || !email.trim()}>
-            {isBusy ? 'One moment…' : step === 'email' ? 'Continue' : step === 'login' ? 'Log in' : 'Create account'}
+            {isBusy ? t('login.busy') : step === 'email' ? t('common.continue') : step === 'login' ? t('nav.login') : t('login.create')}
           </button>
           {error && <p className='login-error' role='alert'>{error}</p>}
 
           {step === 'login' && (
             <div className='login-forgot'>
-              <span>Forgot your password?</span>
-              <button type='button' className='pill-button login-forgot__button' onClick={handleForgotPassword}>Email me a reset link</button>
+              <span>{t('login.forgot')}</span>
+              <button type='button' className='pill-button login-forgot__button' onClick={handleForgotPassword}>{t('login.emailReset')}</button>
             </div>
           )}
-          {step !== 'email' && <button type='button' className='login-link' onClick={() => { setUserExists(undefined); setPassword('') }}>Use a different email</button>}
+          {step !== 'email' && <button type='button' className='login-link' onClick={() => { setUserExists(undefined); setPassword('') }}>{t('login.differentEmail')}</button>}
         </form>
-        {step === 'email' && <p className='login-fine'>New? Enter your email and we’ll set you up. <Link to='/'>What is Bird Alert!?</Link></p>}
+        {step === 'email' && <p className='login-fine'><Trans i18nKey='login.fine' components={{ about: <Link to='/' /> }} /></p>}
       </section>
     </main>
   )

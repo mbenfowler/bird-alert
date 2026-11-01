@@ -1,3 +1,4 @@
+import { t } from './i18n'
 /** US states and DC, as eBird codes them (US-XX). */
 export const US_STATES: [string, string][] = [
   ['AL', 'Alabama'], ['AK', 'Alaska'], ['AZ', 'Arizona'], ['AR', 'Arkansas'], ['CA', 'California'], ['CO', 'Colorado'], ['CT', 'Connecticut'],
@@ -108,11 +109,12 @@ export const stateOfRegion = (region: string): string | null => {
  * municipalities ("Zapopan"), and in South Africa local municipalities ("City of Cape Town").
  * Everywhere else, an area.
  */
-const COUNTY_WORDS: Record<string, string> = { US: 'county', MX: 'municipality', ZA: 'municipality', GB: 'county', IE: 'county' }
-export const countyWord = (state: string) => COUNTY_WORDS[countryOf(state)] ?? 'area'
+const COUNTY_WORDS: Record<string, 'county' | 'municipality'> = { US: 'county', MX: 'municipality', ZA: 'municipality', GB: 'county', IE: 'county' }
+const countyKind = (state: string) => COUNTY_WORDS[countryOf(state)] ?? 'area'
+export const countyWord = (state: string) => t(`county.word.${countyKind(state)}`)
 
 /** The same word for a label: "County", "Area" or "Municipality". */
-export const countyLabel = (state: string) => { const w = countyWord(state); return w[0]!.toUpperCase() + w.slice(1) }
+export const countyLabel = (state: string) => t(`county.label.${countyKind(state)}`)
 
 /** "Hall County" in the US; "Toronto" or "Zapopan" elsewhere, where the name stands alone. */
-export const countyName = (name: string, state: string) => (countryOf(state) === 'US' ? `${name} County` : name)
+export const countyName = (name: string, state: string) => (countryOf(state) === 'US' ? t('county.us', { name }) : name)

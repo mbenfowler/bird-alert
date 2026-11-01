@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useParams } from 'react-router'
 import { confirmEmail, errorMessage } from '../../apiCalls'
 import './EmailConfirm.css'
+import { t } from '../../i18n'
 
 type Status = 'pending' | 'done' | 'failed'
 
@@ -21,17 +22,17 @@ const EmailConfirm = () => {
 
   return (
     <section>
-      {status === 'pending' && <h2>Confirming email...</h2>}
+      {status === 'pending' && <h2>{t('emailConfirm.confirming')}</h2>}
       {status === 'failed' &&
         <>
-          <h2>Something went wrong:</h2>
+          <h2>{t('common.wentWrong')}</h2>
           <p>{error}</p>
-          <Link to='/login'><button>Return home</button></Link>
+          <Link to='/login'><button>{t('common.returnHome')}</button></Link>
         </>}
       {status === 'done' &&
         <section className='confirm-section'>
-          <h2>Email successfully confirmed!</h2>
-          <Link to='/'><button>Continue</button></Link>
+          <h2>{t('emailConfirm.done')}</h2>
+          <Link to='/'><button>{t('common.continue')}</button></Link>
         </section>}
     </section>
   )

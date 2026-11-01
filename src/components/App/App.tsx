@@ -24,6 +24,8 @@ import Nav from '../Nav/Nav'
 import Home from '../Home/Home'
 import NotFound from '../NotFound/NotFound'
 import { LoadingState } from '../Loading/Loading'
+import { useTranslation } from 'react-i18next'
+import { applyLocale, noteLocale, t } from '../../i18n'
 
 // Everything off the main path loads on demand, keeping the first visit light.
 const Saved = lazy(() => import('../Saved/Saved'))
@@ -49,6 +51,11 @@ const App = () => {
   const session = useSessionQuery()
   // undefined while the cookie is being checked; null when logged out (or the API is unreachable).
   const user = session.isError ? null : session.data
+  // Bird names follow the person's language from the first render on; the page's words switch with it.
+  const locale = user?.locale ?? null
+  noteLocale(locale)
+  const { i18n } = useTranslation()
+  useEffect(() => { void applyLocale(locale) }, [locale])
 
   const navigate = useNavigate()
   const { pathname } = useLocation()
@@ -121,7 +128,7 @@ const App = () => {
       // Once per alert, however many times it is offered.
       if (push.path !== lastAlarmed) { lastAlarmed = push.path; soundTheAlarm(push.title) }
       // On iPhone the system banner is a dead end while the app is open, so this toast is the way in; give it time.
-      toast(`${push.title} · tap to view`, { toastId: push.path, position: 'top-center', autoClose: 20000, closeOnClick: true, onClick: () => navigateRef.current(push.path) })
+      toast(t('app.pushToast', { title: push.title }), { toastId: push.path, position: 'top-center', autoClose: 20000, closeOnClick: true, onClick: () => navigateRef.current(push.path) })
     }
     // The worker's own records and messages are instant where they work (desktop); the toast itself
     // comes only from the server, so it can never race a navigation to the same page.
@@ -184,8 +191,8 @@ const App = () => {
   const home = user?.location
     ? <Home />
     : <section id='init'>
-        <p id='initText'>Go to settings and set a location</p>
-        <Link to='/settings'><button className='navigate-button'>Go to settings</button></Link>
+        <p id='initText'>{t('app.setLocation')}</p>
+        <Link to='/settings'><button className='navigate-button'>{t('app.goSettings')}</button></Link>
       </section>
 
   return (
@@ -193,7 +200,8 @@ const App = () => {
       <Nav />
       <main className="App">
         <ConfirmNudge />
-        <div className='route-view' ref={routeView}>
+        {/* Keyed by language, so a change of language redraws every page in it. */}
+        <div className='route-view' ref={routeView} key={`${locale ?? ''}|${i18n.language}`}>
         <RouteError resetKey={pathname}>
         <Suspense fallback={<LoadingState />}>
         <Routes>

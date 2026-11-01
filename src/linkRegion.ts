@@ -1,5 +1,6 @@
 import { useSearchParams } from 'react-router'
 import { countyWord, stateName, stateOfRegion } from './usStates'
+import { t } from './i18n'
 
 /**
  * The county a page should show: the one its link names (`?region=US-ME-003`, as alert links do),
@@ -18,7 +19,7 @@ export const useLinkRegion = (user: { location: string; state: string }) => {
 
 /** "Hall" for the account's own county; "Aroostook, Maine" for another, so it's clear which. */
 export const countyLabel = (name: string | undefined, state: string, own: boolean) => {
-  if (!name) return own ? `your ${countyWord(state)}` : `that ${countyWord(state)}`
+  if (!name) return own ? t('range.yourCounty', { word: countyWord(state) }) : t('county.that', { word: countyWord(state) })
   if (own) return name
   const full = stateName(state)
   return full ? `${name}, ${full}` : name
