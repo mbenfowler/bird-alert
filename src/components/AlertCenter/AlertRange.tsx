@@ -4,17 +4,20 @@ import { errorMessage } from '../../apiCalls'
 import { useCurrentUser, useRegionsQuery } from '../../hooks/queries'
 import { usePatchUserMutation } from '../../hooks/mutations'
 import { useDistanceUnit } from '../../distance'
-import { countyName, countyWord } from '../../usStates'
+import { countyName, countyWord, stateName } from '../../usStates'
 import PlaceSearch from '../PlaceSearch/PlaceSearch'
 
-// The server's choices (lib/range.js), in miles; Canadians and Mexicans see them in kilometres.
-const RANGES = [0, 15, 30] as const
+// The server's choices (lib/range.js), in miles; outside the US they show in kilometres. -1 is the
+// whole state or province.
+const WHOLE_STATE = -1
+const RANGES = [0, 15, 30, WHOLE_STATE] as const
 
 /**
- * How far rare-bird and lifer alerts reach past the county line, and the spot it's measured from.
- * A bird one county over is one you could still go for, or one coming your way; the alerts say
- * how far it is. Watch-list alerts stay in the county. Below it, whether rare-bird alerts wait for
- * proof. Shown whether or not push is on here, since both settings shape the emails too.
+ * How far alerts reach past the county line (watch list, rare birds and lifers alike): a set
+ * distance from a home spot, or the whole state or province. A bird one county over is one you
+ * could still go for, or one coming your way; the alerts say where it is. Below it, whether
+ * rare-bird alerts wait for proof. Shown whether or not push is on here, since both settings shape
+ * the emails too.
  */
 const AlertRange = () => {
   const user = useCurrentUser()
@@ -24,19 +27,24 @@ const AlertRange = () => {
   const [choosing, setChoosing] = useState(false)
   const county = regions.data?.find(r => r.code === user.location)?.name
   const range = user.range_mi ?? 30
-  const label = (mi: number) => (mi === 0 ? 'Just my county' : unit === 'km' ? `${Math.round(mi * 1.609344 / 5) * 5} km` : `${mi} mi`)
+  const state = stateName(user.state)
+  // Where the home area already is the whole province (no counties there), there's nothing wider to offer.
+  const choices = RANGES.filter(mi => mi !== WHOLE_STATE || (user.location ?? '').split('-').length > 2)
+  const label = (mi: number) => mi === 0 ? 'Just my county'
+    : mi === WHOLE_STATE ? `All of ${state ?? 'my state'}`
+    : unit === 'km' ? `${Math.round(mi * 1.609344 / 5) * 5} km` : `${mi} mi`
   const ownSpot = user.home_lat != null && user.home_lng != null
 
   return (
     <div className='notification-group alert-range'>
       <div className='notification'>
         <div className='notification__text'>
-          <span className='notification__label' id='alert-range-label'>How far rare birds and lifers reach</span>
-          <p className='notification__hint'>Rare-bird and lifer alerts, push and email, also cover sightings this far from home, past the county line, and say how far away they are. Watch-list alerts stay in your county.</p>
+          <span className='notification__label' id='alert-range-label'>How far your alerts reach</span>
+          <p className='notification__hint'>Watch-list, rare-bird and lifer alerts, push and email, also cover sightings this far from home, and say where they are.</p>
         </div>
       </div>
       <fieldset className='timing alert-range__choices' aria-labelledby='alert-range-label' disabled={patch.isPending}>
-        {RANGES.map(mi => (
+        {choices.map(mi => (
           <label key={mi} className={`timing__option ${range === mi ? 'is-selected' : ''}`}>
             <input type='radio' name='range_mi' value={mi} checked={range === mi} onChange={() => patch.mutate({ range_mi: mi })} />
             {label(mi)}
