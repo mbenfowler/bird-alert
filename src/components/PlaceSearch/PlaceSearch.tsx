@@ -5,6 +5,7 @@ import { usePlaceSearchQuery, useRegionsQuery } from '../../hooks/queries'
 import type { PlanPoint } from '../../routePlan'
 import './PlaceSearch.css'
 import { countyName } from '../../usStates'
+import { t } from '../../i18n'
 
 export interface Suggestion { point: PlanPoint; detail: string }
 
@@ -46,7 +47,7 @@ const PlaceSearch = ({ state, label, placeholder, onPick, suggestions = [], sugg
         <SearchIcon className='place-search__icon' />
         <input id={id} className='place-search__input' type='search' placeholder={placeholder} autoComplete='off' enterKeyHint='search' autoFocus={autoFocus}
           value={text} onChange={(e) => setText(e.target.value)} />
-        {text && <button type='button' className='place-search__clear' aria-label='Clear search' onClick={() => { setText(''); setSubmitted('') }}><CloseIcon /></button>}
+        {text && <button type='button' className='place-search__clear' aria-label={t('common.clearSearch')} onClick={() => { setText(''); setSubmitted('') }}><CloseIcon /></button>}
       </form>
       {!searching && suggestions.length > 0 && (
         <div className='place-search__group'>
@@ -64,11 +65,11 @@ const PlaceSearch = ({ state, label, placeholder, onPick, suggestions = [], sugg
         <div className='place-search__group' aria-live='polite'>
           {hotspots.length > 0 && (
             <>
-              <p className='place-search__label'>eBird hotspots</p>
+              <p className='place-search__label'>{t('placeSearch.hotspots')}</p>
               <ul className='place-search__results'>
                 {hotspots.map(h => {
                   const where = county(h.county)
-                  const detail = [where && countyName(where, state), h.species !== null && `${h.species} species all time`].filter(Boolean).join(' · ')
+                  const detail = [where && countyName(where, state), h.species !== null && t('placeSearch.speciesAllTime', { count: h.species })].filter(Boolean).join(' · ')
                   return (
                     <li key={h.locId}>
                       <button type='button' onClick={() => pick({ locId: h.locId, name: h.name, lat: h.lat, lng: h.lng, note: detail || null })}>
@@ -82,7 +83,7 @@ const PlaceSearch = ({ state, label, placeholder, onPick, suggestions = [], sugg
           )}
           {addresses.length > 0 && (
             <>
-              <p className='place-search__label'>Towns and addresses</p>
+              <p className='place-search__label'>{t('placeSearch.towns')}</p>
               <ul className='place-search__results'>
                 {addresses.map(a => (
                   <li key={`${a.lat},${a.lng}`}>
@@ -92,9 +93,9 @@ const PlaceSearch = ({ state, label, placeholder, onPick, suggestions = [], sugg
               </ul>
             </>
           )}
-          {search.isFetching && <p className='place-search__hint'>Searching…</p>}
-          {!search.isFetching && wantsAddresses && !hotspots.length && !addresses.length && <p className='place-search__hint'>Nothing found for “{submitted}”.</p>}
-          {!wantsAddresses && <p className='place-search__hint'>Press Enter to search towns and addresses too.</p>}
+          {search.isFetching && <p className='place-search__hint'>{t('common.searching')}</p>}
+          {!search.isFetching && wantsAddresses && !hotspots.length && !addresses.length && <p className='place-search__hint'>{t('placeSearch.nothing', { text: submitted })}</p>}
+          {!wantsAddresses && <p className='place-search__hint'>{t('placeSearch.pressEnter')}</p>}
         </div>
       )}
     </div>

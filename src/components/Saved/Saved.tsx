@@ -7,6 +7,7 @@ import { errorMessage } from '../../apiCalls'
 import { useCurrentUser, useObservationsQuery, useSavedBirdsQuery, useSeenCodes } from '../../hooks/queries'
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll'
 import './Saved.css'
+import { t } from '../../i18n'
 
 const STEP = 12
 const HIDE_SEEN_KEY = 'bird-alert:hide-seen'
@@ -45,26 +46,26 @@ const Saved = () => {
     return (
         <section id='birdsInArea'>
             <ListTabs lifeCount={seen.codes.size} />
-            <h2 className='fredericka list-heading'>Birds on your watch list</h2>
+            <h2 className='fredericka list-heading'>{t('saved.title')}</h2>
             {seenCount > 0 && (
                 <label className='list-filter'>
                     <input className='switch switch--small' type='checkbox' checked={hideSeen} onChange={(e) => { setHideSeen(e.target.checked); setLimit(STEP) }} />
-                    Hide the {seenCount} I’ve seen
+                    {t('saved.hideSeen', { count: seenCount })}
                 </label>
             )}
             {saved.isPending
-                ? <SkeletonList count={4} label='Loading your watch list…' />
+                ? <SkeletonList count={4} label={t('saved.loading')} />
                 : savedBirds.length
                     ? <>
                         <BirdsList birds={visible} />
                         <div ref={sentinelRef} className='list-sentinel' aria-hidden='true'></div>
                         {hasMore
-                            ? <button type='button' className='load-more' onClick={() => setLimit(current => current + STEP)}>Show more ({visible.length} of {savedBirds.length})</button>
-                            : <p className='list-end'>{savedBirds.length} bird{savedBirds.length === 1 ? '' : 's'} on your watch list{hideSeen ? ' you haven’t seen yet' : ''}.</p>}
+                            ? <button type='button' className='load-more' onClick={() => setLimit(current => current + STEP)}>{t('common.showMore', { shown: visible.length, count: savedBirds.length })}</button>
+                            : <p className='list-end'>{hideSeen ? t('saved.endUnseen', { count: savedBirds.length }) : t('saved.end', { count: savedBirds.length })}</p>}
                       </>
                     : hideSeen && allSaved.length
-                        ? <p className='list-end'>You’ve seen every bird on your watch list.</p>
-                        : <p className='info-text'>You don't have any birds on your watch list yet. Go to the home page to add some!</p>}
+                        ? <p className='list-end'>{t('saved.allSeen')}</p>
+                        : <p className='info-text'>{t('saved.empty')}</p>}
         </section>
     )
 }

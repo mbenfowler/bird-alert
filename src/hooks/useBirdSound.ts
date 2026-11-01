@@ -3,6 +3,7 @@ import { toast } from 'react-toastify'
 import { getBirdSound } from '../apiCalls'
 import { queryClient } from '../queryClient'
 import type { BirdSound } from '../types'
+import { t } from '../i18n'
 
 export type SoundState = 'idle' | 'loading' | 'playing' | 'paused' | 'none'
 
@@ -53,20 +54,20 @@ export const useBirdSound = (code: string, name: string) => {
       const found = sound ?? await load()
       if (!found.found || !found.url) {
         setState('none')
-        toast.info(`No recording of ${name} on xeno-canto yet.`, { position: 'bottom-center' })
+        toast.info(t('sound.noneYet', { name }), { position: 'bottom-center' })
         return
       }
       const next = new Audio(found.url)
       next.preload = 'auto'
       next.onended = () => setState('idle')
-      next.onerror = () => { setState('idle'); toast.error('The recording could not be played.', { position: 'bottom-center' }) }
+      next.onerror = () => { setState('idle'); toast.error(t('sound.failed'), { position: 'bottom-center' }) }
       audioRef.current = next
       takeOver(next, () => { next.pause(); setState('paused') })
       await next.play()
       setState('playing')
     } catch (error) {
       setState('idle')
-      toast.error(error instanceof Error && error.message ? error.message : 'The recording could not be played.', { position: 'bottom-center' })
+      toast.error(error instanceof Error && error.message ? error.message : t('sound.failed'), { position: 'bottom-center' })
     }
   }, [state, sound, load, name])
 

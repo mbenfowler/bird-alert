@@ -1,5 +1,6 @@
 import { useSessionQuery } from './hooks/queries'
 import { countryOf } from './usStates'
+import { number, t } from './i18n'
 
 /** Outside the US distances read in kilometres; in the US, and for anyone signed out, in miles. */
 export type DistanceUnit = 'mi' | 'km'
@@ -15,10 +16,10 @@ const KM_PER_MILE = 1.609344
 const inUnit = (miles: number, unit: DistanceUnit) => (unit === 'km' ? Math.round(miles * KM_PER_MILE * 10) / 10 : miles)
 
 /** "4.8 mi" or "7.7 km". */
-export const shortDistance = (miles: number, unit: DistanceUnit) => `${inUnit(miles, unit)} ${unit}`
+export const shortDistance = (miles: number, unit: DistanceUnit) => t(`distance.short.${unit}`, { n: number(inUnit(miles, unit)) })
 
 /** "4.8 miles" or "7.7 kilometres". */
-export const longDistance = (miles: number, unit: DistanceUnit) => `${inUnit(miles, unit)} ${unit === 'km' ? 'kilometres' : 'miles'}`
+export const longDistance = (miles: number, unit: DistanceUnit) => t(`distance.long.${unit}`, { count: inUnit(miles, unit), n: number(inUnit(miles, unit)) })
 
 /** "miles" or "kilometres", for prose like "within a few miles". */
-export const unitWord = (unit: DistanceUnit) => (unit === 'km' ? 'kilometres' : 'miles')
+export const unitWord = (unit: DistanceUnit) => t(`distance.word.${unit}`)

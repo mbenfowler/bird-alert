@@ -12,6 +12,7 @@ import { isIOS, isStandalone } from '../../install'
 import InstallSteps from '../InstallSteps/InstallSteps'
 import { popStar } from '../Pop/pop'
 import './Onboarding.css'
+import { t } from '../../i18n'
 
 const TILES = 12
 type Step = 'county' | 'birds' | 'alerts' | 'lifelist'
@@ -77,10 +78,10 @@ const Onboarding = () => {
     alert_digest_email_enabled: false
   })
   const rows: { field: keyof typeof prefs; label: string }[] = [
-    { field: 'push_watchlist_enabled', label: 'Birds you starred' },
-    { field: 'push_first_of_season', label: 'First migrants of the season' },
-    { field: 'push_notable_enabled', label: 'Rarities near you' },
-    { field: 'alert_digest_email_enabled', label: 'A morning email instead' }
+    { field: 'push_watchlist_enabled', label: t('onboard.rowStarred') },
+    { field: 'push_first_of_season', label: t('onboard.rowFirst') },
+    { field: 'push_notable_enabled', label: t('onboard.rowRare') },
+    { field: 'alert_digest_email_enabled', label: t('onboard.rowEmail') }
   ]
   const pushSupported = push.state !== 'unsupported'
   const saveAlerts = () => patch.mutate(prefs as UserPatch, { onSettled: () => setStep('lifelist') })
@@ -100,10 +101,10 @@ const Onboarding = () => {
 
   const dots = (
     <div className='onboard__top'>
-      <span className='onboard__dots' aria-label={`Step ${steps.indexOf(step) + 1} of ${steps.length}`}>
+      <span className='onboard__dots' aria-label={t('onboard.step', { n: steps.indexOf(step) + 1, count: steps.length })}>
         {steps.map(s => <span key={s} className={s === step ? 'is-on' : ''} />)}
       </span>
-      <button type='button' className='onboard__skip' onClick={() => finish('/')}>Skip</button>
+      <button type='button' className='onboard__skip' onClick={() => finish('/')}>{t('onboard.skip')}</button>
     </div>
   )
 
@@ -114,11 +115,11 @@ const Onboarding = () => {
 
         {step === 'county' && (
           <>
-            <h1 className='fredericka onboard__title'>Where do you bird?</h1>
+            <h1 className='fredericka onboard__title'>{t('area.title')}</h1>
             {picked ? (
               <p className='onboard__lede onboard__picked'>
                 <strong>{picked.label}</strong>{' '}
-                <button type='button' className='link-button link-text' onClick={() => setPicked(null)}>Change</button>
+                <button type='button' className='link-button link-text' onClick={() => setPicked(null)}>{t('common.change')}</button>
               </p>
             ) : (
               <div className='onboard__pick'>
@@ -127,15 +128,15 @@ const Onboarding = () => {
             )}
             {patch.isError && <p className='onboard__lede' role='alert'>{errorMessage(patch.error)}</p>}
             <button type='button' className='pill-button pill-button--primary onboard__next' disabled={!picked || patch.isPending}
-              onClick={() => picked && patch.mutate({ state: picked.state, location: picked.location }, { onSuccess: () => setStep('birds') })}>Next</button>
+              onClick={() => picked && patch.mutate({ state: picked.state, location: picked.location }, { onSuccess: () => setStep('birds') })}>{t('onboard.next')}</button>
           </>
         )}
 
         {step === 'birds' && (
           <>
-            <h1 className='fredericka onboard__title'>Tap the birds you’d love to see</h1>
-            <p className='onboard__lede'>We’ll tell you when they’re around.</p>
-            {fromState && tiles.length > 0 && <p className='onboard__lede'>Nothing has been reported in your {countyWord(user.state)} lately, so these are from across {stateName(user.state) ?? 'your state'}.</p>}
+            <h1 className='fredericka onboard__title'>{t('onboard.birdsTitle')}</h1>
+            <p className='onboard__lede'>{t('onboard.birdsLede')}</p>
+            {fromState && tiles.length > 0 && <p className='onboard__lede'>{t('onboard.fromState', { word: countyWord(user.state), state: stateName(user.state) ?? t('onboard.yourState') })}</p>}
             {tiles.length ? (
               <ul className='onboard__tiles'>
                 {tiles.map(({ code, tag, bird }) => {
@@ -146,29 +147,29 @@ const Onboarding = () => {
                         <img src={bird!.birdImg!} alt='' loading='lazy' />
                         {on && <span className='onboard__check' aria-hidden='true'>★</span>}
                         <span className='onboard__name'>{bird!.comName}</span>
-                        {tag && <span className='onboard__tag'>{tag}</span>}
+                        {tag && <span className='onboard__tag'>{tag === 'Notable this week' ? t('onboard.tagNotable') : t('onboard.tagArriving')}</span>}
                       </button>
                     </li>
                   )
                 })}
               </ul>
-            ) : <p className='onboard__lede'>{recent.isPending || (quiet && stateRecent.isPending && Boolean(user.state)) || (candidates.length > 0 && birds.isPending) ? 'Finding birds near you…' : 'No recent reports to show yet. You can star birds from the home page any time.'}</p>}
+            ) : <p className='onboard__lede'>{recent.isPending || (quiet && stateRecent.isPending && Boolean(user.state)) || (candidates.length > 0 && birds.isPending) ? t('onboard.finding') : t('onboard.noReports')}</p>}
             <button type='button' className='pill-button pill-button--primary onboard__next onboard__next--stick' disabled={saving} onClick={() => { void saveBirds() }}>
-              {saving ? 'Saving…' : starred.size ? `Next (${starred.size})` : 'Next'}
+              {saving ? t('onboard.saving') : starred.size ? t('onboard.nextCount', { count: starred.size }) : t('onboard.next')}
             </button>
           </>
         )}
 
         {step === 'alerts' && (
           <>
-            <h1 className='fredericka onboard__title'>How should we tell you?</h1>
+            <h1 className='fredericka onboard__title'>{t('onboard.alertsTitle')}</h1>
             {/* On iPhone, Safari only offers notifications once the app is on the Home Screen, so say that before anything else. */}
             {isIOS() && !isStandalone()
               ? <InstallSteps />
               : pushSupported && (push.state === 'on'
-                  ? <p className='onboard__ok'>✓ Notifications are on for this device</p>
+                  ? <p className='onboard__ok'>{t('onboard.pushOn')}</p>
                   : <button type='button' className='pill-button onboard__push' onClick={() => { void push.enable() }} disabled={push.state === 'busy' || push.state === 'denied'}>
-                      🔔 {push.state === 'denied' ? 'Notifications are blocked in your browser' : push.state === 'busy' ? 'Turning on…' : 'Turn on notifications'}
+                      🔔 {push.state === 'denied' ? t('onboard.pushBlocked') : push.state === 'busy' ? t('pushAsk.turningOn') : t('onboard.pushTurnOn')}
                     </button>)}
             <ul className='onboard__rows'>
               {rows.map(({ field, label }) => (
@@ -180,39 +181,39 @@ const Onboarding = () => {
                 </li>
               ))}
             </ul>
-            <button type='button' className='pill-button pill-button--primary onboard__next' disabled={patch.isPending} onClick={saveAlerts}>Next</button>
+            <button type='button' className='pill-button pill-button--primary onboard__next' disabled={patch.isPending} onClick={saveAlerts}>{t('onboard.next')}</button>
           </>
         )}
 
         {step === 'lifelist' && (
           <>
-            <h1 className='fredericka onboard__title'>Do you keep an eBird life list?</h1>
+            <h1 className='fredericka onboard__title'>{t('onboard.lifeTitle')}</h1>
             {keeps === null && (
               <div className='onboard__yesno'>
-                <button type='button' className='pill-button pill-button--primary' onClick={() => setKeeps(true)}>Yes</button>
-                <button type='button' className='pill-button' onClick={done}>No</button>
+                <button type='button' className='pill-button pill-button--primary' onClick={() => setKeeps(true)}>{t('common.yes')}</button>
+                <button type='button' className='pill-button' onClick={done}>{t('common.no')}</button>
               </div>
             )}
             {keeps && imported === null && (
               <>
-                <p className='onboard__lede'>On eBird: My eBird → Life List → Download (CSV). Then choose the file.</p>
+                <p className='onboard__lede'>{t('onboard.lifeHow')}</p>
                 <input ref={fileRef} type='file' accept='.csv,text/csv' className='visually-hidden' onChange={(e) => { void onFile(e) }} />
-                <button type='button' className='pill-button pill-button--primary onboard__next' disabled={importer.isPending} onClick={() => fileRef.current?.click()}>{importer.isPending ? 'Importing…' : 'Choose file'}</button>
+                <button type='button' className='pill-button pill-button--primary onboard__next' disabled={importer.isPending} onClick={() => fileRef.current?.click()}>{importer.isPending ? t('lifeList.importing') : t('onboard.chooseFile')}</button>
                 {importer.isError && <p className='onboard__error' role='alert'>{errorMessage(importer.error)}</p>}
-                <button type='button' className='onboard__later' onClick={done}>I’ll do it later</button>
+                <button type='button' className='onboard__later' onClick={done}>{t('onboard.later')}</button>
               </>
             )}
             {keeps && imported !== null && (
               <>
-                <p className='onboard__ok'>✓ {imported} {imported === 1 ? 'bird' : 'birds'} on your life list</p>
+                <p className='onboard__ok'>{t('onboard.imported', { count: imported })}</p>
                 {imported >= 10 && (
                   liferOn
-                    ? <p className='onboard__ok'>✓ We’ll tell you when a possible lifer is nearby</p>
-                    : <p className='onboard__lifer'>Want a heads-up when a possible lifer is nearby?
-                        <button type='button' className='pill-button' onClick={() => patch.mutate({ push_lifer_enabled: true }, { onSuccess: () => setLiferOn(true) })}>Turn on</button>
+                    ? <p className='onboard__ok'>{t('onboard.liferOn')}</p>
+                    : <p className='onboard__lifer'>{t('onboard.liferAsk')}
+                        <button type='button' className='pill-button' onClick={() => patch.mutate({ push_lifer_enabled: true }, { onSuccess: () => setLiferOn(true) })}>{t('onboard.turnOn')}</button>
                       </p>
                 )}
-                <button type='button' className='pill-button pill-button--primary onboard__next' onClick={done}>Done</button>
+                <button type='button' className='pill-button pill-button--primary onboard__next' onClick={done}>{t('route.done')}</button>
               </>
             )}
           </>

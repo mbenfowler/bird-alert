@@ -1,4 +1,5 @@
 import './Loading.css'
+import { t } from '../../i18n'
 
 interface LoadingStateProps {
   label?: string
@@ -7,7 +8,7 @@ interface LoadingStateProps {
 }
 
 /** A ring and a label, centred in the space the content will take. */
-export const LoadingState = ({ label = 'Loading…', variant = 'block' }: LoadingStateProps) => (
+export const LoadingState = ({ label = t('loading.default'), variant = 'block' }: LoadingStateProps) => (
   <div className={`loading loading--${variant}`} role='status' aria-live='polite'>
     <span className='loading__ring' aria-hidden='true'></span>
     <span className={variant === 'inline' ? 'visually-hidden' : 'loading__label'}>{label}</span>
@@ -33,7 +34,7 @@ export const SkeletonCard = () => (
   </div>
 )
 
-export const SkeletonList = ({ count = 3, label = 'Loading birds…' }: { count?: number; label?: string }) => (
+export const SkeletonList = ({ count = 3, label = t('loading.birds') }: { count?: number; label?: string }) => (
   <div className='skeleton-list' role='status' aria-live='polite' aria-busy='true'>
     <span className='visually-hidden'>{label}</span>
     {Array.from({ length: count }, (_, index) => <SkeletonCard key={index} />)}

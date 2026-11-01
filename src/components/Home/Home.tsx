@@ -9,6 +9,8 @@ import { SEARCH_MIN_LENGTH, useBirdSearchQuery, useCurrentUser, useInfiniteBirds
 import { useDebouncedValue } from '../../hooks/useDebouncedValue'
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll'
 import './Home.css'
+import { t } from '../../i18n'
+import { Trans } from 'react-i18next'
 
 const PAGE_SIZE = 12
 const REGION_ONLY_KEY = 'bird-alert-search-region-only'
@@ -50,15 +52,15 @@ const Home = () => {
     const shownResults = regionOnly ? inRegion : allResults
 
     const renderSearch = () => {
-        if (rawTerm.length < SEARCH_MIN_LENGTH) return <p className='list-note'>Keep typing to search {regionOnly ? `birds in ${regionName ?? 'your region'}` : 'every bird we know about'}.</p>
+        if (rawTerm.length < SEARCH_MIN_LENGTH) return <p className='list-note'>{regionOnly ? t('home.keepTypingRegion', { region: regionName ?? t('home.yourRegion') }) : t('home.keepTyping')}</p>
         if (results.isError) return <ErrorMessage networkError={errorMessage(results.error)} />
-        if (!results.data) return <SkeletonList count={3} label='Searching…' />
+        if (!results.data) return <SkeletonList count={3} label={t('common.searching')} />
         if (!shownResults.length) {
             return (
                 <p className='list-note'>
                     {regionOnly && allResults.length
-                        ? <>No birds in {regionName ?? 'your region'} match "{rawTerm}". {allResults.length} match elsewhere: <button type='button' className='link-button list-note__link' onClick={() => setRegionOnly(false)}>show all birds</button>.</>
-                        : <>No birds match "{rawTerm}".</>}
+                        ? <Trans i18nKey='home.noneRegion' count={allResults.length} values={{ region: regionName ?? t('home.yourRegion'), text: rawTerm, count: allResults.length }} components={{ all: <button type='button' className='link-button list-note__link' onClick={() => setRegionOnly(false)} /> }} />
+                        : t('home.none', { text: rawTerm })}
                 </p>
             )
         }
@@ -66,8 +68,8 @@ const Home = () => {
             <>
                 <p className='list-note'>
                     {regionOnly
-                        ? `${shownResults.length} match${shownResults.length === 1 ? '' : 'es'} in ${regionName ?? 'your region'}${allResults.length > shownResults.length ? `, ${allResults.length - shownResults.length} more elsewhere` : ''}.`
-                        : `${shownResults.length} match${shownResults.length === 1 ? '' : 'es'}. ${inRegion.length} of them ${inRegion.length === 1 ? 'is' : 'are'} in your area.`}
+                        ? (allResults.length > shownResults.length ? t('home.matchesRegionMore', { count: shownResults.length, region: regionName ?? t('home.yourRegion'), more: allResults.length - shownResults.length }) : t('home.matchesRegion', { count: shownResults.length, region: regionName ?? t('home.yourRegion') }))
+                        : `${t('home.matches', { count: shownResults.length })} ${t('home.inArea', { count: inRegion.length })}`}
                 </p>
                 <BirdsList birds={shownResults} />
             </>
@@ -78,17 +80,17 @@ const Home = () => {
         if (speciesList.isError) return <ErrorMessage networkError={errorMessage(speciesList.error)} />
         if (birdPages.isError) return <ErrorMessage networkError={errorMessage(birdPages.error)} />
         if (speciesList.isPending || (codes.length > 0 && birdPages.isPending)) return <SkeletonList count={6} />
-        if (!codes.length) return <p className='list-note'>eBird has no species recorded for this region yet.</p>
+        if (!codes.length) return <p className='list-note'>{t('home.noSpecies')}</p>
         return (
             <>
                 <BirdsList birds={birds} />
-                {birdPages.isFetchingNextPage && <SkeletonList count={3} label='Loading more birds…' />}
+                {birdPages.isFetchingNextPage && <SkeletonList count={3} label={t('home.loadingMore')} />}
                 <div ref={sentinelRef} className='list-sentinel' aria-hidden='true'></div>
                 {birdPages.hasNextPage
                     ? <button type='button' className='load-more' onClick={loadMore} disabled={birdPages.isFetchingNextPage}>
-                        {birdPages.isFetchingNextPage ? <LoadingState variant='inline' label='Loading more birds' /> : `Show more (${birds.length} of ${codes.length})`}
+                        {birdPages.isFetchingNextPage ? <LoadingState variant='inline' label={t('home.loadingMoreShort')} /> : t('common.showMore', { shown: birds.length, count: codes.length })}
                       </button>
-                    : <p className='list-end'>That's all {codes.length} birds reported in your area.</p>}
+                    : <p className='list-end'>{t('home.end', { count: codes.length })}</p>}
             </>
         )
     }
@@ -101,18 +103,18 @@ const Home = () => {
             <section id='birdsInArea'>
                 <div className='search'>
                     <SearchIcon className='search__icon' />
-                    <input id='birdSearch' type='search' placeholder='Search birds by name' aria-label='Search birds by name' autoComplete='off' value={search} onChange={(e) => setSearch(e.target.value)} />
-                    {search && <button type='button' className='search__clear' aria-label='Clear search' onClick={() => setSearch('')}><CloseIcon /></button>}
+                    <input id='birdSearch' type='search' placeholder={t('home.search')} aria-label={t('home.search')} autoComplete='off' value={search} onChange={(e) => setSearch(e.target.value)} />
+                    {search && <button type='button' className='search__clear' aria-label={t('common.clearSearch')} onClick={() => setSearch('')}><CloseIcon /></button>}
                 </div>
                 {/* The main list is always the region's birds; this scope switch only applies to a search. */}
                 {isSearching && (
                     <label className='search-scope'>
                         <input className='switch switch--small' type='checkbox' id='searchRegionOnly' checked={regionOnly} onChange={(e) => setRegionOnly(e.target.checked)} />
-                        <span>Only birds in {regionName ?? 'my region'}</span>
+                        <span>{t('home.onlyRegion', { region: regionName ?? t('home.myRegion') })}</span>
                     </label>
                 )}
                 <h2 className='fredericka list-heading'>
-                    {isSearching ? 'Search results' : <>Birds in your area: <span className='list-heading__region'>{regionLabel}</span></>}
+                    {isSearching ? t('home.results') : <Trans i18nKey='home.title' values={{ region: regionLabel }} components={{ region: <span className='list-heading__region' /> }} />}
                 </h2>
                 {isSearching ? renderSearch() : renderBirds()}
             </section>

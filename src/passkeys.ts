@@ -1,6 +1,7 @@
 import { browserSupportsWebAuthn, browserSupportsWebAuthnAutofill, startAuthentication, startRegistration, WebAuthnAbortService } from '@simplewebauthn/browser'
 import { passkeyLogin, passkeyLoginOptions, passkeyRegister, passkeyRegisterOptions } from './apiCalls'
 import type { User } from './types'
+import { t } from './i18n'
 
 /** What the device calls its own lock, for the prompts: "Face ID" reads better than "a passkey". */
 export const unlockName = () => {
@@ -8,9 +9,12 @@ export const unlockName = () => {
   if (/iPhone|iPad/.test(ua)) return 'Face ID'
   if (/Macintosh/.test(ua)) return 'Touch ID'
   if (/Windows/.test(ua)) return 'Windows Hello'
-  if (/Android/.test(ua)) return 'your fingerprint'
-  return 'your device’s lock'
+  if (/Android/.test(ua)) return t('passkeys.fingerprint')
+  return t('passkeys.deviceLock')
 }
+
+/** True when there's no product name for the device's lock, only the general words. */
+export const isDeviceLock = (name: string) => name === t('passkeys.deviceLock')
 
 export const passkeysSupported = () => browserSupportsWebAuthn()
 

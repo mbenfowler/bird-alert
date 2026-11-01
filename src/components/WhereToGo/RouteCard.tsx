@@ -4,6 +4,7 @@ import { ChevronIcon, CloseIcon, DragIcon, LocateIcon } from '../Icons/Icons'
 import { longDistance, shortDistance, useDistanceUnit, type DistanceUnit } from '../../distance'
 import { MAX_ROUTE_STOPS, move, roadKm, samePlace, shortestOrder, type PlanPoint } from '../../routePlan'
 import type { GoPlace } from '../../types'
+import { number, t } from '../../i18n'
 
 type Leg = { minutes: number; miles: number } | null
 
@@ -37,8 +38,9 @@ interface RouteCardProps {
   onShare?: () => void
 }
 
-const birdsWord = (n: number) => `${n % 1 === 0 ? n : n.toFixed(1)} ${n === 1 ? 'bird' : 'birds'}`
-const legText = (leg: Leg, unit: DistanceUnit) => leg ? `↓ ${leg.minutes} min drive · ${shortDistance(leg.miles, unit)}` : '↓ drive'
+const birdsWord = (n: number) => t('route.birds', { count: n, n: number(n, { maximumFractionDigits: 1 }) })
+const legText = (leg: Leg, unit: DistanceUnit) => leg ? t('route.leg', { minutes: leg.minutes, distance: shortDistance(leg.miles, unit) }) : t('route.legUnknown')
+const expectedText = (place: GoPlace) => place.bestTime ? t('route.expectedBest', { birds: birdsWord(place.expected), best: place.bestTime }) : t('route.expected', { birds: birdsWord(place.expected) })
 
 /**
  * The morning route: suggested from the watch list, or the person's own. Editing adds stops from
@@ -100,13 +102,13 @@ const RouteCard = (props: RouteCardProps) => {
   const suggestions: Suggestion[] = places
     .filter(p => p.isHotspot !== false && p.lat !== null && p.lng !== null && !stops.some(s => s.locId === p.locId))
     .slice(0, 5)
-    .map(p => ({ point: { locId: p.locId, name: p.locName ?? p.locId, lat: p.lat!, lng: p.lng! }, detail: `${birdsWord(p.expected)} expected${p.bestTime ? ` · best ${p.bestTime}` : ''}` }))
+    .map(p => ({ point: { locId: p.locId, name: p.locName ?? p.locId, lat: p.lat!, lng: p.lng! }, detail: expectedText(p) }))
 
   const locate = () => {
     if (!('geolocation' in navigator)) { setLocating('failed'); return }
     setLocating('busy')
     navigator.geolocation.getCurrentPosition(
-      (pos) => { setLocating('idle'); setSettingStart(false); onStart({ locId: null, name: 'My location', lat: Math.round(pos.coords.latitude * 1e4) / 1e4, lng: Math.round(pos.coords.longitude * 1e4) / 1e4 }) },
+      (pos) => { setLocating('idle'); setSettingStart(false); onStart({ locId: null, name: t('route.myLocation'), lat: Math.round(pos.coords.latitude * 1e4) / 1e4, lng: Math.round(pos.coords.longitude * 1e4) / 1e4 }) },
       () => setLocating('failed'),
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 }
     )
@@ -117,27 +119,27 @@ const RouteCard = (props: RouteCardProps) => {
 
   return (
     <div className={`go__route ${editing ? 'is-editing' : ''}`}>
-      <h2 className='fredericka go__route-head'>{custom ? 'Your route' : 'A morning route'}</h2>
+      <h2 className='fredericka go__route-head'>{custom ? t('route.yours') : t('route.suggested')}</h2>
 
       {(start || editing) && (
         <div className='go__start'>
           <span className='go__start-dot' aria-hidden='true' />
           <span className='go__start-text'>
-            <span className='go__start-label'>Start</span>
-            <strong>{start ? start.name : 'Wherever you are when you open Maps'}</strong>
+            <span className='go__start-label'>{t('route.start')}</span>
+            <strong>{start ? start.name : t('route.startAnywhere')}</strong>
           </span>
-          {editing && !settingStart && <button type='button' className='go__link-button' onClick={() => setSettingStart(true)}>{start ? 'Change' : 'Set'}</button>}
-          {editing && start && !settingStart && <button type='button' className='go__icon-button' aria-label='Clear the starting point' onClick={() => onStart(null)}><CloseIcon /></button>}
+          {editing && !settingStart && <button type='button' className='go__link-button' onClick={() => setSettingStart(true)}>{start ? t('common.change') : t('route.set')}</button>}
+          {editing && start && !settingStart && <button type='button' className='go__icon-button' aria-label={t('route.clearStart')} onClick={() => onStart(null)}><CloseIcon /></button>}
         </div>
       )}
       {editing && settingStart && (
         <div className='go__start-picker'>
-          <PlaceSearch state={state} label='Starting point' placeholder='Town, address or hotspot' autoFocus onPick={(p) => { onStart(p); setSettingStart(false) }} />
+          <PlaceSearch state={state} label={t('route.startingPoint')} placeholder={t('route.startPlaceholder')} autoFocus onPick={(p) => { onStart(p); setSettingStart(false) }} />
           <div className='go__start-actions'>
-            <button type='button' className='pill-button' onClick={locate} disabled={locating === 'busy'}><LocateIcon className='go__btn-icon' />{locating === 'busy' ? 'Finding you…' : 'Use my location'}</button>
-            <button type='button' className='go__link-button' onClick={() => setSettingStart(false)}>Cancel</button>
+            <button type='button' className='pill-button' onClick={locate} disabled={locating === 'busy'}><LocateIcon className='go__btn-icon' />{locating === 'busy' ? t('route.finding') : t('route.useLocation')}</button>
+            <button type='button' className='go__link-button' onClick={() => setSettingStart(false)}>{t('common.cancel')}</button>
           </div>
-          {locating === 'failed' && <p className='go__hint'>Couldn’t get your location. Type a town or address instead.</p>}
+          {locating === 'failed' && <p className='go__hint'>{t('route.locateFailed')}</p>}
         </div>
       )}
 
@@ -151,23 +153,23 @@ const RouteCard = (props: RouteCardProps) => {
                 {leg}
                 <div className='go__stop-row'>
                   {editing && (
-                    <span className='go__drag' role='presentation' title='Drag to reorder' onPointerDown={startDrag(i)}><DragIcon /></span>
+                    <span className='go__drag' role='presentation' title={t('route.drag')} onPointerDown={startDrag(i)}><DragIcon /></span>
                   )}
                   <button type='button' className='go__stop-main' onClick={() => onStopClick(stop)}>
                     <span className='go__stop-n'>{i + 1}</span>
                     <span className='go__stop-text'>
                       <strong>{stop.name}</strong>
                       {place
-                        ? <span>{birdsWord(place.expected)} expected{place.bestTime ? ` · best ${place.bestTime}` : ''}</span>
-                        : <span>{stop.note || 'Added by you'}</span>}
+                        ? <span>{expectedText(place)}</span>
+                        : <span>{stop.note || t('route.addedByYou')}</span>}
                       {place && place.birds.length > 0 && !editing && <span className='go__stop-birds'>{place.birds.slice(0, 4).map(b => `${b.comName} ${b.chance}%`).join(' · ')}{place.birds.length > 4 ? ` · +${place.birds.length - 4}` : ''}</span>}
                     </span>
                   </button>
                   {editing && (
                     <span className='go__stop-tools'>
-                      <button type='button' className='go__icon-button' aria-label={`Move ${stop.name} up`} disabled={i === 0} onClick={() => onStops(move(stops, i, i - 1))}><ChevronIcon className='is-up' /></button>
-                      <button type='button' className='go__icon-button' aria-label={`Move ${stop.name} down`} disabled={i === stops.length - 1} onClick={() => onStops(move(stops, i, i + 1))}><ChevronIcon /></button>
-                      <button type='button' className='go__icon-button' aria-label={`Remove ${stop.name}`} onClick={() => onStops(stops.filter((_, j) => j !== i))}><CloseIcon /></button>
+                      <button type='button' className='go__icon-button' aria-label={t('route.moveUp', { name: stop.name })} disabled={i === 0} onClick={() => onStops(move(stops, i, i - 1))}><ChevronIcon className='is-up' /></button>
+                      <button type='button' className='go__icon-button' aria-label={t('route.moveDown', { name: stop.name })} disabled={i === stops.length - 1} onClick={() => onStops(move(stops, i, i + 1))}><ChevronIcon /></button>
+                      <button type='button' className='go__icon-button' aria-label={t('route.remove', { name: stop.name })} onClick={() => onStops(stops.filter((_, j) => j !== i))}><CloseIcon /></button>
                     </span>
                   )}
                 </div>
@@ -176,48 +178,50 @@ const RouteCard = (props: RouteCardProps) => {
           })}
           {preview && (
             <li className='go__stop is-preview' aria-live='polite'>
-              {(stops.length > 0 || start) && <span className='go__leg'>↓ about {shortDistance(Math.round(roadKm(stops[stops.length - 1] ?? start!, preview) / 1.609344 * 10) / 10, unit)}</span>}
+              {(stops.length > 0 || start) && <span className='go__leg'>{t('route.legAbout', { distance: shortDistance(Math.round(roadKm(stops[stops.length - 1] ?? start!, preview) / 1.609344 * 10) / 10, unit) })}</span>}
               <div className='go__stop-row'>
                 <span className='go__stop-main'>
                   <span className='go__stop-n'>{stops.length + 1}</span>
-                  <span className='go__stop-text'><strong>{preview.name}</strong><span>Preview · {preview.note || 'not on the route yet'}</span></span>
+                  <span className='go__stop-text'><strong>{preview.name}</strong><span>{t('route.preview', { note: preview.note || t('route.notOnRoute') })}</span></span>
                 </span>
               </div>
             </li>
           )}
         </ol>
-      ) : <p className='go__hint'>No stops yet. Add one below.</p>}
+      ) : <p className='go__hint'>{t('route.noStops')}</p>}
 
       {stops.length > 0 && (
         <p className='go__covers'>
-          Together these cover about {lifers ? `${covers % 1 === 0 ? covers : covers.toFixed(1)} of the ${speciesCount} possible ${speciesCount === 1 ? 'lifer' : 'lifers'}` : `${birdsWord(covers)} of your ${speciesCount}`}.
-          {drive ? ` ${drive.minutes} minutes of driving, ${longDistance(drive.miles, unit)}.` : ''}
-          {firstBest ? ` Start at ${stops[0].name}, best ${firstBest}.` : ''}
-          {unscored ? ' Stops from outside your list’s places aren’t counted.' : ''}
+          {[
+            lifers ? t('route.coversLifers', { covers: number(covers, { maximumFractionDigits: 1 }), count: speciesCount }) : t('route.coversBirds', { birds: birdsWord(covers), count: speciesCount }),
+            drive ? t('route.driving', { minutes: drive.minutes, distance: longDistance(drive.miles, unit) }) : null,
+            firstBest ? t('route.startAt', { name: stops[0].name, best: firstBest }) : null,
+            unscored ? t('route.unscored') : null
+          ].filter(Boolean).join(' ')}
         </p>
       )}
 
-      {saveFailed && <p className='go__hint'>Couldn’t save this route to your account just now. It’s kept on this device and will save with your next change.</p>}
+      {saveFailed && <p className='go__hint'>{t('route.saveFailed')}</p>}
       {editing ? (
         <>
           <div className='go__add'>
             {full
-              ? <p className='go__hint'>That’s {MAX_ROUTE_STOPS} stops, as many as Maps will take.</p>
-              : <PlaceSearch state={state} label='Add a stop' placeholder='Add a stop: any hotspot or address' onPick={addStop}
-                  suggestions={suggestions} suggestionsLabel='Good places from your list' />}
+              ? <p className='go__hint'>{t('route.full', { count: MAX_ROUTE_STOPS })}</p>
+              : <PlaceSearch state={state} label={t('route.addStop')} placeholder={t('route.addPlaceholder')} onPick={addStop}
+                  suggestions={suggestions} suggestionsLabel={t('route.goodPlaces')} />}
           </div>
           <div className='go__route-actions'>
-            {stops.length > 2 && <button type='button' className='pill-button' onClick={() => onStops(shortestOrder(stops, start))}>Shortest order</button>}
-            {custom && <button type='button' className='pill-button' onClick={onReset}>Back to suggested</button>}
-            <button type='button' className='pill-button pill-button--primary' onClick={() => { setSettingStart(false); onEditing(false) }}>Done</button>
+            {stops.length > 2 && <button type='button' className='pill-button' onClick={() => onStops(shortestOrder(stops, start))}>{t('route.shortest')}</button>}
+            {custom && <button type='button' className='pill-button' onClick={onReset}>{t('route.backSuggested')}</button>}
+            <button type='button' className='pill-button pill-button--primary' onClick={() => { setSettingStart(false); onEditing(false) }}>{t('route.done')}</button>
           </div>
         </>
       ) : (
         <div className='go__route-actions'>
-          {stops.length > 0 && <button type='button' className={`pill-button ${showRoute ? 'pill-button--primary' : ''}`} aria-pressed={showRoute} onClick={onToggleRoute}>{showRoute ? 'Hide route on map' : 'Show route on map'}</button>}
-          {url && <a className='pill-button' href={url} target='_blank' rel='noreferrer'>Open in Maps</a>}
-          <button type='button' className='pill-button' onClick={() => onEditing(true)}>Edit route</button>
-          {onShare && stops.length > 0 && <button type='button' className='pill-button' onClick={onShare}>Share</button>}
+          {stops.length > 0 && <button type='button' className={`pill-button ${showRoute ? 'pill-button--primary' : ''}`} aria-pressed={showRoute} onClick={onToggleRoute}>{showRoute ? t('route.hide') : t('route.show')}</button>}
+          {url && <a className='pill-button' href={url} target='_blank' rel='noreferrer'>{t('route.openMaps')}</a>}
+          <button type='button' className='pill-button' onClick={() => onEditing(true)}>{t('route.edit')}</button>
+          {onShare && stops.length > 0 && <button type='button' className='pill-button' onClick={onShare}>{t('route.share')}</button>}
         </div>
       )}
     </div>

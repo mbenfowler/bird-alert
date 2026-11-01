@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router'
 import { toast } from 'react-toastify'
 import { resetPassword, errorMessage } from '../../apiCalls'
 import './PassReset.css'
+import { t } from '../../i18n'
 
 const PASSWORD_MIN_LENGTH = 8
 
@@ -26,7 +27,7 @@ const PassReset = () => {
     setError(null)
     try {
       await resetPassword(token, passwordOne)
-      toast.success('Password has been reset! Please log in.', { position: 'bottom-center' })
+      toast.success(t('reset.done'), { position: 'bottom-center' })
       navigate('/login')
     } catch (err) {
       setError(errorMessage(err))
@@ -38,19 +39,19 @@ const PassReset = () => {
   return (
     <section>
       <form id='resetPasswordForm' onSubmit={handleSubmit}>
-        <h1>Reset Password</h1>
+        <h1>{t('reset.title')}</h1>
         <label>
-          New password:
+          {t('reset.new')}
           <input id='passwordOne' type='password' autoComplete='new-password' value={passwordOne} onChange={(e) => setPasswordOne(e.target.value)} />
         </label>
         <label>
-          Retype password:
+          {t('reset.retype')}
           <input id='passwordTwo' type='password' autoComplete='new-password' value={passwordTwo} onChange={(e) => setPasswordTwo(e.target.value)} />
         </label>
-        {tooShort && <p className='passwordErrorText'>Password must be at least {PASSWORD_MIN_LENGTH} characters</p>}
-        {mismatch && <p className='passwordErrorText'>Passwords do not match</p>}
+        {tooShort && <p className='passwordErrorText'>{t('reset.tooShort', { count: PASSWORD_MIN_LENGTH })}</p>}
+        {mismatch && <p className='passwordErrorText'>{t('reset.mismatch')}</p>}
         {error && <p className='passwordErrorText' role='alert'>{error}</p>}
-        <button type='submit' id='confirmPasswordReset' disabled={!canSubmit}>Confirm password</button>
+        <button type='submit' id='confirmPasswordReset' disabled={!canSubmit}>{t('reset.confirm')}</button>
       </form>
     </section>
   )

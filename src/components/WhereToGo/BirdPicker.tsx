@@ -4,6 +4,7 @@ import { useDebouncedValue } from '../../hooks/useDebouncedValue'
 import { SEARCH_MIN_LENGTH, useBirdSearchQuery, useRegionBirds, useSpeciesListQuery } from '../../hooks/queries'
 import type { Bird } from '../../types'
 import '../PlaceSearch/PlaceSearch.css'
+import { t } from '../../i18n'
 
 const MAX_RESULTS = 8
 
@@ -45,11 +46,11 @@ const BirdPicker = ({ region, regionName, onPick }: { region: string; regionName
   return (
     <div className='place-search best__bird-picker'>
       <form className='place-search__form' role='search' onSubmit={(e) => { e.preventDefault(); if (results[0]) pick(results[0].speciesCode) }}>
-        <label className='visually-hidden' htmlFor={id}>Filter by a bird</label>
+        <label className='visually-hidden' htmlFor={id}>{t('birdPicker.label')}</label>
         <SearchIcon className='place-search__icon' />
-        <input id={id} className='place-search__input' type='search' placeholder='Filter by a bird, e.g. Painted Bunting' autoComplete='off' enterKeyHint='search'
+        <input id={id} className='place-search__input' type='search' placeholder={t('birdPicker.placeholder')} autoComplete='off' enterKeyHint='search'
           value={text} onChange={(e) => setText(e.target.value)} />
-        {text && <button type='button' className='place-search__clear' aria-label='Clear search' onClick={() => setText('')}><CloseIcon /></button>}
+        {text && <button type='button' className='place-search__clear' aria-label={t('common.clearSearch')} onClick={() => setText('')}><CloseIcon /></button>}
       </form>
       {searching && answered && (
         <div className='place-search__group' aria-live='polite'>
@@ -63,7 +64,7 @@ const BirdPicker = ({ region, regionName, onPick }: { region: string; regionName
                 ))}
               </ul>
             )
-            : <p className='place-search__label'>No birds on {regionName}’s list match “{typed}”.</p>}
+            : <p className='place-search__label'>{t('birdPicker.none', { regionName, typed })}</p>}
         </div>
       )}
     </div>

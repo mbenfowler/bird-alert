@@ -1,5 +1,6 @@
 import { toast } from 'react-toastify'
 import './Pop.css'
+import { Trans } from 'react-i18next'
 
 /**
  * Small rewards for the taps that matter: a star that bounces with a few sparks when a bird goes
@@ -78,5 +79,5 @@ export const celebrateLifer = (el: Element | null, comName: string) => {
     mark(el, el.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.3)', offset: 0.4 }, { transform: 'scale(1)' }], { duration: 480, easing: 'ease-out' }))
     burst(el, 'feathers')
   }
-  toast(<span className='lifer-toast__text'><strong>Lifer!</strong> {comName}</span>, { position: 'bottom-center', className: 'lifer-toast', icon: false, autoClose: 3500, hideProgressBar: true })
+  toast(<span className='lifer-toast__text'><Trans i18nKey='lifer.toast' values={{ name: comName }} components={{ b: <strong /> }} /></span>, { position: 'bottom-center', className: 'lifer-toast', icon: false, autoClose: 3500, hideProgressBar: true })
 }

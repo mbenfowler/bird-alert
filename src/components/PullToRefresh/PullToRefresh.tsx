@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { isStandalone } from '../../install'
 import { pullState } from '../../pullToRefresh'
 import './PullToRefresh.css'
+import { t } from '../../i18n'
 
 // Gestures that start here belong to something else: the map pans, fields scroll their text.
 const NOT_FROM = '.leaflet-container, input, textarea, select, [data-no-pull]'
@@ -81,7 +82,7 @@ const PullToRefresh = () => {
   return (
     <div ref={indicator} className={`pull-refresh ${refreshing ? 'is-refreshing' : ''}`} aria-hidden={!refreshing} role='status'>
       <img src='/images/bird.png' alt='' />
-      {refreshing && <span className='visually-hidden'>Refreshing</span>}
+      {refreshing && <span className='visually-hidden'>{t('pull.refreshing')}</span>}
     </div>
   )
 }

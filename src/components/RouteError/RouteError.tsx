@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import './RouteError.css'
+import { t } from '../../i18n'
 
 interface Props { children: ReactNode; resetKey: string }
 interface State { error: Error | null }
@@ -27,9 +28,9 @@ class RouteError extends Component<Props, State> {
     if (!this.state.error) return this.props.children
     return (
       <section className='route-error' role='alert'>
-        <h2 className='fredericka'>This page could not be loaded</h2>
-        <p>Usually a connection hiccup, or an update that just went out.</p>
-        <button type='button' className='pill-button pill-button--primary' onClick={() => window.location.reload()}>Reload</button>
+        <h2 className='fredericka'>{t('routeError.title')}</h2>
+        <p>{t('routeError.why')}</p>
+        <button type='button' className='pill-button pill-button--primary' onClick={() => window.location.reload()}>{t('routeError.reload')}</button>
       </section>
     )
   }

@@ -1,4 +1,5 @@
 import './EbirdCredit.css'
+import { Trans } from 'react-i18next'
 
 /**
  * The credit eBird's API terms ask for wherever its data is shown: one quiet line under every page
@@ -6,7 +7,7 @@ import './EbirdCredit.css'
  */
 const EbirdCredit = () => (
   <p className='ebird-credit'>
-    Sightings and checklists from <a href='https://ebird.org' target='_blank' rel='noreferrer'>eBird</a>, the Cornell Lab of Ornithology
+    <Trans i18nKey='credit.ebird' components={{ ebird: <a href='https://ebird.org' target='_blank' rel='noreferrer' /> }} />
   </p>
 )
 
