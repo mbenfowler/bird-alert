@@ -27,6 +27,18 @@ describe('states and provinces', () => {
     expect(countyLabel('JAL')).toBe('Municipality')
     expect(countyLabel('GA')).toBe('County')
   })
+  it('keeps South Africa\'s provinces with their country, so NL and NC still mean Newfoundland and North Carolina', () => {
+    expect(countryOf('ZA-WC')).toBe('ZA')
+    expect(countryOf('ZA-NL')).toBe('ZA')
+    expect(countryOf('NL')).toBe('CA')
+    expect(countryOf('NC')).toBe('US')
+    expect(subnational1('ZA-WC')).toBe('ZA-WC')
+    expect(stateName('ZA-NL')).toBe('KwaZulu-Natal')
+    expect(stateOfRegion('ZA-WC-21')).toBe('ZA-WC')
+    expect(stateOfRegion('ZA-ZZ-01')).toBeNull()
+    expect(countyWord('ZA-GT')).toBe('municipality')
+    expect(countyLabel('ZA-GT')).toBe('Municipality')
+  })
   it('names a Canadian area plainly and a US county as a county', () => {
     expect(countyName('Toronto', 'ON')).toBe('Toronto')
     expect(countyName('Hall', 'GA')).toBe('Hall County')

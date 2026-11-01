@@ -1,7 +1,7 @@
 import { useSessionQuery } from './hooks/queries'
 import { countryOf } from './usStates'
 
-/** Canadians and Mexicans read distances in kilometres; everyone else, and anyone signed out, in miles. */
+/** Outside the US distances read in kilometres; in the US, and for anyone signed out, in miles. */
 export type DistanceUnit = 'mi' | 'km'
 
 export const unitFor = (state?: string | null): DistanceUnit => (state && countryOf(state) !== 'US' ? 'km' : 'mi')

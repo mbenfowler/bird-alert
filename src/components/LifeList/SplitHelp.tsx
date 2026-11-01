@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { errorMessage, getSplitEvidence } from '../../apiCalls'
 import { useRegionsQuery } from '../../hooks/queries'
 import type { LifeListImport, SplitEvidence } from '../../types'
-import { countyName } from '../../usStates'
+import { countyName, stateName, stateOfCode } from '../../usStates'
 
 type Row = LifeListImport['skipped'][number]
 
@@ -17,7 +17,7 @@ const SplitHelp = ({ row, onPick, onLeave }: { row: Row; onPick: (speciesCode: s
   const [error, setError] = useState('')
   const [evidence, setEvidence] = useState<SplitEvidence | null>(null)
   // A county answer is named from the state's county list ("US-CO-013" is Boulder).
-  const regions = useRegionsQuery(evidence?.areaKind === 'county' ? evidence.area.split('-')[1] : '')
+  const regions = useRegionsQuery(evidence?.areaKind === 'county' ? stateOfCode(evidence.area) : '')
   if (!row.choices || row.choices.length < 2 || !row.where) return null
 
   const ask = async () => {
@@ -32,8 +32,8 @@ const SplitHelp = ({ row, onPick, onLeave }: { row: Row; onPick: (speciesCode: s
       </span>
     )
   }
-  const areaState = evidence.area.split('-')[1] ?? ''
-  const area = evidence.areaKind === 'county' ? countyName(regions.data?.find(r => r.code === evidence.area)?.name ?? evidence.area, areaState) : evidence.area.replace(/^(US|CA)-/, '')
+  const areaState = stateOfCode(evidence.area)
+  const area = evidence.areaKind === 'county' ? countyName(regions.data?.find(r => r.code === evidence.area)?.name ?? evidence.area, areaState) : stateName(areaState) ?? evidence.area.replace(/^(US|CA|MX|ZA)-/, '')
   const when = `${monthDay(evidence.from)} to ${monthDay(evidence.to)}`
   const counts = evidence.ranked.map(c => `${c.comName} on ${c.days}`).join(', ')
   const top = evidence.ranked[0]

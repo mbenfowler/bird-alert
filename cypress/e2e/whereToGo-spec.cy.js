@@ -213,4 +213,11 @@ describe('Where to go', () => {
     cy.get('.go__stops li').eq(1).find('.go__leg').should('have.text', '↓ 9 min drive · 5 km')
     cy.get('.go__covers').should('contain', '9 minutes of driving, 5 kilometres')
   })
+
+  it('gives a South African the distances in kilometres too', () => {
+    cy.intercept('GET', '**/api/auth/me', { statusCode: 200, body: { ...TEST_USER, state: 'ZA-WC', location: 'ZA-WC-21' } })
+    cy.visit('http://localhost:3000/go')
+    cy.wait('@whereToGo')
+    cy.get('.go__stops li').eq(1).find('.go__leg').should('have.text', '↓ 9 min drive · 5 km')
+  })
 })

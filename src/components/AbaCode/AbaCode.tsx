@@ -20,16 +20,16 @@ const MEANS: Record<number, string> = {
  */
 const AbaCode = ({ code, explain = false }: { code?: number | null; explain?: boolean }) => {
   const ref = useRef<HTMLDetailsElement>(null)
-  // The ABA Area is the US and Canada; to someone birding in Mexico its codes would mislead.
+  // The ABA Area is the US and Canada; to someone birding in Mexico or South Africa its codes would mislead.
   const state = useSessionQuery().data?.state
-  const inMexico = Boolean(state) && countryOf(state!) === 'MX'
+  const outsideAbaArea = Boolean(state) && ['MX', 'ZA'].includes(countryOf(state!))
   useEffect(() => {
     if (!explain) return
     const close = (e: PointerEvent) => { if (ref.current?.open && !ref.current.contains(e.target as Node)) ref.current.open = false }
     document.addEventListener('pointerdown', close)
     return () => document.removeEventListener('pointerdown', close)
   }, [explain])
-  if (inMexico || !code || !WORDS[code]) return null
+  if (outsideAbaArea || !code || !WORDS[code]) return null
   // "ABA Code 5 ·" never breaks; on a narrow card the words wrap after it instead of widening the card.
   const label = <><span className='aba-code__code'>ABA Code {code} ·</span> <span>{WORDS[code]}</span></>
   if (!explain) return <span className='aba-code' title={`ABA Checklist Code ${code}: ${MEANS[code]}`}>{label}</span>

@@ -27,37 +27,58 @@ export const MX_STATES: [string, string][] = [
   ['VER', 'Veracruz'], ['YUC', 'Yucatán'], ['ZAC', 'Zacatecas']
 ]
 
+/**
+ * South Africa's provinces, as eBird codes them (KwaZulu-Natal is NL). Their letters clash with US and
+ * Canadian ones (NL is also Newfoundland and Labrador, NC North Carolina), so they keep the country:
+ * 'ZA-WC' is what the app stores and sends.
+ */
+export const ZA_PROVINCES: [string, string][] = [
+  ['ZA-EC', 'Eastern Cape'], ['ZA-FS', 'Free State'], ['ZA-GT', 'Gauteng'], ['ZA-NL', 'KwaZulu-Natal'], ['ZA-LP', 'Limpopo'],
+  ['ZA-MP', 'Mpumalanga'], ['ZA-NW', 'North West'], ['ZA-NC', 'Northern Cape'], ['ZA-WC', 'Western Cape']
+]
+
 const PROVINCE_CODES = new Set(CA_PROVINCES.map(([code]) => code))
 const MX_CODES = new Set(MX_STATES.map(([code]) => code))
+const ZA_CODES = new Set(ZA_PROVINCES.map(([code]) => code))
 
-export type Country = 'US' | 'CA' | 'MX'
+export type Country = 'US' | 'CA' | 'MX' | 'ZA'
 
-/** 'CA' for a Canadian province or territory, 'MX' for a Mexican state, else 'US'. */
-export const countryOf = (state: string): Country => (PROVINCE_CODES.has(state) ? 'CA' : MX_CODES.has(state) ? 'MX' : 'US')
+/** 'CA' for a Canadian province or territory, 'MX' for a Mexican state, 'ZA' for a South African province, else 'US'. */
+export const countryOf = (state: string): Country =>
+  (ZA_CODES.has(state) ? 'ZA' : PROVINCE_CODES.has(state) ? 'CA' : MX_CODES.has(state) ? 'MX' : 'US')
 
-/** eBird's code for a state or province: 'GA' -> 'US-GA', 'ON' -> 'CA-ON', 'JAL' -> 'MX-JAL'. */
-export const subnational1 = (state: string) => `${countryOf(state)}-${state}`
+/** eBird's code for a state or province: 'GA' -> 'US-GA', 'ON' -> 'CA-ON', 'JAL' -> 'MX-JAL'; 'ZA-WC' already is one. */
+export const subnational1 = (state: string) => (ZA_CODES.has(state) ? state : `${countryOf(state)}-${state}`)
 
-/** "Georgia", "Ontario" or "Jalisco". */
-export const stateName = (state: string) => ({ US: US_STATES, CA: CA_PROVINCES, MX: MX_STATES })[countryOf(state)].find(([code]) => code === state)?.[1]
+/** "Georgia", "Ontario", "Jalisco" or "Western Cape". */
+export const stateName = (state: string) => ({ US: US_STATES, CA: CA_PROVINCES, MX: MX_STATES, ZA: ZA_PROVINCES })[countryOf(state)].find(([code]) => code === state)?.[1]
 
-const COUNTY_REGION = /^(?:US-([A-Z]{2})-\d{3}|CA-([A-Z]{2})-[A-Z0-9]{1,5}|MX-([A-Z]{3})-\d{3})$/
+/** The state or province within any eBird region code, state or county level: 'US-GA-139' -> 'GA', 'ZA-WC' -> 'ZA-WC'. */
+export const stateOfCode = (region: string) => {
+  const [country, state] = region.split('-')
+  if (!state) return ''
+  return country === 'ZA' ? `ZA-${state}` : state
+}
 
-/** The state or province of a county-level region ('US-GA-139' -> 'GA', 'CA-ON-TO' -> 'ON', 'MX-JAL-039' -> 'JAL'), or null. */
+const COUNTY_REGION = /^(?:US-([A-Z]{2})-\d{3}|CA-([A-Z]{2})-[A-Z0-9]{1,5}|MX-([A-Z]{3})-\d{3}|ZA-([A-Z]{2})-\d{2})$/
+
+/** The state or province of a county-level region ('US-GA-139' -> 'GA', 'CA-ON-TO' -> 'ON', 'MX-JAL-039' -> 'JAL', 'ZA-WC-21' -> 'ZA-WC'), or null. */
 export const stateOfRegion = (region: string): string | null => {
   const m = COUNTY_REGION.exec(region)
   if (!m) return null
   if (m[2]) return PROVINCE_CODES.has(m[2]) ? m[2] : null
   if (m[3]) return MX_CODES.has(m[3]) ? m[3] : null
+  if (m[4]) return ZA_CODES.has(`ZA-${m[4]}`) ? `ZA-${m[4]}` : null
   return m[1]!
 }
 
 /**
  * What the app calls a county-level region: a county in the US; in Canada eBird's are census
  * divisions ("Toronto", "Algoma"), which nobody calls counties, so there it's an area; in Mexico
- * they are municipalities ("Zapopan"; in Mexico City, its boroughs).
+ * they are municipalities ("Zapopan"; in Mexico City, its boroughs), and in South Africa local
+ * municipalities ("City of Cape Town", "Stellenbosch").
  */
-export const countyWord = (state: string) => ({ US: 'county', CA: 'area', MX: 'municipality' } as const)[countryOf(state)]
+export const countyWord = (state: string) => ({ US: 'county', CA: 'area', MX: 'municipality', ZA: 'municipality' } as const)[countryOf(state)]
 
 /** The same word for a label: "County", "Area" or "Municipality". */
 export const countyLabel = (state: string) => { const w = countyWord(state); return w[0]!.toUpperCase() + w.slice(1) }
