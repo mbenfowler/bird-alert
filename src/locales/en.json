@@ -1065,7 +1065,7 @@
     "title": "Your places",
     "hint": "Switch to a place when you're there, or add trip dates and it switches on its own. Alerts follow the place you're in, with its own target birds; everything comes back home afterwards.",
     "home": "Home",
-    "homeHint": "Your area and how far alerts reach are set above.",
+    "homeHint": "Your area is set above; how far alerts reach is in the Alert center below.",
     "keepHome": "Keep my home alerts while I'm away",
     "keepHomeHint": "Home keeps alerting too while you're at a place.",
     "add": "Add a place",

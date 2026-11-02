@@ -9,7 +9,6 @@ import type { EmailPreference, EmailPreviewKind, EmailPreviewResult, PushPrefere
 import './AlertCenter.css'
 import AlertModeSettings from '../AlertModeSettings/AlertModeSettings'
 import AlertRange from './AlertRange'
-import Places from './Places'
 import InstallSteps from '../InstallSteps/InstallSteps'
 import { isIOS, isStandalone } from '../../install'
 import { countyWord } from '../../usStates'
@@ -210,7 +209,6 @@ const AlertCenter = () => {
       )}
 
       <AlertRange />
-      <Places />
 
       {EMAIL_PREFERENCES.map(({ field, preview }) => (
         <div className='notification' key={field}>

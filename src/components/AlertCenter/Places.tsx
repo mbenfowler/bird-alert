@@ -13,6 +13,7 @@ import { unitFor } from '../../distance'
 import { stateName, stateOfRegion } from '../../usStates'
 import { dateRange, t } from '../../i18n'
 import type { PlaceTrip, SavedPlace } from '../../types'
+import './AlertCenter.css'
 import './Places.css'
 
 const MAX_PLACES = 10
@@ -313,7 +314,6 @@ const Places = () => {
     <div className='notification-group places' id='places'>
       <div className='notification'>
         <div className='notification__text'>
-          <span className='notification__label'>{t('places.title')}</span>
           <p className='notification__hint'>{t('places.hint')}</p>
         </div>
       </div>
