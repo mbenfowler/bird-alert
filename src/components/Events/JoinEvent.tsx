@@ -11,7 +11,7 @@ import '../AlertCenter/Places.css'
 import './Events.css'
 
 /**
- * Where an invite link lands (/join/:token): what the event is, then Join. Someone not signed in
+ * Where an invite link lands (/events/join/:token): what the event is, then Join. Someone not signed in
  * logs in or signs up first and is brought back here (pendingJoin).
  */
 const JoinEvent = () => {

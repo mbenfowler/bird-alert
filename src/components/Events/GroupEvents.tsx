@@ -127,7 +127,7 @@ const EventCard = ({ event }: { event: GroupEvent }) => {
       {from && !event.active && <p className='notification__hint'>{t('places.scoutingFrom', { date: monthDay(from) })}</p>}
       <p className='event__members'>{membersText(event.members)}</p>
       <p className='place__actions'>
-        {event.active && <Link className='pill-button pill-button--primary pill-button--small' to={`/event/${encodeURIComponent(String(event.id))}/tally`}>{t('events.openTally')}</Link>}
+        {event.active && <Link className='pill-button pill-button--primary pill-button--small' to={`/events/${encodeURIComponent(String(event.id))}/tally`}>{t('events.openTally')}</Link>}
         {event.invite_url && <button type='button' className='pill-button pill-button--small' onClick={() => void shareUrl(absolute(event.invite_url!), t('events.inviteTitle', { name: event.name }))}>{t('events.invite')}</button>}
         {organizer && <button type='button' className='link-button link-text' disabled={rotate.isPending}
           onClick={() => rotate.mutate(event.id, { onSuccess: () => toast.success(t('events.newInviteDone'), { position: 'bottom-center' }), onError: fail })}>{t('events.newInvite')}</button>}

@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useRef, type ReactElement } from 'react'
 import { lazyWithReload as lazy } from '../../lazyRetry'
 import RouteError from '../RouteError/RouteError'
-import { Routes, Route, useNavigate, useLocation, useNavigationType, Link } from 'react-router'
+import { Routes, Route, Navigate, useNavigate, useLocation, useNavigationType, Link } from 'react-router'
 import { CHANNEL, decidePending, pollInterval, samePath, takePendingOpen, type LatestPush, type PendingTrigger } from '../../notificationHandoff'
 import { ackPendingPush, getPendingPush, postPushTrace } from '../../apiCalls'
 import type { PendingPush } from '../../types'
@@ -47,9 +47,9 @@ const EventTally = lazy(() => import('../Events/EventTally'))
 const Onboarding = lazy(() => import('../Onboarding/Onboarding'))
 
 // Routes reachable without a session. Everything else redirects to /login once we know there is no user.
-const PUBLIC_PATH_PREFIXES = ['/login', '/reset/', '/confirm/', '/unsubscribe/', '/share/', '/join/', '/e/']
+const PUBLIC_PATH_PREFIXES = ['/login', '/reset/', '/confirm/', '/unsubscribe/', '/share/', '/events/join/', '/events/view/']
 // Pages about the account alone; every other page is built from eBird's sightings and credits it.
-const NO_EBIRD_DATA = new Set(['login', 'settings', 'reset', 'confirm', 'unsubscribe', 'join'])
+const NO_EBIRD_DATA = new Set(['login', 'settings', 'reset', 'confirm', 'unsubscribe'])
 
 const App = () => {
   const session = useSessionQuery()
@@ -102,16 +102,16 @@ const App = () => {
   // counts: an account the server doesn't mark either way is left alone.
   const needsSetup = Boolean(user) && user?.onboarded_at === null
   useEffect(() => {
-    if (needsSetup && pathname !== '/welcome' && !pathname.startsWith('/share/') && !pathname.startsWith('/confirm/') && !pathname.startsWith('/unsubscribe/') && !pathname.startsWith('/join/') && !pathname.startsWith('/e/')) navigate('/welcome', { replace: true })
+    if (needsSetup && pathname !== '/welcome' && !pathname.startsWith('/share/') && !pathname.startsWith('/confirm/') && !pathname.startsWith('/unsubscribe/') && !pathname.startsWith('/events/join/') && !pathname.startsWith('/events/view/')) navigate('/welcome', { replace: true })
   }, [needsSetup, pathname, navigate])
   // An invite opened before signing in: once signed in (logged in, signed up, by passkey), back to it to join.
   const signedIn = Boolean(user)
   useEffect(() => {
-    if (!signedIn || pathname.startsWith('/join/')) return
+    if (!signedIn || pathname.startsWith('/events/join/')) return
     const token = pendingJoin()
     if (!token) return
     forgetJoin()
-    navigate(`/join/${encodeURIComponent(token)}`, { replace: true })
+    navigate(`/events/join/${encodeURIComponent(token)}`, { replace: true })
   }, [signedIn, pathname, navigate])
 
   // Push notifications hand off to the page through src/notificationHandoff.ts. The page follows a
@@ -228,9 +228,11 @@ const App = () => {
           <Route path='/sightings' element={requireUser(<AlertSightings />)} />
           <Route path='/go' element={requireUser(<GoPage />)} />
           <Route path='/share/:kind/:id' element={<Shared />} />
-          <Route path='/join/:token' element={<JoinEvent />} />
-          <Route path='/e/:token' element={<EventView />} />
-          <Route path='/event/:id/tally' element={requireUser(<EventTally />)} />
+          <Route path='/events/join/:token' element={<JoinEvent />} />
+          <Route path='/events/view/:token' element={<EventView />} />
+          <Route path='/events/:id/tally' element={requireUser(<EventTally />)} />
+          {/* Scouting reports and event emails link here: the events live in Settings, Places tab. */}
+          <Route path='/events' element={requireUser(<Navigate to='/settings?tab=places#events' replace />)} />
           <Route path='/welcome' element={requireUser(<Onboarding />)} />
           <Route path='/reset/:token' element={<PassReset />} />
           <Route path='/unsubscribe/:token' element={<Unsubscribe />} />

@@ -17,7 +17,7 @@ const EventBanner = () => {
   return (
     <p className='area-banner area-banner--place event-banner' role='status' data-testid='event-banner'>
       <span><Trans i18nKey={bigDay ? 'events.banner' : 'events.bannerTrip'} values={{ name: active.name, count }} components={{ b: <strong /> }} /></span>
-      <Link className='link-button link-text' to={`/event/${encodeURIComponent(String(active.id))}/tally`}>{t('events.openTally')}</Link>
+      <Link className='link-button link-text' to={`/events/${encodeURIComponent(String(active.id))}/tally`}>{t('events.openTally')}</Link>
     </p>
   )
 }

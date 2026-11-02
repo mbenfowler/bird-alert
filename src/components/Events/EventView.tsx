@@ -7,7 +7,7 @@ import '../AlertCenter/Places.css'
 import './Events.css'
 
 /**
- * The view-only link (/e/:token): an event's plan and, on the day, its tally (refreshed each
+ * The view-only link (/events/view/:token): an event's plan and, on the day, its tally (refreshed each
  * minute), for people who don't want an account. No names: just the birds. A quiet invitation to
  * Bird Alert for anyone not signed in.
  */

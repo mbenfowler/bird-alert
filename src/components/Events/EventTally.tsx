@@ -13,7 +13,7 @@ import '../AlertCenter/Places.css'
 import './Events.css'
 
 /**
- * The day's shared tally (/event/:id/tally): a big search to add each bird as it's found, the
+ * The day's shared tally (/events/:id/tally): a big search to add each bird as it's found, the
  * group's list newest first with who got it, and the count against the targets. Adds show at once;
  * everyone else's arrive with the refresh every 30 seconds.
  */

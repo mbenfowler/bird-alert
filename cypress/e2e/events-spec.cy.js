@@ -11,7 +11,7 @@ const event = (over = {}) => ({
   members: [{ display_name: 'Jane', role: 'member' }, { display_name: 'Matt', role: 'organizer', you: true }, { display_name: 'Sam', role: 'member' }],
   targets: [{ code: 'eletro', lifer_for: ['Jane', 'Sam'] }, { code: 'mexchi' }],
   tally: [],
-  invite_url: '/join/inv123', view_url: '/e/view456',
+  invite_url: '/events/join/inv123', view_url: '/events/view/view456',
   ...over
 })
 
@@ -52,13 +52,13 @@ describe('Group events', () => {
     stubRegions()
     stubBirds()
     cy.intercept('GET', '**/api/saved?kind=events*', { statusCode: 200, body: [event()] }).as('events')
-    cy.intercept('POST', '**/api/saved?kind=event-invite-rotate*', { statusCode: 200, body: event({ invite_url: '/join/new789' }) }).as('rotate')
+    cy.intercept('POST', '**/api/saved?kind=event-invite-rotate*', { statusCode: 200, body: event({ invite_url: '/events/join/new789' }) }).as('rotate')
     cy.intercept('DELETE', '**/api/saved?kind=event&id=5', { statusCode: 204, body: '' }).as('end')
     cy.visit('http://localhost:3000/settings?tab=places', { onBeforeLoad: copied })
     cy.contains('.events button', 'Invite').click()
-    cy.get('@copy').should('have.been.calledWith', 'http://localhost:3000/join/inv123')
+    cy.get('@copy').should('have.been.calledWith', 'http://localhost:3000/events/join/inv123')
     cy.contains('.events button', 'View-only link').click()
-    cy.get('@copy').should('have.been.calledWith', 'http://localhost:3000/e/view456')
+    cy.get('@copy').should('have.been.calledWith', 'http://localhost:3000/events/view/view456')
     cy.contains('.events', "For people who don't want an account")
     cy.contains('.events button', 'Make a new invite link').click()
     cy.wait('@rotate')
@@ -74,7 +74,10 @@ describe('Group events', () => {
     stubBirds()
     cy.intercept('GET', '**/api/saved?kind=events*', { statusCode: 200, body: [event({ role: 'member' })] })
     cy.intercept('POST', '**/api/saved?kind=event-leave*', { statusCode: 204, body: '' }).as('leave')
-    cy.visit('http://localhost:3000/settings?tab=places')
+    // Scouting reports and event emails link to /events: the Places tab's group events.
+    cy.visit('http://localhost:3000/events')
+    cy.url().should('include', '/settings?tab=places')
+    cy.get('#events').should('contain', 'Chiricahuas')
     cy.contains('.events button', 'Make a new invite link').should('not.exist')
     cy.contains('.events button', 'End event').should('not.exist')
     cy.contains('.events button', 'Leave').click()
@@ -86,7 +89,7 @@ describe('Group events', () => {
     const state = stubAuth({ loggedIn: false })
     cy.intercept('GET', '**/api/saved?kind=event-preview*', { statusCode: 200, body: { name: 'Chiricahuas', area: 'Cochise County, Arizona', starts_on: '2027-05-09', ends_on: '2027-05-09', kind: 'bigday', members: 3 } }).as('preview')
     cy.intercept('POST', '**/api/saved?kind=event-join', { statusCode: 200, body: event({ role: 'member' }) }).as('join')
-    cy.visit('http://localhost:3000/join/inv123')
+    cy.visit('http://localhost:3000/events/join/inv123')
     cy.contains('h1', 'Join Chiricahuas')
     cy.contains('.event-page', 'Cochise County, Arizona').and('contain', 'Big Day').and('contain', '3 birders so far')
     cy.contains('.event-page a', 'Log in or sign up').should('have.attr', 'href', '/login')
@@ -94,7 +97,7 @@ describe('Group events', () => {
     // Signing in (any way) brings them back to the invite.
     cy.then(() => { state.loggedIn = true })
     cy.visit('http://localhost:3000/')
-    cy.url().should('include', '/join/inv123')
+    cy.url().should('include', '/events/join/inv123')
     cy.get('.event-page__join input[name="display_name"]').type('Jane')
     cy.contains('.event-page__join button', 'Join').click()
     cy.wait('@join').its('request.body').should('deep.equal', { token: 'inv123', display_name: 'Jane' })
@@ -108,17 +111,17 @@ describe('Group events', () => {
     cy.intercept('GET', '**/api/saved?kind=event-view*', (req) => {
       calls += 1
       req.reply({ statusCode: 200, body: { name: 'Chiricahuas', area: 'Cochise County, Arizona', starts_on: day(0), ends_on: day(0), kind: 'bigday', active: true,
-        targets: [{ code: 'eletro', comName: 'Elegant Trogon' }],
+        targets: [{ code: 'eletro', speciesCode: 'eletro', comName: 'Elegant Trogon' }],
         tally: calls === 1 ? [{ code: 'eletro', comName: 'Elegant Trogon', added_at: '2027-05-09T12:00:00Z' }] : [{ code: 'eletro', comName: 'Elegant Trogon', added_at: '2027-05-09T12:00:00Z' }, { code: 'mexchi', comName: 'Mexican Chickadee', added_at: '2027-05-09T13:00:00Z' }],
         count: calls === 1 ? 1 : 2 } })
     }).as('view')
     cy.clock(Date.now(), ['setInterval'])
-    cy.visit('http://localhost:3000/e/view456')
+    cy.visit('http://localhost:3000/events/view/view456')
     cy.wait('@view')
     cy.get('[data-testid="view-count"]').should('have.text', '1 species so far')
     cy.contains('.event-page', 'Bird Alert keeps your group')
     cy.get('.event-page').should('not.contain', 'Matt').and('not.contain', 'Jane')
-    cy.url().should('include', '/e/view456')
+    cy.url().should('include', '/events/view/view456')
     cy.tick(61_000)
     cy.wait('@view')
     cy.get('[data-testid="view-count"]').should('have.text', '2 species so far')
@@ -143,7 +146,7 @@ describe('Group events', () => {
     cy.visit('http://localhost:3000/')
     cy.get('[data-testid="event-banner"]').should('contain', 'Big Day today: Chiricahuas').and('contain', '0 species')
     cy.contains('[data-testid="event-banner"] a', 'Open tally').click()
-    cy.url().should('include', '/event/5/tally')
+    cy.url().should('include', '/events/5/tally')
     cy.get('[data-testid="tally-count"]').should('contain', '0 species').and('contain', '0 of 2 targets')
     cy.contains('.event-page__section button', 'Elegant Trogon').click()
     cy.wait('@add').its('request.body').should('deep.equal', { species_code: 'eletro' })
