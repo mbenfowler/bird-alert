@@ -38,6 +38,8 @@ export interface User {
   trip_emails_enabled?: boolean
   /** A trip that ended and hasn't been welcomed home yet. */
   lastTrip?: { name: string; ended_on: string } | null
+  /** A group event happening today (a Big Day with friends), for the home banner and the tally. */
+  activeEvent?: ActiveEvent | null
 }
 
 export type Id = number | string
@@ -433,3 +435,89 @@ export interface Passkey { id: string; name: string | null; site: string; create
 export interface FoundAddress { kind: 'address'; name: string; lat: number; lng: number }
 export interface PlaceSearch { hotspots: FoundHotspot[]; addresses: FoundAddress[] }
 export interface NearbyPublic { hotspots: NearbyHotspot[]; parks: NearbyPark[]; fetchedAt?: string }
+
+/** Someone in a group event, by the name the group knows them by. */
+export interface EventMember {
+  display_name: string
+  role: 'organizer' | 'member'
+  /** This is the person looking. */
+  you?: boolean
+}
+
+/** A bird the group is after, and whose lifer it would be. */
+export interface EventTarget {
+  code: string
+  lifer_for?: string[]
+}
+
+/** A bird on the day's shared tally, and who got it. */
+export interface EventTallyEntry {
+  code: string
+  added_by_name?: string | null
+  added_at: string
+}
+
+/** A trip shared with a group: one plan, one target list, one tally on the day. */
+export interface GroupEvent {
+  id: Id
+  name: string
+  state: string
+  location: string
+  range_mi: number
+  starts_on: string
+  ends_on: string
+  kind?: 'trip' | 'bigday'
+  scout?: boolean
+  scout_days?: number
+  scout_from?: string | null
+  active: boolean
+  role: 'organizer' | 'member'
+  members: EventMember[]
+  targets: EventTarget[]
+  tally: EventTallyEntry[]
+  invite_url?: string | null
+  view_url?: string | null
+}
+
+export interface EventInput {
+  name?: string
+  state?: string
+  location?: string
+  range_mi?: number
+  starts_on?: string
+  ends_on?: string
+  kind?: 'trip' | 'bigday'
+  scout?: boolean
+  scout_days?: number
+}
+
+/** The event happening today, as the session carries it. */
+export interface ActiveEvent {
+  id: Id
+  name: string
+  count?: number
+}
+
+/** What an invite link shows before joining. */
+export interface EventPreview {
+  name: string
+  area?: string | null
+  starts_on: string
+  ends_on: string
+  kind?: 'trip' | 'bigday'
+  members?: number | string[] | EventMember[]
+}
+
+/** The view-only page: the plan and the day's tally, no names. */
+export interface EventView {
+  name: string
+  area?: string | null
+  starts_on: string
+  ends_on: string
+  kind?: 'trip' | 'bigday'
+  active?: boolean
+  targets: { code: string; comName?: string }[]
+  tally: { code: string; comName?: string; added_at: string }[]
+  count: number
+}
+

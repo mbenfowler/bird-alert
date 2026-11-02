@@ -1,0 +1,67 @@
+import { Link, useParams } from 'react-router'
+import { toast } from 'react-toastify'
+import BirdPicker from '../WhereToGo/BirdPicker'
+import { CloseIcon } from '../Icons/Icons'
+import { LoadingState } from '../Loading/Loading'
+import { errorMessage } from '../../apiCalls'
+import { useBirdsQuery, useEventsQuery } from '../../hooks/queries'
+import { useEventTallyMutation } from '../../hooks/mutations'
+import { useAreaName } from '../../shownArea'
+import { clockTime, t } from '../../i18n'
+import { tallyCodes } from './events'
+import '../AlertCenter/Places.css'
+import './Events.css'
+
+/**
+ * The day's shared tally (/event/:id/tally): a big search to add each bird as it's found, the
+ * group's list newest first with who got it, and the count against the targets. Adds show at once;
+ * everyone else's arrive with the refresh every 30 seconds.
+ */
+const EventTally = () => {
+  const { id = '' } = useParams()
+  const events = useEventsQuery(true)
+  const tallyMutation = useEventTallyMutation()
+  const event = events.data?.find(e => String(e.id) === id)
+  const areaName = useAreaName(event?.state ?? '', event?.location ?? '')
+  const codes = event ? tallyCodes(event) : []
+  const targetCodes = event?.targets.map(target => target.code) ?? []
+  const names = useBirdsQuery([...new Set([...codes, ...targetCodes])])
+  const nameOf = (code: string) => names.data?.find(b => b.speciesCode === code)?.comName ?? code
+  if (events.isPending) return <LoadingState />
+  if (!event) return <section className='event-page'><p className='event-page__missing'>{t('events.tallyMissing')}</p><Link to='/settings?tab=places#events'>{t('events.backToPlaces')}</Link></section>
+
+  const got = targetCodes.filter(code => codes.includes(code)).length
+  const needed = targetCodes.filter(code => !codes.includes(code))
+  const change = (code: string, remove = false) => tallyMutation.mutate({ id: event.id, code, remove }, { onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' }) })
+  const entries = [...event.tally].sort((a, b) => b.added_at.localeCompare(a.added_at))
+  return (
+    <section className='event-page event-tally'>
+      <h1 className='fredericka event-page__title'>{t('events.tallyHeading', { name: event.name })}</h1>
+      <p className='event-tally__count' data-testid='tally-count'>
+        <strong>{t('events.tallyCount', { count: codes.length })}</strong>
+        {targetCodes.length > 0 && <span> · {t('events.tallyTargets', { got, total: targetCodes.length })}</span>}
+      </p>
+      <div className='event-tally__add'>
+        <p className='place-form__label'>{t('events.tallyAdd')}</p>
+        <BirdPicker region={event.location} regionName={areaName} onPick={(code) => { if (!codes.includes(code)) change(code) }} />
+      </div>
+      {entries.length
+        ? <ol className='event-tally__list'>{entries.map(entry => (
+            <li key={entry.code}>
+              <span className='event-tally__bird'>{nameOf(entry.code)}</span>
+              <span className='event-tally__who'>{t('events.tallyBy', { name: entry.added_by_name ?? '', time: clockTime(new Date(entry.added_at)) })}</span>
+              <button type='button' className='event-tally__undo' aria-label={t('events.undoLabel', { name: nameOf(entry.code) })} disabled={tallyMutation.isPending} onClick={() => change(entry.code, true)}><CloseIcon /></button>
+            </li>))}</ol>
+        : <p className='notification__hint'>{t('events.tallyEmpty')}</p>}
+      {needed.length > 0 && (
+        <div className='event-page__section'>
+          <p className='place__heading'>{t('events.stillNeeded')}</p>
+          <ul className='place__chips'>{needed.map(code => <li key={code}><button type='button' className='place__chip place__chip--add' onClick={() => change(code)}>+ {nameOf(code)}</button></li>)}</ul>
+        </div>
+      )}
+      <p><Link to='/settings?tab=places#events'>{t('events.backToPlaces')}</Link></p>
+    </section>
+  )
+}
+
+export default EventTally

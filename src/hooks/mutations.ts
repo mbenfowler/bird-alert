@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { releaseThisDevice } from './usePushNotifications'
-import { deleteAccount, deletePlace, deletePlaceTrip, patchPlace, patchPlaceTrip, postPlace, postPlaceTrip, putPlaceSeen, putPlaceTargets, deleteSavedBird, deleteSeenBird, importLifeList, logout, patchUser, postSavedBird, postSeenBird, putSavedRoute } from '../apiCalls'
+import { deleteAccount, deleteEvent, deleteEventTally, joinEvent, leaveEvent, patchEvent, postEventFromTrip, postEventTally, putEventTargets, rotateEventInvite, deletePlace, deletePlaceTrip, patchPlace, patchPlaceTrip, postPlace, postPlaceTrip, putPlaceSeen, putPlaceTargets, deleteSavedBird, deleteSeenBird, importLifeList, logout, patchUser, postSavedBird, postSeenBird, putSavedRoute } from '../apiCalls'
 import { clearLocalRoutes } from '../routePlan'
 import { queryKeys } from './queries'
-import type { Bird, Id, PlaceInput, PlaceTripInput, SeenBird, User } from '../types'
+import type { Bird, EventInput, GroupEvent, Id, PlaceInput, PlaceTripInput, SeenBird, User } from '../types'
 
 /** Put a freshly logged-in user into the cache so every view updates at once. */
 export const useSetSession = () => {
@@ -149,3 +149,48 @@ export const usePlaceSeenMutation = () => {
     ])
   })
 }
+
+/** Every change to group events refreshes them, places (a shared trip leaves them) and the session. */
+const useEventChange = <A, R>(mutationFn: (args: A) => Promise<R>) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn,
+    onSettled: () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.events }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.places }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.session })
+    ])
+  })
+}
+
+export const useShareTripMutation = () => useEventChange(({ tripId, displayName }: { tripId: Id; displayName: string }) => postEventFromTrip(tripId, displayName))
+export const usePatchEventMutation = () => useEventChange(({ id, change }: { id: Id; change: EventInput }) => patchEvent(id, change))
+export const useEndEventMutation = () => useEventChange((id: Id) => deleteEvent(id))
+export const useLeaveEventMutation = () => useEventChange((id: Id) => leaveEvent(id))
+export const useRotateInviteMutation = () => useEventChange((id: Id) => rotateEventInvite(id))
+export const useEventTargetsMutation = () => useEventChange(({ id, codes }: { id: Id; codes: string[] }) => putEventTargets(id, codes))
+export const useJoinEventMutation = () => useEventChange(({ token, displayName }: { token: string; displayName: string }) => joinEvent(token, displayName))
+
+/**
+ * Adds a bird to the day's tally, or takes it off, at once on screen (the group's other adds arrive
+ * with the next refresh); a failure puts the tally back.
+ */
+export const useEventTallyMutation = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, code, remove }: { id: Id; code: string; remove?: boolean }) => (remove ? deleteEventTally(id, code) : postEventTally(id, code)),
+    onMutate: async ({ id, code, remove }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.events })
+      const previous = queryClient.getQueryData<GroupEvent[]>(queryKeys.events)
+      queryClient.setQueryData<GroupEvent[]>(queryKeys.events, (events) => (events ?? []).map(event => {
+        if (String(event.id) !== String(id)) return event
+        const tally = (event.tally ?? []).filter(entry => entry.code !== code)
+        return { ...event, tally: remove ? tally : [{ code, added_by_name: event.members?.find(m => m.you)?.display_name ?? null, added_at: new Date().toISOString() }, ...tally] }
+      }))
+      return { previous }
+    },
+    onError: (_error, _vars, context) => { if (context) queryClient.setQueryData(queryKeys.events, context.previous) },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.events })
+  })
+}
+

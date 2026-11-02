@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions, getCountries, getProvinces,
-  getSavedBirds, getPlaces, getPlaceSeen, getPlaceSuggestions, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase, getNameLocales } from '../apiCalls'
+  getSavedBirds, getPlaces, getPlaceSeen, getPlaceSuggestions, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase, getNameLocales, getEvents, getEventPreview, getEventView } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
 import { nameLocale } from '../i18n'
 import type { Id, LifersScope, PersistenceClass, User } from '../types'
@@ -37,6 +37,7 @@ export const queryKeys = {
   bestHotspots: (region: string, days: number, species = '') => ['best-hotspots', region, days, species, nameLocale()] as const,
   savedRoute: (region: string) => ['saved-route', region, nameLocale()] as const,
   places: ['places'] as const,
+  events: ['events'] as const,
   placeSearch: (state: string, q: string, addresses: boolean) => ['place-search', state, q.trim().toLowerCase(), addresses, nameLocale()] as const,
   drive: (points: { lat: number; lng: number }[]) => ['drive', points.map(p => `${p.lat.toFixed(4)},${p.lng.toFixed(4)}`).join(';'), nameLocale()] as const,
   nearby: (lat: number, lng: number) => ['nearby', lat.toFixed(3), lng.toFixed(3), nameLocale()] as const
@@ -402,6 +403,34 @@ export const useNearbyPublicQuery = (lat: number | null, lng: number | null, ena
   })
 
 /** The person's trips, soonest first. */
+/**
+ * The group events the person is in. Tolerant like places; refreshed every 30 s on the event day
+ * (`live`), so the group sees each other's tally as it grows.
+ */
+export const useEventsQuery = (live = false) =>
+  useQuery({
+    queryKey: queryKeys.events,
+    queryFn: getEvents,
+    staleTime: live ? 0 : 60 * 1000,
+    refetchInterval: live ? 30 * 1000 : false,
+    select: (events) => (Array.isArray(events) ? events : [])
+      .filter(event => event && typeof event.location === 'string')
+      .map(event => ({ ...event, members: event.members ?? [], targets: event.targets ?? [], tally: event.tally ?? [] }))
+  })
+
+/** What an invite link is for, before joining (no sign-in needed). */
+export const useEventPreviewQuery = (token: string) =>
+  useQuery({ queryKey: ['event-preview', token], queryFn: () => getEventPreview(token), staleTime: MINUTE, retry: 1 })
+
+/** The view-only page: the plan, and on the day a tally that refreshes each minute. */
+export const useEventViewQuery = (token: string) =>
+  useQuery({
+    queryKey: ['event-view', token, nameLocale()],
+    queryFn: () => getEventView(token),
+    retry: 1,
+    refetchInterval: (query) => (query.state.data?.active ? 60 * 1000 : false)
+  })
+
 export const usePlacesQuery = () =>
   useQuery({
     queryKey: queryKeys.places,

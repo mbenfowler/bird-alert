@@ -4,6 +4,8 @@ import { toast } from 'react-toastify'
 import AreaPicker, { type PickedArea } from '../AreaPicker/AreaPicker'
 import BirdPicker from '../WhereToGo/BirdPicker'
 import ErrorMessage from '../Error/ErrorMessage'
+import GroupEvents from '../Events/GroupEvents'
+import ShareTrip from '../Events/ShareTrip'
 import { CloseIcon } from '../Icons/Icons'
 import { errorMessage } from '../../apiCalls'
 import { useBirdsQuery, useCurrentUser, usePlaceSeenQuery, usePlaceSuggestionsQuery, usePlacesQuery } from '../../hooks/queries'
@@ -246,6 +248,7 @@ const Trips = ({ place, openTrip = null }: { place: SavedPlace; openTrip?: strin
                   onClick={() => remove.mutate(trip.id, { onSuccess: () => toast.success(t('places.tripDeleted'), { position: 'bottom-center' }), onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' }) })}>
                   {t('places.delete')}
                 </button>
+                <ShareTrip tripId={trip.id} dates={dates} />
               </li>
             )
           })}</ul>
@@ -405,6 +408,7 @@ const Places = () => {
         </div>
         {places.isError && <ErrorMessage networkError={errorMessage(places.error)} />}
         {places.data && places.data.length > 0 && <ul className='places__list'>{places.data.map(place => <PlaceCard key={place.id} place={place} openTrip={openTrip && place.trips.some(trip => String(trip.id) === openTrip) ? openTrip : null} />)}</ul>}
+        <GroupEvents />
         {adding
           ? <PlaceForm preset={presetState ? { state: presetState, location: presetRegion! } : null} onDone={doneAdding} />
           : full

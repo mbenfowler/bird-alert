@@ -1,4 +1,4 @@
-import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, Place, Province, Area,SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, BestHotspots, SpeciesHotspots, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share, Passkey, Chase, PersistenceClass, Id, SavedPlace, PlaceInput, PlaceTrip, PlaceTripInput, PlaceSuggestion, LifersScope } from './types'
+import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, Place, Province, Area,SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, BestHotspots, SpeciesHotspots, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share, Passkey, Chase, PersistenceClass, Id, SavedPlace, PlaceInput, PlaceTrip, PlaceTripInput, PlaceSuggestion, LifersScope, GroupEvent, EventInput, EventPreview, EventView } from './types'
 import { arrival } from './arrival'
 import { isStandalone } from './install'
 import { nameLocale, signupLocale } from './i18n'
@@ -123,6 +123,20 @@ export const putPlaceSeen = (id: Id, codes: string[]) => api<string[]>('/saved',
 export const postPlaceTrip = (trip: PlaceTripInput & { place_id: Id }) => api<PlaceTrip>('/saved', { method: 'POST', params: { kind: 'trip' }, body: trip })
 export const patchPlaceTrip = (id: Id, trip: PlaceTripInput) => api<PlaceTrip>('/saved', { method: 'PATCH', params: { kind: 'trip', id: String(id) }, body: trip })
 export const deletePlaceTrip = (id: Id) => api<null>('/saved', { method: 'DELETE', params: { kind: 'trip', id: String(id) } })
+
+// Group events: a trip shared with friends (invite link, view-only link, shared targets and tally).
+export const postEventFromTrip = (tripId: Id, displayName: string) => api<GroupEvent>('/saved', { method: 'POST', params: { kind: 'event-from-trip' }, body: { trip_id: tripId, display_name: displayName } })
+export const getEvents = () => api<GroupEvent[]>('/saved', { params: { kind: 'events' } })
+export const patchEvent = (id: Id, change: EventInput) => api<GroupEvent>('/saved', { method: 'PATCH', params: { kind: 'event', id: String(id) }, body: change })
+export const deleteEvent = (id: Id) => api<null>('/saved', { method: 'DELETE', params: { kind: 'event', id: String(id) } })
+export const leaveEvent = (id: Id) => api<null>('/saved', { method: 'POST', params: { kind: 'event-leave', id: String(id) }, body: {} })
+export const rotateEventInvite = (id: Id) => api<GroupEvent>('/saved', { method: 'POST', params: { kind: 'event-invite-rotate', id: String(id) }, body: {} })
+export const putEventTargets = (id: Id, codes: string[]) => api<GroupEvent>('/saved', { method: 'PUT', params: { kind: 'event-targets', id: String(id) }, body: { codes } })
+export const postEventTally = (id: Id, code: string) => api<GroupEvent>('/saved', { method: 'POST', params: { kind: 'event-tally', id: String(id) }, body: { species_code: code } })
+export const deleteEventTally = (id: Id, code: string) => api<null>('/saved', { method: 'DELETE', params: { kind: 'event-tally', id: String(id), code } })
+export const joinEvent = (token: string, displayName: string) => api<GroupEvent>('/saved', { method: 'POST', params: { kind: 'event-join' }, body: { token, display_name: displayName } })
+export const getEventPreview = (token: string) => api<EventPreview>('/saved', { params: { kind: 'event-preview', token } })
+export const getEventView = (token: string) => api<EventView>('/saved', { params: { kind: 'event-view', token } })
 export const getSavedRoute = (region: string) => api<SavedRoute>('/saved', { params: { kind: 'route', region } })
 /** Only the fields given change: `stops: null` goes back to the suggestion, `start: null` clears the start. */
 export const putSavedRoute = (change: { region: string; stops?: SavedPoint[] | null; start?: SavedPoint | null }) =>

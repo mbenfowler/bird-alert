@@ -1,0 +1,181 @@
+/* Group events: cards in Places like a saved place's, and their public pages (join, view, tally). */
+.events {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.events__heading {
+  font-size: 1.05rem;
+}
+
+.event__members {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+
+.event__lifer {
+  font-size: 0.82rem;
+  opacity: 0.85;
+}
+
+.event__view-only {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.event__leave {
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+
+.event-share {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.event-share input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  box-sizing: border-box;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  font: inherit;
+  font-size: 1rem;
+}
+
+/* The pages an event's links open. */
+.event-page {
+  width: min(100%, 560px);
+  margin: 24px auto 40px;
+  padding: 0 16px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.event-page__title {
+  margin: 0;
+}
+
+.event-page__what {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.event-page__missing {
+  font-style: italic;
+}
+
+.event-page__join {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.event-page__join input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  box-sizing: border-box;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  font: inherit;
+  font-size: 1rem;
+}
+
+.event-page__subhead {
+  margin: 0 0 6px;
+  font-size: 1.1rem;
+}
+
+.event-page__count {
+  margin: 0 0 6px;
+  font-weight: 700;
+}
+
+.event-page__pitch {
+  margin: 0;
+}
+
+/* The day's tally: a big add, then the list newest first. */
+.event-tally__count {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.event-tally__add {
+  padding: 12px;
+  border: 2px solid var(--ink);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.event-tally__add .place-form__label {
+  margin: 0 0 6px;
+}
+
+.event-tally__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.event-tally__list > li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.event-tally__list--plain > li {
+  padding: 6px 12px;
+}
+
+.event-tally__bird {
+  flex: 1 1 auto;
+  font-weight: 700;
+}
+
+.event-tally__who {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.event-tally__undo {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.event-tally__undo svg {
+  width: 16px;
+  height: 16px;
+}
+
+.event-banner a {
+  color: inherit;
+}
