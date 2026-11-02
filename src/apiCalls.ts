@@ -45,6 +45,7 @@ interface RequestOptions {
 // so they carry the language in it (?locale=); everything else says it in a header, which the
 // server uses for its messages (the signed-in person's own lists follow their saved choice).
 const CACHED_BY_URL = /^\/(ebird|birds)(\/|$)/
+const APP_HEADER = 'X-Bird-Alert'
 
 const api = <T,>(path: string, { method = 'GET', body, params, headers }: RequestOptions = {}): Promise<T> => {
     const locale = nameLocale()
@@ -55,7 +56,9 @@ const api = <T,>(path: string, { method = 'GET', body, params, headers }: Reques
     return fetch(`${API_BASE}${path}${query}`, {
         method,
         credentials: 'same-origin',
-        headers: body !== undefined || allHeaders ? { ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}), ...allHeaders } : undefined,
+        // X-Bird-Alert marks the request as the app's: the server hands eBird's data only to the app,
+        // as eBird's terms ask, and a page on another site can't send this header.
+        headers: { [APP_HEADER]: '1', ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}), ...allHeaders },
         body: body !== undefined ? JSON.stringify(body) : undefined
     }).then(res => parseResponse<T>(res))
 }

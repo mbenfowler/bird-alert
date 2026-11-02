@@ -17,7 +17,7 @@ describe('api client', () => {
     expect(url).toBe('/api/auth/login')
     expect(init.method).toBe('POST')
     expect(init.credentials).toBe('same-origin')
-    expect(init.headers).toEqual({ 'Content-Type': 'application/json' })
+    expect(init.headers).toEqual({ 'X-Bird-Alert': '1', 'Content-Type': 'application/json' })
     expect(JSON.parse(init.body)).toEqual({ email: 'a@b.co', password: 'secret123' })
   })
 
@@ -28,6 +28,15 @@ describe('api client', () => {
     await getUserExists('a+b@example.com')
 
     expect(fetchMock.mock.calls[0][0]).toBe('/api/auth/exists?email=a%2Bb%40example.com')
+  })
+
+  it('marks every request as the app\'s, so the server hands it eBird data', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(json([]))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await getBirdsByCodes(['cangoo'])
+
+    expect(fetchMock.mock.calls[0][1].headers).toMatchObject({ 'X-Bird-Alert': '1' })
   })
 
   it('surfaces the server error message with its status', async () => {
