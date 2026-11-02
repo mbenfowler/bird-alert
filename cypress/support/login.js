@@ -99,6 +99,8 @@ export const login = () => {
     const region = new URL(req.url).searchParams.get('region')
     req.reply({ statusCode: 200, body: { region, stops: account.stops[region] ?? null, start: account.start, updatedAt: null } })
   }).as('getRoute')
+  // No saved places unless a spec says otherwise.
+  cy.intercept('GET', '**/api/saved?kind=places*', { statusCode: 200, body: [] }).as('getPlaces')
   cy.intercept('PUT', '**/api/saved?kind=route*', (req) => {
     const { region, ...change } = req.body
     if ('stops' in change) account.stops[region] = change.stops

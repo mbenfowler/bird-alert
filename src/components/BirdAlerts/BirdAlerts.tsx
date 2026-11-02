@@ -4,7 +4,8 @@ import AlertCard from '../AlertCard/AlertCard'
 import ArrivalCard from '../ArrivalCard/ArrivalCard'
 import { AlertIcon, ChevronIcon, CompassIcon, MapIcon, MigrationIcon, ShareIcon, StarIcon } from '../Icons/Icons'
 import { LoadingState } from '../Loading/Loading'
-import { useArrivalsQuery, useCurrentUser, useNotableQuery, useObservationsQuery, useRegionsQuery, useSavedCodes } from '../../hooks/queries'
+import { useArrivalsQuery, useNotableQuery, useObservationsQuery, useRegionsQuery, useSavedCodes } from '../../hooks/queries'
+import { useShownArea, useShownTargets } from '../../shownArea'
 import './BirdAlerts.css'
 import { countyWord } from '../../usStates'
 import { isNewSince, previousVisit, watchVisits } from '../../lastVisit'
@@ -22,8 +23,11 @@ const TITLES: Record<AlertType, string> = { star: 'alerts.watchLabel', notable: 
  * and species due back about now that have not been reported yet.
  */
 const BirdAlerts = () => {
-    const user = useCurrentUser()
-    const region = user.location
+    // The area shown (home, a place the person is in, or one being explored); at a place, its
+    // target birds count alongside the watch list.
+    const area = useShownArea()
+    const region = area.region
+    const targets = useShownTargets(area)
     const [alertType, setAlertType] = useState<AlertType>('star')
     const [expanded, setExpanded] = useState(true)
     // Each tab's row starts at its first card, however far the previous one was scrolled.
@@ -38,12 +42,12 @@ const BirdAlerts = () => {
     // The other feeds are only fetched once someone opens their tab.
     const notable = useNotableQuery(region, alertType === 'notable')
     const arriving = useArrivalsQuery(region, alertType === 'arriving')
-    const regions = useRegionsQuery(user.state)
-    const regionName = regions.data?.find(r => r.code === region)?.name ?? t('range.yourCounty', { word: countyWord(user.state) })
+    const regions = useRegionsQuery(area.state)
+    const regionName = regions.data?.find(r => r.code === region)?.name ?? t('range.yourCounty', { word: countyWord(area.state) })
 
     const birdAlerts = useMemo(
-      () => (observations.data ?? []).filter(obs => savedCodes.has(obs.speciesCode)),
-      [observations.data, savedCodes]
+      () => (observations.data ?? []).filter(obs => savedCodes.has(obs.speciesCode) || targets.has(obs.speciesCode)),
+      [observations.data, savedCodes, targets]
     )
 
     const shown = alertType === 'star' ? birdAlerts : alertType === 'notable' ? (notable.data ?? []) : []
@@ -97,7 +101,7 @@ const BirdAlerts = () => {
                   // The card opens the sighting; the share button sits beside the link, not in it (a
                   // button inside a link would open the sighting too).
                   <div key={`${alert.subId}-${alert.speciesCode}`} className='alerts-item alerts-item--sighting' style={{ '--i': index } as React.CSSProperties}>
-                    <Link className={`alert-link ${isNew ? 'is-new' : ''}`} to={`/sighting/${alert.speciesCode}/${alert.subId}`}>
+                    <Link className={`alert-link ${isNew ? 'is-new' : ''}`} to={`/sighting/${alert.speciesCode}/${alert.subId}${area.mode === 'home' ? '' : `?region=${area.region}`}`}>
                       {isNew && <span className='alert-new'><span className='alert-new__dot' aria-hidden='true' />{t('alerts.new')}<span className='visually-hidden'>{t('alerts.newHidden')}</span></span>}
                       <AlertCard alert={alert} />
                       <span className='visually-hidden'>{t('alerts.openHidden')}</span>

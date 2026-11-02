@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import BirdAlerts from '../BirdAlerts/BirdAlerts'
+import AreaBanner from '../AreaBanner/AreaBanner'
+import { useShownArea } from '../../shownArea'
 import BirdsList from '../BirdsList/BirdsList'
 import ErrorMessage from '../Error/ErrorMessage'
 import { LoadingState, SkeletonList } from '../Loading/Loading'
 import { SearchIcon, CloseIcon } from '../Icons/Icons'
 import { errorMessage } from '../../apiCalls'
-import { SEARCH_MIN_LENGTH, useBirdSearchQuery, useCurrentUser, useInfiniteBirdsQuery, useRegionsQuery, useSpeciesListQuery } from '../../hooks/queries'
+import { SEARCH_MIN_LENGTH, useBirdSearchQuery, useInfiniteBirdsQuery, useRegionsQuery, useSpeciesListQuery } from '../../hooks/queries'
 import { useDebouncedValue } from '../../hooks/useDebouncedValue'
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll'
 import './Home.css'
@@ -20,11 +22,12 @@ const writeRegionOnly = (value: boolean) => { try { localStorage.setItem(REGION_
 const SEARCH_DEBOUNCE_MS = 250
 
 const Home = () => {
-    const user = useCurrentUser()
-    const region = user.location
+    // Home, a place the person is in, or an area being explored (shownArea).
+    const shown = useShownArea()
+    const region = shown.region
 
     // "Hall - US-GA-139": the same label the settings page shows for the chosen region.
-    const regions = useRegionsQuery(user.state)
+    const regions = useRegionsQuery(shown.state)
     const regionName = regions.data?.find(r => r.code === region)?.name
     const regionLabel = regionName ? `${regionName} - ${region}` : region
 
@@ -97,6 +100,7 @@ const Home = () => {
 
     return (
         <>
+            <AreaBanner upcoming />
             <section id='alertArea'>
                 <BirdAlerts />
             </section>

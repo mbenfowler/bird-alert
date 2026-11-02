@@ -2,10 +2,10 @@ import { useMemo } from 'react'
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions, getCountries, getProvinces,
-  getSavedBirds, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase, getNameLocales } from '../apiCalls'
+  getSavedBirds, getPlaces, getPlaceSuggestions, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase, getNameLocales } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
 import { nameLocale } from '../i18n'
-import type { PersistenceClass, User } from '../types'
+import type { Id, PersistenceClass, User } from '../types'
 
 /** Short stable fingerprint of a code list, so a changed species list gets its own cache entry. */
 export const codesKey = (codes: string[]) => {
@@ -36,6 +36,7 @@ export const queryKeys = {
   whereToGo: (region: string, codes: string[], from?: { lat: number; lng: number } | null) => ['where-to-go', region, codesKey(codes), from ? `${from.lat.toFixed(2)},${from.lng.toFixed(2)}` : '', nameLocale()] as const,
   bestHotspots: (region: string, days: number, species = '') => ['best-hotspots', region, days, species, nameLocale()] as const,
   savedRoute: (region: string) => ['saved-route', region, nameLocale()] as const,
+  places: ['places'] as const,
   placeSearch: (state: string, q: string, addresses: boolean) => ['place-search', state, q.trim().toLowerCase(), addresses, nameLocale()] as const,
   drive: (points: { lat: number; lng: number }[]) => ['drive', points.map(p => `${p.lat.toFixed(4)},${p.lng.toFixed(4)}`).join(';'), nameLocale()] as const,
   nearby: (lat: number, lng: number) => ['nearby', lat.toFixed(3), lng.toFixed(3), nameLocale()] as const
@@ -398,4 +399,21 @@ export const useNearbyPublicQuery = (lat: number | null, lng: number | null, ena
     queryFn: () => getNearbyPublic(lat!, lng!),
     staleTime: DAY,
     enabled: enabled && lat !== null && lng !== null
+  })
+
+/** The person's trips, soonest first. */
+export const usePlacesQuery = () =>
+  useQuery({ queryKey: queryKeys.places, queryFn: getPlaces, staleTime: 5 * 60 * 1000 })
+
+/** Target birds worth adding for a place over some days (likely lifers there then), as species codes. */
+export const usePlaceSuggestionsQuery = (id: Id | null, from: string, to: string) =>
+  useQuery({
+    queryKey: ['place-suggestions', id, from, to] as const,
+    queryFn: async () => {
+      const answer = await getPlaceSuggestions(id!, from, to)
+      const list = Array.isArray(answer) ? answer : (answer.suggestions ?? answer.codes ?? [])
+      return list.map(s => (typeof s === 'string' ? s : s.speciesCode)).filter(Boolean)
+    },
+    enabled: id !== null,
+    staleTime: 60 * 60 * 1000
   })

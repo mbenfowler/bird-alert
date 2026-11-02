@@ -6,7 +6,8 @@ import ErrorMessage from '../Error/ErrorMessage'
 import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
 import RouteCard from './RouteCard'
-import { useCurrentUser, useDriveQuery, useNearbyPublicQuery, useRegionsQuery } from '../../hooks/queries'
+import { useDriveQuery, useNearbyPublicQuery, useRegionsQuery } from '../../hooks/queries'
+import { useShownArea, useShownTargets } from '../../shownArea'
 import { focusFor } from '../../mapFocus'
 import { unitFor } from '../../distance'
 import { chanceColour } from '../../chance'
@@ -29,10 +30,11 @@ const birdsWord = (n: number) => t('route.birds', { count: n, n: number(n, { max
  * as the species page: the route card leads, the map and list dock under the bar.
  */
 const WhereToGo = () => {
-  const user = useCurrentUser()
+  const user = useShownArea()
   const distanceUnit = unitFor(user.state)
-  const region = user.location
-  const { custom, setCustom, start, setStart, saveFailed, seen, lifers, setLiferMode, codes, go, route, stops } = useGoPlan(region)
+  const region = user.region
+  const targets = useShownTargets(user)
+  const { custom, setCustom, start, setStart, saveFailed, seen, lifers, setLiferMode, codes, go, route, stops } = useGoPlan(region, targets)
   const regions = useRegionsQuery(user.state)
   const regionName = regions.data?.find(r => r.code === region)?.name ?? t('range.yourCounty', { word: countyWord(user.state) })
   const [selected, setSelected] = useState<string | null>(null)
@@ -208,7 +210,7 @@ const WhereToGo = () => {
                   </button>
                   <div className='go__birds'>
                     {place.birds.slice(0, 8).map(b => (
-                      <Link key={b.speciesCode} className='go__bird' style={{ '--chance': chanceColour(b.chance) } as CSSProperties} to={`/sighting/${b.speciesCode}/${b.lastSeen?.subId ?? ''}`}>{b.comName} {b.chance}%</Link>
+                      <Link key={b.speciesCode} className='go__bird' style={{ '--chance': chanceColour(b.chance) } as CSSProperties} to={`/sighting/${b.speciesCode}/${b.lastSeen?.subId ?? ''}${user.mode === 'home' ? '' : `?region=${region}`}`}>{b.comName} {b.chance}%</Link>
                     ))}
                     {place.birds.length > 8 && <span className='go__more'>{t('go.more', { count: place.birds.length - 8 })}</span>}
                   </div>

@@ -1,6 +1,7 @@
 import { useSearchParams } from 'react-router'
 import WhereToGo from './WhereToGo'
 import BestHotspots from './BestHotspots'
+import AreaBanner from '../AreaBanner/AreaBanner'
 import { t } from '../../i18n'
 
 export type GoTab = 'birds' | 'best'
@@ -9,7 +10,13 @@ export type GoTab = 'birds' | 'best'
 const useGoTab = () => {
   const [params, setParams] = useSearchParams()
   const tab: GoTab = params.get('tab') === 'best' ? 'best' : 'birds'
-  const setTab = (next: GoTab) => setParams(next === 'best' ? { tab: 'best' } : new URLSearchParams(), { replace: true })
+  // An explored area (?region=) stays in the address across tabs, so the link still names it.
+  const setTab = (next: GoTab) => setParams((prev) => {
+    const kept = new URLSearchParams()
+    if (prev.get('region')) kept.set('region', prev.get('region')!)
+    if (next === 'best') kept.set('tab', 'best')
+    return kept
+  }, { replace: true })
   return [tab, setTab] as const
 }
 
@@ -26,6 +33,7 @@ const GoPage = () => {
   const [tab, setTab] = useGoTab()
   return (
     <>
+      <AreaBanner />
       <div className='go-tabs'>
         <div className='timing go-tabs__switch' role='group' aria-label={t('go.tabsLabel')}>
           {TABS.map(({ tab: which, label }) => (

@@ -1,4 +1,4 @@
-import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, Place, Province, Area,SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, BestHotspots, SpeciesHotspots, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share, Passkey, Chase, PersistenceClass } from './types'
+import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, Place, Province, Area,SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, BestHotspots, SpeciesHotspots, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share, Passkey, Chase, PersistenceClass, Id, SavedPlace, PlaceInput, PlaceTrip, PlaceSuggestion } from './types'
 import { arrival } from './arrival'
 import { isStandalone } from './install'
 import { nameLocale, signupLocale } from './i18n'
@@ -108,6 +108,16 @@ export const sendFeedback = (feedback: { kind: 'idea' | 'bug' | 'other'; message
 export const createShare = (share: Record<string, unknown> & { kind: 'route' | 'sighting' }) => api<{ id: string; url: string }>('/saved', { method: 'POST', params: { kind: 'share' }, body: share })
 export const getShare = (id: string) => api<Share>('/ebird/share', { params: { id } })
 
+export const getPlaces = () => api<SavedPlace[]>('/saved', { params: { kind: 'places' } })
+export const postPlace = (place: PlaceInput) => api<SavedPlace>('/saved', { method: 'POST', params: { kind: 'place' }, body: place })
+export const patchPlace = (id: Id, place: Partial<PlaceInput>) => api<SavedPlace>('/saved', { method: 'PATCH', params: { kind: 'place', id: String(id) }, body: place })
+export const deletePlace = (id: Id) => api<null>('/saved', { method: 'DELETE', params: { kind: 'place', id: String(id) } })
+export const putPlaceTargets = (id: Id, codes: string[]) => api<SavedPlace>('/saved', { method: 'PUT', params: { kind: 'place-targets', id: String(id) }, body: { codes } })
+export const getPlaceSuggestions = (id: Id, from: string, to: string) =>
+  api<PlaceSuggestion[] | { suggestions?: PlaceSuggestion[]; codes?: PlaceSuggestion[] }>('/saved', { params: { kind: 'place-suggestions', id: String(id), from, to } })
+export const postPlaceTrip = (trip: { place_id: Id; starts_on: string; ends_on: string }) => api<PlaceTrip>('/saved', { method: 'POST', params: { kind: 'trip' }, body: trip })
+export const patchPlaceTrip = (id: Id, trip: { starts_on: string; ends_on: string }) => api<PlaceTrip>('/saved', { method: 'PATCH', params: { kind: 'trip', id: String(id) }, body: trip })
+export const deletePlaceTrip = (id: Id) => api<null>('/saved', { method: 'DELETE', params: { kind: 'trip', id: String(id) } })
 export const getSavedRoute = (region: string) => api<SavedRoute>('/saved', { params: { kind: 'route', region } })
 /** Only the fields given change: `stops: null` goes back to the suggestion, `start: null` clears the start. */
 export const putSavedRoute = (change: { region: string; stops?: SavedPoint[] | null; start?: SavedPoint | null }) =>

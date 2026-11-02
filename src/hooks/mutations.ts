@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { releaseThisDevice } from './usePushNotifications'
-import { deleteAccount, deleteSavedBird, deleteSeenBird, importLifeList, logout, patchUser, postSavedBird, postSeenBird, putSavedRoute } from '../apiCalls'
+import { deleteAccount, deletePlace, deletePlaceTrip, patchPlace, patchPlaceTrip, postPlace, postPlaceTrip, putPlaceTargets, deleteSavedBird, deleteSeenBird, importLifeList, logout, patchUser, postSavedBird, postSeenBird, putSavedRoute } from '../apiCalls'
 import { clearLocalRoutes } from '../routePlan'
 import { queryKeys } from './queries'
-import type { Bird, SeenBird, User } from '../types'
+import type { Bird, Id, PlaceInput, SeenBird, User } from '../types'
 
 /** Put a freshly logged-in user into the cache so every view updates at once. */
 export const useSetSession = () => {
@@ -107,3 +107,27 @@ export const useToggleSavedMutation = () => {
     onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.saved })
   })
 }
+
+/** Every change to places refreshes them, and the session too, since it says which place is active. */
+const usePlaceChange = <A, R>(mutationFn: (args: A) => Promise<R>) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn,
+    onSettled: () => Promise.all([queryClient.invalidateQueries({ queryKey: queryKeys.places }), queryClient.invalidateQueries({ queryKey: queryKeys.session })])
+  })
+}
+
+/** Adds a place, or changes one. */
+export const useSavePlaceMutation = () =>
+  usePlaceChange(({ id, place }: { id?: Id; place: PlaceInput }) => (id === undefined ? postPlace(place) : patchPlace(id, place)))
+
+export const useDeletePlaceMutation = () => usePlaceChange((id: Id) => deletePlace(id))
+
+export const usePlaceTargetsMutation = () => usePlaceChange(({ id, codes }: { id: Id; codes: string[] }) => putPlaceTargets(id, codes))
+
+/** Adds dates at a place, or changes them. */
+export const useSavePlaceTripMutation = () =>
+  usePlaceChange(({ id, placeId, starts_on, ends_on }: { id?: Id; placeId: Id; starts_on: string; ends_on: string }) =>
+    (id === undefined ? postPlaceTrip({ place_id: placeId, starts_on, ends_on }) : patchPlaceTrip(id, { starts_on, ends_on })))
+
+export const useDeletePlaceTripMutation = () => usePlaceChange((id: Id) => deletePlaceTrip(id))

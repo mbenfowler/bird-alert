@@ -1,0 +1,62 @@
+/* Which area a page shows, with a way back: a slim card above the page's own content. */
+.area-banner-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 12px 10px;
+}
+
+.area-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin: 8px 12px 10px;
+  padding: 10px 14px;
+  border: 2px solid var(--ink);
+  border-left-width: 6px;
+  border-left-color: var(--accent);
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 0.95rem;
+}
+
+.area-banner-wrap .area-banner {
+  margin: 0;
+}
+
+/* A trip under way leads in the accent; a quieter note for "showing home" and trips coming up. */
+.area-banner--place {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.area-banner--place .link-text {
+  color: inherit;
+}
+
+.area-banner--quiet {
+  border-color: var(--line);
+  border-left-color: var(--line);
+}
+
+.area-banner__another-row {
+  margin: 0;
+  font-size: 0.95rem;
+  text-align: right;
+}
+
+.area-banner__picker {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.area-banner__picker > :first-child {
+  width: 100%;
+}
