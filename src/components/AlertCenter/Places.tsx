@@ -209,7 +209,12 @@ const Trips = ({ place, openTrip = null }: { place: SavedPlace; openTrip?: strin
   const adding = editing !== undefined
   const setAdding = (on: boolean) => (on ? open(null) : setEditing(undefined))
   // A Big Day is one date, and scouts by default; an ordinary trip doesn't unless asked.
-  const toggleBigDay = (on: boolean) => { setBigDay(on); setScout(on); if (on) setScoutDays(DEFAULT_SCOUT_DAYS) }
+  // Turning Big Day on turns scouting on with the usual lead time, unless scouting is already on:
+  // then the lead time chosen stays. Turning it off leaves scouting as it is.
+  const toggleBigDay = (on: boolean) => {
+    setBigDay(on)
+    if (on && !scout) { setScout(true); setScoutDays(DEFAULT_SCOUT_DAYS) }
+  }
   const submit = (e: FormEvent) => {
     e.preventDefault()
     const ends = bigDay ? startsOn : endsOn

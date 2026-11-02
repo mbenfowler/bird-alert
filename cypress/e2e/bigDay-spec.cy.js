@@ -29,6 +29,19 @@ describe('Big Day and scouting', () => {
     cy.wait('@postTrip').its('request.body').should('deep.equal', { place_id: 7, starts_on: day(40), ends_on: day(40), kind: 'bigday', scout: true, scout_days: 21 })
   })
 
+  it('keeps a lead time already chosen when Big Day is switched on', () => {
+    open([place()])
+    cy.intercept('POST', '**/api/saved?kind=trip', (req) => req.reply({ statusCode: 201, body: { id: 9, ...req.body, active: false } })).as('postTrip')
+    cy.contains('button', 'Add trip dates').click()
+    cy.get('.place__trip-form input[name="scout"]').check({ force: true })
+    cy.contains('.place__scout-weeks button', '1 week').click()
+    cy.get('.place__trip-form input[name="bigday"]').check({ force: true })
+    cy.contains('.place__scout-weeks button', '1 week').should('have.attr', 'aria-pressed', 'true')
+    cy.get('.place__trip-form input[name="starts_on"]').type(day(40))
+    cy.contains('.place__trip-form button', 'Save dates').click()
+    cy.wait('@postTrip').its('request.body').should('include', { kind: 'bigday', scout: true, scout_days: 7 })
+  })
+
   it('shows the trip line, a Scouting badge in the window, and asks for target birds when there are none', () => {
     const bigDay = { id: 9, starts_on: day(10), ends_on: day(10), active: false, kind: 'bigday', scout: true, scout_days: 21, scout_from: day(-11) }
     open([place([bigDay], [])])
