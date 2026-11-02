@@ -1,6 +1,6 @@
-import { useEffect, useSyncExternalStore } from 'react'
+import { useEffect, useMemo, useSyncExternalStore } from 'react'
 import { useSearchParams } from 'react-router'
-import { useCurrentUser, usePlacesQuery, useRegionsQuery } from './hooks/queries'
+import { useCurrentUser, usePlaceSeenQuery, usePlacesQuery, useRegionsQuery } from './hooks/queries'
 import { countyName, countyWord, stateOfRegion } from './usStates'
 import { daysUntil, t } from './i18n'
 import type { ActivePlace, SavedPlace } from './types'
@@ -84,6 +84,18 @@ export const useShownTargets = (shown: ShownArea): Set<string> => {
   return place?.targets.length ? new Set(place.targets) : EMPTY
 }
 const EMPTY = new Set<string>()
+
+/**
+ * The list "new for me" is measured against while a place is shown: the place's own seen list when
+ * the person chose "in <place>" for it, else null (the life list).
+ */
+export const useShownSeen = (shown: ShownArea): Set<string> | null => {
+  const places = usePlacesQuery()
+  const place = shown.mode === 'place' && shown.place ? places.data?.find(p => String(p.id) === String(shown.place!.id)) : undefined
+  const byPlace = place?.lifers_scope === 'place'
+  const seen = usePlaceSeenQuery(byPlace ? place!.id : null, byPlace)
+  return useMemo(() => (byPlace && seen.data ? new Set(seen.data) : null), [byPlace, seen.data])
+}
 
 const UPCOMING_DAYS = 7
 

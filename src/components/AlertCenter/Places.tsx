@@ -6,13 +6,13 @@ import BirdPicker from '../WhereToGo/BirdPicker'
 import ErrorMessage from '../Error/ErrorMessage'
 import { CloseIcon } from '../Icons/Icons'
 import { errorMessage } from '../../apiCalls'
-import { useBirdsQuery, useCurrentUser, usePlaceSuggestionsQuery, usePlacesQuery } from '../../hooks/queries'
-import { useDeletePlaceMutation, useDeletePlaceTripMutation, usePatchUserMutation, usePlaceTargetsMutation, useSavePlaceMutation, useSavePlaceTripMutation } from '../../hooks/mutations'
+import { useBirdsQuery, useCurrentUser, usePlaceSeenQuery, usePlaceSuggestionsQuery, usePlacesQuery } from '../../hooks/queries'
+import { useDeletePlaceMutation, useDeletePlaceTripMutation, usePatchUserMutation, usePlaceSeenMutation, usePlaceTargetsMutation, useSavePlaceMutation, useSavePlaceTripMutation } from '../../hooks/mutations'
 import { useAreaName } from '../../shownArea'
 import { unitFor } from '../../distance'
 import { stateName, stateOfRegion } from '../../usStates'
 import { dateRange, t } from '../../i18n'
-import type { SavedPlace } from '../../types'
+import type { PlaceTrip, SavedPlace } from '../../types'
 import './Places.css'
 
 const MAX_PLACES = 10
@@ -85,7 +85,7 @@ const Targets = ({ place, areaName }: { place: SavedPlace; areaName: string }) =
   const next = place.trips.filter(trip => trip.ends_on >= today()).sort((a, b) => a.starts_on.localeCompare(b.starts_on))[0]
   const from = next ? (next.starts_on > today() ? next.starts_on : today()) : today()
   const to = next ? next.ends_on : inTwoWeeks()
-  const suggestions = usePlaceSuggestionsQuery(place.id, from, to)
+  const suggestions = usePlaceSuggestionsQuery(place.id, from, to, place.lifers_scope)
   const suggested = (suggestions.data ?? []).filter(code => !place.targets.includes(code)).slice(0, 8)
   const names = useBirdsQuery([...place.targets, ...suggested])
   const nameOf = (code: string) => names.data?.find(b => b.speciesCode === code)?.comName ?? code
@@ -118,21 +118,91 @@ const Targets = ({ place, areaName }: { place: SavedPlace; areaName: string }) =
   )
 }
 
-/** A place's trips: dates when it switches on by itself. */
-const Trips = ({ place }: { place: SavedPlace }) => {
+/**
+ * What counts as new at a place, for its suggested targets and Lifers first there: a bird new in
+ * life, or one not yet seen at this place (its own list, like a state list).
+ */
+const Scope = ({ place }: { place: SavedPlace }) => {
+  const save = useSavePlaceMutation()
+  const scope = place.lifers_scope ?? 'life'
+  const id = `scope-${place.id}`
+  return (
+    <div className='place__section'>
+      <p className='place__heading' id={id}>{t('places.newForMe')}</p>
+      <fieldset className='timing place__scope' aria-labelledby={id} disabled={save.isPending}>
+        {(['life', 'place'] as const).map(which => (
+          <label key={which} className={`timing__option ${scope === which ? 'is-selected' : ''}`}>
+            <input type='radio' name={`lifers_scope_${place.id}`} value={which} checked={scope === which}
+              onChange={() => save.mutate({ id: place.id, place: { lifers_scope: which } }, { onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' }) })} />
+            {which === 'life' ? t('places.anywhere') : t('places.inPlace', { name: place.name })}
+          </label>
+        ))}
+      </fieldset>
+    </div>
+  )
+}
+
+/** "Seen in Colorado (work) · 42 birds": the place's own list, opened to look through, add to or prune. */
+const SeenHere = ({ place, areaName }: { place: SavedPlace; areaName: string }) => {
+  const [open, setOpen] = useState(false)
+  const [adding, setAdding] = useState(false)
+  const seen = usePlaceSeenQuery(place.id, open)
+  const save = usePlaceSeenMutation()
+  const codes = seen.data ?? []
+  const names = useBirdsQuery(open ? codes : [])
+  const nameOf = (code: string) => names.data?.find(b => b.speciesCode === code)?.comName ?? code
+  const setCodes = (next: string[]) => save.mutate({ id: place.id, codes: next }, { onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' }) })
+  const count = open && seen.data ? codes.length : (place.seenCount ?? 0)
+  return (
+    <div className='place__section'>
+      <p className='place__seen'>
+        <span>{t('places.seenIn', { name: place.name, count })}</span>
+        <button type='button' className='link-button link-text' aria-expanded={open} onClick={() => setOpen(o => !o)}>{open ? t('places.hideSeen') : t('places.showSeen')}</button>
+      </p>
+      {open && (
+        <>
+          {seen.isError && <ErrorMessage networkError={errorMessage(seen.error)} />}
+          {seen.data && (codes.length
+            ? <ul className='place__chips'>{codes.map(code => (
+                <li key={code} className='place__chip place__chip--seen'>{nameOf(code)}
+                  <button type='button' aria-label={t('places.removeSeen', { name: nameOf(code) })} disabled={save.isPending} onClick={() => setCodes(codes.filter(c => c !== code))}><CloseIcon /></button>
+                </li>))}</ul>
+            : <p className='notification__hint'>{t('places.seenNone')}</p>)}
+          {adding
+            ? <div className='place__add-target'>
+                <BirdPicker region={place.location} regionName={areaName} onPick={(code) => { if (!codes.includes(code)) setCodes([...codes, code]); setAdding(false) }} />
+                <button type='button' className='link-button link-text' onClick={() => setAdding(false)}>{t('common.cancel')}</button>
+              </div>
+            : <button type='button' className='link-button link-text' onClick={() => setAdding(true)}>{t('places.addSeen')}</button>}
+        </>
+      )}
+    </div>
+  )
+}
+
+/**
+ * A place's trips: dates when it switches on by itself. A trip can be changed (an "Extend my trip"
+ * link from the trip email opens it: `openTrip`).
+ */
+const Trips = ({ place, openTrip = null }: { place: SavedPlace; openTrip?: string | null }) => {
   const save = useSavePlaceTripMutation()
   const remove = useDeletePlaceTripMutation()
-  const [adding, setAdding] = useState(false)
-  const [startsOn, setStartsOn] = useState('')
-  const [endsOn, setEndsOn] = useState('')
+  const opened = openTrip ? place.trips.find(trip => String(trip.id) === openTrip) : undefined
+  // undefined: no form; null: adding new dates; a trip: changing its dates.
+  const [editing, setEditing] = useState<PlaceTrip | null | undefined>(opened)
+  const [startsOn, setStartsOn] = useState(opened?.starts_on ?? '')
+  const [endsOn, setEndsOn] = useState(opened?.ends_on ?? '')
   const [problem, setProblem] = useState<string | null>(null)
+  const open = (trip: PlaceTrip | null) => { setEditing(trip); setStartsOn(trip?.starts_on ?? ''); setEndsOn(trip?.ends_on ?? ''); setProblem(null) }
+  const adding = editing !== undefined
+  const setAdding = (on: boolean) => (on ? open(null) : setEditing(undefined))
   const submit = (e: FormEvent) => {
     e.preventDefault()
     if (!startsOn || !endsOn) return setProblem(t('places.pickDates'))
     if (endsOn < startsOn) return setProblem(t('places.datesOrder'))
     setProblem(null)
-    save.mutate({ placeId: place.id, starts_on: startsOn, ends_on: endsOn }, {
-      onSuccess: () => { toast.success(t('places.tripSaved'), { position: 'bottom-center' }); setAdding(false); setStartsOn(''); setEndsOn('') },
+    save.mutate({ id: editing?.id, placeId: place.id, starts_on: startsOn, ends_on: endsOn }, {
+      onSuccess: () => { toast.success(t('places.tripSaved'), { position: 'bottom-center' }); setEditing(undefined); setStartsOn(''); setEndsOn('') },
       onError: (error) => setProblem(errorMessage(error))
     })
   }
@@ -146,6 +216,7 @@ const Trips = ({ place }: { place: SavedPlace }) => {
             return (
               <li key={trip.id}>
                 {dates}{trip.active && <span className='place__badge'>{t('places.tripNow')}</span>}
+                <button type='button' className='link-button link-text' aria-label={t('places.changeTrip', { dates })} onClick={() => open(trip)}>{t('places.changeDates')}</button>
                 <button type='button' className='link-button link-text' aria-label={t('places.deleteTrip', { dates })} disabled={remove.isPending}
                   onClick={() => remove.mutate(trip.id, { onSuccess: () => toast.success(t('places.tripDeleted'), { position: 'bottom-center' }), onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' }) })}>
                   {t('places.delete')}
@@ -155,8 +226,8 @@ const Trips = ({ place }: { place: SavedPlace }) => {
           })}</ul>
         : <p className='notification__hint'>{t('places.tripsNone')}</p>}
       {adding
-        ? <form className='place__trip-form' onSubmit={submit} noValidate>
-            <label><span className='place-form__label'>{t('places.starts')}</span><input type='date' name='starts_on' value={startsOn} min={today()} onChange={(e) => setStartsOn(e.target.value)} /></label>
+        ? <form className='place__trip-form' onSubmit={submit} noValidate data-trip={editing ? String(editing.id) : 'new'}>
+            <label><span className='place-form__label'>{t('places.starts')}</span><input type='date' name='starts_on' value={startsOn} min={editing ? undefined : today()} onChange={(e) => setStartsOn(e.target.value)} /></label>
             <label><span className='place-form__label'>{t('places.ends')}</span><input type='date' name='ends_on' value={endsOn} min={startsOn || today()} onChange={(e) => setEndsOn(e.target.value)} /></label>
             {problem && <p className='place-form__error' role='alert'>{problem}</p>}
             <div className='place-form__actions'>
@@ -170,7 +241,7 @@ const Trips = ({ place }: { place: SavedPlace }) => {
 }
 
 /** One saved place: where, how far, whether you're there now, its target birds and its trips. */
-const PlaceCard = ({ place }: { place: SavedPlace }) => {
+const PlaceCard = ({ place, openTrip = null }: { place: SavedPlace; openTrip?: string | null }) => {
   const user = useCurrentUser()
   const navigate = useNavigate()
   const patch = usePatchUserMutation()
@@ -197,7 +268,9 @@ const PlaceCard = ({ place }: { place: SavedPlace }) => {
         </button>
       </p>
       <Targets place={place} areaName={areaName} />
-      <Trips place={place} />
+      <Scope place={place} />
+      <SeenHere place={place} areaName={areaName} />
+      <Trips place={place} openTrip={openTrip} />
     </li>
   )
 }
@@ -218,10 +291,19 @@ const Places = () => {
   const [adding, setAdding] = useState(Boolean(presetState))
   const homeName = useAreaName(user.state, user.location)
   const full = (places.data?.length ?? 0) >= MAX_PLACES
+  // "Extend my trip" from a trip email: /settings#places?trip=12 (or ?trip=12) opens that trip's dates.
+  const [openTrip] = useState(() => /[?&]trip=([^&]+)/.exec(window.location.hash)?.[1] ?? params.get('trip'))
 
   useEffect(() => {
-    if (presetState) document.getElementById('places')?.scrollIntoView({ block: 'start' })
-  }, [presetState])
+    if (presetState || openTrip) document.getElementById('places')?.scrollIntoView({ block: 'start' })
+  }, [presetState, openTrip])
+  useEffect(() => {
+    if (openTrip && places.data) document.querySelector(`[data-trip="${CSS.escape(openTrip)}"]`)?.scrollIntoView({ block: 'center' })
+  }, [openTrip, places.data])
+  const setPreference = (changes: { keep_home_alerts?: boolean; trip_emails_enabled?: boolean }) => patch.mutate(changes, {
+    onSuccess: () => toast.success(t('alertCenter.updated'), { position: 'bottom-center' }),
+    onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
+  })
   const doneAdding = () => {
     setAdding(false)
     if (presetRegion) setParams((prev) => { const next = new URLSearchParams(prev); next.delete('addPlace'); return next }, { replace: true })
@@ -247,14 +329,21 @@ const Places = () => {
           </div>
           <div className='notification__controls'>
             <input className='switch switch--small' type='checkbox' id='keep_home_alerts' name='keep_home_alerts' checked={user.keep_home_alerts ?? true} disabled={patch.isPending}
-              onChange={(e) => patch.mutate({ keep_home_alerts: e.target.checked }, {
-                onSuccess: () => toast.success(t('alertCenter.updated'), { position: 'bottom-center' }),
-                onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
-              })} />
+              onChange={(e) => setPreference({ keep_home_alerts: e.target.checked })} />
+          </div>
+        </div>
+        <div className='notification notification--sub places__keep'>
+          <div className='notification__text'>
+            <label htmlFor='trip_emails_enabled'>{t('places.tripEmails')}</label>
+            <p className='notification__hint'>{t('places.tripEmailsHint')}</p>
+          </div>
+          <div className='notification__controls'>
+            <input className='switch switch--small' type='checkbox' id='trip_emails_enabled' name='trip_emails_enabled' checked={user.trip_emails_enabled ?? true} disabled={patch.isPending}
+              onChange={(e) => setPreference({ trip_emails_enabled: e.target.checked })} />
           </div>
         </div>
         {places.isError && <ErrorMessage networkError={errorMessage(places.error)} />}
-        {places.data && places.data.length > 0 && <ul className='places__list'>{places.data.map(place => <PlaceCard key={place.id} place={place} />)}</ul>}
+        {places.data && places.data.length > 0 && <ul className='places__list'>{places.data.map(place => <PlaceCard key={place.id} place={place} openTrip={openTrip && place.trips.some(trip => String(trip.id) === openTrip) ? openTrip : null} />)}</ul>}
         {adding
           ? <PlaceForm preset={presetState ? { state: presetState, location: presetRegion! } : null} onDone={doneAdding} />
           : full

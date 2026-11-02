@@ -2,10 +2,10 @@ import { useMemo } from 'react'
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions, getCountries, getProvinces,
-  getSavedBirds, getPlaces, getPlaceSuggestions, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase, getNameLocales } from '../apiCalls'
+  getSavedBirds, getPlaces, getPlaceSeen, getPlaceSuggestions, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase, getNameLocales } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
 import { nameLocale } from '../i18n'
-import type { Id, PersistenceClass, User } from '../types'
+import type { Id, LifersScope, PersistenceClass, User } from '../types'
 
 /** Short stable fingerprint of a code list, so a changed species list gets its own cache entry. */
 export const codesKey = (codes: string[]) => {
@@ -403,14 +403,26 @@ export const useNearbyPublicQuery = (lat: number | null, lng: number | null, ena
 
 /** The person's trips, soonest first. */
 export const usePlacesQuery = () =>
-  useQuery({ queryKey: queryKeys.places, queryFn: getPlaces, staleTime: 5 * 60 * 1000 })
+  useQuery({
+    queryKey: queryKeys.places,
+    queryFn: getPlaces,
+    staleTime: 5 * 60 * 1000,
+    // Tolerant of an odd answer: only real places, each with its lists, so no page can trip on one.
+    select: (places) => (Array.isArray(places) ? places : [])
+      .filter(place => place && typeof place.location === 'string')
+      .map(place => ({ ...place, targets: place.targets ?? [], trips: place.trips ?? [] }))
+  })
+
+/** A place's own seen list (like a state list), as species codes; fetched only when wanted. */
+export const usePlaceSeenQuery = (id: Id | null, enabled = true) =>
+  useQuery({ queryKey: ['place-seen', id] as const, queryFn: () => getPlaceSeen(id!), enabled: enabled && id !== null, staleTime: 5 * 60 * 1000 })
 
 /** Target birds worth adding for a place over some days (likely lifers there then), as species codes. */
-export const usePlaceSuggestionsQuery = (id: Id | null, from: string, to: string) =>
+export const usePlaceSuggestionsQuery = (id: Id | null, from: string, to: string, scope?: LifersScope) =>
   useQuery({
-    queryKey: ['place-suggestions', id, from, to] as const,
+    queryKey: ['place-suggestions', id, from, to, scope ?? null] as const,
     queryFn: async () => {
-      const answer = await getPlaceSuggestions(id!, from, to)
+      const answer = await getPlaceSuggestions(id!, from, to, scope)
       const list = Array.isArray(answer) ? answer : (answer.suggestions ?? answer.codes ?? [])
       return list.map(s => (typeof s === 'string' ? s : s.speciesCode)).filter(Boolean)
     },

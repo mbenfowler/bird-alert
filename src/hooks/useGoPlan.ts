@@ -14,7 +14,7 @@ const readLiferMode = () => { try { return localStorage.getItem(LIFER_MODE_KEY) 
  * target birds while the person is there.
  */
 const NO_EXTRA = new Set<string>()
-export const useGoPlan = (region: string, extra: Set<string> = NO_EXTRA) => {
+export const useGoPlan = (region: string, extra: Set<string> = NO_EXTRA, seenAt: Set<string> | null = null) => {
   const savedCodes = useSavedCodes()
   // Only the watch-list birds that occur in this county are worth asking about; a long list saved
   // across many places would otherwise go over the wire for nothing.
@@ -23,12 +23,14 @@ export const useGoPlan = (region: string, extra: Set<string> = NO_EXTRA) => {
   const seen = useSeenCodes()
   const [liferMode, setLiferModeState] = useState(readLiferMode)
   const setLiferMode = (on: boolean) => { setLiferModeState(on); try { localStorage.setItem(LIFER_MODE_KEY, on ? '1' : '0') } catch { /* this visit only */ } }
-  const lifers = liferMode && seen.codes.size > 0
+  // "New for me" is measured against the life list, or a place's own list when the person chose that there.
+  const counted = seenAt ?? seen.codes
+  const lifers = liferMode && (seenAt !== null || seen.codes.size > 0)
   const codes = useMemo(() => {
-    if (lifers) return (speciesList.data ?? []).filter(code => !seen.codes.has(code)).sort()
+    if (lifers) return (speciesList.data ?? []).filter(code => !counted.has(code)).sort()
     const here = speciesList.data ? new Set(speciesList.data) : null
     return [...new Set([...savedCodes, ...extra])].filter(code => !here || here.has(code)).sort()
-  }, [lifers, savedCodes, extra, seen.codes, speciesList.data])
+  }, [lifers, savedCodes, extra, counted, speciesList.data])
   // The person's own stops for this county (null follows the suggestion) and where the day starts,
   // kept on the account. The suggested route counts the drive from the start.
   const plan = useRoutePlan(region)

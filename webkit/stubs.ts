@@ -31,6 +31,7 @@ export const stubApi = async (page: Page, { loggedIn = true } = {}) => {
     if (p.endsWith('/api/auth/me')) return loggedIn ? route.fulfill(json(USER)) : route.fulfill({ status: 401, contentType: 'application/json', body: '{"error":"Not logged in"}' })
     if (p.endsWith('/api/user') && route.request().method() === 'PATCH') return route.fulfill(json({ ...USER, ...route.request().postDataJSON() }))
     if (p.endsWith('/api/saved') && url.searchParams.get('kind') === 'seen') return route.fulfill(json([]))
+    if (p.endsWith('/api/saved') && url.searchParams.get('kind') === 'places') return route.fulfill(json([]))
     if (p.endsWith('/api/saved') && url.searchParams.get('kind') === 'route') return route.fulfill(json({ region: url.searchParams.get('region'), stops: null, start: null, updatedAt: null }))
     if (p.endsWith('/api/saved')) return route.fulfill(json([{ ...fixture('cangoo'), id: 1 }]))
     if (p.endsWith('/api/birds')) {

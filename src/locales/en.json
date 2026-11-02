@@ -1107,6 +1107,21 @@
     "pickName": "Give the place a name.",
     "pickArea": "Choose the place's area.",
     "pickDates": "Choose both dates.",
-    "datesOrder": "The trip has to end on or after the day it starts."
+    "datesOrder": "The trip has to end on or after the day it starts.",
+    "changeDates": "Change",
+    "changeTrip": "Change the trip {{dates}}",
+    "newForMe": "New for me",
+    "anywhere": "Anywhere",
+    "inPlace": "In {{name}}",
+    "seenIn_one": "Seen in {{name}} · {{count}} bird",
+    "seenIn_other": "Seen in {{name}} · {{count}} birds",
+    "showSeen": "See the list",
+    "hideSeen": "Hide the list",
+    "seenNone": "Nothing on this list yet.",
+    "addSeen": "Add a bird",
+    "removeSeen": "Remove {{name}}",
+    "tripEmails": "Trip emails",
+    "tripEmailsHint": "When a trip starts and the day before it ends.",
+    "welcomeBack": "Welcome back: alerts are back to {{name}}."
   }
 }

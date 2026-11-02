@@ -7,7 +7,7 @@ import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
 import RouteCard from './RouteCard'
 import { useDriveQuery, useNearbyPublicQuery, useRegionsQuery } from '../../hooks/queries'
-import { useShownArea, useShownTargets } from '../../shownArea'
+import { useShownArea, useShownSeen, useShownTargets } from '../../shownArea'
 import { focusFor } from '../../mapFocus'
 import { unitFor } from '../../distance'
 import { chanceColour } from '../../chance'
@@ -34,7 +34,8 @@ const WhereToGo = () => {
   const distanceUnit = unitFor(user.state)
   const region = user.region
   const targets = useShownTargets(user)
-  const { custom, setCustom, start, setStart, saveFailed, seen, lifers, setLiferMode, codes, go, route, stops } = useGoPlan(region, targets)
+  const seenAt = useShownSeen(user)
+  const { custom, setCustom, start, setStart, saveFailed, seen, lifers, setLiferMode, codes, go, route, stops } = useGoPlan(region, targets, seenAt)
   const regions = useRegionsQuery(user.state)
   const regionName = regions.data?.find(r => r.code === region)?.name ?? t('range.yourCounty', { word: countyWord(user.state) })
   const [selected, setSelected] = useState<string | null>(null)

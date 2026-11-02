@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { releaseThisDevice } from './usePushNotifications'
-import { deleteAccount, deletePlace, deletePlaceTrip, patchPlace, patchPlaceTrip, postPlace, postPlaceTrip, putPlaceTargets, deleteSavedBird, deleteSeenBird, importLifeList, logout, patchUser, postSavedBird, postSeenBird, putSavedRoute } from '../apiCalls'
+import { deleteAccount, deletePlace, deletePlaceTrip, patchPlace, patchPlaceTrip, postPlace, postPlaceTrip, putPlaceSeen, putPlaceTargets, deleteSavedBird, deleteSeenBird, importLifeList, logout, patchUser, postSavedBird, postSeenBird, putSavedRoute } from '../apiCalls'
 import { clearLocalRoutes } from '../routePlan'
 import { queryKeys } from './queries'
 import type { Bird, Id, PlaceInput, SeenBird, User } from '../types'
@@ -64,7 +64,12 @@ export const useToggleSeenMutation = () => {
       return { previous }
     },
     onError: (_error, _variables, context) => { if (context) queryClient.setQueryData(queryKeys.seen, context.previous) },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.seen })
+    // At a saved place, the server adds the bird to that place's list too: its count and list refresh.
+    onSettled: () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.seen }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.places }),
+      queryClient.invalidateQueries({ queryKey: ['place-seen'] })
+    ])
   })
 }
 
@@ -117,9 +122,10 @@ const usePlaceChange = <A, R>(mutationFn: (args: A) => Promise<R>) => {
   })
 }
 
-/** Adds a place, or changes one. */
+/** Adds a place (every field), or changes one (just what changed). */
 export const useSavePlaceMutation = () =>
-  usePlaceChange(({ id, place }: { id?: Id; place: PlaceInput }) => (id === undefined ? postPlace(place) : patchPlace(id, place)))
+  usePlaceChange((change: { id?: undefined; place: PlaceInput } | { id: Id; place: Partial<PlaceInput> }) =>
+    (change.id === undefined ? postPlace(change.place as PlaceInput) : patchPlace(change.id, change.place)))
 
 export const useDeletePlaceMutation = () => usePlaceChange((id: Id) => deletePlace(id))
 
@@ -131,3 +137,15 @@ export const useSavePlaceTripMutation = () =>
     (id === undefined ? postPlaceTrip({ place_id: placeId, starts_on, ends_on }) : patchPlaceTrip(id, { starts_on, ends_on })))
 
 export const useDeletePlaceTripMutation = () => usePlaceChange((id: Id) => deletePlaceTrip(id))
+
+/** Sets a place's own seen list; the list and the place's count refresh. */
+export const usePlaceSeenMutation = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, codes }: { id: Id; codes: string[] }) => putPlaceSeen(id, codes),
+    onSettled: (_data, _error, { id }) => Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['place-seen', id] }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.places })
+    ])
+  })
+}

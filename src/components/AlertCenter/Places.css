@@ -211,3 +211,26 @@
 .places__add {
   align-self: flex-start;
 }
+
+/* "New for me: Anywhere | In Colorado (work)". */
+.place__scope {
+  margin: 0;
+}
+
+/* "Seen in Colorado (work) · 42 birds · See the list". */
+.place__seen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* A bird on the place's list: quieter than a target. */
+.place__chip--seen {
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--ink);
+}

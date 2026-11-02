@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Trans } from 'react-i18next'
 import AreaPicker from '../AreaPicker/AreaPicker'
-import { usePlacesQuery } from '../../hooks/queries'
+import { useCurrentUser, usePlacesQuery } from '../../hooks/queries'
 import { usePatchUserMutation } from '../../hooks/mutations'
 import { nextTrip, useAreaName, useShownArea } from '../../shownArea'
 import { daysUntil, monthDay, t } from '../../i18n'
@@ -22,6 +22,16 @@ const AreaBanner = ({ upcoming = false }: { upcoming?: boolean }) => {
   const shownName = useAreaName(shown.state, shown.region)
   const places = usePlacesQuery()
   const soon = upcoming && shown.mode === 'home' && !shown.place ? nextTrip(places.data ?? []) : undefined
+  // Back from a trip: said once, on the home screen. Held for this view, and marked seen at once so
+  // it never shows again.
+  const user = useCurrentUser()
+  const [welcome, setWelcome] = useState(() => (upcoming && !user.activePlace ? user.lastTrip ?? null : null))
+  const marked = useRef(false)
+  useEffect(() => {
+    if (!welcome || marked.current) return
+    marked.current = true
+    patch.mutate({ trip_return_seen: true })
+  }, [welcome, patch])
 
   const picker = picking && (
     <div className='area-banner__picker'>
@@ -61,6 +71,12 @@ const AreaBanner = ({ upcoming = false }: { upcoming?: boolean }) => {
   }
   return (
     <div className='area-banner-wrap'>
+      {welcome && (
+        <p className='area-banner area-banner--quiet' role='status' data-testid='welcome-back'>
+          <span>{t('places.welcomeBack', { name: homeName })}</span>
+          <button type='button' className='link-button link-text' onClick={() => setWelcome(null)}>{t('common.ok')}</button>
+        </p>
+      )}
       {shown.place && (
         <p className='area-banner area-banner--quiet' role='status'>
           <span><Trans i18nKey='places.showingHome' values={{ name: homeName }} components={{ b: <strong /> }} /></span>
