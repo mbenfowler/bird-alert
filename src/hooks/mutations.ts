@@ -151,10 +151,11 @@ const useEventChange = <A, R>(mutationFn: (args: A) => Promise<R>) => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn,
-    onSettled: () => Promise.all([
+    // Not waited for: a page that the change takes away (a deleted event) moves on at once, not after the refetch.
+    onSettled: () => { void Promise.all([
       queryClient.invalidateQueries({ queryKey: queryKeys.events, refetchType: 'all' }),
       queryClient.invalidateQueries({ queryKey: queryKeys.session, refetchType: 'all' })
-    ])
+    ]) }
   })
 }
 
@@ -182,7 +183,7 @@ export const useEventTallyMutation = () => {
       queryClient.setQueryData<GroupEvent[]>(queryKeys.events, (events) => (events ?? []).map(event => {
         if (String(event.id) !== String(id)) return event
         const tally = (event.tally ?? []).filter(entry => entry.code !== code)
-        return { ...event, tally: remove ? tally : [{ code, added_by_name: event.members?.find(m => m.you)?.display_name ?? null, added_at: new Date().toISOString() }, ...tally] }
+        return { ...event, tally: remove ? tally : [{ code, added_by_name: event.display_name ?? null, added_by_you: true, added_at: new Date().toISOString() }, ...tally] }
       }))
       return { previous }
     },

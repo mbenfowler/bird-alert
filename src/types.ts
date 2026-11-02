@@ -30,14 +30,12 @@ export interface User {
   home_lng?: number | null
   /** Rare-bird alerts (push and email) wait until a report has proof: a reviewer's OK, a photo, or a second birder. */
   rare_alerts_need_proof?: boolean
-  /** The saved place the person is in now (switched by hand, or by a trip's dates); null at home. */
+  /** The saved place the person switched to by hand ("I'm here now"); null at home. */
   activePlace?: ActivePlace | null
   /** While away at a place, whether the home area keeps alerting too. */
   keep_home_alerts?: boolean
-  /** Emails when a trip starts and the day before it ends. */
+  /** Emails when an event starts and the day before it ends. */
   trip_emails_enabled?: boolean
-  /** A trip that ended and hasn't been welcomed home yet. */
-  lastTrip?: { name: string; ended_on: string } | null
   /** An event happening today (a Big Day, solo or with friends), for the home banner and the tally. */
   activeEvent?: ActiveEvent | null
   /** An event starting within the week, for "Chiricahuas in 3 days · Plan it". */
@@ -119,7 +117,6 @@ export interface UserPatch {
   active_place_id?: Id | null
   keep_home_alerts?: boolean
   trip_emails_enabled?: boolean
-  trip_return_seen?: boolean
   event_return_seen?: boolean
   range_mi?: number
   rare_alerts_need_proof?: boolean

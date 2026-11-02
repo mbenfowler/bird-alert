@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useRef, type ReactElement } from 'react'
 import { lazyWithReload as lazy } from '../../lazyRetry'
 import RouteError from '../RouteError/RouteError'
-import { Routes, Route, Navigate, useNavigate, useLocation, useNavigationType, Link } from 'react-router'
+import { Routes, Route, useNavigate, useLocation, useNavigationType, Link } from 'react-router'
 import { CHANNEL, decidePending, pollInterval, samePath, takePendingOpen, type LatestPush, type PendingTrigger } from '../../notificationHandoff'
 import { ackPendingPush, getPendingPush, postPushTrace } from '../../apiCalls'
 import type { PendingPush } from '../../types'
@@ -44,6 +44,9 @@ const Shared = lazy(() => import('../Shared/Shared'))
 const JoinEvent = lazy(() => import('../Events/JoinEvent'))
 const EventView = lazy(() => import('../Events/EventView'))
 const EventTally = lazy(() => import('../Events/EventTally'))
+const EventsPage = lazy(() => import('../Events/EventsPage'))
+const EventNew = lazy(() => import('../Events/EventNew'))
+const EventDetail = lazy(() => import('../Events/EventDetail'))
 const Onboarding = lazy(() => import('../Onboarding/Onboarding'))
 
 // Routes reachable without a session. Everything else redirects to /login once we know there is no user.
@@ -231,8 +234,10 @@ const App = () => {
           <Route path='/events/join/:token' element={<JoinEvent />} />
           <Route path='/events/view/:token' element={<EventView />} />
           <Route path='/events/:id/tally' element={requireUser(<EventTally />)} />
-          {/* Scouting reports and event emails link here: the events live in Settings, Places tab. */}
-          <Route path='/events' element={requireUser(<Navigate to='/settings?tab=places#events' replace />)} />
+          {/* Scouting reports and event emails link to an event's own page. */}
+          <Route path='/events' element={requireUser(<EventsPage />)} />
+          <Route path='/events/new' element={requireUser(<EventNew />)} />
+          <Route path='/events/:id' element={requireUser(<EventDetail />)} />
           <Route path='/welcome' element={requireUser(<Onboarding />)} />
           <Route path='/reset/:token' element={<PassReset />} />
           <Route path='/unsubscribe/:token' element={<Unsubscribe />} />

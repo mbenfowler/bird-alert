@@ -72,7 +72,7 @@ const EventTally = () => {
         ? <ol className='event-tally__list'>{entries.map(entry => (
             <li key={entry.code}>
               <span className='event-tally__bird'>{nameOf(entry.code)}</span>
-              <span className='event-tally__who'>{t('events.tallyBy', { name: entry.added_by_name ?? '', time: clockTime(new Date(entry.added_at)) })}</span>
+              <span className='event-tally__who'>{entry.added_by_you || entry.added_by_name ? t('events.tallyBy', { name: entry.added_by_you ? t('events.you') : entry.added_by_name, time: clockTime(new Date(entry.added_at)) }) : clockTime(new Date(entry.added_at))}</span>
               <button type='button' className='event-tally__undo' aria-label={t('events.undoLabel', { name: nameOf(entry.code) })} disabled={tallyMutation.isPending} onClick={() => change(entry.code, true)}><CloseIcon /></button>
             </li>))}</ol>
         : <p className='notification__hint'>{t('events.tallyEmpty')}</p>}

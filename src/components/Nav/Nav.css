@@ -61,6 +61,11 @@ nav .text-link {
     background-image: url('/images/bird.ico');
 }
 
+.nav-icon--events .nav-img {
+    background-image: url('/images/calendar.svg');
+    background-size: 36px 36px;
+}
+
 .nav-icon--settings .nav-img {
     background-image: url('/images/settings.png');
 }

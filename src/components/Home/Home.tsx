@@ -102,7 +102,7 @@ const Home = () => {
     return (
         <>
             <EventBanner />
-            <AreaBanner upcoming />
+            <AreaBanner />
             <section id='alertArea'>
                 <BirdAlerts />
             </section>
