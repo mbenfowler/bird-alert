@@ -35,32 +35,115 @@ const open = (ev, scouting) => {
 }
 
 describe('Event scouting', () => {
-  it('shows where the targets were reported lately, with evidence and links, and which are still unreported', () => {
+  it('summarises the week, maps numbered places, and gives a card per place with its birds and one checklist', () => {
     open(event(), {
       checked_at: new Date().toISOString(), days_to_go: 6, window: { from: day(-7), to: day(0) }, using: 'targets',
-      reported: [report(), report({ code: 'mexchi', comName: 'Mexican Chickadee', locName: 'Rustler Park', obsDt: `${day(-3)} 09:00`, birders: 1, confirmed: null, media: false, subId: 'S200', lat: 31.9, lng: -109.27 })],
+      reported: [
+        report(),
+        report({ code: 'mexchi', comName: 'Mexican Chickadee', locName: 'Rustler Park', locId: 'L200', obsDt: `${day(-3)} 09:00`, birders: 1, confirmed: null, media: false, subId: 'S200', lat: 31.9, lng: -109.27 }),
+        // An older report of the trogon at Cave Creek: one card, one chip, the latest checklist.
+        report({ obsDt: `${day(-4)} 06:00`, subId: 'S050' })
+      ],
       unreported: [{ code: 'whepar', comName: 'Whiskered Screech-Owl' }]
     })
     cy.wait('@scouting').its('request.url').should('include', 'id=5')
     cy.get('[data-testid="event-scouting"]').within(() => {
-      cy.get('.place__heading').should('contain', 'Scouting · 6 days to go · checked')
+      cy.get('.place__heading').should('have.text', 'Scouting · 6 days to go')
       cy.get('.event-scouting__fallback').should('not.exist')
-      cy.contains('Reported lately (last 7 days)')
-      cy.get('.event-scouting__item').should('have.length', 2)
-      cy.get('.event-scouting__item').first().within(() => {
-        cy.contains('a', 'Elegant Trogon').should('have.attr', 'href', '/sighting/eletro/S100')
-        cy.get('.event-scouting__what').should('contain', 'Cave Creek Canyon').and('contain', 'yesterday')
-        cy.contains('a', 'Checklist on eBird').should('have.attr', 'href', 'https://ebird.org/checklist/S100').and('have.attr', 'target', '_blank')
+      cy.get('.event-scouting__progress').should('have.text', '2 of 3 targets reported this week')
+      cy.get('.event-scouting__progress strong').should('have.text', '2 of 3 targets')
+      cy.get('.event-scouting__bar > span').should('have.attr', 'style').and('include', 'width: 67%')
+      cy.get('.event-scouting__updated').invoke('text').should('match', /^Updated \d{1,2}:\d{2}/)
+      // The map comes before the cards: one pin per place, numbered like them.
+      cy.get('.event-scouting__map').next().should('have.class', 'event-scouting__places')
+      cy.get('.map-pin').should('have.length', 2)
+      cy.get('.map-pin__count').then(els => expect([...els].map(e => e.textContent).sort()).to.deep.equal(['1', '2']))
+      cy.get('[data-testid="scout-place"]').should('have.length', 2)
+      cy.get('[data-testid="scout-place"]').first().within(() => {
+        cy.get('.event-scouting__num').should('have.text', '1')
+        cy.get('.event-scouting__place-name').should('have.text', 'Cave Creek Canyon')
+        cy.get('.event-scouting__when').should('have.text', 'yesterday')
+        cy.get('.event-scouting__count').should('have.text', '1 target')
+        cy.get('.event-scouting__bird').should('have.length', 1)
+        cy.contains('a.event-scouting__bird', 'Elegant Trogon').should('have.attr', 'href', '/sighting/eletro/S100').find('.event-scouting__ok').should('have.text', '✓')
+        cy.get('a.event-scouting__checklist').should('have.length', 1).and('have.text', 'Checklist on eBird')
+          .and('have.attr', 'href', 'https://ebird.org/checklist/S100').and('have.attr', 'target', '_blank')
       })
-      cy.get('.event-scouting__item').first().should('contain', 'Confirmed')
-      // An ordinary report eBird never flagged has no confirmed/unconfirmed label.
-      cy.get('.event-scouting__item').eq(1).should('contain', 'Rustler Park').and('contain', '3 days ago').and('not.contain', 'onfirmed')
-      cy.get('.event-scouting__unreported').should('contain', 'Still unreported (nothing in 2 weeks):').and('contain', 'Whiskered Screech-Owl')
-      cy.get('.event-scouting__map').should('exist')
+      // An ordinary report eBird never flagged has no confirmed mark or label.
+      cy.get('[data-testid="scout-place"]').eq(1).within(() => {
+        cy.get('.event-scouting__place-name').should('have.text', 'Rustler Park')
+        cy.get('.event-scouting__when').should('have.text', '3 days ago')
+        cy.get('.event-scouting__ok').should('not.exist')
+        cy.root().should('not.contain', 'onfirmed')
+      })
+      cy.get('.event-scouting__more-places').should('not.exist')
+      cy.contains('.event-scouting__missing .place__subheading', 'Still missing')
+      cy.get('.event-scouting__missing .event-scouting__bird--missing').should('have.length', 1).and('have.text', 'Whiskered Screech-Owl')
+      cy.contains('Still unreported').should('not.exist')
     })
     // Between the target birds and the people.
     cy.get('[data-testid="event-scouting"]').prev().should('have.class', 'event-detail__targets')
     cy.get('[data-testid="event-scouting"]').next().should('have.class', 'event-detail__people')
+  })
+
+  it('sorts places by targets, shows four with the rest behind a button, and folds long bird lists', () => {
+    const birds = ['b1', 'b2', 'b3', 'b4', 'b5', 'b6', 'b7']
+    // Seven targets at Big Spot (seen 2 days ago); one each at five other places, the freshest first.
+    const reported = [
+      ...['P1', 'P2', 'P3', 'P4', 'P5'].map((id, i) => report({ code: `x${i}`, comName: `Other ${i}`, locId: id, locName: `Place ${id}`, obsDt: `${day(-i)} 08:00`, subId: `S${id}`, lat: 31 + i / 10, lng: -109 - i / 10, confirmed: null })),
+      ...birds.map((code, i) => report({ code, comName: `Bird ${code}`, locId: 'BIG', locName: 'Big Spot', obsDt: `${day(-2)} 0${i}:00`, subId: i ? `SB${i}` : 'SBIG', lat: 32, lng: -110, confirmed: i === 0 ? true : i === 1 ? false : null }))
+    ]
+    open(event({ targets: [...birds, 'x0', 'x1', 'x2', 'x3', 'x4', 'gone'].map(code => ({ code })) }), {
+      checked_at: new Date().toISOString(), days_to_go: 1, using: 'targets', reported, unreported: [{ code: 'gone', comName: 'Gone Bird' }]
+    })
+    cy.get('[data-testid="event-scouting"]').within(() => {
+      cy.get('.place__heading').should('have.text', 'Scouting · 1 day to go')
+      cy.get('.event-scouting__progress').should('have.text', '12 of 13 targets reported this week')
+      cy.get('.map-pin').should('have.length', 6)
+      cy.get('[data-testid="scout-place"]').should('have.length', 4)
+      cy.get('.event-scouting__place-name').then(els => expect([...els].map(e => e.textContent)).to.deep.equal(['Big Spot', 'Place P1', 'Place P2', 'Place P3']))
+      cy.get('[data-testid="scout-place"]').first().within(() => {
+        cy.get('.event-scouting__count').should('have.text', '7 targets')
+        cy.get('.event-scouting__when').should('have.text', '2 days ago')
+        cy.get('a.event-scouting__bird').should('have.length', 5)
+        cy.get('.event-scouting__ok').should('have.length', 1)
+        cy.get('.event-scouting__bird--unconfirmed').should('have.length', 1)
+        cy.get('a.event-scouting__checklist').should('have.length', 1)
+        cy.contains('button', '+2 more').click()
+        cy.get('a.event-scouting__bird').should('have.length', 7)
+        cy.contains('button', 'more').should('not.exist')
+      })
+      cy.contains('button', 'Show 2 more places').click()
+      cy.get('[data-testid="scout-place"]').should('have.length', 6)
+      cy.get('.event-scouting__more-places').should('not.exist')
+    })
+  })
+
+  it('tapping a pin reveals, highlights and scrolls to its card', () => {
+    const reported = ['P1', 'P2', 'P3', 'P4', 'P5'].map((id, i) => report({ code: `x${i}`, comName: `Other ${i}`, locId: id, locName: `Place ${id}`, obsDt: `${day(-i)} 08:00`, subId: `S${id}`, lat: 31 + i / 5, lng: -109 - i / 5 }))
+    open(event(), { checked_at: new Date().toISOString(), days_to_go: 6, using: 'targets', reported, unreported: [] })
+    cy.get('[data-testid="event-scouting"]').within(() => {
+      cy.get('[data-testid="scout-place"]').should('have.length', 4)
+      cy.contains('.map-pin__count', '5').click({ force: true })
+      cy.get('[data-testid="scout-place"]').should('have.length', 5)
+      cy.get('#scout-place-5').should('have.class', 'is-active').and('contain', 'Place P5')
+      cy.get('.event-scouting__place.is-active').should('have.length', 1)
+      cy.get('.map-pin--highlight').should('have.length', 1)
+    })
+    // Retried: the scroll is smooth.
+    cy.get('#scout-place-5').should(el => {
+      const r = el[0].getBoundingClientRect()
+      expect(r.top).to.be.lessThan(Cypress.config('viewportHeight'))
+      expect(r.bottom).to.be.greaterThan(0)
+    })
+  })
+
+  it('fits a phone without scrolling sideways', () => {
+    cy.viewport(375, 740)
+    const reported = [report({ locName: 'A very long place name for a canyon trailhead parking area and picnic ground' }), ...['b1', 'b2', 'b3', 'b4', 'b5', 'b6'].map(code => report({ code, comName: `Long-named Bird ${code} of the Sky Islands` }))]
+    open(event(), { checked_at: new Date().toISOString(), days_to_go: 6, using: 'targets', reported, unreported: [{ code: 'whepar', comName: 'Whiskered Screech-Owl' }] })
+    cy.get('[data-testid="scout-place"]').should('have.length', 1)
+    cy.document().then(doc => expect(doc.documentElement.scrollWidth).to.be.at.most(375))
   })
 
   it('with no targets, scouts the likely lifers and says so; nothing reported has its own line', () => {
@@ -71,8 +154,9 @@ describe('Event scouting', () => {
     cy.get('[data-testid="event-scouting"]').within(() => {
       cy.contains('.event-scouting__fallback', 'No targets yet, so these are likely lifers for your dates.')
       cy.contains('None of your likely lifers have been reported nearby in the last week.')
-      cy.get('.event-scouting__item').should('not.exist')
-      cy.get('.event-scouting__unreported').should('not.exist')
+      cy.get('[data-testid="scout-place"]').should('not.exist')
+      cy.get('.event-scouting__summary').should('not.exist')
+      cy.get('.event-scouting__missing').should('not.exist')
       cy.get('.event-scouting__map').should('not.exist')
     })
   })
@@ -80,6 +164,9 @@ describe('Event scouting', () => {
   it('targets with no reports get the empty line', () => {
     open(event(), { checked_at: null, days_to_go: 6, using: 'targets', reported: [], unreported: [{ code: 'eletro', comName: 'Elegant Trogon' }] })
     cy.get('[data-testid="event-scouting"]').should('contain', 'None of your targets have been reported nearby in the last week.')
+    cy.get('.event-scouting__progress').should('have.text', '0 of 1 target reported this week')
+    cy.get('.event-scouting__updated').should('not.exist')
+    cy.get('.event-scouting__bird--missing').should('have.text', 'Elegant Trogon')
   })
 
   it('a past event has no scouting', () => {

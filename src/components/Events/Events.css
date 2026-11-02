@@ -432,7 +432,8 @@
 /* The same red as the map's pins, so a card and its pin read as a pair. */
 .event-scouting__num {
   flex: none;
-  align-self: center;
+  align-self: flex-start;
+  margin-top: 1px;
   display: inline-grid;
   place-items: center;
   width: 22px;
