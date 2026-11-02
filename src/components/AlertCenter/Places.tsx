@@ -84,6 +84,17 @@ const PlaceForm = ({ place, preset, onDone }: { place?: SavedPlace; preset?: { s
   )
 }
 
+/** Brings a place's target birds into view and flashes them: where scouting's birds are picked. */
+const showTargets = (placeId: number | string) => {
+  const el = document.getElementById(`place-targets-${placeId}`)
+  if (!el) return
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  el.focus({ preventScroll: true })
+  el.classList.remove('is-flashing')
+  void el.offsetWidth
+  el.classList.add('is-flashing')
+}
+
 /** A place's target birds: chips to remove, a search over the area's birds to add, and suggestions for the next trip. */
 const Targets = ({ place, areaName }: { place: SavedPlace; areaName: string }) => {
   const targets = usePlaceTargetsMutation()
@@ -98,7 +109,7 @@ const Targets = ({ place, areaName }: { place: SavedPlace; areaName: string }) =
   const setCodes = (codes: string[]) => targets.mutate({ id: place.id, codes }, { onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' }) })
 
   return (
-    <div className='place__section'>
+    <div className='place__section place__targets' id={`place-targets-${place.id}`} tabIndex={-1}>
       <p className='place__heading'>{t('places.targets')}</p>
       {place.targets.length
         ? <ul className='place__chips'>{place.targets.map(code => (
@@ -222,7 +233,14 @@ const Trips = ({ place, openTrip = null }: { place: SavedPlace; openTrip?: strin
     if (ends < startsOn) return setProblem(t('places.datesOrder'))
     setProblem(null)
     save.mutate({ id: editing?.id, placeId: place.id, starts_on: startsOn, ends_on: ends, kind: bigDay ? 'bigday' : 'trip', scout, scout_days: scoutDays }, {
-      onSuccess: () => { toast.success(t('places.tripSaved'), { position: 'bottom-center' }); setEditing(undefined); setStartsOn(''); setEndsOn('') },
+      onSuccess: () => {
+        setEditing(undefined); setStartsOn(''); setEndsOn('')
+        // Scouting looks for the place's target birds: with none, send them straight to picking some.
+        if (scout && place.targets.length === 0) {
+          toast.warn(t('places.scoutPickNow'), { position: 'bottom-center' })
+          window.setTimeout(() => showTargets(place.id), 300)
+        } else toast.success(t('places.tripSaved'), { position: 'bottom-center' })
+      },
       onError: (error) => setProblem(errorMessage(error))
     })
   }
@@ -255,7 +273,12 @@ const Trips = ({ place, openTrip = null }: { place: SavedPlace; openTrip?: strin
             )
           })}</ul>
         : <p className='notification__hint'>{t('places.tripsNone')}</p>}
-      {scouting && place.targets.length === 0 && <p className='notification__hint place__scout-note'>{t('places.scoutNoTargets')}</p>}
+      {scouting && place.targets.length === 0 && (
+        <div className='place__scout-warning' role='alert'>
+          <p className='place__scout-note'>{t('places.scoutNoTargets')}</p>
+          <button type='button' className='pill-button pill-button--small' onClick={() => showTargets(place.id)}>{t('places.pickTargets')}</button>
+        </div>
+      )}
       {adding
         ? <form className='place__trip-form' onSubmit={submit} noValidate data-trip={editing ? String(editing.id) : 'new'}>
             <label className='place__trip-switch'>

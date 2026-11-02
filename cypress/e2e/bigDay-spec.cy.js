@@ -42,6 +42,18 @@ describe('Big Day and scouting', () => {
     cy.wait('@postTrip').its('request.body').should('include', { kind: 'bigday', scout: true, scout_days: 7 })
   })
 
+  it('saving a scouting trip at a place with no targets sends you to pick some', () => {
+    open([place([], [])])
+    cy.intercept('POST', '**/api/saved?kind=trip', (req) => req.reply({ statusCode: 201, body: { id: 9, ...req.body, active: false } })).as('postTrip')
+    cy.contains('button', 'Add trip dates').click()
+    cy.get('.place__trip-form input[name="bigday"]').check({ force: true })
+    cy.get('.place__trip-form input[name="starts_on"]').type(day(40))
+    cy.contains('.place__trip-form button', 'Save dates').click()
+    cy.wait('@postTrip')
+    cy.contains('Now pick a few target birds')
+    cy.get('.place__targets').should('have.class', 'is-flashing')
+  })
+
   it('shows the trip line, a Scouting badge in the window, and asks for target birds when there are none', () => {
     const bigDay = { id: 9, starts_on: day(10), ends_on: day(10), active: false, kind: 'bigday', scout: true, scout_days: 21, scout_from: day(-11) }
     open([place([bigDay], [])])
@@ -49,7 +61,9 @@ describe('Big Day and scouting', () => {
       cy.get('.place__trip-what').should('have.text', `${monthDay(10)} · Big Day · scouting from ${monthDay(-11)}`)
       cy.contains('.place__badge--scouting', 'Scouting')
     })
-    cy.contains('.place__scout-note', 'Add target birds to get scouting reports.')
+    cy.contains('.place__scout-warning', 'Scouting has nothing to look for yet')
+    cy.contains('.place__scout-warning button', 'Pick target birds').click()
+    cy.get('.place__targets').should('have.class', 'is-flashing').and('be.focused')
   })
 
   it('changes the lead time of an ordinary trip', () => {
