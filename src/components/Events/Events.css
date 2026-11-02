@@ -1,0 +1,324 @@
+/* Events: the list, an event's page, and the pages its links open (join, view, tally). */
+.event__members {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+
+.event__lifer {
+  font-size: 0.82rem;
+  opacity: 0.85;
+}
+
+.event__view-only {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.event-share {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.event-share input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  box-sizing: border-box;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  font: inherit;
+  font-size: 1rem;
+}
+
+/* The pages an event's links open. */
+.event-page {
+  width: min(100%, 560px);
+  margin: 24px auto 40px;
+  padding: 0 16px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.event-page__title {
+  margin: 0;
+}
+
+.event-page__what {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.event-page__missing {
+  font-style: italic;
+}
+
+.event-page__join {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.event-page__join input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  box-sizing: border-box;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  font: inherit;
+  font-size: 1rem;
+}
+
+.event-page__subhead {
+  margin: 0 0 6px;
+  font-size: 1.1rem;
+}
+
+.event-page__count {
+  margin: 0 0 6px;
+  font-weight: 700;
+}
+
+.event-page__pitch {
+  margin: 0;
+}
+
+/* The day's tally: a big add, then the list newest first. */
+.event-tally__count {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.event-tally__add {
+  padding: 12px;
+  border: 2px solid var(--ink);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.event-tally__add .place-form__label {
+  margin: 0 0 6px;
+}
+
+.event-tally__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.event-tally__list > li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.event-tally__list--plain > li {
+  padding: 6px 12px;
+}
+
+.event-tally__bird {
+  flex: 1 1 auto;
+  font-weight: 700;
+}
+
+.event-tally__who {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.event-tally__undo {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.event-tally__undo svg {
+  width: 16px;
+  height: 16px;
+}
+
+.event-banner a {
+  color: inherit;
+}
+
+/* "Lifer! Add Elegant Trogon to your life list?" with its one button. */
+.lifer-prompt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+/* The Events list: upcoming, past and archived, each event a tappable row. */
+.events-page__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.events-page__heading {
+  margin: 8px 0 0;
+  font-size: 1.05rem;
+}
+
+.events-page__archived {
+  align-self: flex-start;
+}
+
+.events-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.events-list__link {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.events-list__link:hover,
+.events-list__link:focus-visible {
+  border-color: var(--accent);
+}
+
+.events-list__item.is-today .events-list__link {
+  border-color: var(--accent);
+  border-left-width: 6px;
+}
+
+.events-list--archived {
+  opacity: 0.8;
+}
+
+.events-list__name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.events-list__name .place__badge {
+  margin-left: 4px;
+}
+
+.events-list__what,
+.events-list__who {
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+
+.events-list__recap {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* A plain badge (Big Day, Archived) beside the louder Today and Scouting ones. */
+.place__badge--quiet {
+  background: transparent;
+  color: inherit;
+  border: 1px solid var(--line);
+}
+
+/* An event's page: its sections, one under another. */
+.event-detail__back {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.event-page__section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.event-page__section .place__heading,
+.event-page__section > p {
+  margin: 0;
+}
+
+.event-detail__tally {
+  margin: 0;
+}
+
+.event-detail__actions .place__actions {
+  margin: 0;
+}
+
+.event__confirm {
+  align-items: center;
+}
+
+.link-button.event__delete {
+  color: #b91c1c;
+}
+
+.pill-button.event__delete {
+  color: #fff;
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+/* The plan form: switches beside their words, and the two dates side by side where there's room. */
+.event-plan .place__trip-switch {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.event-plan__dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.event-plan__dates label {
+  flex: 1 1 140px;
+}
+
+.event-plan__where {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.event-plan__where .notification__hint,
+.event-plan__where .place__chips {
+  margin: 0;
+}

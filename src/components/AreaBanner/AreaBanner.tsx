@@ -1,37 +1,24 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Trans } from 'react-i18next'
 import AreaPicker from '../AreaPicker/AreaPicker'
-import { useCurrentUser, usePlacesQuery } from '../../hooks/queries'
 import { usePatchUserMutation } from '../../hooks/mutations'
-import { nextTrip, useAreaName, useShownArea } from '../../shownArea'
-import { daysUntil, monthDay, t } from '../../i18n'
+import { useAreaName, useShownArea } from '../../shownArea'
+import { t } from '../../i18n'
 import './AreaBanner.css'
 
 /**
  * Which area the page shows, said plainly with a way back: an area being explored, or the saved
- * place the person is in; on the home screen, a trip coming up. At home it offers "Explore another
- * area", which changes what this visit shows and nothing in Settings.
+ * place the person is in. At home it offers "Explore another area", which changes what this visit
+ * shows and nothing in Settings. (Events coming up and just over have their own banner.)
  */
-const AreaBanner = ({ upcoming = false }: { upcoming?: boolean }) => {
+const AreaBanner = () => {
   const shown = useShownArea()
   const navigate = useNavigate()
   const patch = usePatchUserMutation()
   const [picking, setPicking] = useState(false)
   const homeName = useAreaName(shown.home.state, shown.home.region)
   const shownName = useAreaName(shown.state, shown.region)
-  const places = usePlacesQuery()
-  const soon = upcoming && shown.mode === 'home' && !shown.place ? nextTrip(places.data ?? []) : undefined
-  // Back from a trip: said once, on the home screen. Held for this view, and marked seen at once so
-  // it never shows again.
-  const user = useCurrentUser()
-  const [welcome, setWelcome] = useState(() => (upcoming && !user.activePlace ? user.lastTrip ?? null : null))
-  const marked = useRef(false)
-  useEffect(() => {
-    if (!welcome || marked.current) return
-    marked.current = true
-    patch.mutate({ trip_return_seen: true })
-  }, [welcome, patch])
 
   const picker = picking && (
     <div className='area-banner__picker'>
@@ -60,7 +47,6 @@ const AreaBanner = ({ upcoming = false }: { upcoming?: boolean }) => {
       <p className='area-banner area-banner--place' role='status'>
         <span>
           <Trans i18nKey='places.youreIn' values={{ name: place.name, area: shownName }} components={{ b: <strong /> }} />
-          {place.via === 'trip' && place.trip ? ` ${t('places.until', { date: monthDay(place.trip.ends_on) })}` : ''}
         </span>
         <button type='button' className='link-button link-text' onClick={() => shown.showHome(true)}>{t('places.showHome')}</button>
         {place.via === 'manual' && (
@@ -71,22 +57,10 @@ const AreaBanner = ({ upcoming = false }: { upcoming?: boolean }) => {
   }
   return (
     <div className='area-banner-wrap'>
-      {welcome && (
-        <p className='area-banner area-banner--quiet' role='status' data-testid='welcome-back'>
-          <span>{t('places.welcomeBack', { name: homeName })}</span>
-          <button type='button' className='link-button link-text' onClick={() => setWelcome(null)}>{t('common.ok')}</button>
-        </p>
-      )}
       {shown.place && (
         <p className='area-banner area-banner--quiet' role='status'>
           <span><Trans i18nKey='places.showingHome' values={{ name: homeName }} components={{ b: <strong /> }} /></span>
           <button type='button' className='link-button link-text' onClick={() => shown.showHome(false)}>{t('places.backTo', { name: shown.place.name })}</button>
-        </p>
-      )}
-      {soon && (
-        <p className='area-banner area-banner--quiet' data-testid='upcoming-trip'>
-          <span><Trans i18nKey='places.upcoming' count={daysUntil(soon.trip.starts_on)} values={{ name: soon.place.name, count: daysUntil(soon.trip.starts_on) }} components={{ b: <strong /> }} /></span>
-          <button type='button' className='link-button link-text' onClick={() => shown.explore(soon.place)}>{t('places.planIt')}</button>
         </p>
       )}
       {another && <p className='area-banner__another-row'>{another}</p>}

@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions, getCountries, getProvinces,
-  getSavedBirds, getPlaces, getPlaceSeen, getPlaceSuggestions, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase, getNameLocales } from '../apiCalls'
+  getSavedBirds, getPlaces, getPlaceSeen, getPlaceSuggestions, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase, getNameLocales, getEvents, getEventPreview, getEventView, getEventSuggestions } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
 import { nameLocale } from '../i18n'
 import type { Id, LifersScope, PersistenceClass, User } from '../types'
@@ -37,6 +37,7 @@ export const queryKeys = {
   bestHotspots: (region: string, days: number, species = '') => ['best-hotspots', region, days, species, nameLocale()] as const,
   savedRoute: (region: string) => ['saved-route', region, nameLocale()] as const,
   places: ['places'] as const,
+  events: ['events'] as const,
   placeSearch: (state: string, q: string, addresses: boolean) => ['place-search', state, q.trim().toLowerCase(), addresses, nameLocale()] as const,
   drive: (points: { lat: number; lng: number }[]) => ['drive', points.map(p => `${p.lat.toFixed(4)},${p.lng.toFixed(4)}`).join(';'), nameLocale()] as const,
   nearby: (lat: number, lng: number) => ['nearby', lat.toFixed(3), lng.toFixed(3), nameLocale()] as const
@@ -401,7 +402,47 @@ export const useNearbyPublicQuery = (lat: number | null, lng: number | null, ena
     enabled: enabled && lat !== null && lng !== null
   })
 
-/** The person's trips, soonest first. */
+/**
+ * The events the person is in, solo or with a group. Tolerant like places; refreshed every 30 s on the event day
+ * (`live`), so the group sees each other's tally as it grows.
+ */
+export const useEventsQuery = (live = false) =>
+  useQuery({
+    queryKey: queryKeys.events,
+    queryFn: getEvents,
+    staleTime: live ? 0 : 60 * 1000,
+    refetchInterval: live ? 30 * 1000 : false,
+    select: (events) => (Array.isArray(events) ? events : [])
+      .filter(event => event && typeof event.location === 'string')
+      .map(event => ({ ...event, members: event.members ?? [], targets: event.targets ?? [], tally: event.tally ?? [] }))
+  })
+
+/** Birds likely in an event's area on its dates that the person has never seen, most likely first. */
+export const useEventSuggestionsQuery = (id: Id | null, limit?: number) =>
+  useQuery({
+    queryKey: ['event-suggestions', id, limit ?? null, nameLocale()] as const,
+    queryFn: async () => {
+      const answer = await getEventSuggestions(id!, limit)
+      const list = Array.isArray(answer) ? answer : (answer.suggestions ?? [])
+      return list.map(s => (typeof s === 'string' ? s : s.speciesCode)).filter(Boolean)
+    },
+    enabled: id !== null,
+    staleTime: 60 * 60 * 1000
+  })
+
+/** What an invite link is for, before joining (no sign-in needed). */
+export const useEventPreviewQuery = (token: string) =>
+  useQuery({ queryKey: ['event-preview', token], queryFn: () => getEventPreview(token), staleTime: MINUTE, retry: 1 })
+
+/** The view-only page: the plan, and on the day a tally that refreshes each minute. */
+export const useEventViewQuery = (token: string) =>
+  useQuery({
+    queryKey: ['event-view', token, nameLocale()],
+    queryFn: () => getEventView(token),
+    retry: 1,
+    refetchInterval: (query) => (query.state.data?.active ? 60 * 1000 : false)
+  })
+
 export const usePlacesQuery = () =>
   useQuery({
     queryKey: queryKeys.places,
@@ -410,7 +451,7 @@ export const usePlacesQuery = () =>
     // Tolerant of an odd answer: only real places, each with its lists, so no page can trip on one.
     select: (places) => (Array.isArray(places) ? places : [])
       .filter(place => place && typeof place.location === 'string')
-      .map(place => ({ ...place, targets: place.targets ?? [], trips: place.trips ?? [] }))
+      .map(place => ({ ...place, targets: place.targets ?? [] }))
   })
 
 /** A place's own seen list (like a state list), as species codes; fetched only when wanted. */

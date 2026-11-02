@@ -26,6 +26,7 @@ import NotFound from '../NotFound/NotFound'
 import { LoadingState } from '../Loading/Loading'
 import { useTranslation } from 'react-i18next'
 import { applyLocale, noteLocale, t } from '../../i18n'
+import { forgetJoin, pendingJoin } from '../Events/pendingJoin'
 
 // Everything off the main path loads on demand, keeping the first visit light.
 const Saved = lazy(() => import('../Saved/Saved'))
@@ -40,10 +41,16 @@ const AlertSightings = lazy(() => import('../AlertSightings/AlertSightings'))
 const GoPage = lazy(() => import('../WhereToGo/GoPage'))
 const Landing = lazy(() => import('../Landing/Landing'))
 const Shared = lazy(() => import('../Shared/Shared'))
+const JoinEvent = lazy(() => import('../Events/JoinEvent'))
+const EventView = lazy(() => import('../Events/EventView'))
+const EventTally = lazy(() => import('../Events/EventTally'))
+const EventsPage = lazy(() => import('../Events/EventsPage'))
+const EventNew = lazy(() => import('../Events/EventNew'))
+const EventDetail = lazy(() => import('../Events/EventDetail'))
 const Onboarding = lazy(() => import('../Onboarding/Onboarding'))
 
 // Routes reachable without a session. Everything else redirects to /login once we know there is no user.
-const PUBLIC_PATH_PREFIXES = ['/login', '/reset/', '/confirm/', '/unsubscribe/', '/share/']
+const PUBLIC_PATH_PREFIXES = ['/login', '/reset/', '/confirm/', '/unsubscribe/', '/share/', '/events/join/', '/events/view/']
 // Pages about the account alone; every other page is built from eBird's sightings and credits it.
 const NO_EBIRD_DATA = new Set(['login', 'settings', 'reset', 'confirm', 'unsubscribe'])
 
@@ -98,8 +105,17 @@ const App = () => {
   // counts: an account the server doesn't mark either way is left alone.
   const needsSetup = Boolean(user) && user?.onboarded_at === null
   useEffect(() => {
-    if (needsSetup && pathname !== '/welcome' && !pathname.startsWith('/share/') && !pathname.startsWith('/confirm/') && !pathname.startsWith('/unsubscribe/')) navigate('/welcome', { replace: true })
+    if (needsSetup && pathname !== '/welcome' && !pathname.startsWith('/share/') && !pathname.startsWith('/confirm/') && !pathname.startsWith('/unsubscribe/') && !pathname.startsWith('/events/join/') && !pathname.startsWith('/events/view/')) navigate('/welcome', { replace: true })
   }, [needsSetup, pathname, navigate])
+  // An invite opened before signing in: once signed in (logged in, signed up, by passkey), back to it to join.
+  const signedIn = Boolean(user)
+  useEffect(() => {
+    if (!signedIn || pathname.startsWith('/events/join/')) return
+    const token = pendingJoin()
+    if (!token) return
+    forgetJoin()
+    navigate(`/events/join/${encodeURIComponent(token)}`, { replace: true })
+  }, [signedIn, pathname, navigate])
 
   // Push notifications hand off to the page through src/notificationHandoff.ts. The page follows a
   // tap's target on start, on return to the foreground, on a broadcast, or on a short poll while
@@ -215,6 +231,13 @@ const App = () => {
           <Route path='/sightings' element={requireUser(<AlertSightings />)} />
           <Route path='/go' element={requireUser(<GoPage />)} />
           <Route path='/share/:kind/:id' element={<Shared />} />
+          <Route path='/events/join/:token' element={<JoinEvent />} />
+          <Route path='/events/view/:token' element={<EventView />} />
+          <Route path='/events/:id/tally' element={requireUser(<EventTally />)} />
+          {/* Scouting reports and event emails link to an event's own page. */}
+          <Route path='/events' element={requireUser(<EventsPage />)} />
+          <Route path='/events/new' element={requireUser(<EventNew />)} />
+          <Route path='/events/:id' element={requireUser(<EventDetail />)} />
           <Route path='/welcome' element={requireUser(<Onboarding />)} />
           <Route path='/reset/:token' element={<PassReset />} />
           <Route path='/unsubscribe/:token' element={<Unsubscribe />} />

@@ -49,8 +49,9 @@ const Nav = () => {
             {user &&
                 <div>
                     {/* The icons are backgrounds on the links, not <img> elements: on iOS an image inside a link
-                        carries drag and preview gestures that were swallowing most taps on these two. */}
+                        carries drag and preview gestures that were swallowing most taps on these. */}
                     <Link to='/saved' className='nav-icon nav-icon--saved' aria-label={t('nav.saved')} draggable={false}><span className='nav-img' aria-hidden='true' /></Link>
+                    <Link to='/events' className='nav-icon nav-icon--events' aria-label={t('nav.events')} draggable={false}><span className='nav-img' aria-hidden='true' /></Link>
                     <div id='settings'>
                         {/* The hover menu exists only where hovering does. On touch screens it was hidden by a clip
                             under the gear, and iOS then dropped most taps on the gear; Log out lives on the settings page. */}

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import BirdAlerts from '../BirdAlerts/BirdAlerts'
 import AreaBanner from '../AreaBanner/AreaBanner'
+import EventBanner from '../Events/EventBanner'
 import { useShownArea } from '../../shownArea'
 import BirdsList from '../BirdsList/BirdsList'
 import ErrorMessage from '../Error/ErrorMessage'
@@ -100,7 +101,8 @@ const Home = () => {
 
     return (
         <>
-            <AreaBanner upcoming />
+            <EventBanner />
+            <AreaBanner />
             <section id='alertArea'>
                 <BirdAlerts />
             </section>

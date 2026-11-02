@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { toast } from 'react-toastify'
 import AreaPicker, { type PickedArea } from '../AreaPicker/AreaPicker'
 import BirdPicker from '../WhereToGo/BirdPicker'
@@ -7,12 +7,12 @@ import ErrorMessage from '../Error/ErrorMessage'
 import { CloseIcon } from '../Icons/Icons'
 import { errorMessage } from '../../apiCalls'
 import { useBirdsQuery, useCurrentUser, usePlaceSeenQuery, usePlaceSuggestionsQuery, usePlacesQuery } from '../../hooks/queries'
-import { useDeletePlaceMutation, useDeletePlaceTripMutation, usePatchUserMutation, usePlaceSeenMutation, usePlaceTargetsMutation, useSavePlaceMutation, useSavePlaceTripMutation } from '../../hooks/mutations'
+import { useDeletePlaceMutation, usePatchUserMutation, usePlaceSeenMutation, usePlaceTargetsMutation, useSavePlaceMutation } from '../../hooks/mutations'
 import { useAreaName } from '../../shownArea'
 import { unitFor } from '../../distance'
 import { stateName, stateOfRegion } from '../../usStates'
-import { dateRange, monthDay, t } from '../../i18n'
-import type { PlaceTrip, SavedPlace } from '../../types'
+import { t } from '../../i18n'
+import type { SavedPlace } from '../../types'
 import './AlertCenter.css'
 import './Places.css'
 
@@ -22,11 +22,6 @@ const RANGES = [0, 15, 30, WHOLE_STATE] as const
 
 const dayString = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 const today = () => dayString(new Date())
-// Scouting lead times, in days (1-4 weeks); a Big Day scouts three weeks ahead unless told otherwise.
-const SCOUT_DAYS = [7, 14, 21, 28] as const
-const DEFAULT_SCOUT_DAYS = 21
-const daysBefore = (day: string, days: number) => { const d = new Date(`${day}T12:00:00`); d.setDate(d.getDate() - days); return dayString(d) }
-const scoutFrom = (trip: PlaceTrip) => trip.scout ? (trip.scout_from ?? daysBefore(trip.starts_on, trip.scout_days ?? DEFAULT_SCOUT_DAYS)) : null
 const inTwoWeeks = () => { const d = new Date(); d.setDate(d.getDate() + 14); return dayString(d) }
 
 /** "Just my county", "25 km", "All of Colorado": the same choices as home's reach, in the place's own units. */
@@ -84,24 +79,12 @@ const PlaceForm = ({ place, preset, onDone }: { place?: SavedPlace; preset?: { s
   )
 }
 
-/** Brings a place's target birds into view and flashes them: where scouting's birds are picked. */
-const showTargets = (placeId: number | string) => {
-  const el = document.getElementById(`place-targets-${placeId}`)
-  if (!el) return
-  el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  el.focus({ preventScroll: true })
-  el.classList.remove('is-flashing')
-  void el.offsetWidth
-  el.classList.add('is-flashing')
-}
-
-/** A place's target birds: chips to remove, a search over the area's birds to add, and suggestions for the next trip. */
+/** A place's target birds: chips to remove, a search over the area's birds to add, and suggestions for the coming two weeks. */
 const Targets = ({ place, areaName }: { place: SavedPlace; areaName: string }) => {
   const targets = usePlaceTargetsMutation()
   const [adding, setAdding] = useState(false)
-  const next = place.trips.filter(trip => trip.ends_on >= today()).sort((a, b) => a.starts_on.localeCompare(b.starts_on))[0]
-  const from = next ? (next.starts_on > today() ? next.starts_on : today()) : today()
-  const to = next ? next.ends_on : inTwoWeeks()
+  const from = today()
+  const to = inTwoWeeks()
   const suggestions = usePlaceSuggestionsQuery(place.id, from, to, place.lifers_scope)
   const suggested = (suggestions.data ?? []).filter(code => !place.targets.includes(code)).slice(0, 8)
   const names = useBirdsQuery([...place.targets, ...suggested])
@@ -125,7 +108,7 @@ const Targets = ({ place, areaName }: { place: SavedPlace; areaName: string }) =
         : <button type='button' className='link-button link-text' onClick={() => setAdding(true)}>{t('places.addTarget')}</button>}
       {suggested.length > 0 && (
         <>
-          <p className='place__subheading'>{next ? t('places.suggested') : t('places.suggestedSoon')}</p>
+          <p className='place__subheading'>{t('places.suggestedSoon')}</p>
           <ul className='place__chips'>{suggested.map(code => (
             <li key={code}><button type='button' className='place__chip place__chip--add' aria-label={t('places.addSuggestion', { name: nameOf(code) })} disabled={targets.isPending} onClick={() => setCodes([...place.targets, code])}>+ {nameOf(code)}</button></li>
           ))}</ul>
@@ -197,129 +180,8 @@ const SeenHere = ({ place, areaName }: { place: SavedPlace; areaName: string }) 
   )
 }
 
-/**
- * A place's trips: dates when it switches on by itself. A trip can be changed (an "Extend my trip"
- * link from the trip email opens it: `openTrip`).
- */
-const Trips = ({ place, openTrip = null }: { place: SavedPlace; openTrip?: string | null }) => {
-  const save = useSavePlaceTripMutation()
-  const remove = useDeletePlaceTripMutation()
-  const opened = openTrip ? place.trips.find(trip => String(trip.id) === openTrip) : undefined
-  // undefined: no form; null: adding new dates; a trip: changing its dates.
-  const [editing, setEditing] = useState<PlaceTrip | null | undefined>(opened)
-  const [startsOn, setStartsOn] = useState(opened?.starts_on ?? '')
-  const [endsOn, setEndsOn] = useState(opened?.ends_on ?? '')
-  const [bigDay, setBigDay] = useState(opened?.kind === 'bigday')
-  const [scout, setScout] = useState(Boolean(opened?.scout))
-  const [scoutDays, setScoutDays] = useState(opened?.scout_days ?? DEFAULT_SCOUT_DAYS)
-  const [problem, setProblem] = useState<string | null>(null)
-  const open = (trip: PlaceTrip | null) => {
-    setEditing(trip); setStartsOn(trip?.starts_on ?? ''); setEndsOn(trip?.ends_on ?? ''); setProblem(null)
-    setBigDay(trip?.kind === 'bigday'); setScout(Boolean(trip?.scout)); setScoutDays(trip?.scout_days ?? DEFAULT_SCOUT_DAYS)
-  }
-  const adding = editing !== undefined
-  const setAdding = (on: boolean) => (on ? open(null) : setEditing(undefined))
-  // A Big Day is one date, and scouts by default; an ordinary trip doesn't unless asked.
-  // Turning Big Day on turns scouting on with the usual lead time, unless scouting is already on:
-  // then the lead time chosen stays. Turning it off leaves scouting as it is.
-  const toggleBigDay = (on: boolean) => {
-    setBigDay(on)
-    if (on && !scout) { setScout(true); setScoutDays(DEFAULT_SCOUT_DAYS) }
-  }
-  const submit = (e: FormEvent) => {
-    e.preventDefault()
-    const ends = bigDay ? startsOn : endsOn
-    if (!startsOn || !ends) return setProblem(t(bigDay ? 'places.pickDate' : 'places.pickDates'))
-    if (ends < startsOn) return setProblem(t('places.datesOrder'))
-    setProblem(null)
-    save.mutate({ id: editing?.id, placeId: place.id, starts_on: startsOn, ends_on: ends, kind: bigDay ? 'bigday' : 'trip', scout, scout_days: scoutDays }, {
-      onSuccess: () => {
-        setEditing(undefined); setStartsOn(''); setEndsOn('')
-        // Scouting looks for the place's target birds: with none, send them straight to picking some.
-        if (scout && place.targets.length === 0) {
-          toast.warn(t('places.scoutPickNow'), { position: 'bottom-center' })
-          window.setTimeout(() => showTargets(place.id), 300)
-        } else toast.success(t('places.tripSaved'), { position: 'bottom-center' })
-      },
-      onError: (error) => setProblem(errorMessage(error))
-    })
-  }
-  const trips = [...place.trips].sort((a, b) => a.starts_on.localeCompare(b.starts_on))
-  const now = today()
-  const scouting = trips.some(trip => trip.scout && trip.ends_on >= now)
-  return (
-    <div className='place__section'>
-      <p className='place__heading'>{t('places.trips')}</p>
-      {trips.length
-        ? <ul className='place__trips'>{trips.map(trip => {
-            const dates = dateRange(trip.starts_on, trip.ends_on)
-            const from = scoutFrom(trip)
-            const inWindow = from !== null && !trip.active && now >= from && now < trip.starts_on
-            return (
-              <li key={trip.id}>
-                <span className='place__trip-what'>
-                  {dates}
-                  {trip.kind === 'bigday' && <> · {t('places.bigDay')}</>}
-                  {from && <> · {t('places.scoutingFrom', { date: monthDay(from) })}</>}
-                </span>
-                {trip.active && <span className='place__badge'>{t('places.tripNow')}</span>}
-                {inWindow && <span className='place__badge place__badge--scouting'>{t('places.scoutingNow')}</span>}
-                <button type='button' className='link-button link-text' aria-label={t('places.changeTrip', { dates })} onClick={() => open(trip)}>{t('places.changeDates')}</button>
-                <button type='button' className='link-button link-text' aria-label={t('places.deleteTrip', { dates })} disabled={remove.isPending}
-                  onClick={() => remove.mutate(trip.id, { onSuccess: () => toast.success(t('places.tripDeleted'), { position: 'bottom-center' }), onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' }) })}>
-                  {t('places.delete')}
-                </button>
-              </li>
-            )
-          })}</ul>
-        : <p className='notification__hint'>{t('places.tripsNone')}</p>}
-      {scouting && place.targets.length === 0 && (
-        <div className='place__scout-warning' role='alert'>
-          <p className='place__scout-note'>{t('places.scoutNoTargets')}</p>
-          <button type='button' className='pill-button pill-button--small' onClick={() => showTargets(place.id)}>{t('places.pickTargets')}</button>
-        </div>
-      )}
-      {adding
-        ? <form className='place__trip-form' onSubmit={submit} noValidate data-trip={editing ? String(editing.id) : 'new'}>
-            <label className='place__trip-switch'>
-              <input className='switch switch--small' type='checkbox' name='bigday' checked={bigDay} onChange={(e) => toggleBigDay(e.target.checked)} />
-              <span><span className='place-form__label'>{t('places.bigDay')}</span> <span className='notification__hint'>{t('places.bigDayHint')}</span></span>
-            </label>
-            {bigDay
-              ? <label><span className='place-form__label'>{t('places.bigDayDate')}</span><input type='date' name='starts_on' value={startsOn} min={editing ? undefined : today()} onChange={(e) => setStartsOn(e.target.value)} /></label>
-              : <>
-                  <label><span className='place-form__label'>{t('places.starts')}</span><input type='date' name='starts_on' value={startsOn} min={editing ? undefined : today()} onChange={(e) => setStartsOn(e.target.value)} /></label>
-                  <label><span className='place-form__label'>{t('places.ends')}</span><input type='date' name='ends_on' value={endsOn} min={startsOn || today()} onChange={(e) => setEndsOn(e.target.value)} /></label>
-                </>}
-            <label className='place__trip-switch'>
-              <input className='switch switch--small' type='checkbox' name='scout' checked={scout} onChange={(e) => setScout(e.target.checked)} />
-              <span className='place-form__label'>{t('places.scout')}</span>
-            </label>
-            {scout && (
-              <>
-                <div className='timing place__scout-weeks' role='group' aria-label={t('places.scoutLead')}>
-                  {SCOUT_DAYS.map(days => (
-                    <button key={days} type='button' className={`timing__option ${days === scoutDays ? 'is-selected' : ''}`} aria-pressed={days === scoutDays} onClick={() => setScoutDays(days)}>
-                      {t('places.scoutWeeks', { count: days / 7 })}
-                    </button>
-                  ))}
-                </div>
-                {startsOn && <p className='notification__hint place__scout-hint'>{t('places.scoutHint', { date: monthDay(daysBefore(startsOn, scoutDays)) })}</p>}
-              </>
-            )}
-            {problem && <p className='place-form__error' role='alert'>{problem}</p>}
-            <div className='place-form__actions'>
-              <button type='submit' className='pill-button pill-button--primary' disabled={save.isPending}>{t('places.saveTrip')}</button>
-              <button type='button' className='link-button link-text' onClick={() => { setAdding(false); setProblem(null) }}>{t('common.cancel')}</button>
-            </div>
-          </form>
-        : <button type='button' className='link-button link-text' onClick={() => setAdding(true)}>{t('places.addTrip')}</button>}
-    </div>
-  )
-}
-
-/** One saved place: where, how far, whether you're there now, its target birds and its trips. */
-const PlaceCard = ({ place, openTrip = null }: { place: SavedPlace; openTrip?: string | null }) => {
+/** One saved place: where, how far, whether you're there now, its target birds, and planning an event there. */
+const PlaceCard = ({ place }: { place: SavedPlace }) => {
   const user = useCurrentUser()
   const navigate = useNavigate()
   const patch = usePatchUserMutation()
@@ -339,6 +201,7 @@ const PlaceCard = ({ place, openTrip = null }: { place: SavedPlace; openTrip?: s
           ? <button type='button' className='pill-button pill-button--small' disabled={patch.isPending} onClick={() => patch.mutate({ active_place_id: null })}>{t('places.backHome')}</button>
           : <button type='button' className='pill-button pill-button--small' disabled={patch.isPending} onClick={() => patch.mutate({ active_place_id: place.id }, { onSuccess: () => toast.success(t('places.switched', { name: place.name }), { position: 'bottom-center' }) })}>{t('places.hereNow')}</button>}
         <button type='button' className='link-button link-text' onClick={() => navigate(`/?region=${encodeURIComponent(place.location)}`)}>{t('places.plan')}</button>
+        <Link className='link-button link-text' to={`/events/new?place=${encodeURIComponent(String(place.id))}`}>{t('places.planEvent')}</Link>
         <button type='button' className='link-button link-text' aria-label={t('places.editLabel', { name: place.name })} onClick={() => setEditing(true)}>{t('places.edit')}</button>
         <button type='button' className='link-button link-text' aria-label={t('places.deleteLabel', { name: place.name })} disabled={remove.isPending}
           onClick={() => remove.mutate(place.id, { onSuccess: () => toast.success(t('places.deleted'), { position: 'bottom-center' }), onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' }) })}>
@@ -348,15 +211,14 @@ const PlaceCard = ({ place, openTrip = null }: { place: SavedPlace; openTrip?: s
       <Targets place={place} areaName={areaName} />
       <Scope place={place} />
       <SeenHere place={place} areaName={areaName} />
-      <Trips place={place} openTrip={openTrip} />
     </li>
   )
 }
 
 /**
  * Your places: home, and the places you go besides (a work town, a cabin), each with its own area,
- * reach and target birds. Switch to one when you're there, or give it trip dates and it switches on
- * its own; everything comes back home afterwards. "Save this place" from exploring lands here with
+ * reach and target birds. Switch to one when you're there, or plan an event there (Events) and it
+ * switches on by itself on the day; everything comes back home afterwards. "Save this place" from exploring lands here with
  * the area filled in (?addPlace=US-CO-031).
  */
 const Places = () => {
@@ -369,16 +231,11 @@ const Places = () => {
   const [adding, setAdding] = useState(Boolean(presetState))
   const homeName = useAreaName(user.state, user.location)
   const [changingHome, setChangingHome] = useState(false)
-  const full =(places.data?.length ?? 0) >= MAX_PLACES
-  // "Extend my trip" from a trip email: /settings#places?trip=12 (or ?trip=12) opens that trip's dates.
-  const [openTrip] = useState(() => /[?&]trip=([^&]+)/.exec(window.location.hash)?.[1] ?? params.get('trip'))
+  const full = (places.data?.length ?? 0) >= MAX_PLACES
 
   useEffect(() => {
-    if (presetState || openTrip) document.getElementById('places')?.scrollIntoView({ block: 'start' })
-  }, [presetState, openTrip])
-  useEffect(() => {
-    if (openTrip && places.data) document.querySelector(`[data-trip="${CSS.escape(openTrip)}"]`)?.scrollIntoView({ block: 'center' })
-  }, [openTrip, places.data])
+    if (presetState) document.getElementById('places')?.scrollIntoView({ block: 'start' })
+  }, [presetState])
   const setPreference = (changes: { keep_home_alerts?: boolean; trip_emails_enabled?: boolean }) => patch.mutate(changes, {
     onSuccess: () => toast.success(t('alertCenter.updated'), { position: 'bottom-center' }),
     onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
@@ -432,7 +289,7 @@ const Places = () => {
           </div>
         </div>
         {places.isError && <ErrorMessage networkError={errorMessage(places.error)} />}
-        {places.data && places.data.length > 0 && <ul className='places__list'>{places.data.map(place => <PlaceCard key={place.id} place={place} openTrip={openTrip && place.trips.some(trip => String(trip.id) === openTrip) ? openTrip : null} />)}</ul>}
+        {places.data && places.data.length > 0 && <ul className='places__list'>{places.data.map(place => <PlaceCard key={place.id} place={place} />)}</ul>}
         {adding
           ? <PlaceForm preset={presetState ? { state: presetState, location: presetRegion! } : null} onDone={doneAdding} />
           : full

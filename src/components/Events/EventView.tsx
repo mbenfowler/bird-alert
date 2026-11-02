@@ -1,0 +1,55 @@
+import { Link, useParams } from 'react-router'
+import { LoadingState } from '../Loading/Loading'
+import { useEventViewQuery, useSessionQuery } from '../../hooks/queries'
+import { dateRange, t } from '../../i18n'
+import '../Shared/Shared.css'
+import '../AlertCenter/Places.css'
+import './Events.css'
+
+/**
+ * The view-only link (/events/view/:token): an event's plan and, on the day, its tally (refreshed each
+ * minute), for people who don't want an account. No names: just the birds. A quiet invitation to
+ * Bird Alert for anyone not signed in.
+ */
+const EventView = () => {
+  const { token = '' } = useParams()
+  const view = useEventViewQuery(token)
+  const session = useSessionQuery()
+  const signedIn = Boolean(session.data)
+  if (view.isPending) return <LoadingState />
+  if (view.isError || !view.data) return <section className='event-page'><p className='event-page__missing'>{t('events.viewMissing')}</p></section>
+  const v = view.data
+  const tally = [...(v.tally ?? [])].sort((a, b) => b.added_at.localeCompare(a.added_at))
+  return (
+    <article className='event-page'>
+      <h1 className='fredericka event-page__title'>{v.name}</h1>
+      <p className='event-page__what'>
+        {v.kind === 'bigday' && <span className='place__badge'>{t('events.bigDay')}</span>}
+        {' '}{dateRange(v.starts_on, v.ends_on)}{v.area ? ` · ${v.area}` : ''}
+      </p>
+      {!signedIn && (
+        <aside className='shared__pitch event-page__pitch'>
+          <p>{t('events.viewPrompt')}</p>
+          <Link className='pill-button pill-button--primary' to='/login'>{t('events.viewPromptButton')}</Link>
+        </aside>
+      )}
+      <section className='event-page__section' aria-labelledby='viewTally'>
+        <h2 id='viewTally' className='event-page__subhead'>{t('events.viewTally')}</h2>
+        {tally.length || v.active
+          ? <>
+              <p className='event-page__count' data-testid='view-count'>{t('events.viewCount', { count: v.count ?? tally.length })}</p>
+              <ol className='event-tally__list event-tally__list--plain'>{tally.map(entry => <li key={entry.code}>{entry.comName ?? entry.code}</li>)}</ol>
+            </>
+          : <p className='notification__hint'>{t('events.viewNoTally')}</p>}
+      </section>
+      {v.targets.length > 0 && (
+        <section className='event-page__section' aria-labelledby='viewTargets'>
+          <h2 id='viewTargets' className='event-page__subhead'>{t('events.viewTargets')}</h2>
+          <ul className='place__chips'>{v.targets.map(target => <li key={target.code} className='place__chip'>{target.comName ?? target.code}</li>)}</ul>
+        </section>
+      )}
+    </article>
+  )
+}
+
+export default EventView

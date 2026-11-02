@@ -4,7 +4,7 @@ import { TEST_USER } from '../support/login'
 const DENVER = 'US-CO-031'
 const day = (offset) => { const d = new Date(); d.setDate(d.getDate() + offset); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
 
-const colorado = (trips = []) => ({ id: 7, name: 'Colorado (work)', state: 'CO', location: DENVER, range_mi: 30, home_lat: null, home_lng: null, targets: ['clanut'], trips })
+const colorado = () => ({ id: 7, name: 'Colorado (work)', state: 'CO', location: DENVER, range_mi: 30, home_lat: null, home_lng: null, targets: ['clanut'] })
 
 // Counties for Georgia (home) and Colorado (the place), whichever state is asked for.
 const stubRegions = () => cy.intercept('GET', '**/api/ebird/regions*', (req) => {
@@ -55,43 +55,35 @@ describe('Places and exploring', () => {
     cy.get('@patchUser.all').should('have.length', 0)
   })
 
-  it('lists places with targets and trips; switches to one, adds a suggested target and trip dates', () => {
+  it('lists places with targets; switches to one, adds a suggested target for the coming two weeks', () => {
     stubAuth({ loggedIn: true })
     stubRegions()
     stubBirds()
-    cy.intercept('GET', '**/api/saved?kind=places*', { statusCode: 200, body: [colorado([{ id: 3, starts_on: day(10), ends_on: day(13), active: false }])] }).as('getPlaces')
-    cy.intercept('GET', '**/api/saved?kind=place-suggestions*', { statusCode: 200, body: { from: day(10), to: day(13), sampled: 40, suggestions: [{ speciesCode: 'stejay', comName: "Steller's Jay", days: 9, sampled: 40 }] } }).as('suggestions')
+    cy.intercept('GET', '**/api/saved?kind=places*', { statusCode: 200, body: [colorado()] }).as('getPlaces')
+    cy.intercept('GET', '**/api/saved?kind=place-suggestions*', { statusCode: 200, body: { from: day(0), to: day(14), sampled: 40, suggestions: [{ speciesCode: 'stejay', comName: "Steller's Jay", days: 9, sampled: 40 }] } }).as('suggestions')
     cy.intercept('PUT', '**/api/saved?kind=place-targets*', (req) => req.reply({ statusCode: 200, body: { ...colorado(), targets: req.body.codes } })).as('targets')
     cy.visit('http://localhost:3000/settings?tab=places')
     cy.get('#places').scrollIntoView()
     cy.contains('.place__what', 'Colorado (work)').should('contain', 'Denver County')
     cy.get('.place__chip').should('contain', "Clark's Nutcracker")
-    cy.wait('@suggestions').its('request.url').should('include', `from=${day(10)}`).and('include', `to=${day(13)}`)
+    cy.wait('@suggestions').its('request.url').should('include', `from=${day(0)}`).and('include', `to=${day(14)}`)
     cy.contains('.place__chip--add', "Steller's Jay").click()
     cy.wait('@targets').its('request.body').should('deep.equal', { codes: ['clanut', 'stejay'] })
     // I'm here now.
     cy.contains('.place button', "I'm here now").click()
     cy.wait('@patchUser').its('request.body').should('deep.equal', { active_place_id: 7 })
-    // Trip dates: the server's own words come through when it refuses.
-    cy.intercept('POST', '**/api/saved?kind=trip', { statusCode: 400, body: { error: 'A trip can be at most 60 days.' } }).as('postTrip')
-    cy.contains('.place button', 'Add trip dates').click()
-    cy.get('.place__trip-form input[name="starts_on"]').type(day(20))
-    cy.get('.place__trip-form input[name="ends_on"]').type(day(100))
-    cy.contains('.place__trip-form button', 'Save dates').click()
-    cy.wait('@postTrip').its('request.body').should('deep.equal', { place_id: 7, starts_on: day(20), ends_on: day(100), kind: 'trip', scout: false, scout_days: 21 })
-    cy.get('.place-form__error').should('contain', 'A trip can be at most 60 days.')
     // Keep home alerts while away.
     cy.get('#keep_home_alerts').click({ force: true })
     cy.wait('@patchUser').its('request.body').should('deep.equal', { keep_home_alerts: false })
   })
 
-  it('at a place, the home screen shows it until asked for home, and the trip says until when', () => {
-    const activePlace = { id: 7, name: 'Colorado (work)', state: 'CO', location: DENVER, via: 'trip', trip: { starts_on: day(-1), ends_on: day(2) } }
+  it('at a place, the home screen shows it until asked for home', () => {
+    const activePlace = { id: 7, name: 'Colorado (work)', state: 'CO', location: DENVER, via: 'manual' }
     stubAuth({ loggedIn: true, user: { ...TEST_USER, activePlace } })
     stubRegions()
     cy.intercept('GET', '**/api/ebird/observations*').as('observations')
     cy.visit('http://localhost:3000/')
-    cy.get('.area-banner--place').should('contain', 'Colorado (work)').and('contain', 'Denver County').and('contain', 'until')
+    cy.get('.area-banner--place').should('contain', 'Colorado (work)').and('contain', 'Denver County')
     cy.wait('@observations').its('request.url').should('include', `region=${DENVER}`)
     cy.contains('.area-banner button', 'Show home').click()
     cy.get('.area-banner').should('contain', 'Showing home').and('contain', 'Hall County')
@@ -131,40 +123,5 @@ describe('Places and exploring', () => {
     // Trip emails.
     cy.get('#trip_emails_enabled').click({ force: true })
     cy.wait('@patchUser').its('request.body').should('deep.equal', { trip_emails_enabled: false })
-  })
-
-  it('Extend my trip: a link to a trip opens its dates to change', () => {
-    stubAuth({ loggedIn: true })
-    stubRegions()
-    stubBirds()
-    cy.intercept('GET', '**/api/saved?kind=places*', { statusCode: 200, body: [colorado([{ id: 3, starts_on: day(-1), ends_on: day(2), active: true }])] }).as('getPlaces')
-    cy.intercept('PATCH', '**/api/saved?kind=trip&id=3', (req) => req.reply({ statusCode: 200, body: { id: 3, ...req.body, active: true } })).as('patchTrip')
-    cy.visit('http://localhost:3000/settings#places?trip=3')
-    cy.get('.place__trip-form[data-trip="3"]').should('be.visible')
-    cy.get('.place__trip-form input[name="ends_on"]').should('have.value', day(2)).clear()
-    cy.get('.place__trip-form input[name="ends_on"]').type(day(5))
-    cy.contains('.place__trip-form button', 'Save dates').click()
-    cy.wait('@patchTrip').its('request.body').should('deep.equal', { starts_on: day(-1), ends_on: day(5), kind: 'trip', scout: false, scout_days: 21 })
-  })
-
-  it('back from a trip, the home screen says so once and marks it seen', () => {
-    stubAuth({ loggedIn: true, user: { ...TEST_USER, lastTrip: { name: 'Colorado (work)', ended_on: day(-1) } } })
-    stubRegions()
-    cy.visit('http://localhost:3000/')
-    cy.get('[data-testid="welcome-back"]').should('contain', 'Welcome back: alerts are back to Hall County.')
-    cy.wait('@patchUser').its('request.body').should('deep.equal', { trip_return_seen: true })
-    cy.contains('[data-testid="welcome-back"] button', 'OK').click()
-    cy.get('[data-testid="welcome-back"]').should('not.exist')
-  })
-
-  it('a trip starting within the week shows on the home screen, with a way to plan it', () => {
-    stubAuth({ loggedIn: true })
-    stubRegions()
-    cy.intercept('GET', '**/api/saved?kind=places*', { statusCode: 200, body: [colorado([{ id: 3, starts_on: day(3), ends_on: day(5), active: false }])] }).as('getPlaces')
-    cy.visit('http://localhost:3000/')
-    cy.get('[data-testid="upcoming-trip"]').should('contain', 'Colorado (work)').and('contain', 'in 3 days')
-    cy.contains('[data-testid="upcoming-trip"] button', 'Plan it').click()
-    cy.url().should('include', `region=${DENVER}`)
-    cy.get('.area-banner').should('contain', 'Exploring')
   })
 })

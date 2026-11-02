@@ -2,8 +2,8 @@ import { useEffect, useMemo, useSyncExternalStore } from 'react'
 import { useSearchParams } from 'react-router'
 import { useCurrentUser, usePlaceSeenQuery, usePlacesQuery, useRegionsQuery } from './hooks/queries'
 import { countyName, countyWord, stateOfRegion } from './usStates'
-import { daysUntil, t } from './i18n'
-import type { ActivePlace, SavedPlace } from './types'
+import { t } from './i18n'
+import type { ActivePlace } from './types'
 
 /**
  * Which area the home screen, alerts bar, Where to go and the map show: an area being explored
@@ -96,13 +96,6 @@ export const useShownSeen = (shown: ShownArea): Set<string> | null => {
   const seen = usePlaceSeenQuery(byPlace ? place!.id : null, byPlace)
   return useMemo(() => (byPlace && seen.data ? new Set(seen.data) : null), [byPlace, seen.data])
 }
-
-const UPCOMING_DAYS = 7
-
-/** The saved place with the soonest trip starting within the week (not yet under way), and that trip. */
-export const nextTrip = (places: SavedPlace[]) => places
-  .flatMap(place => place.trips.filter(trip => !trip.active && daysUntil(trip.starts_on) > 0 && daysUntil(trip.starts_on) <= UPCOMING_DAYS).map(trip => ({ place, trip })))
-  .sort((a, b) => a.trip.starts_on.localeCompare(b.trip.starts_on))[0]
 
 /** "Denver County" in the US, "Calgary" elsewhere; "your county" while the names load. */
 export const useAreaName = (state: string, region: string) => {

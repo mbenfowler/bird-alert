@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { releaseThisDevice } from './usePushNotifications'
-import { deleteAccount, deletePlace, deletePlaceTrip, patchPlace, patchPlaceTrip, postPlace, postPlaceTrip, putPlaceSeen, putPlaceTargets, deleteSavedBird, deleteSeenBird, importLifeList, logout, patchUser, postSavedBird, postSeenBird, putSavedRoute } from '../apiCalls'
+import { deleteAccount, deleteEvent, deleteEventTally, joinEvent, leaveEvent, patchEvent, patchEventMember, postEvent, postEventTally, putEventTargets, rotateEventInvite, startEventInvite, deletePlace, patchPlace, postPlace, putPlaceSeen, putPlaceTargets, deleteSavedBird, deleteSeenBird, importLifeList, logout, patchUser, postSavedBird, postSeenBird, putSavedRoute } from '../apiCalls'
 import { clearLocalRoutes } from '../routePlan'
 import { queryKeys } from './queries'
-import type { Bird, Id, PlaceInput, PlaceTripInput, SeenBird, User } from '../types'
+import type { Bird, EventInput, GroupEvent, Id, PlaceInput, SeenBird, User } from '../types'
 
 /** Put a freshly logged-in user into the cache so every view updates at once. */
 export const useSetSession = () => {
@@ -131,13 +131,6 @@ export const useDeletePlaceMutation = () => usePlaceChange((id: Id) => deletePla
 
 export const usePlaceTargetsMutation = () => usePlaceChange(({ id, codes }: { id: Id; codes: string[] }) => putPlaceTargets(id, codes))
 
-/** Adds dates at a place, or changes them. */
-export const useSavePlaceTripMutation = () =>
-  usePlaceChange(({ id, placeId, ...trip }: PlaceTripInput & { id?: Id; placeId: Id }) =>
-    (id === undefined ? postPlaceTrip({ place_id: placeId, ...trip }) : patchPlaceTrip(id, trip)))
-
-export const useDeletePlaceTripMutation = () => usePlaceChange((id: Id) => deletePlaceTrip(id))
-
 /** Sets a place's own seen list; the list and the place's count refresh. */
 export const usePlaceSeenMutation = () => {
   const queryClient = useQueryClient()
@@ -149,3 +142,53 @@ export const usePlaceSeenMutation = () => {
     ])
   })
 }
+
+/**
+ * Every change to events refreshes them and the session (which says which one is on today), even
+ * where no screen is showing them now, so the next one to open is already right.
+ */
+const useEventChange = <A, R>(mutationFn: (args: A) => Promise<R>) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn,
+    // Not waited for: a page that the change takes away (a deleted event) moves on at once, not after the refetch.
+    onSettled: () => { void Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.events, refetchType: 'all' }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.session, refetchType: 'all' })
+    ]) }
+  })
+}
+
+export const useCreateEventMutation = () => useEventChange((event: EventInput & { starts_on: string; ends_on: string }) => postEvent(event))
+export const useEventMemberMutation = () => useEventChange(({ id, change }: { id: Id; change: { archived?: boolean; display_name?: string } }) => patchEventMember(id, change))
+export const useStartInviteMutation = () => useEventChange(({ id, displayName }: { id: Id; displayName: string }) => startEventInvite(id, displayName))
+export const usePatchEventMutation = () => useEventChange(({ id, change }: { id: Id; change: EventInput }) => patchEvent(id, change))
+export const useEndEventMutation = () => useEventChange((id: Id) => deleteEvent(id))
+export const useLeaveEventMutation = () => useEventChange((id: Id) => leaveEvent(id))
+export const useRotateInviteMutation = () => useEventChange((id: Id) => rotateEventInvite(id))
+export const useEventTargetsMutation = () => useEventChange(({ id, codes }: { id: Id; codes: string[] }) => putEventTargets(id, codes))
+export const useJoinEventMutation = () => useEventChange(({ token, displayName }: { token: string; displayName: string }) => joinEvent(token, displayName))
+
+/**
+ * Adds a bird to the day's tally, or takes it off, at once on screen (the group's other adds arrive
+ * with the next refresh); a failure puts the tally back.
+ */
+export const useEventTallyMutation = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, code, remove }: { id: Id; code: string; remove?: boolean }) => (remove ? deleteEventTally(id, code) : postEventTally(id, code)),
+    onMutate: async ({ id, code, remove }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.events })
+      const previous = queryClient.getQueryData<GroupEvent[]>(queryKeys.events)
+      queryClient.setQueryData<GroupEvent[]>(queryKeys.events, (events) => (events ?? []).map(event => {
+        if (String(event.id) !== String(id)) return event
+        const tally = (event.tally ?? []).filter(entry => entry.code !== code)
+        return { ...event, tally: remove ? tally : [{ code, added_by_name: event.display_name ?? null, added_by_you: true, added_at: new Date().toISOString() }, ...tally] }
+      }))
+      return { previous }
+    },
+    onError: (_error, _vars, context) => { if (context) queryClient.setQueryData(queryKeys.events, context.previous) },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.events })
+  })
+}
+
