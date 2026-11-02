@@ -234,3 +234,37 @@
   background: var(--surface);
   color: var(--ink);
 }
+
+/* A trip in its scouting window: a cooler badge than Now. */
+.place__badge--scouting {
+  background: #dbeafe;
+  color: #1e3a8a;
+}
+
+/* The Big Day and scouting switches in the trip form: switch, then its words. */
+.place__trip-form .place__trip-switch {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  text-align: left;
+}
+
+.place__trip-switch .switch {
+  flex: none;
+}
+
+.place__scout-weeks {
+  align-self: flex-start;
+  margin: 0;
+}
+
+.place__scout-weeks .timing__option {
+  white-space: nowrap;
+  padding-inline: 12px;
+}
+
+.place__scout-hint,
+.place__scout-note {
+  margin: 0;
+}

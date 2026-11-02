@@ -48,6 +48,22 @@ export interface PlaceTrip {
   starts_on: string
   ends_on: string
   active: boolean
+  /** A Big Day is one date; an ordinary trip a span. */
+  kind?: 'trip' | 'bigday'
+  /** A daily scouting report of the place's target birds, from scout_days before the trip. */
+  scout?: boolean
+  scout_days?: number
+  /** The day scouting starts (from the server). */
+  scout_from?: string | null
+}
+
+/** What a trip form sends. */
+export interface PlaceTripInput {
+  starts_on: string
+  ends_on: string
+  kind?: 'trip' | 'bigday'
+  scout?: boolean
+  scout_days?: number
 }
 
 /** A place the person goes besides home ("Colorado (work)"), with its own area, reach and target birds. */
