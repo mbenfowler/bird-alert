@@ -108,4 +108,26 @@ describe('Life list', () => {
     cy.wait('@postSeen').its('request.body').should('deep.equal', { speciesCode: 'snogoo' })
     cy.get('.birds-list .card').should('have.length', 2)
   })
+
+  it('birds marked seen here, not imported from eBird, get a nudge to log them on eBird', () => {
+    cy.get('#seen-snogoo').click()
+    cy.wait('@postSeen')
+    cy.get('#seen-cangoo').click()
+    cy.wait('@postSeen')
+    cy.visit('http://localhost:3000/life-list')
+    cy.get('[data-testid="not-on-ebird"]').within(() => {
+      cy.get('h3').should('have.text', 'Not on your eBird list yet (2)')
+      cy.contains('You marked these seen in Bird Alert.')
+      cy.get('li').should('have.length', 2).first().should('have.text', 'Canada Goose')
+      cy.contains('a', 'Submit on eBird').should('have.attr', 'href', 'https://ebird.org/submit').and('have.attr', 'target', '_blank')
+    })
+  })
+
+  it('a life list all from eBird has no nudge', () => {
+    cy.intercept('GET', '**/api/saved?kind=seen*', { statusCode: 200, body: [{ speciesCode: 'snogoo', firstSeen: '2020-01-01', source: 'import', comName: 'Snow Goose' }] })
+    cy.visit('http://localhost:3000/life-list')
+    cy.get('.list-heading').should('contain', 'Your life list: 1 bird')
+    cy.get('.birds-list .card').should('have.length', 1)
+    cy.get('[data-testid="not-on-ebird"]').should('not.exist')
+  })
 })

@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions, getCountries, getProvinces,
-  getSavedBirds, getPlaces, getPlaceSeen, getPlaceSuggestions, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase, getNameLocales, getEvents, getEventPreview, getEventView, getEventSuggestions } from '../apiCalls'
+  getSavedBirds, getPlaces, getPlaceSeen, getPlaceSuggestions, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase, getNameLocales, getEvents, getEventPreview, getEventView, getEventScouting, getEventSuggestions } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
 import { nameLocale } from '../i18n'
 import type { Id, LifersScope, PersistenceClass, User } from '../types'
@@ -428,6 +428,16 @@ export const useEventSuggestionsQuery = (id: Id | null, limit?: number) =>
     },
     enabled: id !== null,
     staleTime: 60 * 60 * 1000
+  })
+
+/** Where an event's target birds (or likely lifers) have been reported lately; it changes slowly, so half an hour is fresh enough. */
+export const useEventScoutingQuery = (id: Id | null) =>
+  useQuery({
+    queryKey: ['event-scouting', id, nameLocale()] as const,
+    queryFn: () => getEventScouting(id!),
+    enabled: id !== null,
+    staleTime: 30 * 60 * 1000,
+    select: (answer) => ({ ...answer, reported: Array.isArray(answer?.reported) ? answer.reported : [], unreported: Array.isArray(answer?.unreported) ? answer.unreported : [] })
   })
 
 /** What an invite link is for, before joining (no sign-in needed). */

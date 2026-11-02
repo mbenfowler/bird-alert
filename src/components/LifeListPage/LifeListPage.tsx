@@ -54,6 +54,9 @@ const LifeListPage = () => {
   const loadMore = () => { if (pages.hasNextPage && !pages.isFetchingNextPage) void pages.fetchNextPage() }
   const sentinelRef = useInfiniteScroll(loadMore, Boolean(pages.hasNextPage) && !pages.isFetchingNextPage)
 
+  // Birds marked seen here but not (yet) imported from eBird, so likely missing from the eBird list.
+  const tapped = useMemo(() => list.filter(b => b.source === 'tap').sort(sorters.name), [list])
+
   if (seen.isError) return <ErrorMessage networkError={errorMessage(seen.error)} />
   const count = list.length
 
@@ -86,6 +89,14 @@ const LifeListPage = () => {
             <div ref={sentinelRef} className='list-sentinel' aria-hidden='true'></div>
             {pages.isFetchingNextPage && <p className='list-end'>{t('common.loadingMore')}</p>}
             {!pages.hasNextPage && birds.length > 0 && <p className='list-end'>{term ? t('lifePage.endMatching', { count: birds.length }) : t('lifePage.end', { count })}</p>}
+            {tapped.length > 0 && !pages.hasNextPage && (
+              <div className='life-page__not-ebird' data-testid='not-on-ebird'>
+                <h3>{t('lifePage.notOnEbird', { count: tapped.length })}</h3>
+                <p className='life-page__not-ebird-hint'>{t('lifePage.notOnEbirdHint')}</p>
+                <ul>{tapped.map(b => <li key={b.speciesCode}>{b.comName ?? b.speciesCode}</li>)}</ul>
+                <a className='life-page__submit' href='https://ebird.org/submit' target='_blank' rel='noreferrer'>{t('lifePage.submitOnEbird')}</a>
+              </div>
+            )}
           </>
         )}
     </section>
