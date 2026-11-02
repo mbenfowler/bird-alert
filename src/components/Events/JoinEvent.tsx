@@ -35,7 +35,7 @@ const JoinEvent = () => {
     if (!name.trim()) return setProblem(t('events.pickName'))
     setProblem(null)
     join.mutate({ token, displayName: name.trim() }, {
-      onSuccess: () => { forgetJoin(); toast.success(t('events.joined'), { position: 'bottom-center' }); navigate('/settings?tab=places#events') },
+      onSuccess: (joined) => { forgetJoin(); toast.success(t('events.joined'), { position: 'bottom-center' }); navigate(`/events/${encodeURIComponent(String(joined.id))}`) },
       onError: (error) => setProblem(errorMessage(error))
     })
   }

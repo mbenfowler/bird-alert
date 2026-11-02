@@ -38,8 +38,12 @@ export interface User {
   trip_emails_enabled?: boolean
   /** A trip that ended and hasn't been welcomed home yet. */
   lastTrip?: { name: string; ended_on: string } | null
-  /** A group event happening today (a Big Day with friends), for the home banner and the tally. */
+  /** An event happening today (a Big Day, solo or with friends), for the home banner and the tally. */
   activeEvent?: ActiveEvent | null
+  /** An event starting within the week, for "Chiricahuas in 3 days · Plan it". */
+  upcomingEvent?: { id: Id; name: string; starts_on: string } | null
+  /** An event that just ended and hasn't been welcomed home yet. */
+  lastEvent?: { id: Id; name: string; ended_on: string } | null
 }
 
 export type Id = number | string
@@ -78,7 +82,8 @@ export interface SavedPlace {
   home_lat: number | null
   home_lng: number | null
   targets: string[]
-  trips: PlaceTrip[]
+  /** Trips are events now; older answers may still carry them. */
+  trips?: PlaceTrip[]
   /** How many birds are on the place's own seen list (like a state list). */
   seenCount?: number
   /** What counts as new for target suggestions and Lifers first there: new in life, or new at this place. */
@@ -115,6 +120,7 @@ export interface UserPatch {
   keep_home_alerts?: boolean
   trip_emails_enabled?: boolean
   trip_return_seen?: boolean
+  event_return_seen?: boolean
   range_mi?: number
   rare_alerts_need_proof?: boolean
   home_lat?: number | null
@@ -438,7 +444,8 @@ export interface NearbyPublic { hotspots: NearbyHotspot[]; parks: NearbyPark[]; 
 
 /** Someone in a group event, by the name the group knows them by. */
 export interface EventMember {
-  display_name: string
+  /** Null until the person invites or joins (a solo event's organizer has no group name yet). */
+  display_name: string | null
   role: 'organizer' | 'member'
   /** This is the person looking. */
   you?: boolean
@@ -448,22 +455,35 @@ export interface EventMember {
 export interface EventTarget {
   code: string
   lifer_for?: string[]
+  lifer_for_you?: boolean
 }
 
 /** A bird on the day's shared tally, and who got it. */
 export interface EventTallyEntry {
   code: string
   added_by_name?: string | null
+  added_by_you?: boolean
   added_at: string
 }
 
-/** A trip shared with a group: one plan, one target list, one tally on the day. */
+/** How an event went: species on the tally, and how many of its targets. */
+export interface EventRecap {
+  species: number
+  targets_got: number
+  targets_total: number
+}
+
+/** A dated outing, solo or with a small group: one plan, one target list, one tally on the day. */
 export interface GroupEvent {
   id: Id
   name: string
   state: string
   location: string
   range_mi: number
+  home_lat?: number | null
+  home_lng?: number | null
+  /** The place it was planned from, if any. */
+  place_id?: Id | null
   starts_on: string
   ends_on: string
   kind?: 'trip' | 'bigday'
@@ -471,7 +491,14 @@ export interface GroupEvent {
   scout_days?: number
   scout_from?: string | null
   active: boolean
+  /** Its last day is behind us. */
+  past?: boolean
+  /** Put away by this person (archiving is each member's own). */
+  archived?: boolean
   role: 'organizer' | 'member'
+  /** The name the group knows this person by; null until they invite or join. */
+  display_name?: string | null
+  recap?: EventRecap | null
   members: EventMember[]
   targets: EventTarget[]
   tally: EventTallyEntry[]
@@ -484,6 +511,8 @@ export interface EventInput {
   state?: string
   location?: string
   range_mi?: number
+  /** Creating from a place copies its area, range, spot and targets. */
+  place_id?: Id
   starts_on?: string
   ends_on?: string
   kind?: 'trip' | 'bigday'

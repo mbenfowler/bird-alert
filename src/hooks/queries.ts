@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions, getCountries, getProvinces,
-  getSavedBirds, getPlaces, getPlaceSeen, getPlaceSuggestions, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase, getNameLocales, getEvents, getEventPreview, getEventView } from '../apiCalls'
+  getSavedBirds, getPlaces, getPlaceSeen, getPlaceSuggestions, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase, getNameLocales, getEvents, getEventPreview, getEventView, getEventSuggestions } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
 import { nameLocale } from '../i18n'
 import type { Id, LifersScope, PersistenceClass, User } from '../types'
@@ -402,9 +402,8 @@ export const useNearbyPublicQuery = (lat: number | null, lng: number | null, ena
     enabled: enabled && lat !== null && lng !== null
   })
 
-/** The person's trips, soonest first. */
 /**
- * The group events the person is in. Tolerant like places; refreshed every 30 s on the event day
+ * The events the person is in, solo or with a group. Tolerant like places; refreshed every 30 s on the event day
  * (`live`), so the group sees each other's tally as it grows.
  */
 export const useEventsQuery = (live = false) =>
@@ -416,6 +415,19 @@ export const useEventsQuery = (live = false) =>
     select: (events) => (Array.isArray(events) ? events : [])
       .filter(event => event && typeof event.location === 'string')
       .map(event => ({ ...event, members: event.members ?? [], targets: event.targets ?? [], tally: event.tally ?? [] }))
+  })
+
+/** Birds likely in an event's area on its dates that the person has never seen, most likely first. */
+export const useEventSuggestionsQuery = (id: Id | null, limit?: number) =>
+  useQuery({
+    queryKey: ['event-suggestions', id, limit ?? null, nameLocale()] as const,
+    queryFn: async () => {
+      const answer = await getEventSuggestions(id!, limit)
+      const list = Array.isArray(answer) ? answer : (answer.suggestions ?? [])
+      return list.map(s => (typeof s === 'string' ? s : s.speciesCode)).filter(Boolean)
+    },
+    enabled: id !== null,
+    staleTime: 60 * 60 * 1000
   })
 
 /** What an invite link is for, before joining (no sign-in needed). */
@@ -439,7 +451,7 @@ export const usePlacesQuery = () =>
     // Tolerant of an odd answer: only real places, each with its lists, so no page can trip on one.
     select: (places) => (Array.isArray(places) ? places : [])
       .filter(place => place && typeof place.location === 'string')
-      .map(place => ({ ...place, targets: place.targets ?? [], trips: place.trips ?? [] }))
+      .map(place => ({ ...place, targets: place.targets ?? [] }))
   })
 
 /** A place's own seen list (like a state list), as species codes; fetched only when wanted. */

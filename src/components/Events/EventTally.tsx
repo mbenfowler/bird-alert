@@ -32,7 +32,7 @@ const EventTally = () => {
   const names = useBirdsQuery([...new Set([...codes, ...targetCodes])])
   const nameOf = (code: string) => names.data?.find(b => b.speciesCode === code)?.comName ?? code
   if (events.isPending) return <LoadingState />
-  if (!event) return <section className='event-page'><p className='event-page__missing'>{t('events.tallyMissing')}</p><Link to='/settings?tab=places#events'>{t('events.backToPlaces')}</Link></section>
+  if (!event) return <section className='event-page'><p className='event-page__missing'>{t('events.tallyMissing')}</p><Link to='/events'>{t('events.backToEvents')}</Link></section>
 
   const got = targetCodes.filter(code => codes.includes(code)).length
   const needed = targetCodes.filter(code => !codes.includes(code))
@@ -82,7 +82,7 @@ const EventTally = () => {
           <ul className='place__chips'>{needed.map(code => <li key={code}><button type='button' className='place__chip place__chip--add' onClick={() => add(code)}>+ {nameOf(code)}</button></li>)}</ul>
         </div>
       )}
-      <p><Link to='/settings?tab=places#events'>{t('events.backToPlaces')}</Link></p>
+      <p><Link to={`/events/${encodeURIComponent(String(event.id))}`}>{t('events.backToEvent')}</Link></p>
     </section>
   )
 }

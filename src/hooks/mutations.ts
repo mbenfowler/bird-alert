@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { releaseThisDevice } from './usePushNotifications'
-import { deleteAccount, deleteEvent, deleteEventTally, joinEvent, leaveEvent, patchEvent, postEventFromTrip, postEventTally, putEventTargets, rotateEventInvite, deletePlace, deletePlaceTrip, patchPlace, patchPlaceTrip, postPlace, postPlaceTrip, putPlaceSeen, putPlaceTargets, deleteSavedBird, deleteSeenBird, importLifeList, logout, patchUser, postSavedBird, postSeenBird, putSavedRoute } from '../apiCalls'
+import { deleteAccount, deleteEvent, deleteEventTally, joinEvent, leaveEvent, patchEvent, patchEventMember, postEvent, postEventTally, putEventTargets, rotateEventInvite, startEventInvite, deletePlace, patchPlace, postPlace, putPlaceSeen, putPlaceTargets, deleteSavedBird, deleteSeenBird, importLifeList, logout, patchUser, postSavedBird, postSeenBird, putSavedRoute } from '../apiCalls'
 import { clearLocalRoutes } from '../routePlan'
 import { queryKeys } from './queries'
-import type { Bird, EventInput, GroupEvent, Id, PlaceInput, PlaceTripInput, SavedPlace, SeenBird, User } from '../types'
+import type { Bird, EventInput, GroupEvent, Id, PlaceInput, SeenBird, User } from '../types'
 
 /** Put a freshly logged-in user into the cache so every view updates at once. */
 export const useSetSession = () => {
@@ -131,13 +131,6 @@ export const useDeletePlaceMutation = () => usePlaceChange((id: Id) => deletePla
 
 export const usePlaceTargetsMutation = () => usePlaceChange(({ id, codes }: { id: Id; codes: string[] }) => putPlaceTargets(id, codes))
 
-/** Adds dates at a place, or changes them. */
-export const useSavePlaceTripMutation = () =>
-  usePlaceChange(({ id, placeId, ...trip }: PlaceTripInput & { id?: Id; placeId: Id }) =>
-    (id === undefined ? postPlaceTrip({ place_id: placeId, ...trip }) : patchPlaceTrip(id, trip)))
-
-export const useDeletePlaceTripMutation = () => usePlaceChange((id: Id) => deletePlaceTrip(id))
-
 /** Sets a place's own seen list; the list and the place's count refresh. */
 export const usePlaceSeenMutation = () => {
   const queryClient = useQueryClient()
@@ -151,29 +144,23 @@ export const usePlaceSeenMutation = () => {
 }
 
 /**
- * Every change to group events refreshes them, places (a shared trip leaves them) and the session,
- * even where no screen is showing them now, so the next one to open is already right.
+ * Every change to events refreshes them and the session (which says which one is on today), even
+ * where no screen is showing them now, so the next one to open is already right.
  */
-const useEventChange = <A, R>(mutationFn: (args: A) => Promise<R>, onSuccess?: (args: A) => void) => {
+const useEventChange = <A, R>(mutationFn: (args: A) => Promise<R>) => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn,
-    onSuccess: (_data, args) => onSuccess?.(args),
     onSettled: () => Promise.all([
       queryClient.invalidateQueries({ queryKey: queryKeys.events, refetchType: 'all' }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.places, refetchType: 'all' }),
       queryClient.invalidateQueries({ queryKey: queryKeys.session, refetchType: 'all' })
     ])
   })
 }
 
-/** A shared trip becomes the group's event: it leaves its place at once, before the refetch says so. */
-export const useShareTripMutation = () => {
-  const queryClient = useQueryClient()
-  return useEventChange(({ tripId, displayName }: { tripId: Id; displayName: string }) => postEventFromTrip(tripId, displayName), ({ tripId }) => {
-    queryClient.setQueryData<SavedPlace[]>(queryKeys.places, (places) => places?.map(place => ({ ...place, trips: (place.trips ?? []).filter(trip => String(trip.id) !== String(tripId)) })))
-  })
-}
+export const useCreateEventMutation = () => useEventChange((event: EventInput & { starts_on: string; ends_on: string }) => postEvent(event))
+export const useEventMemberMutation = () => useEventChange(({ id, change }: { id: Id; change: { archived?: boolean; display_name?: string } }) => patchEventMember(id, change))
+export const useStartInviteMutation = () => useEventChange(({ id, displayName }: { id: Id; displayName: string }) => startEventInvite(id, displayName))
 export const usePatchEventMutation = () => useEventChange(({ id, change }: { id: Id; change: EventInput }) => patchEvent(id, change))
 export const useEndEventMutation = () => useEventChange((id: Id) => deleteEvent(id))
 export const useLeaveEventMutation = () => useEventChange((id: Id) => leaveEvent(id))
