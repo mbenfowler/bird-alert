@@ -92,7 +92,7 @@ const Targets = ({ place, areaName }: { place: SavedPlace; areaName: string }) =
   const setCodes = (codes: string[]) => targets.mutate({ id: place.id, codes }, { onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' }) })
 
   return (
-    <div className='place__section'>
+    <div className='place__section place__targets' id={`place-targets-${place.id}`} tabIndex={-1}>
       <p className='place__heading'>{t('places.targets')}</p>
       {place.targets.length
         ? <ul className='place__chips'>{place.targets.map(code => (

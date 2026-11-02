@@ -1125,7 +1125,7 @@
     "scoutHint": "A daily report of where your target birds are being seen, starting {{date}}.",
     "scoutingFrom": "scouting from {{date}}",
     "scoutingNow": "Scouting",
-    "scoutNoTargets": "Add target birds to get scouting reports.",
+    "scoutNoTargets": "Scouting has nothing to look for yet: it reports where your target birds are being seen, so this place needs some.",
     "datesOrder": "The trip has to end on or after the day it starts.",
     "changeDates": "Change",
     "changeTrip": "Change the trip {{dates}}",
