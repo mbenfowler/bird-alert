@@ -589,6 +589,8 @@ export interface EventRoute {
     private?: boolean
     /** Personal spots nearby whose reports were folded into this place. */
     merged?: { locId: string; locName: string }[]
+    /** Put in the route by the viewer (`add`). */
+    picked?: boolean
   }[]
   /** Optional stops that add birds but cost a lot of driving, best value first. */
   extras?: {
@@ -602,8 +604,13 @@ export interface EventRoute {
     add_mi: number | null
     private?: boolean
     merged?: { locId: string; locName: string }[]
+    /** Taken out of the route by the viewer (`drop`) but still adds birds. */
+    dropped?: boolean
   }[]
   covered_with_extras?: number
+  /** The `add` and `drop` lists the server applied. */
+  add?: string[]
+  drop?: string[]
   total_min: number | null
   total_mi: number | null
   covered: number

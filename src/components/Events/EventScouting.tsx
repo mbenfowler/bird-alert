@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { Trans } from 'react-i18next'
 import SightingsMap, { type MapPoint } from '../SightingsMap/SightingsMap'
 import { LoadingState } from '../Loading/Loading'
 import EventRoute, { type RouteBird } from './EventRoute'
+import { readChoices, round2, saveChoices, type RouteChoices } from './routeChoices'
 import { useEventRouteQuery, useEventScoutingQuery } from '../../hooks/queries'
+import { ApiError } from '../../apiCalls'
 import { clockTime, daysUntil, t } from '../../i18n'
 import { prefersReducedMotion } from '../../routeDraw'
 import type { EventScouting as Scouting, GroupEvent } from '../../types'
@@ -116,11 +118,48 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
   useEffect(() => {
     if (scrollTo) document.getElementById(cardId(scrollTo.n))?.scrollIntoView({ block: 'center', behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
   }, [scrollTo])
-  // The route is only asked for when someone presses Plan a route; from is a rounded "lat,lng" start.
+  // The route is only asked for when someone presses Plan a route. The viewer's start and the places
+  // they put in or took out are remembered in this browser, per event.
   const [routeOpen, setRouteOpen] = useState(false)
-  const [from, setFrom] = useState<string | null>(null)
-  const routeQuery = useEventRouteQuery(event.id, from, routeOpen)
+  const [choices, setChoicesState] = useState<RouteChoices>(() => readChoices(event.id))
+  const setChoices = (next: RouteChoices) => { setChoicesState(next); saveChoices(event.id, next) }
+  const from = choices.start ? `${round2(choices.start.lat)},${round2(choices.start.lng)}` : null
+  // A change the server refuses (a 400: too many places added, say) is rolled back, with its reason;
+  // remembered lists it no longer takes (no change just now) start over without them. A fresh answer's
+  // lists are the ones kept (a personal spot becomes its hotspot, unknown ids go), so what's remembered
+  // matches what's planned.
+  const undoTo = useRef<RouteChoices | null>(null)
+  const [routeNote, setRouteNote] = useState<string | null>(null)
+  const keep = (change: (prev: RouteChoices) => RouteChoices) => setChoicesState(prev => {
+    const next = change(prev)
+    if (next !== prev) saveChoices(event.id, next)
+    return next
+  })
+  const routeQuery = useEventRouteQuery(event.id, { from, add: choices.add, drop: choices.drop }, routeOpen, {
+    answer: (answer, sent) => {
+      if (!Array.isArray(answer?.add) || !Array.isArray(answer?.drop)) return
+      const { add, drop } = answer
+      const same = (a: string[], b: string[]) => a.join(',') === b.join(',')
+      // Only the answer to the lists still chosen: a slower, older one doesn't undo a newer change.
+      keep(prev => (!same(sent.add, prev.add) || !same(sent.drop, prev.drop) || (same(add, prev.add) && same(drop, prev.drop)) ? prev : { ...prev, add, drop }))
+    },
+    refused: (error) => {
+      const back = undoTo.current
+      undoTo.current = null
+      setRouteNote(error.message)
+      keep(prev => back ?? { ...prev, add: [], drop: [] })
+    }
+  })
   const route = routeOpen ? routeQuery.data : undefined
+  const refused = routeQuery.error instanceof ApiError && routeQuery.error.status === 400
+  const edit = (next: RouteChoices) => { undoTo.current = choices; setRouteNote(null); setPickedExtra(null); setChoices(next) }
+  const without = (list: string[], id: string) => list.filter(x => x !== id)
+  // A place is never in both lists: adding takes it out of drop, removing takes it out of add.
+  const addPlace = (locId: string) => edit({ ...choices, add: [...without(choices.add, locId), locId], drop: without(choices.drop, locId) })
+  const putBack = (locId: string) => edit({ ...choices, drop: without(choices.drop, locId) })
+  const removeStop = (stop: { locId: string; picked?: boolean }) => edit(stop.picked || choices.add.includes(stop.locId)
+    ? { ...choices, add: without(choices.add, stop.locId) }
+    : { ...choices, add: without(choices.add, stop.locId), drop: [...without(choices.drop, stop.locId), stop.locId] })
   // A route bird's chip is its place card's chip, so it links to the same report.
   const routeBird = (bird: RouteBird, stop: { locId: string }) => {
     const known = places.find(p => p.key === stop.locId)?.birds.find(b => b.code === bird.code)
@@ -133,7 +172,7 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
     ? {
         path: route.geometry,
         stops: route.stops.map((s, i) => ({ lat: s.lat, lng: s.lng, label: `${i + 1}. ${s.locName}` })),
-        start: route.from ? { ...route.from, label: t(from ? 'route.myLocation' : 'eventRoute.meetingPoint') } : null
+        start: route.from ? { ...route.from, label: choices.start ? (choices.start.mine ? t('route.myLocation') : choices.start.name) : t('eventRoute.meetingPoint') } : null
       }
     : null
   // The optional stops ride along as small grey pins; tapping one brings its row into view.
@@ -201,7 +240,9 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
             </div>
           )}
           {routeOpen && (
-            <EventRoute route={route} pending={routeQuery.isPending} failed={routeQuery.isError} from={from} onFrom={f => { setFrom(f); setPickedExtra(null) }} lifers={lifers} picked={pickedExtra} renderBird={routeBird} />
+            <EventRoute route={route} pending={routeQuery.isPending} updating={routeQuery.isPlaceholderData} failed={routeQuery.isError && !refused} note={routeNote}
+              state={event.state} start={choices.start} onStart={start => edit({ ...choices, start })} lifers={lifers} picked={pickedExtra} renderBird={routeBird}
+              onAdd={addPlace} onPutBack={putBack} onRemove={removeStop} />
           )}
           {routeOpen ? null : places.length
             ? <ol className='event-scouting__places'>

@@ -6,6 +6,7 @@ import type { PlanPoint } from '../../routePlan'
 import './PlaceSearch.css'
 import { countyName } from '../../usStates'
 import { t } from '../../i18n'
+import { parseCoordinates } from '../../coordinates'
 
 export interface Suggestion { point: PlanPoint; detail: string }
 
@@ -30,13 +31,16 @@ const PlaceSearch = ({ state, label, placeholder, onPick, suggestions = [], sugg
   const [submitted, setSubmitted] = useState('')
   const typed = useDebouncedValue(text, 250)
   const wantsAddresses = submitted !== '' && submitted === text.trim()
-  const search = usePlaceSearchQuery(state, wantsAddresses ? submitted : typed, wantsAddresses)
+  // Typed coordinates are a place already: one row to use them, Enter picks it, and nothing is searched.
+  const coords = parseCoordinates(text)
+  const search = usePlaceSearchQuery(state, coords ? '' : wantsAddresses ? submitted : typed, wantsAddresses)
   const regions = useRegionsQuery(state)
   const county = (code: string | null) => regions.data?.find(r => r.code === code)?.name ?? null
 
-  const submit = (e: FormEvent) => { e.preventDefault(); setSubmitted(text.trim()) }
   const pick = (point: PlanPoint) => { onPick(point); setText(''); setSubmitted('') }
-  const searching = text.trim().length >= 2
+  const coordsPoint: PlanPoint | null = coords ? { locId: null, name: `${coords.lat}, ${coords.lng}`, lat: coords.lat, lng: coords.lng } : null
+  const submit = (e: FormEvent) => { e.preventDefault(); if (coordsPoint) pick(coordsPoint); else setSubmitted(text.trim()) }
+  const searching = !coords && text.trim().length >= 2
   const hotspots = searching ? search.data?.hotspots ?? [] : []
   const addresses = wantsAddresses ? search.data?.addresses ?? [] : []
 
@@ -58,6 +62,13 @@ const PlaceSearch = ({ state, label, placeholder, onPick, suggestions = [], sugg
                 <button type='button' onClick={() => pick(s.point)}><strong>{s.point.name}</strong><span>{s.detail}</span></button>
               </li>
             ))}
+          </ul>
+        </div>
+      )}
+      {coordsPoint && (
+        <div className='place-search__group' aria-live='polite'>
+          <ul className='place-search__results'>
+            <li><button type='button' onClick={() => pick(coordsPoint)}><strong>{t('placeSearch.useCoordinates', { name: coordsPoint.name })}</strong></button></li>
           </ul>
         </div>
       )}

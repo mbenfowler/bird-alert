@@ -674,3 +674,35 @@ a.event-scouting__bird:hover {
 .event-route__more-extras {
   align-self: flex-start;
 }
+
+/* Editing the route: take a stop out, put an optional one in. The last route stays up, dimmed, until the new one comes. */
+.event-route__remove,
+.event-route__add {
+  align-self: flex-start;
+}
+
+.event-route__remove {
+  font-size: 0.85rem;
+}
+
+.event-route.is-updating .event-route__stops,
+.event-route.is-updating .event-route__extras {
+  opacity: 0.6;
+}
+
+.event-route__start-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.event-route__start--choosing {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.event-route__start-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}

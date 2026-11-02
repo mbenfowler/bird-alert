@@ -5,7 +5,7 @@ import {
   getSavedBirds, getPlaces, getPlaceSeen, getPlaceSuggestions, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase, getNameLocales, getEvents, getEventPreview, getEventView, getEventScouting, getEventRoute, getEventSuggestions } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
 import { nameLocale } from '../i18n'
-import type { Id, LifersScope, PersistenceClass, User } from '../types'
+import type { EventRoute, Id, LifersScope, PersistenceClass, User } from '../types'
 
 /** Short stable fingerprint of a code list, so a changed species list gets its own cache entry. */
 export const codesKey = (codes: string[]) => {
@@ -440,12 +440,29 @@ export const useEventScoutingQuery = (id: Id | null) =>
     select: (answer) => ({ ...answer, reported: Array.isArray(answer?.reported) ? answer.reported : [], unreported: Array.isArray(answer?.unreported) ? answer.unreported : [] })
   })
 
-/** The scouting route, fetched only once asked for; `from` is a rounded "lat,lng" start. */
-export const useEventRouteQuery = (id: Id, from: string | null, enabled: boolean) =>
+/**
+ * The scouting route, fetched only once asked for; `from` is a rounded "lat,lng" start, `add` and `drop`
+ * the places put in or taken out. An edit keeps the last route showing until the new one comes; a 400
+ * (too many added) is an answer, not a hiccup, so it isn't retried.
+ */
+export const useEventRouteQuery = (id: Id, { from, add, drop }: { from: string | null; add: string[]; drop: string[] }, enabled: boolean,
+  on: { answer?: (route: EventRoute, sent: { add: string[]; drop: string[] }) => void; refused?: (error: ApiError) => void } = {}) =>
   useQuery({
-    queryKey: ['event-route', id, from, nameLocale()] as const,
-    queryFn: () => getEventRoute(id, from),
+    queryKey: ['event-route', id, from, add, drop, nameLocale()] as const,
+    // The page hears each fresh answer (to keep the lists the server applied) and each refusal (to roll back).
+    queryFn: async () => {
+      try {
+        const route = await getEventRoute(id, { from, add, drop })
+        on.answer?.(route, { add, drop })
+        return route
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 400) on.refused?.(error)
+        throw error
+      }
+    },
     enabled,
+    placeholderData: keepPreviousData,
+    retry: (failures, error) => !(error instanceof ApiError && error.status === 400) && failures < 1,
     staleTime: 30 * 60 * 1000,
     select: (answer) => ({ ...answer, stops: Array.isArray(answer?.stops) ? answer.stops : [], extras: Array.isArray(answer?.extras) ? answer.extras : [], geometry: Array.isArray(answer?.geometry) ? answer.geometry : [] })
   })
