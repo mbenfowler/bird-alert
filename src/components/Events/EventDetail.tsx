@@ -12,6 +12,7 @@ import { shareUrl } from '../../share'
 import { dateRange, monthDay, t } from '../../i18n'
 import type { GroupEvent } from '../../types'
 import EventPlan from './EventPlan'
+import EventScouting from './EventScouting'
 import { MAX_TARGETS, eventPath, isGroup, isPast, isScouting, membersText, recapText, scoutFrom } from './events'
 import '../AlertCenter/Places.css'
 import './Events.css'
@@ -75,16 +76,22 @@ const Targets = ({ event, areaName }: { event: GroupEvent; areaName: string }) =
 
 /**
  * Who's in: just you until you invite anyone. Inviting asks once for the name your group will know
- * you by, then gives the invite and view-only links to share.
+ * you by, then gives two links, each on its own row with what it's for: the invite link (which the
+ * organizer can reset) and the view-only page.
  */
 const People = ({ event }: { event: GroupEvent }) => {
   const start = useStartInviteMutation()
   const rotate = useRotateInviteMutation()
   const [asking, setAsking] = useState(false)
+  const [resetting, setResetting] = useState(false)
   const [name, setName] = useState('')
   const [problem, setProblem] = useState<string | null>(null)
   const organizer = event.role === 'organizer'
   const invite = () => void shareUrl(absolute(event.invite_url!), t('events.inviteTitle', { name: event.name }))
+  const reset = () => rotate.mutate(event.id, {
+    onSuccess: () => { setResetting(false); toast.success(t('events.resetInviteDone'), { position: 'bottom-center' }) },
+    onError: fail
+  })
   const submit = (e: FormEvent) => {
     e.preventDefault()
     if (!name.trim()) return setProblem(t('events.pickName'))
@@ -97,16 +104,32 @@ const People = ({ event }: { event: GroupEvent }) => {
   return (
     <div className='event-page__section event-detail__people'>
       <h2 className='place__heading'>{t('events.people')}</h2>
-      <p className='event__members'>{isGroup(event) ? membersText(event.members) : t('events.justYou')}</p>
+      <p className='event__members'>{event.invite_url || isGroup(event) ? membersText(event.members) : t('events.justYou')}</p>
       {event.invite_url
         ? <>
-            <p className='place__actions'>
-              <button type='button' className='pill-button pill-button--small' onClick={invite}>{t('events.invite')}</button>
-              <button type='button' className='link-button link-text' onClick={() => void shareUrl(absolute(event.view_url!), t('events.viewOnlyTitle', { name: event.name }))} disabled={!event.view_url}>{t('events.viewOnly')}</button>
-              {organizer && <button type='button' className='link-button link-text' disabled={rotate.isPending}
-                onClick={() => rotate.mutate(event.id, { onSuccess: () => toast.success(t('events.newInviteDone'), { position: 'bottom-center' }), onError: fail })}>{t('events.newInvite')}</button>}
-            </p>
-            <p className='notification__hint'>{t('events.viewOnlyHint')}</p>
+            <div className='event-link' data-testid='event-invite-link'>
+              <h3 className='event-link__title'>{t('events.inviteLink')}</h3>
+              <p className='event-link__hint'>{t('events.inviteLinkHint')}</p>
+              <p className='place__actions'>
+                <button type='button' className='pill-button pill-button--primary pill-button--small' onClick={invite}>{t('events.shareInvite')}</button>
+                {organizer && !resetting && <button type='button' className='link-button link-text event-link__reset' onClick={() => setResetting(true)}>{t('events.resetInvite')}</button>}
+              </p>
+              {organizer && resetting && (
+                <p className='place__actions event__confirm' role='alert'>
+                  <span>{t('events.resetInviteSure')}</span>
+                  <button type='button' className='pill-button pill-button--small' disabled={rotate.isPending} onClick={reset}>{t('events.resetInviteYes')}</button>
+                  <button type='button' className='link-button link-text' onClick={() => setResetting(false)}>{t('common.cancel')}</button>
+                </p>
+              )}
+            </div>
+            <div className='event-link' data-testid='event-view-link'>
+              <h3 className='event-link__title'>{t('events.viewOnly')}</h3>
+              <p className='event-link__hint'>{t('events.viewOnlyHint')}</p>
+              <p className='place__actions'>
+                <button type='button' className='pill-button pill-button--small' disabled={!event.view_url}
+                  onClick={() => void shareUrl(absolute(event.view_url!), t('events.viewOnlyTitle', { name: event.name }))}>{t('events.shareViewOnly')}</button>
+              </p>
+            </div>
           </>
         : asking
           ? <form className='event-share' onSubmit={submit} noValidate>
@@ -120,7 +143,12 @@ const People = ({ event }: { event: GroupEvent }) => {
                 <button type='button' className='link-button link-text' onClick={() => { setAsking(false); setProblem(null) }}>{t('common.cancel')}</button>
               </div>
             </form>
-          : <button type='button' className='pill-button pill-button--small' onClick={() => setAsking(true)}>{t('events.inviteGroup')}</button>}
+          : <>
+              <p className='place__actions'>
+                <button type='button' className='pill-button pill-button--primary pill-button--small' onClick={() => setAsking(true)}>{t('events.inviteGroup')}</button>
+              </p>
+              <p className='notification__hint'>{t('events.soloHint')}</p>
+            </>}
     </div>
   )
 }
@@ -197,6 +225,7 @@ const EventDetail = () => {
             </>}
       </div>
       <Targets event={event} areaName={areaName} />
+      {!past && <EventScouting event={event} />}
       <People event={event} />
       {!event.active && (
         <div className='event-page__section'>

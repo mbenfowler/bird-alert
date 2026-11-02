@@ -1,4 +1,4 @@
-import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, Place, Province, Area,SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, BestHotspots, SpeciesHotspots, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share, Passkey, Chase, PersistenceClass, Id, SavedPlace, PlaceInput, PlaceSuggestion, LifersScope, GroupEvent, EventInput, EventPreview, EventView } from './types'
+import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, Place, Province, Area,SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, BestHotspots, SpeciesHotspots, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share, Passkey, Chase, PersistenceClass, Id, SavedPlace, PlaceInput, PlaceSuggestion, LifersScope, GroupEvent, EventInput, EventPreview, EventView, EventScouting } from './types'
 import { arrival } from './arrival'
 import { isStandalone } from './install'
 import { nameLocale, signupLocale } from './i18n'
@@ -137,6 +137,11 @@ export const postEventTally = (id: Id, code: string) => api<GroupEvent>('/saved'
 export const deleteEventTally = (id: Id, code: string) => api<null>('/saved', { method: 'DELETE', params: { kind: 'event-tally', id: String(id), code } })
 export const joinEvent = (token: string, displayName: string) => api<GroupEvent>('/saved', { method: 'POST', params: { kind: 'event-join' }, body: { token, display_name: displayName } })
 export const getEventPreview = (token: string) => api<EventPreview>('/saved', { params: { kind: 'event-preview', token } })
+// Bird names here follow ?locale= (the header alone isn't read for this one).
+export const getEventScouting = (id: Id) => {
+    const locale = nameLocale()
+    return api<EventScouting>('/saved', { params: { kind: 'event-scouting', id: String(id), ...(locale ? { locale } : {}) } })
+}
 export const getEventView = (token: string) => api<EventView>('/saved', { params: { kind: 'event-view', token } })
 export const getSavedRoute = (region: string) => api<SavedRoute>('/saved', { params: { kind: 'route', region } })
 /** Only the fields given change: `stops: null` goes back to the suggestion, `start: null` clears the start. */

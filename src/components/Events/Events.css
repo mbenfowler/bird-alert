@@ -322,3 +322,74 @@
 .event-plan__where .place__chips {
   margin: 0;
 }
+
+.event-link {
+  align-self: stretch;
+  box-sizing: border-box;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.event-link__title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.event-link__hint {
+  margin: 2px 0 8px;
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+
+.event-link .place__actions {
+  margin: 0;
+}
+
+.event-link .event__confirm {
+  margin-top: 8px;
+}
+
+.event-scouting__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.event-scouting__item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.event-scouting__item:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.event-scouting__what {
+  margin: 0;
+}
+
+.event-scouting__what a,
+.event-scouting__checklist {
+  color: var(--link);
+}
+
+.event-scouting__checklist {
+  font-size: 0.9rem;
+  align-self: flex-start;
+}
+
+.event-scouting__map {
+  align-self: stretch;
+  margin-top: 12px;
+  border-radius: 12px;
+  overflow: hidden;
+}

@@ -194,7 +194,8 @@ export interface Observation {
 
 /** Whether an eBird reviewer has confirmed a report, whether it has a photo or recording, and how many birders reported it. */
 export interface Evidence {
-  confirmed: boolean
+  /** null for an ordinary report eBird never flagged for review: no label either way. */
+  confirmed: boolean | null
   media: boolean
   birders: number
 }
@@ -545,5 +546,28 @@ export interface EventView {
   targets: { code: string; comName?: string }[]
   tally: { code: string; comName?: string; added_at: string }[]
   count: number
+}
+
+/** An event's scouting picture: its target birds (or likely lifers) reported lately in its area, and those not. */
+export interface EventScouting {
+  checked_at?: string | null
+  days_to_go?: number | null
+  window?: { from: string; to: string } | null
+  using: 'targets' | 'likely_lifers'
+  reported: {
+    code: string
+    speciesCode?: string
+    comName?: string
+    locName?: string
+    locId?: string
+    lat?: number | null
+    lng?: number | null
+    obsDt: string
+    birders?: number | null
+    confirmed?: boolean | null
+    media?: boolean | string | null
+    subId?: string | null
+  }[]
+  unreported: { code: string; speciesCode?: string; comName?: string }[]
 }
 

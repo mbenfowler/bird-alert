@@ -102,3 +102,33 @@
 .life-page__empty a {
     color: var(--link);
 }
+
+.life-page__not-ebird {
+    width: 100%;
+    max-width: 520px;
+    margin: 8px auto 24px;
+    padding: 16px;
+    border: 2px solid var(--line);
+    border-radius: 16px;
+    background-color: var(--surface);
+}
+
+.life-page__not-ebird h3 {
+    margin: 0 0 6px;
+    font-size: 1.05rem;
+}
+
+.life-page__not-ebird-hint {
+    margin: 0 0 10px;
+    color: var(--muted);
+}
+
+.life-page__not-ebird ul {
+    margin: 0 0 12px;
+    padding-left: 20px;
+}
+
+.life-page__submit {
+    color: var(--link);
+    font-weight: 600;
+}
