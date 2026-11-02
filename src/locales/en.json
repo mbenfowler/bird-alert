@@ -913,7 +913,13 @@
     "whatBirdsLike": "birds like the {{name}}",
     "opening": "Opening the shared link…",
     "failed": "This link didn’t open",
-    "whatBirds": "birds"
+    "whatBirds": "birds",
+    "share": "Share",
+    "shareTitle": "{{name}} at {{place}}",
+    "openInApp": "Open in Bird Alert",
+    "pitch": "Bird Alert sends alerts like this the moment a rare bird is reported near you. Free, no ads.",
+    "pitchButton": "Get alerts for my area",
+    "restricted": "Restricted access: this spot is private or by arrangement. Check access before you go."
   },
   "sighting": {
     "class": {

@@ -194,3 +194,45 @@
 .shared__aba {
     margin: 6px 0 0;
 }
+
+/* Before going: the place is private ground or by arrangement. */
+.shared__restricted {
+    margin: 0 0 12px;
+    padding: 8px 12px;
+    border-left: 4px solid #b45309;
+    border-radius: 6px;
+    background: #fff7ed;
+    color: #7c2d12;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.shared__actions .shared__share {
+    display: inline-flex;
+    align-items: center;
+}
+
+/* For someone without the app, near the top: what it does and the way in. */
+.shared__pitch {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 4px 0 16px;
+    padding: 14px 16px;
+    border: 2px solid var(--ink);
+    border-left: 8px solid var(--accent);
+    border-radius: 14px;
+    background: var(--surface);
+}
+
+.shared__pitch p {
+    flex: 1 1 260px;
+    margin: 0;
+    line-height: 1.45;
+}
+
+.shared__pitch .pill-button {
+    text-decoration: none;
+}
