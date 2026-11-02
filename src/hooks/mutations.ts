@@ -3,7 +3,7 @@ import { releaseThisDevice } from './usePushNotifications'
 import { deleteAccount, deleteEvent, deleteEventTally, joinEvent, leaveEvent, patchEvent, postEventFromTrip, postEventTally, putEventTargets, rotateEventInvite, deletePlace, deletePlaceTrip, patchPlace, patchPlaceTrip, postPlace, postPlaceTrip, putPlaceSeen, putPlaceTargets, deleteSavedBird, deleteSeenBird, importLifeList, logout, patchUser, postSavedBird, postSeenBird, putSavedRoute } from '../apiCalls'
 import { clearLocalRoutes } from '../routePlan'
 import { queryKeys } from './queries'
-import type { Bird, EventInput, GroupEvent, Id, PlaceInput, PlaceTripInput, SeenBird, User } from '../types'
+import type { Bird, EventInput, GroupEvent, Id, PlaceInput, PlaceTripInput, SavedPlace, SeenBird, User } from '../types'
 
 /** Put a freshly logged-in user into the cache so every view updates at once. */
 export const useSetSession = () => {
@@ -150,20 +150,30 @@ export const usePlaceSeenMutation = () => {
   })
 }
 
-/** Every change to group events refreshes them, places (a shared trip leaves them) and the session. */
-const useEventChange = <A, R>(mutationFn: (args: A) => Promise<R>) => {
+/**
+ * Every change to group events refreshes them, places (a shared trip leaves them) and the session,
+ * even where no screen is showing them now, so the next one to open is already right.
+ */
+const useEventChange = <A, R>(mutationFn: (args: A) => Promise<R>, onSuccess?: (args: A) => void) => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn,
+    onSuccess: (_data, args) => onSuccess?.(args),
     onSettled: () => Promise.all([
-      queryClient.invalidateQueries({ queryKey: queryKeys.events }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.places }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.session })
+      queryClient.invalidateQueries({ queryKey: queryKeys.events, refetchType: 'all' }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.places, refetchType: 'all' }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.session, refetchType: 'all' })
     ])
   })
 }
 
-export const useShareTripMutation = () => useEventChange(({ tripId, displayName }: { tripId: Id; displayName: string }) => postEventFromTrip(tripId, displayName))
+/** A shared trip becomes the group's event: it leaves its place at once, before the refetch says so. */
+export const useShareTripMutation = () => {
+  const queryClient = useQueryClient()
+  return useEventChange(({ tripId, displayName }: { tripId: Id; displayName: string }) => postEventFromTrip(tripId, displayName), ({ tripId }) => {
+    queryClient.setQueryData<SavedPlace[]>(queryKeys.places, (places) => places?.map(place => ({ ...place, trips: (place.trips ?? []).filter(trip => String(trip.id) !== String(tripId)) })))
+  })
+}
 export const usePatchEventMutation = () => useEventChange(({ id, change }: { id: Id; change: EventInput }) => patchEvent(id, change))
 export const useEndEventMutation = () => useEventChange((id: Id) => deleteEvent(id))
 export const useLeaveEventMutation = () => useEventChange((id: Id) => leaveEvent(id))
