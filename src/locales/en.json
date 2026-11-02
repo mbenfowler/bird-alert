@@ -1143,6 +1143,9 @@
     "tripEmailsHint": "When a trip starts and the day before it ends.",
     "welcomeBack": "Welcome back: alerts are back to {{name}}.",
     "pickTargets": "Pick target birds",
-    "scoutPickNow": "Trip saved. Now pick a few target birds, so scouting has something to look for."
+    "scoutPickNow": "Trip saved. Now pick a few target birds, so scouting has something to look for.",
+    "addNeverSeen": "Add every bird I've never seen ({{count}})",
+    "addedNeverSeen_one": "Added {{count}} bird you've never seen.",
+    "addedNeverSeen_other": "Added {{count}} birds you've never seen."
   }
 }

@@ -24,6 +24,8 @@ const dayString = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).pa
 const today = () => dayString(new Date())
 // Scouting lead times, in days (1-4 weeks); a Big Day scouts three weeks ahead unless told otherwise.
 const SCOUT_DAYS = [7, 14, 21, 28] as const
+// The server's limit on a place's target birds.
+const MAX_TARGETS = 50
 const DEFAULT_SCOUT_DAYS = 21
 const daysBefore = (day: string, days: number) => { const d = new Date(`${day}T12:00:00`); d.setDate(d.getDate() - days); return dayString(d) }
 const scoutFrom = (trip: PlaceTrip) => trip.scout ? (trip.scout_from ?? daysBefore(trip.starts_on, trip.scout_days ?? DEFAULT_SCOUT_DAYS)) : null
@@ -104,6 +106,15 @@ const Targets = ({ place, areaName }: { place: SavedPlace; areaName: string }) =
   const to = next ? next.ends_on : inTwoWeeks()
   const suggestions = usePlaceSuggestionsQuery(place.id, from, to, place.lifers_scope)
   const suggested = (suggestions.data ?? []).filter(code => !place.targets.includes(code)).slice(0, 8)
+  // Every bird likely there on those dates that isn't on the life list, most likely first: one tap
+  // adds as many as the place's 50 targets have room for.
+  const lifers = usePlaceSuggestionsQuery(place.id, from, to, 'life', MAX_TARGETS)
+  const room = MAX_TARGETS - place.targets.length
+  const neverSeen = (lifers.data ?? []).filter(code => !place.targets.includes(code)).slice(0, Math.max(0, room))
+  const addNeverSeen = () => targets.mutate({ id: place.id, codes: [...place.targets, ...neverSeen] }, {
+    onSuccess: () => toast.success(t('places.addedNeverSeen', { count: neverSeen.length }), { position: 'bottom-center' }),
+    onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
+  })
   const names = useBirdsQuery([...place.targets, ...suggested])
   const nameOf = (code: string) => names.data?.find(b => b.speciesCode === code)?.comName ?? code
   const setCodes = (codes: string[]) => targets.mutate({ id: place.id, codes }, { onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' }) })
@@ -123,6 +134,11 @@ const Targets = ({ place, areaName }: { place: SavedPlace; areaName: string }) =
             <button type='button' className='link-button link-text' onClick={() => setAdding(false)}>{t('common.cancel')}</button>
           </div>
         : <button type='button' className='link-button link-text' onClick={() => setAdding(true)}>{t('places.addTarget')}</button>}
+      {neverSeen.length > 0 && (
+        <button type='button' className='pill-button pill-button--small place__add-never-seen' disabled={targets.isPending} onClick={addNeverSeen}>
+          {t('places.addNeverSeen', { count: neverSeen.length })}
+        </button>
+      )}
       {suggested.length > 0 && (
         <>
           <p className='place__subheading'>{next ? t('places.suggested') : t('places.suggestedSoon')}</p>

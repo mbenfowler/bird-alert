@@ -418,11 +418,11 @@ export const usePlaceSeenQuery = (id: Id | null, enabled = true) =>
   useQuery({ queryKey: ['place-seen', id] as const, queryFn: () => getPlaceSeen(id!), enabled: enabled && id !== null, staleTime: 5 * 60 * 1000 })
 
 /** Target birds worth adding for a place over some days (likely lifers there then), as species codes. */
-export const usePlaceSuggestionsQuery = (id: Id | null, from: string, to: string, scope?: LifersScope) =>
+export const usePlaceSuggestionsQuery = (id: Id | null, from: string, to: string, scope?: LifersScope, limit?: number) =>
   useQuery({
-    queryKey: ['place-suggestions', id, from, to, scope ?? null] as const,
+    queryKey: ['place-suggestions', id, from, to, scope ?? null, limit ?? null] as const,
     queryFn: async () => {
-      const answer = await getPlaceSuggestions(id!, from, to, scope)
+      const answer = await getPlaceSuggestions(id!, from, to, scope, limit)
       const list = Array.isArray(answer) ? answer : (answer.suggestions ?? answer.codes ?? [])
       return list.map(s => (typeof s === 'string' ? s : s.speciesCode)).filter(Boolean)
     },

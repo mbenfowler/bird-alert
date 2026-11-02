@@ -116,8 +116,8 @@ export const postPlace = (place: PlaceInput) => api<SavedPlace>('/saved', { meth
 export const patchPlace = (id: Id, place: Partial<PlaceInput>) => api<SavedPlace>('/saved', { method: 'PATCH', params: { kind: 'place', id: String(id) }, body: place })
 export const deletePlace = (id: Id) => api<null>('/saved', { method: 'DELETE', params: { kind: 'place', id: String(id) } })
 export const putPlaceTargets = (id: Id, codes: string[]) => api<SavedPlace>('/saved', { method: 'PUT', params: { kind: 'place-targets', id: String(id) }, body: { codes } })
-export const getPlaceSuggestions = (id: Id, from: string, to: string, scope?: LifersScope) =>
-  api<PlaceSuggestion[] | { suggestions?: PlaceSuggestion[]; codes?: PlaceSuggestion[] }>('/saved', { params: { kind: 'place-suggestions', id: String(id), from, to, ...(scope ? { scope } : {}) } })
+export const getPlaceSuggestions = (id: Id, from: string, to: string, scope?: LifersScope, limit?: number) =>
+  api<PlaceSuggestion[] | { suggestions?: PlaceSuggestion[]; codes?: PlaceSuggestion[] }>('/saved', { params: { kind: 'place-suggestions', id: String(id), from, to, ...(scope ? { scope } : {}), ...(limit ? { limit: String(limit) } : {}) } })
 export const getPlaceSeen = (id: Id) => api<string[]>('/saved', { params: { kind: 'place-seen', id: String(id) } })
 export const putPlaceSeen = (id: Id, codes: string[]) => api<string[]>('/saved', { method: 'PUT', params: { kind: 'place-seen', id: String(id) }, body: { codes } })
 export const postPlaceTrip = (trip: PlaceTripInput & { place_id: Id }) => api<PlaceTrip>('/saved', { method: 'POST', params: { kind: 'trip' }, body: trip })
