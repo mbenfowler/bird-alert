@@ -17,9 +17,11 @@ describe('Life list', () => {
   })
 
   it('settings imports an eBird life list and lets the person settle the rows it could not', () => {
-    cy.visit('http://localhost:3000/settings')
-    cy.get('.life-list__count').should('have.text', 'No birds yet')
+    // Lifer alerts (Alerts tab) wait for a life list of 10; the list itself is on the Account tab.
+    cy.visit('http://localhost:3000/settings?tab=alerts')
     cy.contains('.notification__hint', 'Needs 10 or more birds').should('exist')
+    cy.contains('.settings-tabs button', 'Account').click()
+    cy.get('.life-list__count').should('have.text', 'No birds yet')
     cy.contains('summary', 'Start from your eBird life list').click()
     cy.get('#lifeListFile').selectFile({ contents: Cypress.Buffer.from('Category,Common Name,Scientific Name\nspecies,Snow Goose,Anser caerulescens\n'), fileName: 'ebird_world_life_list.csv', mimeType: 'text/csv' }, { force: true })
     cy.wait('@importLifeList').its('request.body.csv').should('include', 'Snow Goose')
@@ -48,6 +50,8 @@ describe('Life list', () => {
     cy.wait('@postSeen').its('request.body').should('deep.equal', { speciesCode: 'willet2' })
     cy.contains('.life-list__result li', 'Saltmarsh/Prairie Willet').should('contain', '✓ Saltmarsh Willet added')
     cy.contains('.life-list__result li', 'Muscovy Duck').find('button').should('have.text', 'Count it anyway')
+    cy.contains('.settings-tabs button', 'Alerts').click()
+    cy.contains('h2', 'Alert center')
     cy.contains('.notification__hint', 'Needs 10 or more birds').should('not.exist')
   })
 

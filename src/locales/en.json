@@ -94,8 +94,8 @@
         "hint": "A bird that isn’t on your life list reported in your area. Each one at most every three days."
       }
     },
-    "liferNeeds_one": "Needs {{count}} or more birds on your life list (above) first.",
-    "liferNeeds_other": "Needs {{count}} or more birds on your life list (above) first.",
+    "liferNeeds_one": "Needs {{count}} or more birds on your life list (on the Account tab) first.",
+    "liferNeeds_other": "Needs {{count}} or more birds on your life list (on the Account tab) first.",
     "timingLegend": "How quickly to send notable sightings",
     "rightAway": "Right away",
     "batch": "Batch every 6 hours",
@@ -886,7 +886,13 @@
     "captionPartial_other": "Share of days with a report in {{regionName}} over the last 12 months, {{count}} months on file so far."
   },
   "settings": {
-    "logout": "Log out"
+    "logout": "Log out",
+    "tabsLabel": "Settings",
+    "tab": {
+      "account": "Account",
+      "alerts": "Alerts",
+      "places": "Places"
+    }
   },
   "share": {
     "copied": "Link copied. Paste it anywhere."
@@ -1065,7 +1071,7 @@
     "title": "Your places",
     "hint": "Switch to a place when you're there, or add trip dates and it switches on its own. Alerts follow the place you're in, with its own target birds; everything comes back home afterwards.",
     "home": "Home",
-    "homeHint": "Your area is set above; how far alerts reach is in the Alert center below.",
+    "homeSaved": "Home saved!",
     "keepHome": "Keep my home alerts while I'm away",
     "keepHomeHint": "Home keeps alerting too while you're at a place.",
     "add": "Add a place",
