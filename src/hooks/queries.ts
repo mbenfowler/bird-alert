@@ -447,7 +447,7 @@ export const useEventRouteQuery = (id: Id, from: string | null, enabled: boolean
     queryFn: () => getEventRoute(id, from),
     enabled,
     staleTime: 30 * 60 * 1000,
-    select: (answer) => ({ ...answer, stops: Array.isArray(answer?.stops) ? answer.stops : [], geometry: Array.isArray(answer?.geometry) ? answer.geometry : [] })
+    select: (answer) => ({ ...answer, stops: Array.isArray(answer?.stops) ? answer.stops : [], extras: Array.isArray(answer?.extras) ? answer.extras : [], geometry: Array.isArray(answer?.geometry) ? answer.geometry : [] })
   })
 
 /** What an invite link is for, before joining (no sign-in needed). */

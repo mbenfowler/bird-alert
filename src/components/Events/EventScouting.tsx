@@ -133,9 +133,20 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
     ? {
         path: route.geometry,
         stops: route.stops.map((s, i) => ({ lat: s.lat, lng: s.lng, label: `${i + 1}. ${s.locName}` })),
-        start: route.from ? { ...route.from, label: t('route.myLocation') } : null
+        start: route.from ? { ...route.from, label: t(from ? 'route.myLocation' : 'eventRoute.meetingPoint') } : null
       }
     : null
+  // The optional stops ride along as small grey pins; tapping one brings its row into view.
+  const [pickedExtra, setPickedExtra] = useState<{ i: number } | null>(null)
+  const extraPoints: MapPoint[] = (route?.extras ?? []).map((x, i) => ({
+    id: `extra-${i}`, lat: x.lat, lng: x.lng, muted: true, title: x.locName,
+    subtitle: t('eventRoute.extraBirds', { count: x.new_birds.length })
+  }))
+  const onPin = (pts: MapPoint[]) => {
+    const id = pts[0]?.id
+    if (!id) return
+    if (routeOnMap) { if (id.startsWith('extra-')) setPickedExtra({ i: Number(id.slice(6)) }) } else pick(id)
+  }
 
   const points: MapPoint[] = places
     .map((place, i) => ({ place, n: i + 1 }))
@@ -180,17 +191,17 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
           )}
           {data.checked_at && <p className='event-scouting__updated'>{t('scoutingView.updated', { time: clockTime(new Date(data.checked_at)) })}</p>}
           {places.length > 0 && (
-            <button type='button' className='pill-button pill-button--small event-scouting__plan' aria-expanded={routeOpen} onClick={() => setRouteOpen(open => !open)}>
+            <button type='button' className='pill-button pill-button--small event-scouting__plan' aria-expanded={routeOpen} onClick={() => { setRouteOpen(open => !open); setPickedExtra(null) }}>
               {routeOpen ? t('eventRoute.hide') : t('eventRoute.plan')}
             </button>
           )}
           {points.length > 0 && (
             <div className='event-scouting__map'>
-              <SightingsMap points={routeOnMap ? [] : points} route={routeOnMap} height={240} ariaLabel={t('scoutingView.map', { name: event.name })} onPinClick={pts => pts[0] && pick(pts[0].id)} />
+              <SightingsMap points={routeOnMap ? extraPoints : points} route={routeOnMap} height={240} ariaLabel={t('scoutingView.map', { name: event.name })} onPinClick={onPin} />
             </div>
           )}
           {routeOpen && (
-            <EventRoute route={route} pending={routeQuery.isPending} failed={routeQuery.isError} from={from} onFrom={setFrom} lifers={lifers} renderBird={routeBird} />
+            <EventRoute route={route} pending={routeQuery.isPending} failed={routeQuery.isError} from={from} onFrom={f => { setFrom(f); setPickedExtra(null) }} lifers={lifers} picked={pickedExtra} renderBird={routeBird} />
           )}
           {routeOpen ? null : places.length
             ? <ol className='event-scouting__places'>

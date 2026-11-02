@@ -585,7 +585,25 @@ export interface EventRoute {
     /** From the stop before (or the start); null when drive times aren't available. */
     leg_min: number | null
     leg_mi: number | null
+    /** A personal spot (not an eBird hotspot). */
+    private?: boolean
+    /** Personal spots nearby whose reports were folded into this place. */
+    merged?: { locId: string; locName: string }[]
   }[]
+  /** Optional stops that add birds but cost a lot of driving, best value first. */
+  extras?: {
+    locId: string
+    locName: string
+    lat: number
+    lng: number
+    new_birds: { code: string; speciesCode?: string; comName?: string }[]
+    /** Extra driving it adds; null when drive times aren't available. */
+    add_min: number | null
+    add_mi: number | null
+    private?: boolean
+    merged?: { locId: string; locName: string }[]
+  }[]
+  covered_with_extras?: number
   total_min: number | null
   total_mi: number | null
   covered: number

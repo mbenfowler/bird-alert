@@ -145,12 +145,78 @@ describe('Event route', () => {
         expect(url.searchParams.get('destination')).to.equal('31.87,-109.2')
         expect(url.searchParams.get('waypoints')).to.equal('31.9,-109.27|31.88,-109.17')
       })
-      cy.contains('button', 'Start at the first stop').click()
+      cy.contains('button', 'Don’t use my location').click()
       cy.contains('button', 'Start from my location')
       cy.wrap(null).then(() => { refuse = true })
       cy.contains('button', 'Start from my location').click()
       cy.contains('[role="status"]', 'Couldn’t get your location, so the route starts at the first stop.')
       cy.get('[data-testid="route-stop"]').should('have.length', 3)
+    })
+  })
+
+  it('lists the optional stops lightly, marks personal and merged spots, and starts at the meeting point', () => {
+    const extras = [
+      { locId: 'L500', locName: 'Paradise', lat: 31.93, lng: -109.22, new_birds: [{ code: 'zz', comName: 'Zone-tailed Hawk' }, { code: 'x1', comName: 'Other One' }, { code: 'e3', comName: 'Extra Three' }], add_min: 69, add_mi: 38, private: false, merged: [] },
+      { locId: 'P900', locName: 'Our feeder', lat: 31.6, lng: -109.4, new_birds: [{ code: 'e4', comName: 'Extra Four' }], add_min: 95, add_mi: 51, private: true, merged: [] },
+      ...[1, 2, 3].map(k => ({ locId: `L6${k}`, locName: `Far Place ${k}`, lat: 31.5 - k / 10, lng: -109.5 - k / 10, new_birds: [{ code: `f${k}`, comName: `Far Bird ${k}` }], add_min: 120 + k, add_mi: 70 + k, private: false, merged: [] }))
+    ]
+    const base = routed()
+    const stops = base.stops.map((s, i) => (i === 0 ? { ...s, private: false, merged: [{ locId: 'P1', locName: 'Backyard' }] } : i === 1 ? { ...s, merged: [{ locId: 'P2', locName: 'A' }, { locId: 'P3', locName: 'B' }] } : { ...s, locId: 'P400', private: true }))
+    open({ route: routed({ from: { lat: 31.97, lng: -109.3 }, stops: stops.map((s, i) => (i ? s : { ...s, leg_min: 15, leg_mi: 7 })), extras, covered_with_extras: 12, covered: 9 }) })
+    cy.contains('button', 'Plan a route').click()
+    cy.wait('@route').its('request.url').should('not.include', 'from=')
+    cy.get('[data-testid="event-route"]').within(() => {
+      cy.get('.event-route__covers').should('have.text', 'Covers 9 of 12 targets reported this week · 12 with the extras')
+      cy.contains('.event-route__start', 'Starting from the event’s meeting point.')
+      cy.contains('button', 'Start from my location')
+      cy.get('a.event-route__maps').invoke('attr', 'href').should('include', 'origin=31.97%2C-109.3')
+      // Personal and merged spots.
+      cy.get('[data-testid="route-stop"]').eq(0).within(() => {
+        cy.get('.event-route__tag').should('not.exist')
+        cy.get('.event-route__merged').should('have.text', 'Includes reports from 1 nearby personal spot')
+      })
+      cy.get('[data-testid="route-stop"]').eq(1).find('.event-route__merged').should('have.text', 'Includes reports from 2 nearby personal spots')
+      cy.get('[data-testid="route-stop"]').eq(2).within(() => {
+        cy.get('.event-route__tag').should('have.text', 'personal spot')
+        cy.get('.event-route__merged').should('not.exist')
+      })
+      // The extras: after the stops, no numbers, three then the rest behind a button.
+      cy.get('[data-testid="route-extras"]').within(() => {
+        cy.get('.place__subheading').should('have.text', 'Worth it if you have time')
+        cy.get('[data-testid="route-extra"]').should('have.length', 3)
+        cy.get('.event-scouting__num').should('not.exist')
+        cy.get('[data-testid="route-extra"]').first().within(() => {
+          cy.get('.event-scouting__place-name').should('have.text', 'Paradise')
+          cy.get('.event-route__extra-cost').should('have.text', '+3 birds · +1 h 9 min · 38 mi')
+          cy.get('.event-scouting__bird').should('have.length', 3)
+          cy.get('a.event-route__directions').should('have.attr', 'href', 'https://www.google.com/maps/dir/?api=1&destination=31.93,-109.22')
+        })
+        cy.get('[data-testid="route-extra"]').eq(1).find('.event-route__tag').should('have.text', 'personal spot')
+        cy.contains('button', 'Show 2 more').click()
+        cy.get('[data-testid="route-extra"]').should('have.length', 5)
+      })
+    })
+    cy.get('.event-route__stops').nextAll('[data-testid="route-extras"]').should('have.length', 1)
+    // Extras are small grey pins without numbers; the route's stops keep theirs.
+    cy.get('.event-scouting__map .map-pin--muted').should('have.length', 5)
+    cy.get('.event-scouting__map .map-pin--muted .map-pin__count').should('not.exist')
+    cy.get('.event-scouting__map .map-stop:not(.map-stop--start)').should('have.length', 3)
+  })
+
+  it('tapping an extra’s pin reveals and scrolls to its row', () => {
+    const extras = [1, 2, 3, 4, 5].map(k => ({ locId: `L6${k}`, locName: `Far Place ${k}`, lat: 31.5 - k / 10, lng: -109.5 - k / 10, new_birds: [{ code: `f${k}`, comName: `Far Bird ${k}` }], add_min: null, add_mi: null }))
+    open({ route: routed({ routed: false, extras, covered_with_extras: 11 }) })
+    cy.contains('button', 'Plan a route').click()
+    cy.get('[data-testid="route-extra"]').should('have.length', 3).first().find('.event-route__extra-cost').should('have.text', '+1 bird')
+    // covered_with_extras no higher than covered: the plain line.
+    cy.get('.event-route__covers').should('have.text', 'Covers 11 of 12 targets reported this week')
+    cy.get('.event-scouting__map .map-pin--muted').eq(4).click({ force: true })
+    cy.get('[data-testid="route-extra"]').should('have.length', 5)
+    cy.get('#route-extra-4').should('have.class', 'is-active').and('contain', 'Far Place 5')
+    cy.get('#route-extra-4').should(el => {
+      const r = el[0].getBoundingClientRect()
+      expect(r.top).to.be.lessThan(Cypress.config('viewportHeight'))
+      expect(r.bottom).to.be.greaterThan(0)
     })
   })
 
@@ -169,7 +235,12 @@ describe('Event route', () => {
 
   it('fits a phone without scrolling sideways', () => {
     cy.viewport(375, 740)
-    const long = routed({ stops: routed().stops.map(s => ({ ...s, locName: `${s.locName} trailhead parking area and very long picnic ground name` })) })
+    const longName = (s) => ({ ...s, private: true, merged: [{ locId: 'P1', locName: 'Yard' }], locName: `${s.locName} trailhead parking area and very long picnic ground name` })
+    const long = routed({
+      stops: routed().stops.map(longName),
+      extras: [longName({ locId: 'L500', locName: 'Paradise', lat: 31.93, lng: -109.22, new_birds: [{ code: 'zz', comName: 'Zone-tailed Hawk of the very long name' }], add_min: 69, add_mi: 38 })],
+      covered_with_extras: 12, covered: 9
+    })
     open({ route: long })
     cy.contains('button', 'Plan a route').click()
     cy.get('[data-testid="route-stop"]').should('have.length', 3)
