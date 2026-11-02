@@ -3,3 +3,82 @@
     max-width: 250px;
     flex-direction: column;
 }
+
+/* Heat by ABA code (data-aba, set only inside the ABA Area). Each level sets a border and a glow;
+   the glow is a box-shadow on the card itself, so it never touches the transform the row slides the
+   card's link in with. 1 stays as it is. */
+.alert-card[data-aba] {
+    border-color: var(--heat-border, var(--ink));
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18), 0 0 var(--heat-blur, 0) var(--heat-spread, 0) var(--heat-glow, transparent);
+}
+
+.alert-card[data-aba='2'] {
+    --heat-border: #a87a2c;
+}
+
+.alert-card[data-aba='3'] {
+    --heat-border: #d99a00;
+    --heat-glow: rgba(255, 170, 0, 0.35);
+    --heat-blur: 10px;
+    --heat-spread: 1px;
+}
+
+.alert-card[data-aba='4'] {
+    --heat-border: #e0561b;
+    --heat-glow: rgba(240, 90, 25, 0.5);
+    --heat-blur: 14px;
+    --heat-spread: 2px;
+}
+
+.alert-card[data-aba='5'] {
+    --heat-border: #d11313;
+    --heat-glow: rgba(225, 20, 20, 0.6);
+    --heat-blur: 16px;
+    --heat-spread: 3px;
+    animation: aba-pulse 2.4s ease-in-out infinite;
+}
+
+/* Believed extinct: dark, with an ember that flickers rather than pulses. */
+.alert-card[data-aba='6'] {
+    --heat-border: #ff5a2e;
+    --heat-glow: rgba(255, 80, 30, 0.65);
+    --heat-blur: 18px;
+    --heat-spread: 3px;
+    background: #3b0a0d;
+    color: #fff;
+    animation: aba-ember 1.7s linear infinite;
+}
+
+.alert-card[data-aba='6'] * {
+    color: inherit;
+}
+
+.alert-card__extinct {
+    margin: 2px 0 4px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+@keyframes aba-pulse {
+    0%, 100% { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18), 0 0 10px 1px rgba(225, 20, 20, 0.35); }
+    50% { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18), 0 0 22px 6px rgba(225, 20, 20, 0.75); }
+}
+
+@keyframes aba-ember {
+    0% { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), 0 0 14px 2px rgba(255, 80, 30, 0.5); }
+    18% { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), 0 0 24px 6px rgba(255, 120, 40, 0.85); }
+    27% { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), 0 0 12px 2px rgba(255, 60, 20, 0.45); }
+    45% { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), 0 0 20px 5px rgba(255, 100, 30, 0.75); }
+    63% { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), 0 0 16px 3px rgba(255, 70, 25, 0.6); }
+    78% { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), 0 0 26px 7px rgba(255, 130, 45, 0.9); }
+    100% { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), 0 0 14px 2px rgba(255, 80, 30, 0.5); }
+}
+
+/* Reduced motion: the colours stay, the pulse and flicker don't. */
+@media (prefers-reduced-motion: reduce) {
+    .alert-card[data-aba='5'],
+    .alert-card[data-aba='6'] {
+        animation: none;
+    }
+}
