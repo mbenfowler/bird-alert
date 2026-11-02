@@ -60,6 +60,7 @@ export const stubAuth = ({ userExists = true, user = TEST_USER, loggedIn = false
   cy.intercept('GET', '**/api/saved', { statusCode: 200, body: [] }).as('getSaved')
   cy.intercept('GET', '**/api/saved?kind=seen*', { statusCode: 200, body: [] }).as('getSeen')
   cy.intercept('GET', '**/api/saved?kind=route*', { statusCode: 200, body: { region: 'US-GA-139', stops: null, start: null, updatedAt: null } }).as('getRoute')
+  cy.intercept('GET', '**/api/saved?kind=places*', { statusCode: 200, body: [] }).as('getPlaces')
   cy.intercept('GET', '**/api/push/public-key', { statusCode: 200, body: { publicKey: 'BFakeKeyForTests' } }).as('pushKey')
   // Bird sounds: one stub recording for every species, as a silent clip so playback really runs.
   cy.intercept('GET', '**/api/sound?*', (req) => {

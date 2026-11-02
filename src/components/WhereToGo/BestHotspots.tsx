@@ -4,7 +4,8 @@ import SightingsMap, { type MapPoint } from '../SightingsMap/SightingsMap'
 import ErrorMessage from '../Error/ErrorMessage'
 import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
-import { useBestHotspotsQuery, useBirdsQuery, useCurrentUser, useRegionsQuery, useSpeciesHotspotsQuery } from '../../hooks/queries'
+import { useBestHotspotsQuery, useBirdsQuery, useRegionsQuery, useSpeciesHotspotsQuery } from '../../hooks/queries'
+import { useShownArea, useShownTargets } from '../../shownArea'
 import { useDocked } from '../../hooks/useDocked'
 import { countyWord } from '../../usStates'
 import { useGoPlan } from '../../hooks/useGoPlan'
@@ -46,10 +47,11 @@ const ebirdLink = (href: string, text: ReactNode) => <a href={href} target='_bla
  * bird are kept in the address, so a bird's own page can link straight to its ranking.
  */
 const BestHotspots = ({ onOpenRoute }: { onOpenRoute: () => void }) => {
-  const user = useCurrentUser()
-  const region = user.location
+  const user = useShownArea()
+  const region = user.region
+  const targets = useShownTargets(user)
   // The same route as For your birds: a hotspot added here is a stop there.
-  const { stops, toggle } = useGoPlan(region)
+  const { stops, toggle } = useGoPlan(region, targets)
   const [params, setParams] = useSearchParams()
   const period = PERIODS.find(p => String(p.days) === params.get('days')) ?? PERIODS.find(p => p.days === DEFAULT_DAYS)!
   const setDays = (days: number) => setParams((prev) => { const next = new URLSearchParams(prev); next.set('days', String(days)); return next }, { replace: true })

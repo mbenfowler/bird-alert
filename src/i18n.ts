@@ -118,6 +118,20 @@ export const monthDayYear = (date: Date | string) =>
 export const monthYear = (date: Date | string) =>
   (typeof date === 'string' ? parseDay(date) : date).toLocaleDateString(formatLocale(), { month: 'short', year: 'numeric' })
 
+/** "Nov 12 – 15", "Nov 28 – Dec 3": a trip's days, both included. */
+export const dateRange = (from: string, to: string) => {
+  const format = new Intl.DateTimeFormat(formatLocale(), { month: 'short', day: 'numeric' }) as Intl.DateTimeFormat & { formatRange?: (a: Date, b: Date) => string }
+  if (from === to) return format.format(parseDay(from))
+  return format.formatRange ? format.formatRange(parseDay(from), parseDay(to)) : `${format.format(parseDay(from))} – ${format.format(parseDay(to))}`
+}
+
+/** Whole days from today to a YYYY-MM-DD day (0 today, 1 tomorrow). */
+export const daysUntil = (day: string) => {
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12)
+  return Math.round((parseDay(day).getTime() - today.getTime()) / 86_400_000)
+}
+
 /** "8:10 AM" */
 export const clockTime = (date: Date) => date.toLocaleTimeString(formatLocale(), { hour: 'numeric', minute: '2-digit' })
 

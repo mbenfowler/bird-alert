@@ -1,0 +1,236 @@
+/* Your places: home, then each saved place as a card with its targets and trips. */
+.places__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 16px 16px;
+}
+
+.places__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.place {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.place.is-here {
+  border-color: var(--ink);
+  border-left: 6px solid var(--accent);
+}
+
+.place--home .notification__hint {
+  margin: 0;
+}
+
+.place__what {
+  margin: 0;
+}
+
+.place__badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 0.75rem;
+  font-weight: 700;
+  vertical-align: 2px;
+}
+
+.place__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  margin: 0;
+}
+
+.place__section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--rule);
+}
+
+.place__heading,
+.place__subheading {
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.place__subheading {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.place__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.place__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px 3px 10px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.place__chip button {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.place__chip svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* A suggestion is quieter than a chosen target until it's added. */
+.place__chip--add {
+  padding: 3px 10px;
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.place__add-target {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+}
+
+.place__add-target > :first-child {
+  width: 100%;
+}
+
+.place__trips {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.place__trips li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.place-form,
+.place__trip-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.place-form label,
+.place__trip-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.place-form__label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.place-form input[type='text'],
+.place-form input[type='date'],
+.place__trip-form input[type='date'] {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+}
+
+.place-form__area {
+  margin: 0;
+}
+
+.place-form__reach {
+  align-self: flex-start;
+  margin: 0;
+}
+
+.place-form__error {
+  margin: 0;
+  color: var(--danger, #a61b1b);
+  font-weight: 600;
+}
+
+.place-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.places__add {
+  align-self: flex-start;
+}
+
+/* "New for me: Anywhere | In Colorado (work)". */
+.place__scope {
+  margin: 0;
+}
+
+/* "Seen in Colorado (work) · 42 birds · See the list". */
+.place__seen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* A bird on the place's list: quieter than a target. */
+.place__chip--seen {
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--ink);
+}

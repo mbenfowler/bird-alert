@@ -5,34 +5,37 @@ import ErrorMessage from '../Error/ErrorMessage'
 import { LoadingState } from '../Loading/Loading'
 import { AlertIcon, StarIcon } from '../Icons/Icons'
 import { errorMessage } from '../../apiCalls'
-import { useCurrentUser, useNotableQuery, useObservationsQuery, useRegionsQuery, useSavedCodes, useSpeciesObservationsQuery } from '../../hooks/queries'
+import { useNotableQuery, useObservationsQuery, useRegionsQuery, useSavedCodes, useSpeciesObservationsQuery } from '../../hooks/queries'
 import type { Observation } from '../../types'
+import AreaBanner from '../AreaBanner/AreaBanner'
+import { useShownArea, useShownTargets } from '../../shownArea'
 import './MapPage.css'
 import { t } from '../../i18n'
 
 type Feed = 'watchlist' | 'notable'
 
-const toPoints = (observations: Observation[]): MapPoint[] => {
+const toPoints = (observations: Observation[], query: string): MapPoint[] => {
   const seen = new Set<string>()
   const points: MapPoint[] = []
   for (const o of observations) {
     const id = `${o.speciesCode}-${o.subId}-${o.lat}-${o.lng}`
     if (seen.has(id)) continue
     seen.add(id)
-    points.push({ id, lat: o.lat, lng: o.lng, title: o.comName, subtitle: `${o.locName} · ${o.obsDt}`, href: `/sighting/${o.speciesCode}/${o.subId}` })
+    points.push({ id, lat: o.lat, lng: o.lng, title: o.comName, subtitle: `${o.locName} · ${o.obsDt}`, href: `/sighting/${o.speciesCode}/${o.subId}${query}` })
   }
   return points
 }
 
 /** Every recent sighting in the region on one map: watch-list birds, notable birds, or one species. */
 const MapPage = () => {
-  const user = useCurrentUser()
-  const region = user.location
+  const area = useShownArea()
+  const region = area.region
+  const targets = useShownTargets(area)
   const [params] = useSearchParams()
   const code = params.get('code') ?? ''
   const [feed, setFeed] = useState<Feed>('watchlist')
 
-  const regions = useRegionsQuery(user.state)
+  const regions = useRegionsQuery(area.state)
   const regionName = regions.data?.find(r => r.code === region)?.name ?? region
 
   const observations = useObservationsQuery(region)
@@ -43,14 +46,15 @@ const MapPage = () => {
   const shown = useMemo(() => {
     if (code) return species.data ?? []
     if (feed === 'notable') return notable.data ?? []
-    return (observations.data ?? []).filter(o => savedCodes.has(o.speciesCode))
-  }, [code, feed, species.data, notable.data, observations.data, savedCodes])
-  const points = useMemo(() => toPoints(shown), [shown])
+    return (observations.data ?? []).filter(o => savedCodes.has(o.speciesCode) || targets.has(o.speciesCode))
+  }, [code, feed, species.data, notable.data, observations.data, savedCodes, targets])
+  const points = useMemo(() => toPoints(shown, area.mode === 'home' ? '' : `?region=${area.region}`), [shown, area.mode, area.region])
   const active = code ? species : feed === 'notable' ? notable : observations
   const speciesName = shown[0]?.comName
 
   return (
     <section className='map-page'>
+      <AreaBanner />
       <header className='map-page__bar'>
         <h1 className='fredericka'>
           {code ? t('mapPage.species', { name: speciesName ?? code, regionName }) : feed === 'watchlist' ? t('mapPage.watch', { regionName }) : t('mapPage.notable', { regionName })}
