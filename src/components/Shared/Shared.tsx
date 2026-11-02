@@ -13,6 +13,8 @@ import { longDistance, shortDistance, useDistanceUnit } from '../../distance'
 import './Shared.css'
 import { t } from '../../i18n'
 import { Trans } from 'react-i18next'
+import { shareUrl } from '../../share'
+import { ShareIcon } from '../Icons/Icons'
 
 /** The invitation under a shared page, for someone who doesn't have the app yet. */
 const Invite = ({ what }: { what: string }) => {
@@ -65,9 +67,15 @@ const RouteView = ({ share }: { share: SharedRoute }) => {
   )
 }
 
+/** A place eBird marks as private ground or by arrangement, worth a word before anyone drives there. */
+const isRestricted = (place: string) => /restricted access|\(private/i.test(place)
+
 const SightingView = ({ share }: { share: SharedSighting }) => {
+  const session = useSessionQuery()
   const points = useMemo(() => [{ id: 'here', lat: share.lat, lng: share.lng, title: share.locName, highlight: true }], [share])
   const maps = `https://www.google.com/maps/search/?api=1&query=${share.lat}%2C${share.lng}`
+  // The page passes itself along: the same link, so whoever opens it sees what you saw.
+  const pass = () => shareUrl(window.location.href, t('shared.shareTitle', { name: share.comName, place: share.locName }))
   return (
     <article className='shared'>
       <p className='shared__kicker'>{t('shared.sightingKicker')}</p>
@@ -86,12 +94,24 @@ const SightingView = ({ share }: { share: SharedSighting }) => {
             <Trans i18nKey={share.howMany && share.howMany > 1 ? 'shared.reportedMany' : 'shared.reported'} values={{ count: share.howMany ?? 1, place: share.locName }} components={{ b: <strong /> }} />
             {share.obsDt ? `, ${formatObsDt(share.obsDt)}` : ''}{share.regionName ? ` (${share.regionName})` : ''}.
           </p>
+          {isRestricted(share.locName) && <p className='shared__restricted' role='note'>{t('shared.restricted')}</p>}
           <p className='shared__actions'>
             <a className='pill-button pill-button--primary' href={maps} target='_blank' rel='noreferrer'>{t('shared.directions')}</a>
             {share.subId && <a className='pill-button' href={`https://ebird.org/checklist/${encodeURIComponent(share.subId)}`} target='_blank' rel='noreferrer'>{t('shared.checklist')}</a>}
+            <button type='button' className='pill-button shared__share' onClick={pass}><ShareIcon className='pill-button__icon' />{t('shared.share')}</button>
+            {session.data && share.speciesCode && share.subId && (
+              <Link className='pill-button' to={`/sighting/${encodeURIComponent(share.speciesCode)}/${encodeURIComponent(share.subId)}`}>{t('shared.openInApp')}</Link>
+            )}
           </p>
         </div>
       </div>
+      {/* Someone arriving from a post: what this is, and the way in, before the map. */}
+      {session.isSuccess && !session.data && (
+        <aside className='shared__pitch'>
+          <p>{t('shared.pitch')}</p>
+          <Link className='pill-button pill-button--primary' to='/login'>{t('shared.pitchButton')}</Link>
+        </aside>
+      )}
       {share.locId && <StillThere locId={share.locId} code={share.speciesCode} to={share} />}
       <div className='shared__map shared__map--single'>
         <SightingsMap points={points} height='100%' ariaLabel={t('shared.sightingMap', { name: share.comName })} />
