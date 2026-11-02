@@ -21,7 +21,7 @@ describe('eBird credit', () => {
     cy.visit('http://localhost:3000/settings')
     cy.get('#settings-form')
     cy.get('.ebird-credit').should('not.exist')
-    cy.contains('.settings-tabs button', 'Alerts').click()
+    cy.contains('.settings-tabs button', 'Alert Center').click()
     cy.contains('h2', 'Alert center')
     cy.get('.ebird-credit').should('not.exist')
   })

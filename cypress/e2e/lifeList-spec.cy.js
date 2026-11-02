@@ -50,7 +50,7 @@ describe('Life list', () => {
     cy.wait('@postSeen').its('request.body').should('deep.equal', { speciesCode: 'willet2' })
     cy.contains('.life-list__result li', 'Saltmarsh/Prairie Willet').should('contain', '✓ Saltmarsh Willet added')
     cy.contains('.life-list__result li', 'Muscovy Duck').find('button').should('have.text', 'Count it anyway')
-    cy.contains('.settings-tabs button', 'Alerts').click()
+    cy.contains('.settings-tabs button', 'Alert Center').click()
     cy.contains('h2', 'Alert center')
     cy.contains('.notification__hint', 'Needs 10 or more birds').should('not.exist')
   })

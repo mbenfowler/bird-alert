@@ -35,7 +35,7 @@ describe('Settings', () => {
   })
 
   it('toggles an alert preference', () => {
-    openTab('Alerts')
+    openTab('Alert Center')
     cy.get('#alert_digest_email_enabled').should('be.checked')
     cy.get('#alert_digest_email_enabled').click()
     cy.wait('@patchUser').its('request.body').should('deep.equal', { alert_digest_email_enabled: false })
@@ -44,7 +44,7 @@ describe('Settings', () => {
   })
 
   it('keeps the push sub-options greyed out until push is on for this device', () => {
-    openTab('Alerts')
+    openTab('Alert Center')
     cy.get('#push_enabled').should('not.be.checked')
     cy.get('.notification-sub').should('have.attr', 'aria-disabled', 'true')
     cy.get('#push_watchlist_enabled').should('be.disabled').and('be.checked')
@@ -52,20 +52,20 @@ describe('Settings', () => {
   })
 
   it('offers right-away or batched timing only when notable pushes are on', () => {
-    openTab('Alerts')
+    openTab('Alert Center')
     cy.get('.timing').should('be.disabled')
     cy.get('.timing__option.is-selected').should('contain', 'Right away')
   })
 
   it('shows when the hourly check last ran and the quiet-hours window', () => {
-    openTab('Alerts')
+    openTab('Alert Center')
     cy.get('[data-testid="last-checked"]').should('contain', 'Last checked 14 min ago').and('contain', 'nothing new')
     cy.get('#push_quiet_enabled').should('be.checked').and('be.disabled')
     cy.contains('No pushes between 10 PM and 6 AM')
   })
 
   it('sends an email digest now on request and says when there is nothing to send', () => {
-    openTab('Alerts')
+    openTab('Alert Center')
     cy.intercept('POST', '**/api/mailPreview', (req) => {
       req.reply({ statusCode: 200, body: req.body.kind === 'migration' ? { sent: true, items: 7 } : { sent: false, reason: 'nothing' } })
     }).as('mailPreview')
@@ -78,7 +78,7 @@ describe('Settings', () => {
   })
 
   it('offers first-of-season pushes and the weekly migration email', () => {
-    openTab('Alerts')
+    openTab('Alert Center')
     cy.get('#push_first_of_season').should('be.disabled').and('not.be.checked')
     cy.contains('The first report of a migrant returning to your area')
     cy.get('#migration_email_enabled').should('not.be.checked')
@@ -128,7 +128,7 @@ describe('Settings', () => {
   })
 
   it('sets how far alerts reach, measured from the county center, or the whole state', () => {
-    openTab('Alerts')
+    openTab('Alert Center')
     cy.contains('How far your alerts reach')
     cy.contains('.alert-range', 'Watch-list, rare-bird and lifer alerts').and('not.contain', 'stay in your county')
     cy.get('.alert-range__choices').within(() => {
@@ -150,7 +150,7 @@ describe('Settings', () => {
   })
 
   it('rare-bird alerts can wait for proof, off by default, and the switch works without push', () => {
-    openTab('Alerts')
+    openTab('Alert Center')
     cy.get('#push_enabled').should('not.be.checked')
     cy.contains('label', 'Only once there’s proof')
     cy.contains('.alert-range__proof', 'a photo, an eBird reviewer’s OK, or a second birder').and('contain', 'Watch-list alerts aren’t affected')

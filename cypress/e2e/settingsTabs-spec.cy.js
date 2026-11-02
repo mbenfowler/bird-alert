@@ -16,7 +16,7 @@ describe('Settings tabs', () => {
     cy.get('.feedback')
     cy.contains('button', 'Log out')
 
-    tab('Alerts').click()
+    tab('Alert Center').click()
     cy.url().should('include', 'tab=alerts')
     cy.contains('h2', 'Alert center')
     cy.get('#settings-form').should('not.exist')
@@ -35,9 +35,9 @@ describe('Settings tabs', () => {
 
   it('lands links on the right tab', () => {
     cy.visit('http://localhost:3000/settings?tab=alerts')
-    tab('Alerts').should('have.attr', 'aria-pressed', 'true')
+    tab('Alert Center').should('have.attr', 'aria-pressed', 'true')
     cy.visit('http://localhost:3000/settings#alert-center')
-    tab('Alerts').should('have.attr', 'aria-pressed', 'true')
+    tab('Alert Center').should('have.attr', 'aria-pressed', 'true')
     // "Extend my trip" and "Save this place" are about places.
     cy.visit('http://localhost:3000/settings#places?trip=3')
     tab('Places').should('have.attr', 'aria-pressed', 'true')
