@@ -571,3 +571,29 @@ export interface EventScouting {
   unreported: { code: string; speciesCode?: string; comName?: string }[]
 }
 
+/** A drive through the fewest places that cover the most reported targets, in drive order. */
+export interface EventRoute {
+  from: { lat: number; lng: number } | null
+  stops: {
+    n: number
+    locId: string
+    locName: string
+    lat: number
+    lng: number
+    /** Targets first reached at this stop. */
+    new_birds: { code: string; speciesCode?: string; comName?: string }[]
+    /** From the stop before (or the start); null when drive times aren't available. */
+    leg_min: number | null
+    leg_mi: number | null
+  }[]
+  total_min: number | null
+  total_mi: number | null
+  covered: number
+  reported: number
+  /** Places with reports whose birds the stops already cover. */
+  skipped: number
+  /** Along the roads when routed, straight lines otherwise. */
+  geometry: [number, number][]
+  routed: boolean
+}
+

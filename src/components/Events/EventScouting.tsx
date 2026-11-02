@@ -3,7 +3,8 @@ import { Link } from 'react-router'
 import { Trans } from 'react-i18next'
 import SightingsMap, { type MapPoint } from '../SightingsMap/SightingsMap'
 import { LoadingState } from '../Loading/Loading'
-import { useEventScoutingQuery } from '../../hooks/queries'
+import EventRoute, { type RouteBird } from './EventRoute'
+import { useEventRouteQuery, useEventScoutingQuery } from '../../hooks/queries'
 import { clockTime, daysUntil, t } from '../../i18n'
 import { prefersReducedMotion } from '../../routeDraw'
 import type { EventScouting as Scouting, GroupEvent } from '../../types'
@@ -115,6 +116,26 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
   useEffect(() => {
     if (scrollTo) document.getElementById(cardId(scrollTo.n))?.scrollIntoView({ block: 'center', behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
   }, [scrollTo])
+  // The route is only asked for when someone presses Plan a route; from is a rounded "lat,lng" start.
+  const [routeOpen, setRouteOpen] = useState(false)
+  const [from, setFrom] = useState<string | null>(null)
+  const routeQuery = useEventRouteQuery(event.id, from, routeOpen)
+  const route = routeOpen ? routeQuery.data : undefined
+  // A route bird's chip is its place card's chip, so it links to the same report.
+  const routeBird = (bird: RouteBird, stop: { locId: string }) => {
+    const known = places.find(p => p.key === stop.locId)?.birds.find(b => b.code === bird.code)
+      ?? places.flatMap(p => p.birds).find(b => b.code === bird.code)
+    return known
+      ? <BirdChip bird={known} />
+      : <span className='event-scouting__bird'>{bird.comName ?? bird.code}</span>
+  }
+  const routeOnMap = route && route.stops.length > 0
+    ? {
+        path: route.geometry,
+        stops: route.stops.map((s, i) => ({ lat: s.lat, lng: s.lng, label: `${i + 1}. ${s.locName}` })),
+        start: route.from ? { ...route.from, label: t('route.myLocation') } : null
+      }
+    : null
 
   const points: MapPoint[] = places
     .map((place, i) => ({ place, n: i + 1 }))
@@ -158,12 +179,20 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
             </div>
           )}
           {data.checked_at && <p className='event-scouting__updated'>{t('scoutingView.updated', { time: clockTime(new Date(data.checked_at)) })}</p>}
+          {places.length > 0 && (
+            <button type='button' className='pill-button pill-button--small event-scouting__plan' aria-expanded={routeOpen} onClick={() => setRouteOpen(open => !open)}>
+              {routeOpen ? t('eventRoute.hide') : t('eventRoute.plan')}
+            </button>
+          )}
           {points.length > 0 && (
             <div className='event-scouting__map'>
-              <SightingsMap points={points} height={240} ariaLabel={t('scoutingView.map', { name: event.name })} onPinClick={pts => pts[0] && pick(pts[0].id)} />
+              <SightingsMap points={routeOnMap ? [] : points} route={routeOnMap} height={240} ariaLabel={t('scoutingView.map', { name: event.name })} onPinClick={pts => pts[0] && pick(pts[0].id)} />
             </div>
           )}
-          {places.length
+          {routeOpen && (
+            <EventRoute route={route} pending={routeQuery.isPending} failed={routeQuery.isError} from={from} onFrom={setFrom} lifers={lifers} renderBird={routeBird} />
+          )}
+          {routeOpen ? null : places.length
             ? <ol className='event-scouting__places'>
                 {shown.map((place, i) => (
                   <PlaceCard key={place.key} place={place} n={i + 1} lifers={lifers} active={place.key === active} open={opened.has(place.key)}
@@ -171,7 +200,7 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
                 ))}
               </ol>
             : <p className='notification__hint'>{t(lifers ? 'scoutingView.noneLifers' : 'scoutingView.none')}</p>}
-          {places.length > shown.length && (
+          {!routeOpen && places.length > shown.length && (
             <button type='button' className='pill-button pill-button--small event-scouting__more-places' onClick={() => setShowAll(true)}>
               {t('scoutingView.morePlaces', { count: places.length - shown.length })}
             </button>

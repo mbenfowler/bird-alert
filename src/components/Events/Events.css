@@ -534,3 +534,77 @@ a.event-scouting__bird:hover {
   margin-top: 6px;
 }
 
+
+/* The scouting route: a headline, the start, the stops in drive order with the drive between them. */
+.event-scouting__plan {
+  align-self: flex-start;
+}
+
+.event-route {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.event-route__summary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.event-route__headline,
+.event-route__covers {
+  margin: 0;
+}
+
+.event-route__note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.event-route__start {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.event-route__start .event-route__note[role='status'] {
+  flex-basis: 100%;
+}
+
+.event-route__stops {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.event-route__stop {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.event-route__leg {
+  margin: 0 0 0 18px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.event-route__directions {
+  flex: none;
+  margin-left: auto;
+  color: var(--link);
+  font-size: 0.85rem;
+}
+
+.event-route__maps {
+  align-self: flex-start;
+  text-decoration: none;
+}
