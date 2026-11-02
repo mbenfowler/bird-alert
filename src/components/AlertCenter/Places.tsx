@@ -11,7 +11,7 @@ import { useDeletePlaceMutation, useDeletePlaceTripMutation, usePatchUserMutatio
 import { useAreaName } from '../../shownArea'
 import { unitFor } from '../../distance'
 import { stateName, stateOfRegion } from '../../usStates'
-import { dateRange, t } from '../../i18n'
+import { dateRange, monthDay, t } from '../../i18n'
 import type { PlaceTrip, SavedPlace } from '../../types'
 import './AlertCenter.css'
 import './Places.css'
@@ -22,6 +22,11 @@ const RANGES = [0, 15, 30, WHOLE_STATE] as const
 
 const dayString = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 const today = () => dayString(new Date())
+// Scouting lead times, in days (1-4 weeks); a Big Day scouts three weeks ahead unless told otherwise.
+const SCOUT_DAYS = [7, 14, 21, 28] as const
+const DEFAULT_SCOUT_DAYS = 21
+const daysBefore = (day: string, days: number) => { const d = new Date(`${day}T12:00:00`); d.setDate(d.getDate() - days); return dayString(d) }
+const scoutFrom = (trip: PlaceTrip) => trip.scout ? (trip.scout_from ?? daysBefore(trip.starts_on, trip.scout_days ?? DEFAULT_SCOUT_DAYS)) : null
 const inTwoWeeks = () => { const d = new Date(); d.setDate(d.getDate() + 14); return dayString(d) }
 
 /** "Just my county", "25 km", "All of Colorado": the same choices as home's reach, in the place's own units. */
@@ -193,30 +198,49 @@ const Trips = ({ place, openTrip = null }: { place: SavedPlace; openTrip?: strin
   const [editing, setEditing] = useState<PlaceTrip | null | undefined>(opened)
   const [startsOn, setStartsOn] = useState(opened?.starts_on ?? '')
   const [endsOn, setEndsOn] = useState(opened?.ends_on ?? '')
+  const [bigDay, setBigDay] = useState(opened?.kind === 'bigday')
+  const [scout, setScout] = useState(Boolean(opened?.scout))
+  const [scoutDays, setScoutDays] = useState(opened?.scout_days ?? DEFAULT_SCOUT_DAYS)
   const [problem, setProblem] = useState<string | null>(null)
-  const open = (trip: PlaceTrip | null) => { setEditing(trip); setStartsOn(trip?.starts_on ?? ''); setEndsOn(trip?.ends_on ?? ''); setProblem(null) }
+  const open = (trip: PlaceTrip | null) => {
+    setEditing(trip); setStartsOn(trip?.starts_on ?? ''); setEndsOn(trip?.ends_on ?? ''); setProblem(null)
+    setBigDay(trip?.kind === 'bigday'); setScout(Boolean(trip?.scout)); setScoutDays(trip?.scout_days ?? DEFAULT_SCOUT_DAYS)
+  }
   const adding = editing !== undefined
   const setAdding = (on: boolean) => (on ? open(null) : setEditing(undefined))
+  // A Big Day is one date, and scouts by default; an ordinary trip doesn't unless asked.
+  const toggleBigDay = (on: boolean) => { setBigDay(on); setScout(on); if (on) setScoutDays(DEFAULT_SCOUT_DAYS) }
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    if (!startsOn || !endsOn) return setProblem(t('places.pickDates'))
-    if (endsOn < startsOn) return setProblem(t('places.datesOrder'))
+    const ends = bigDay ? startsOn : endsOn
+    if (!startsOn || !ends) return setProblem(t(bigDay ? 'places.pickDate' : 'places.pickDates'))
+    if (ends < startsOn) return setProblem(t('places.datesOrder'))
     setProblem(null)
-    save.mutate({ id: editing?.id, placeId: place.id, starts_on: startsOn, ends_on: endsOn }, {
+    save.mutate({ id: editing?.id, placeId: place.id, starts_on: startsOn, ends_on: ends, kind: bigDay ? 'bigday' : 'trip', scout, scout_days: scoutDays }, {
       onSuccess: () => { toast.success(t('places.tripSaved'), { position: 'bottom-center' }); setEditing(undefined); setStartsOn(''); setEndsOn('') },
       onError: (error) => setProblem(errorMessage(error))
     })
   }
   const trips = [...place.trips].sort((a, b) => a.starts_on.localeCompare(b.starts_on))
+  const now = today()
+  const scouting = trips.some(trip => trip.scout && trip.ends_on >= now)
   return (
     <div className='place__section'>
       <p className='place__heading'>{t('places.trips')}</p>
       {trips.length
         ? <ul className='place__trips'>{trips.map(trip => {
             const dates = dateRange(trip.starts_on, trip.ends_on)
+            const from = scoutFrom(trip)
+            const inWindow = from !== null && !trip.active && now >= from && now < trip.starts_on
             return (
               <li key={trip.id}>
-                {dates}{trip.active && <span className='place__badge'>{t('places.tripNow')}</span>}
+                <span className='place__trip-what'>
+                  {dates}
+                  {trip.kind === 'bigday' && <> · {t('places.bigDay')}</>}
+                  {from && <> · {t('places.scoutingFrom', { date: monthDay(from) })}</>}
+                </span>
+                {trip.active && <span className='place__badge'>{t('places.tripNow')}</span>}
+                {inWindow && <span className='place__badge place__badge--scouting'>{t('places.scoutingNow')}</span>}
                 <button type='button' className='link-button link-text' aria-label={t('places.changeTrip', { dates })} onClick={() => open(trip)}>{t('places.changeDates')}</button>
                 <button type='button' className='link-button link-text' aria-label={t('places.deleteTrip', { dates })} disabled={remove.isPending}
                   onClick={() => remove.mutate(trip.id, { onSuccess: () => toast.success(t('places.tripDeleted'), { position: 'bottom-center' }), onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' }) })}>
@@ -226,10 +250,35 @@ const Trips = ({ place, openTrip = null }: { place: SavedPlace; openTrip?: strin
             )
           })}</ul>
         : <p className='notification__hint'>{t('places.tripsNone')}</p>}
+      {scouting && place.targets.length === 0 && <p className='notification__hint place__scout-note'>{t('places.scoutNoTargets')}</p>}
       {adding
         ? <form className='place__trip-form' onSubmit={submit} noValidate data-trip={editing ? String(editing.id) : 'new'}>
-            <label><span className='place-form__label'>{t('places.starts')}</span><input type='date' name='starts_on' value={startsOn} min={editing ? undefined : today()} onChange={(e) => setStartsOn(e.target.value)} /></label>
-            <label><span className='place-form__label'>{t('places.ends')}</span><input type='date' name='ends_on' value={endsOn} min={startsOn || today()} onChange={(e) => setEndsOn(e.target.value)} /></label>
+            <label className='place__trip-switch'>
+              <input className='switch switch--small' type='checkbox' name='bigday' checked={bigDay} onChange={(e) => toggleBigDay(e.target.checked)} />
+              <span><span className='place-form__label'>{t('places.bigDay')}</span> <span className='notification__hint'>{t('places.bigDayHint')}</span></span>
+            </label>
+            {bigDay
+              ? <label><span className='place-form__label'>{t('places.bigDayDate')}</span><input type='date' name='starts_on' value={startsOn} min={editing ? undefined : today()} onChange={(e) => setStartsOn(e.target.value)} /></label>
+              : <>
+                  <label><span className='place-form__label'>{t('places.starts')}</span><input type='date' name='starts_on' value={startsOn} min={editing ? undefined : today()} onChange={(e) => setStartsOn(e.target.value)} /></label>
+                  <label><span className='place-form__label'>{t('places.ends')}</span><input type='date' name='ends_on' value={endsOn} min={startsOn || today()} onChange={(e) => setEndsOn(e.target.value)} /></label>
+                </>}
+            <label className='place__trip-switch'>
+              <input className='switch switch--small' type='checkbox' name='scout' checked={scout} onChange={(e) => setScout(e.target.checked)} />
+              <span className='place-form__label'>{t('places.scout')}</span>
+            </label>
+            {scout && (
+              <>
+                <div className='timing place__scout-weeks' role='group' aria-label={t('places.scoutLead')}>
+                  {SCOUT_DAYS.map(days => (
+                    <button key={days} type='button' className={`timing__option ${days === scoutDays ? 'is-selected' : ''}`} aria-pressed={days === scoutDays} onClick={() => setScoutDays(days)}>
+                      {t('places.scoutWeeks', { count: days / 7 })}
+                    </button>
+                  ))}
+                </div>
+                {startsOn && <p className='notification__hint place__scout-hint'>{t('places.scoutHint', { date: monthDay(daysBefore(startsOn, scoutDays)) })}</p>}
+              </>
+            )}
             {problem && <p className='place-form__error' role='alert'>{problem}</p>}
             <div className='place-form__actions'>
               <button type='submit' className='pill-button pill-button--primary' disabled={save.isPending}>{t('places.saveTrip')}</button>

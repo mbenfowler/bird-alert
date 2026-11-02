@@ -78,7 +78,7 @@ describe('Places and exploring', () => {
     cy.get('.place__trip-form input[name="starts_on"]').type(day(20))
     cy.get('.place__trip-form input[name="ends_on"]').type(day(100))
     cy.contains('.place__trip-form button', 'Save dates').click()
-    cy.wait('@postTrip').its('request.body').should('deep.equal', { place_id: 7, starts_on: day(20), ends_on: day(100) })
+    cy.wait('@postTrip').its('request.body').should('deep.equal', { place_id: 7, starts_on: day(20), ends_on: day(100), kind: 'trip', scout: false, scout_days: 21 })
     cy.get('.place-form__error').should('contain', 'A trip can be at most 60 days.')
     // Keep home alerts while away.
     cy.get('#keep_home_alerts').click({ force: true })
@@ -144,7 +144,7 @@ describe('Places and exploring', () => {
     cy.get('.place__trip-form input[name="ends_on"]').should('have.value', day(2)).clear()
     cy.get('.place__trip-form input[name="ends_on"]').type(day(5))
     cy.contains('.place__trip-form button', 'Save dates').click()
-    cy.wait('@patchTrip').its('request.body').should('deep.equal', { starts_on: day(-1), ends_on: day(5) })
+    cy.wait('@patchTrip').its('request.body').should('deep.equal', { starts_on: day(-1), ends_on: day(5), kind: 'trip', scout: false, scout_days: 21 })
   })
 
   it('back from a trip, the home screen says so once and marks it seen', () => {
