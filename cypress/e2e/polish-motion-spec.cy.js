@@ -63,6 +63,6 @@ describe('Polish: motion', () => {
     cy.get('#settingsText').click({ force: true })
     cy.url().should('include', '/settings')
     cy.get('.route-view').should('have.attr', 'data-last-transition', '/settings')
-    cy.contains('h2', 'Alert center')
+    cy.contains('h2', 'Your details')
   })
 })

@@ -24,7 +24,7 @@ describe('Alert! mode', () => {
   })
 
   it('has its switches in Alert Center, on by default, greyed out until push is on here', () => {
-    cy.visit('http://localhost:3000/settings')
+    cy.visit('http://localhost:3000/settings?tab=alerts')
     cy.contains('.notification__label', 'Alert! mode')
     cy.get('.alert-mode .switch').should('have.length', 2).each(($i) => { expect($i).to.be.checked; expect($i).to.be.disabled })
     // A sound per kind of alert, with the defaults chosen, and quiet to start.

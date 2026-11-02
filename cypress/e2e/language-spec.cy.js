@@ -31,15 +31,15 @@ describe('Language', () => {
     stubAuth({ loggedIn: true })
     cy.visit('http://localhost:3000/settings')
     cy.contains('#settingsText', 'Settings')
-    cy.contains('h2', 'Alert center')
+    cy.contains('h2', 'Your details')
     // A made-up catalog stands in for the Spanish and French ones still to come.
     cy.window().then((win) => {
-      win.__addCatalog('xx', { nav: { settings: 'Réglages' }, alertCenter: { title: 'Centre d’alertes' } })
+      win.__addCatalog('xx', { nav: { settings: 'Réglages' }, account: { title: 'Vos coordonnées' } })
       return win.__applyLocale('xx')
     })
     cy.contains('#settingsText', 'Réglages')
-    cy.contains('h2', 'Centre d’alertes')
+    cy.contains('h2', 'Vos coordonnées')
     // Words the catalog lacks fall back to English rather than showing a key.
-    cy.contains('h2', 'Your details')
+    cy.contains('h2', 'Your life list')
   })
 })

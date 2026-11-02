@@ -291,7 +291,8 @@ const Places = () => {
   const presetState = presetRegion ? stateOfRegion(presetRegion) : null
   const [adding, setAdding] = useState(Boolean(presetState))
   const homeName = useAreaName(user.state, user.location)
-  const full = (places.data?.length ?? 0) >= MAX_PLACES
+  const [changingHome, setChangingHome] = useState(false)
+  const full =(places.data?.length ?? 0) >= MAX_PLACES
   // "Extend my trip" from a trip email: /settings#places?trip=12 (or ?trip=12) opens that trip's dates.
   const [openTrip] = useState(() => /[?&]trip=([^&]+)/.exec(window.location.hash)?.[1] ?? params.get('trip'))
 
@@ -318,9 +319,20 @@ const Places = () => {
         </div>
       </div>
       <div className='places__body'>
+        {/* The same home area as the Account tab, changed here too: one setting, saved at once. */}
         <div className={`place place--home ${user.activePlace ? '' : 'is-here'}`}>
-          <p className='place__what'><strong>{t('places.home')}</strong> · {homeName}{!user.activePlace && <span className='place__badge'>{t('places.active')}</span>}</p>
-          <p className='notification__hint'>{t('places.homeHint')}</p>
+          <p className='place__what'>
+            <strong>{t('places.home')}</strong> · <span data-testid='places-home'>{homeName}</span>
+            {!user.activePlace && <span className='place__badge'>{t('places.active')}</span>}{' '}
+            {!changingHome && <button type='button' className='link-button link-text' onClick={() => setChangingHome(true)}>{t('common.change')}</button>}
+          </p>
+          {changingHome && (
+            <AreaPicker current={user.location ? { state: user.state, location: user.location } : null}
+              onPick={(area: PickedArea) => patch.mutate({ state: area.state, location: area.location }, {
+                onSuccess: () => { setChangingHome(false); toast.success(t('places.homeSaved'), { position: 'bottom-center' }) },
+                onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
+              })} />
+          )}
         </div>
         <div className='notification notification--sub places__keep'>
           <div className='notification__text'>

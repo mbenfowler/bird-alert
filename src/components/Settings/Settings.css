@@ -4,6 +4,27 @@
     padding: 0 0 8px;
 }
 
+/* The three tabs, in Where to go's pill style; one row on a phone. */
+.settings-tabs {
+    width: min(100%, 560px);
+    margin: 16px auto 0;
+    padding: 0 12px;
+    box-sizing: border-box;
+}
+
+.settings-tabs .timing {
+    display: flex;
+    width: 100%;
+    margin: 0;
+}
+
+.settings-tabs__switch .timing__option {
+    flex: 1 1 0;
+    padding: 8px 10px;
+    font-size: 0.95rem;
+    text-align: center;
+}
+
 .settings-footer {
     width: min(100%, 560px);
     margin: 0 auto 48px;
