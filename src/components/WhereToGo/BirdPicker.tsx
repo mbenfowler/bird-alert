@@ -24,7 +24,7 @@ const matching = (birds: Bird[], text: string) => {
  * and only an answer for the text as it stands is shown: an earlier, slower answer never flashes up
  * under newer text. Styled like the place search.
  */
-const BirdPicker = ({ region, regionName, onPick }: { region: string; regionName: string; onPick: (code: string) => void }) => {
+const BirdPicker = ({ region, regionName, onPick, placeholder }: { region: string; regionName: string; onPick: (code: string) => void; placeholder?: string }) => {
   const id = useId()
   const [text, setText] = useState('')
   const typed = text.trim()
@@ -48,7 +48,7 @@ const BirdPicker = ({ region, regionName, onPick }: { region: string; regionName
       <form className='place-search__form' role='search' onSubmit={(e) => { e.preventDefault(); if (results[0]) pick(results[0].speciesCode) }}>
         <label className='visually-hidden' htmlFor={id}>{t('birdPicker.label')}</label>
         <SearchIcon className='place-search__icon' />
-        <input id={id} className='place-search__input' type='search' placeholder={t('birdPicker.placeholder')} autoComplete='off' enterKeyHint='search'
+        <input id={id} className='place-search__input' type='search' placeholder={placeholder ?? t('birdPicker.placeholder')} autoComplete='off' enterKeyHint='search'
           value={text} onChange={(e) => setText(e.target.value)} />
         {text && <button type='button' className='place-search__clear' aria-label={t('common.clearSearch')} onClick={() => setText('')}><CloseIcon /></button>}
       </form>

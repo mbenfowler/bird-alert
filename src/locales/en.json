@@ -1209,6 +1209,9 @@
     "undoLabel": "Take {{name}} off the tally",
     "tallyMissing": "This event isn't on your list.",
     "backToPlaces": "Back to your places",
-    "stillNeeded": "Still needed"
+    "stillNeeded": "Still needed",
+    "tallyPlaceholder": "Add a bird…",
+    "liferPrompt": "<b>Lifer!</b> Add {{name}} to your life list?",
+    "addToLifeList": "Add to my life list"
   }
 }

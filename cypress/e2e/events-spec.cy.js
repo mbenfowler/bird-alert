@@ -156,4 +156,32 @@ describe('Group events', () => {
     cy.wait('@remove').its('request.url').should('include', 'code=eletro')
     cy.get('[data-testid="tally-count"]').should('contain', '0 species')
   })
+
+  it('a bird new to the person who adds it is offered for their life list; one already on it says nothing', () => {
+    const user = { ...TEST_USER, activeEvent: { id: 5, name: 'Chiricahuas', count: 0 } }
+    stubAuth({ loggedIn: true, user })
+    stubRegions()
+    stubBirds()
+    // Mexican Chickadee is already on the life list; Elegant Trogon isn't.
+    cy.intercept('GET', '**/api/saved?kind=seen*', { statusCode: 200, body: [{ speciesCode: 'mexchi', firstSeen: '2024-05-01', source: 'tap' }] }).as('seen')
+    cy.intercept('POST', '**/api/saved?kind=seen*', { statusCode: 201, body: { speciesCode: 'eletro' } }).as('markSeen')
+    let tally = []
+    cy.intercept('GET', '**/api/saved?kind=events*', (req) => req.reply({ statusCode: 200, body: [event({ active: true, starts_on: day(0), ends_on: day(0), tally })] }))
+    cy.intercept('POST', '**/api/saved?kind=event-tally*', (req) => {
+      tally = [{ code: req.body.species_code, added_by_name: 'Matt', added_at: new Date().toISOString() }, ...tally]
+      req.reply({ statusCode: 200, body: event({ tally }) })
+    }).as('add')
+    cy.visit('http://localhost:3000/events/5/tally')
+    cy.wait('@seen')
+    cy.get('.event-tally__add input').should('have.attr', 'placeholder', 'Add a bird…')
+    cy.contains('.event-page__section button', 'Mexican Chickadee').click()
+    cy.wait('@add')
+    cy.get('[data-testid="lifer-prompt"]').should('not.exist')
+    cy.contains('.event-page__section button', 'Elegant Trogon').click()
+    cy.wait('@add')
+    cy.get('[data-testid="lifer-prompt"]').should('contain', 'Lifer!').and('contain', 'Add Elegant Trogon to your life list?')
+    cy.contains('[data-testid="lifer-prompt"] button', 'Add to my life list').click()
+    cy.wait('@markSeen').its('request.body').should('deep.equal', { speciesCode: 'eletro' })
+    cy.get('[data-testid="lifer-prompt"]').should('not.exist')
+  })
 })

@@ -179,3 +179,11 @@
 .event-banner a {
   color: inherit;
 }
+
+/* "Lifer! Add Elegant Trogon to your life list?" with its one button. */
+.lifer-prompt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
