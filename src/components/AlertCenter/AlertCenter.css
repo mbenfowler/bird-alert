@@ -117,6 +117,12 @@
   box-shadow: none;
 }
 
+/* A sub-option of the row above it, indented like the notable timing pills. */
+.notification--nested {
+  margin-left: 20px;
+  padding-top: 0;
+}
+
 .notification--sub .notification__text label {
   font-size: 0.98rem;
 }

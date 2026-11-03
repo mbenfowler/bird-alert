@@ -13,6 +13,8 @@ import InstallSteps from '../InstallSteps/InstallSteps'
 import { isIOS, isStandalone } from '../../install'
 import { areaWord } from '../../usStates'
 import { hourLabel, t } from '../../i18n'
+import { Link } from 'react-router'
+import { Trans } from 'react-i18next'
 
 // Labels, hints and the "nothing to send" words are in the catalog under alertCenter.push.<field> and alertCenter.email.<field>.
 const PUSH_KINDS: PushPreference[] = ['push_watchlist_enabled', 'push_notable_enabled', 'push_first_of_season', 'push_lifer_enabled']
@@ -70,6 +72,16 @@ const AlertCenter = () => {
     if (batched === Boolean(user.push_notable_batched)) return
     patchUser.mutate({ push_notable_batched: batched }, {
       onSuccess: () => toast.success(batched ? t('alertCenter.batched') : t('alertCenter.rightAwayToast'), { position: 'bottom-center' }),
+      onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
+    })
+  }
+
+  // Leaves life-list birds out of rare-bird alerts. It shapes the email too, so it works with push off;
+  // it waits for a life list, as lifer alerts do, but can always be switched off.
+  const skipSeenBlocked = !user.notable_skip_seen && lifeListSize < MIN_LIFE_LIST
+  const toggleSkipSeen = (e: ChangeEvent<HTMLInputElement>) => {
+    patchUser.mutate({ notable_skip_seen: e.target.checked }, {
+      onSuccess: () => toast.success(t('alertCenter.updated'), { position: 'bottom-center' }),
       onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
     })
   }
@@ -154,6 +166,20 @@ const AlertCenter = () => {
                 </div>
               </div>
               {field === 'push_notable_enabled' && (
+                <div className='notification notification--sub notification--nested'>
+                  <div className='notification__text'>
+                    <label htmlFor='notable_skip_seen'>{t('alertCenter.skipSeen.label')}</label>
+                    <p className='notification__hint'>
+                      {skipSeenBlocked ? <Trans i18nKey='alertCenter.skipSeen.needsLifeList' components={{ page: <Link to='/life-list' /> }} /> : t('alertCenter.skipSeen.hint')}
+                    </p>
+                  </div>
+                  <div className='notification__controls'>
+                    <input className='switch switch--small' type='checkbox' id='notable_skip_seen' name='notable_skip_seen' checked={Boolean(user.notable_skip_seen)}
+                      disabled={pendingField === 'notable_skip_seen' || skipSeenBlocked} onChange={toggleSkipSeen} />
+                  </div>
+                </div>
+              )}
+              {field === 'push_notable_enabled' && (
                 <fieldset className='timing' disabled={!pushOn || !user.push_notable_enabled || pendingField === 'push_notable_batched'}>
                   <legend className='visually-hidden'>{t('alertCenter.timingLegend')}</legend>
                   <label className={`timing__option ${!user.push_notable_batched ? 'is-selected' : ''}`}>
@@ -215,6 +241,7 @@ const AlertCenter = () => {
           <div className='notification__text'>
             <label htmlFor={field}>{t(`alertCenter.email.${field}.label`)}</label>
             <p className='notification__hint'>{t(`alertCenter.email.${field}.hint`)}</p>
+            {field === 'rare_sightings_email_enabled' && user.notable_skip_seen && <p className='notification__hint' data-testid='skip-seen-email-note'>{t('alertCenter.skipSeen.emailNote')}</p>}
             <button type='button' className='test-push test-push--inline' data-preview={preview} onClick={() => previewEmail(preview, field)}>{t('alertCenter.sendNow')}</button>
           </div>
           <div className='notification__controls'>

@@ -106,6 +106,12 @@
     "timingLegend": "Qué tan rápido enviar los avistamientos notables",
     "rightAway": "Al momento",
     "batch": "Agrupar cada 6 horas",
+    "skipSeen": {
+      "label": "Omitir aves que ya están en mi lista de vida",
+      "hint": "Las aves de tu lista de seguimiento siguen llegando. También aplica al correo de avistamientos poco comunes.",
+      "needsLifeList": "<page>Primero importa tu lista de vida</page>",
+      "emailNote": "Omite las aves de tu lista de vida"
+    },
     "quiet": "Horas de silencio",
     "quietOn": "Sin notificaciones push entre {{from}} y {{to}}; llegan después.",
     "quietOff": "Las notificaciones push pueden llegar a cualquier hora.",
@@ -136,7 +142,7 @@
     }
   },
   "alertMode": {
-    "recording": "Grabación: <link>XC{{xc}}</link> · {{recordist}} · {{license}}",
+    "recording": "Grabación: <page>XC{{xc}}</page> · {{recordist}} · {{license}}",
     "lights": "Luces",
     "sound": "Sonido",
     "volume": "Volumen",
@@ -615,7 +621,7 @@
     "hintEmpty": "Toca “La vi” en cualquier ave que hayas visto, o empieza con tu lista de vida de eBird aquí abajo.",
     "view": "Ver y administrar",
     "importTitle": "Empieza con tu lista de vida de eBird",
-    "step1": "En eBird, abre <link>Mi eBird → Lista de vida</link> (Mundo, Vida).",
+    "step1": "En eBird, abre <page>Mi eBird → Lista de vida</page> (Mundo, Vida).",
     "step2": "Al final de la lista, elige <b>Descargar (CSV)</b>.",
     "step3": "Elige ese archivo aquí. Si lo importas de nuevo después, se agregan las aves nuevas y nunca se quita ninguna.",
     "importing": "Importando…",
