@@ -113,6 +113,8 @@ describe('Where to go', () => {
     cy.wait('@drive').its('request.url').should('include', 'points=34.29950%2C-83.92140%3B34.52968%2C-83.96076')
     cy.get('.go__stops > li').eq(1).find('.go__leg').should('have.text', '↓ 31 min drive · 22.4 mi')
     cy.get('.go__covers').should('contain', '31 minutes of driving').and('contain', 'aren’t counted')
+    // Times at each stop are the event route's: /go has no stepper and no totals.
+    cy.get('.go__stay, [data-testid="stop-stay"], [data-testid="route-totals"]').should('not.exist')
     // Up and down arrows reorder.
     cy.get('[aria-label="Move Yahoola Creek Park up"]').click()
     cy.get('.go__stops > li').first().should('contain', 'Yahoola Creek Park')

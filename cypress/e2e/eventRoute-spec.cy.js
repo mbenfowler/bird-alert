@@ -62,6 +62,8 @@ const open = ({ route, user = TEST_USER, geo = null, stored = null, setup = null
     if (plan.fail) { plan.fail -= 1; return req.reply({ statusCode: 500, body: { error: 'boom' } }) }
     if (req.body.version !== plan.record.version) return req.reply({ statusCode: 409, body: { error: 'Someone changed the route', current: plan.record } })
     plan.record = { start: req.body.start, stops: req.body.stops, version: plan.record.version + 1, updated_at: new Date().toISOString(), updated_by_name: 'Matt', updated_by_you: true }
+    // The server adds what it works out: each stop's suggested stay, the legs and totals.
+    if (plan.decorate) plan.record = plan.decorate(plan.record)
     req.reply({ statusCode: 200, body: plan.record })
   }).as('savePlan')
   cy.intercept('DELETE', '**/api/saved?kind=event-route-plan*', (req) => {
@@ -326,7 +328,7 @@ describe('Event route', () => {
       cy.get('@savePlan.all').should('have.length', 1)
       cy.get('@savePlan').its('request.body').should('deep.equal', {
         start: null, version: 0,
-        stops: [{ locId: 'L123', name: 'Cave Creek Canyon', lat: 31.88, lng: -109.17 }, { locId: 'L200', name: 'Rustler Park', lat: 31.9, lng: -109.27 }]
+        stops: [{ locId: 'L123', name: 'Cave Creek Canyon', lat: 31.88, lng: -109.17, stay_min: null }, { locId: 'L200', name: 'Rustler Park', lat: 31.9, lng: -109.27, stay_min: null }]
       })
       // The next edit goes with the new version: add from the list, and a meeting point typed as coordinates.
       cy.contains('[data-testid="route-editor"] .place-search__results button', 'Paradise').should('contain', '+2 birds').click()
@@ -391,7 +393,7 @@ describe('Event route', () => {
       open({ route: suggestion(), plan: server, setup: stubDrive, stored: { start: null, stops: twoStops } })
       cy.contains('button', 'Plan a route').click()
       cy.contains('[role="alert"]', 'Save the route you made earlier for the group?').contains('button', 'Save').click()
-      cy.wait('@savePlan').its('request.body').should('deep.equal', { start: null, stops: twoStops, version: 0 })
+      cy.wait('@savePlan').its('request.body').should('deep.equal', { start: null, stops: twoStops.map(s => ({ ...s, stay_min: null })), version: 0 })
       cardStops().should('deep.equal', ['Southwestern Research Station', 'Cave Creek Canyon'])
       cy.window().then(win => expect(win.localStorage.getItem(STORE_KEY)).to.equal(null))
       cy.contains('Save the route you made earlier').should('not.exist')
@@ -419,6 +421,150 @@ describe('Event route', () => {
       cy.contains('.event-route__note', 'Some reports couldn’t be loaded, so this may change on refresh.')
     })
 
+    describe('time at each stop', () => {
+      // The suggestion's stays: 45, 30 and 20 minutes, 1 h 35 min in all.
+      const STAYS = [45, 30, 20]
+      const timed = (over = {}) => suggestion({
+        stops: suggestion().stops.map((s, i) => ({ ...s, suggested_stay_min: STAYS[i], targets_here: s.species.length })),
+        stay_min_total: 95,
+        ...over
+      })
+      // The saved route's stays as the server works them out: Southwestern 25, Cave Creek 40.
+      const SUGGESTED = { L400: 25, L123: 40 }
+      const decorate = (record) => {
+        const stops = record.stops && record.stops.map(s => ({ ...s, suggested_stay_min: SUGGESTED[s.locId] ?? 30, targets_here: 1 }))
+        const legs = stops && stops.map((_, i) => (i === 0 && !record.start ? null : { min: 24, mi: 12 }))
+        const stay = stops ? stops.reduce((sum, s) => sum + (s.stay_min ?? s.suggested_stay_min), 0) : 0
+        const drive = legs ? legs.reduce((sum, l) => sum + (l ? l.min : 0), 0) : null
+        return { ...record, stops, legs, totals: { drive_min: drive, stay_min: stay, total_min: drive + stay }, routed: true }
+      }
+      const savedPlan = (stays = [null, null], over = {}) => ({
+        decorate,
+        record: decorate({ start: null, stops: twoStops.map((s, i) => ({ ...s, stay_min: stays[i] })), version: 1, updated_at: ago(5), updated_by_name: 'Sam', ...over })
+      })
+      const texts = (sel) => cy.get(sel).then(els => [...els].map(e => e.textContent))
+      const stepper = (i) => cy.get('[data-testid="route-editor"] [data-testid="stop-stay"]').eq(i)
+      const noDrive = () => cy.intercept('GET', '**/api/ebird/drive*', { statusCode: 500, body: { error: 'down' } }).as('drive')
+
+      it('the suggestion shows each stop’s suggested stay and the whole day, read-only', () => {
+        open({ route: timed(), setup: stubDrive })
+        cy.contains('button', 'Plan a route').click()
+        cy.wait('@plan')
+        texts('[data-testid="route-stop"] .event-route__stay').should('deep.equal', ['Stay 45 min suggested', 'Stay 30 min suggested', 'Stay 20 min suggested'])
+        cy.get('.event-route__stay-tag').should('have.length', 3)
+        cy.get('[data-testid="route-totals"]').should('have.text', 'Driving 3 h 10 min · At stops 1 h 35 min · Total 4 h 45 min')
+        cy.get('[data-testid="route-totals"] strong').should('have.text', 'Total 4 h 45 min')
+        cy.get('[data-testid="event-route"] [data-testid="stop-stay"]').should('not.exist')
+      })
+
+      it('a saved route: the group’s stays, the suggested tag, the drive into each stop, and totals', () => {
+        open({ route: timed(), plan: savedPlan([60, null]), setup: stubDrive })
+        cy.contains('button', 'Plan a route').click()
+        cy.wait('@plan')
+        cy.wait('@drive')
+        texts('[data-testid="route-stop"] .event-route__stay').should('deep.equal', ['Stay 1 h', 'Stay 40 min suggested'])
+        texts('[data-testid="route-stop"] .event-route__leg').should('deep.equal', ['↓ 10 min · 5 mi'])
+        cy.get('[data-testid="route-totals"]').should('have.text', 'Driving 10 min · At stops 1 h 40 min · Total 1 h 50 min')
+      })
+
+      it('when /ebird/drive can’t answer, the saved legs and drive total stand, in the viewer’s unit', () => {
+        const plan = savedPlan([null, null], { start: { name: 'Portal Store', lat: 31.91, lng: -109.14 } })
+        open({ route: timed(), plan, user: { ...TEST_USER, state: 'ON' }, setup: noDrive })
+        cy.contains('button', 'Plan a route').click()
+        cy.wait('@plan')
+        texts('[data-testid="route-stop"] .event-route__leg').should('deep.equal', ['↓ 24 min · 19.3 km', '↓ 24 min · 19.3 km'])
+        cy.get('[data-testid="route-totals"]').should('have.text', 'Driving 48 min · At stops 1 h 5 min · Total 1 h 53 min')
+        cy.contains('Drive times aren’t available').should('not.exist')
+      })
+
+      it('routed: false: no legs or drive total, the stops’ time still adds up', () => {
+        const plan = savedPlan([null, 15])
+        plan.record = { ...plan.record, legs: [null, null], totals: { drive_min: null, stay_min: 40, total_min: 40 }, routed: false }
+        open({ route: timed(), plan, setup: noDrive })
+        cy.contains('button', 'Plan a route').click()
+        cy.wait('@plan')
+        cy.get('[data-testid="route-stop"]').should('have.length', 2)
+        cy.get('.event-route__leg').should('not.exist')
+        cy.contains('.event-route__note', 'Drive times aren’t available right now.')
+        cy.get('[data-testid="route-totals"]').should('have.text', 'At stops 40 min')
+        cy.contains('button', 'Edit route').click()
+        cy.get('[data-testid="route-editor"] [data-testid="route-totals"]').should('have.text', 'At stops 40 min')
+
+        // The suggestion without drive times: the same.
+        open({ route: timed({ routed: false, total_min: null, total_mi: null, stops: timed().stops.map(s => ({ ...s, leg_min: null, leg_mi: null })) }) })
+        cy.contains('button', 'Plan a route').click()
+        cy.get('[data-testid="route-totals"]').should('have.text', 'At stops 1 h 35 min')
+      })
+
+      it('the stepper: −/+ in fives, a typed time, use suggested; totals move at once and each change saves with its version', () => {
+        const plan = savedPlan()
+        open({ route: timed(), plan, setup: stubDrive })
+        cy.contains('button', 'Plan a route').click()
+        cy.wait('@plan')
+        cy.contains('button', 'Edit route').click()
+        stepper(1).within(() => {
+          cy.get('.go__stay-value').should('have.text', '40 min')
+          cy.contains('.go__stay-tag', 'suggested')
+          cy.contains('button', 'use suggested').should('not.exist')
+        })
+        cy.get('[data-testid="route-editor"] [data-testid="route-totals"]').should('have.text', 'Driving 10 min · At stops 1 h 5 min · Total 1 h 15 min')
+        texts('[data-testid="route-editor"] .go__leg').should('deep.equal', ['↓ 10 min · 5 mi'])
+
+        cy.get('[aria-label="More time at Cave Creek Canyon"]').click()
+        // On screen before the save goes.
+        stepper(1).find('.go__stay-value').should('have.text', '45 min')
+        stepper(1).find('.go__stay-tag').should('not.exist')
+        cy.get('[data-testid="route-editor"] [data-testid="route-totals"]').should('have.text', 'Driving 10 min · At stops 1 h 10 min · Total 1 h 20 min')
+        cy.get('@savePlan.all').should('have.length', 0)
+        cy.wait('@savePlan').its('request.body').should('deep.equal', {
+          start: null, version: 1,
+          stops: [{ ...twoStops[0], stay_min: null }, { ...twoStops[1], stay_min: 45 }]
+        })
+
+        // Down in fives.
+        cy.get('[aria-label="Less time at Southwestern Research Station"]').click()
+        cy.get('[aria-label="Less time at Southwestern Research Station"]').click()
+        stepper(0).find('.go__stay-value').should('have.text', '15 min')
+        cy.wait('@savePlan').its('request.body').should('deep.include', { version: 2 }).its('stops').should('deep.equal', [{ ...twoStops[0], stay_min: 15 }, { ...twoStops[1], stay_min: 45 }])
+
+        // Tap the time to type it; past the most it comes back to 8 h.
+        stepper(1).find('.go__stay-value').click()
+        cy.get('[aria-label="Minutes at Cave Creek Canyon"]').should('be.focused').clear()
+        cy.get('[aria-label="Minutes at Cave Creek Canyon"]').type('90{enter}')
+        stepper(1).find('.go__stay-value').should('have.text', '1 h 30 min')
+        cy.get('[data-testid="route-editor"] [data-testid="route-totals"]').should('have.text', 'Driving 10 min · At stops 1 h 45 min · Total 1 h 55 min')
+        cy.wait('@savePlan').its('request.body.stops.1.stay_min').should('equal', 90)
+        stepper(0).find('.go__stay-value').click()
+        cy.get('[aria-label="Minutes at Southwestern Research Station"]').clear()
+        cy.get('[aria-label="Minutes at Southwestern Research Station"]').type('999{enter}')
+        stepper(0).find('.go__stay-value').should('have.text', '8 h')
+        cy.get('[aria-label="More time at Southwestern Research Station"]').should('be.disabled')
+        cy.wait('@savePlan').its('request.body.stops.0.stay_min').should('equal', 480)
+
+        // Back to the suggestion for one stop.
+        stepper(1).contains('button', 'use suggested').click()
+        stepper(1).find('.go__stay-value').should('have.text', '40 min')
+        stepper(1).contains('.go__stay-tag', 'suggested')
+        cy.wait('@savePlan').its('request.body').should((body) => {
+          expect(body.version).to.equal(5)
+          expect(body.stops[1].stay_min).to.equal(null)
+        })
+
+        cy.contains('[data-testid="route-editor"] button', 'Done').click()
+        texts('[data-testid="route-stop"] .event-route__stay').should('deep.equal', ['Stay 8 h', 'Stay 40 min suggested'])
+        cy.get('[data-testid="route-totals"]').should('have.text', 'Driving 10 min · At stops 8 h 40 min · Total 8 h 50 min')
+      })
+
+      it('the stepper fits a phone without scrolling sideways', () => {
+        cy.viewport(375, 740)
+        open({ route: timed(), plan: savedPlan([125, null]), setup: stubDrive })
+        cy.contains('button', 'Plan a route').click()
+        cy.contains('button', 'Edit route').click()
+        stepper(0).contains('button', 'use suggested').should('be.visible')
+        cy.document().then(doc => expect(doc.documentElement.scrollWidth).to.be.at.most(375))
+      })
+    })
+
     it('the editor fits a phone without scrolling sideways', () => {
       cy.viewport(375, 740)
       open({ route: suggestion(), plan: { record: { start: { name: 'A very long meeting point name at the trailhead parking area', lat: 31.9, lng: -109.2 }, stops: twoStops, version: 1, updated_by_name: null, updated_at: ago(3000) } }, setup: stubDrive })
@@ -427,6 +573,7 @@ describe('Event route', () => {
       cy.document().then(doc => expect(doc.documentElement.scrollWidth).to.be.at.most(375))
       cy.contains('button', 'Edit route').click()
       cy.get('[data-testid="route-editor"] .go__stop').should('have.length', 2)
+      cy.get('[data-testid="route-editor"] [data-testid="stop-stay"]').should('have.length', 2)
       cy.document().then(doc => expect(doc.documentElement.scrollWidth).to.be.at.most(375))
     })
   })
