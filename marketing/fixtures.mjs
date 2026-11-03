@@ -226,10 +226,25 @@ export const EVENT = {
 const MEET = { name: 'Sierra Vista', lat: 31.5455, lng: -110.2773 }
 const ROUTE_STOPS = [HOT.ramsey, HOT.carr, HOT.sanpedro]
 
-export const ROUTE_PLAN = {
-  start: MEET,
-  stops: ROUTE_STOPS.map(h => ({ locId: h.locId, name: h.locName, lat: h.lat, lng: h.lng })),
-  version: 4, updated_at: '2026-04-25T10:58:00.000Z', updated_by_name: 'Sam', updated_by_you: false
+/** Minutes at each stop: the server's suggestion, and the group's own where someone set one (null takes the suggestion). */
+const STAYS = {
+  [HOT.ramsey.locId]: { stay_min: 120, suggested_stay_min: 90 },
+  [HOT.carr.locId]: { stay_min: null, suggested_stay_min: 60 },
+  [HOT.sanpedro.locId]: { stay_min: 45, suggested_stay_min: 40 }
+}
+
+/** The group's saved route, with its drive and the day's totals as the server sends them. */
+export const routePlan = () => {
+  const d = drive([MEET, ...ROUTE_STOPS])
+  const stops = ROUTE_STOPS.map(h => ({ locId: h.locId, name: h.locName, lat: h.lat, lng: h.lng, ...STAYS[h.locId], targets_here: speciesAt(h).length }))
+  const stay = stops.reduce((sum, st) => sum + (st.stay_min ?? st.suggested_stay_min ?? 0), 0)
+  return {
+    start: MEET, stops,
+    legs: d.legs.map(l => ({ min: l.minutes, mi: l.miles })),
+    totals: { drive_min: d.minutes, stay_min: stay, total_min: d.minutes + stay },
+    routed: true,
+    version: 4, updated_at: '2026-04-25T10:58:00.000Z', updated_by_name: 'Sam', updated_by_you: false
+  }
 }
 
 const speciesAt = (h) => [...new Set(scoutRows.filter(r => r.locId === h.locId).map(r => r.code))]
@@ -241,12 +256,13 @@ export const suggestedRoute = () => {
   const stops = ROUTE_STOPS.map((h, i) => {
     const fresh = speciesAt(h).filter(c => !covered.has(c))
     fresh.forEach(c => covered.add(c))
-    return { n: i + 1, locId: h.locId, locName: h.locName, lat: h.lat, lng: h.lng, new_birds: fresh.map(code => ({ code, comName: SPECIES[code][0] })), leg_min: legs[i].minutes, leg_mi: legs[i].miles, species: speciesAt(h) }
+    return { n: i + 1, locId: h.locId, locName: h.locName, lat: h.lat, lng: h.lng, new_birds: fresh.map(code => ({ code, comName: SPECIES[code][0] })), leg_min: legs[i].minutes, leg_mi: legs[i].miles, species: speciesAt(h), suggested_stay_min: STAYS[h.locId].suggested_stay_min, targets_here: speciesAt(h).length }
   })
   const d = drive([MEET, ...ROUTE_STOPS])
   return {
     from: { lat: MEET.lat, lng: MEET.lng }, stops, extras: [{ locId: HOT.cavecreek.locId, locName: HOT.cavecreek.locName, lat: HOT.cavecreek.lat, lng: HOT.cavecreek.lng, new_birds: [{ code: 'elfowl', comName: SPECIES.elfowl[0] }], add_min: 165, add_mi: 104, species: speciesAt(HOT.cavecreek) }],
     total_min: d.minutes, total_mi: d.miles, covered: covered.size, covered_with_extras: covered.size + 1, reported: new Set(scoutRows.map(r => r.code)).size, skipped: 2,
+    stay_min_total: ROUTE_STOPS.reduce((sum, h) => sum + STAYS[h.locId].suggested_stay_min, 0),
     geometry: d.geometry, routed: true, names: Object.fromEntries(TARGETS.map(c => [c, SPECIES[c][0]]))
   }
 }
@@ -319,7 +335,7 @@ export const answer = (url, method) => {
     if (kind === 'route') return { region: q('region'), stops: null, start: null, updatedAt: null }
     if (kind === 'event-scouting') return SCOUTING
     if (kind === 'event-route') return suggestedRoute()
-    if (kind === 'event-route-plan') return ROUTE_PLAN
+    if (kind === 'event-route-plan') return routePlan()
     if (kind === 'event-suggestions') return []
     return []
   }

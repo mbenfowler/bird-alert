@@ -111,3 +111,48 @@ h1.big { font-size: 112px; }
 .push .text { grid-column: 2 / 4; font: 400 27px/1.3 var(--sans); color: #222; }
 
 .foot { position: absolute; left: 80px; right: 80px; bottom: 64px; }
+
+/* An Audubon plate as an old print: cream paper with a torn (deckled) edge, a strip of tape, a
+   soft shadow, a slight tilt, and an italic caption under it. Each slide sets where it sits, its
+   size and tilt (--tilt), and the crop (--zoom and --focus on the img):
+   <figure class="print" style="left: …; top: …; width: …; --tilt: -5deg">
+     <div class="print__paper"><div class="print__art" style="height: …"><img src="../.cache/plates/….jpg" style="--zoom: 1.4; --focus: 50% 30%"></div></div>
+     <figcaption>Bird, after Audubon</figcaption>
+   </figure>
+   The torn edge is the #deckle SVG filter that each slide with a print carries. */
+.print { position: absolute; margin: 0; transform: rotate(var(--tilt, -4deg)); }
+.print__paper { position: relative; padding: 18px; }
+.print__paper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #f3ead2;
+  box-shadow: inset 0 0 18px rgba(150, 120, 60, 0.25);
+  filter: url(#deckle) drop-shadow(10px 14px 14px rgba(0, 0, 0, 0.28));
+}
+/* The art is cropped by its box: object-fit fills it, --zoom and --focus pick the part of the plate. */
+.print__art { position: relative; overflow: hidden; }
+.print__art img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: var(--focus, 50% 50%); transform: scale(var(--zoom, 1)); transform-origin: var(--focus, 50% 50%); filter: sepia(0.12) saturate(0.92); }
+/* Translucent tape across the top edge. */
+.print__paper::after {
+  content: '';
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  width: 46%;
+  height: 40px;
+  transform: translateX(-50%) rotate(-2deg);
+  background: rgba(255, 252, 228, 0.55);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+.print figcaption {
+  /* One line, even when it runs a little wider than the print. */
+  margin: 12px -60px 0;
+  white-space: nowrap;
+  text-align: center;
+  font: italic 400 21px/1.2 Georgia, 'Times New Roman', serif;
+  color: #3d3d3d;
+}
+
+/* The credit for the bird photos inside the phone screens. */
+.credit { font: 400 19px/1.35 var(--sans); color: #555; }
