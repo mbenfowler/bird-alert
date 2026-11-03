@@ -1,24 +1,28 @@
 import { useState } from 'react'
 import { toast } from 'react-toastify'
 import { errorMessage } from '../../apiCalls'
-import { useCurrentUser, useRegionsQuery } from '../../hooks/queries'
+import { useCurrentUser, useRegionsQuery, useSeenBirdsQuery } from '../../hooks/queries'
 import { usePatchUserMutation } from '../../hooks/mutations'
 import { useDistanceUnit } from '../../distance'
 import { countyName, areaWord, stateName } from '../../usStates'
 import PlaceSearch from '../PlaceSearch/PlaceSearch'
 import { t } from '../../i18n'
+import { Link } from 'react-router'
+import { Trans } from 'react-i18next'
 
 // The server's choices (lib/range.js), in miles; outside the US they show in kilometres. -1 is the
 // whole state or province.
 const WHOLE_STATE = -1
 const RANGES = [0, 15, 30, WHOLE_STATE] as const
+// Lifer alerts and skipping seen birds measure against the life list; with only a few birds on it, that means little.
+export const MIN_LIFE_LIST = 10
 
 /**
  * How far alerts reach past the county line (watch list, rare birds and lifers alike): a set
  * distance from a home spot, or the whole state or province. A bird one county over is one you
  * could still go for, or one coming your way; the alerts say where it is. Below it, whether
- * rare-bird alerts wait for proof. Shown whether or not push is on here, since both settings shape
- * the emails too.
+ * rare-bird alerts wait for proof, and whether they skip birds already on the life list. Shown
+ * whether or not push is on here, since these settings shape the emails too.
  */
 const AlertRange = () => {
   const user = useCurrentUser()
@@ -35,6 +39,9 @@ const AlertRange = () => {
     : mi === WHOLE_STATE ? (state ? t('range.wholeState', { name: state }) : t('range.wholeStateUnnamed'))
     : unit === 'km' ? t('range.km', { n: Math.round(mi * 1.609344 / 5) * 5 }) : t('range.mi', { n: mi })
   const ownSpot = user.home_lat != null && user.home_lng != null
+  const lifeListSize = useSeenBirdsQuery().data?.length ?? 0
+  // Waits for a life list, as lifer alerts do, but can always be switched off.
+  const skipSeenBlocked = !user.notable_skip_seen && lifeListSize < MIN_LIFE_LIST
 
   return (
     <div className='notification-group alert-range'>
@@ -79,6 +86,23 @@ const AlertRange = () => {
           <input className='switch switch--small' type='checkbox' id='rare_alerts_need_proof' name='rare_alerts_need_proof'
             checked={Boolean(user.rare_alerts_need_proof)} disabled={patch.isPending}
             onChange={(e) => patch.mutate({ rare_alerts_need_proof: e.target.checked }, {
+              onSuccess: () => toast.success(t('alertCenter.updated'), { position: 'bottom-center' }),
+              onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
+            })} />
+        </div>
+      </div>
+      {/* Rare-bird alerts (push and email) leave out birds already on the life list; starred birds still come. */}
+      <div className='notification notification--sub alert-range__skip-seen'>
+        <div className='notification__text'>
+          <label htmlFor='notable_skip_seen'>{t('range.skipSeen')}</label>
+          <p className='notification__hint'>
+            {skipSeenBlocked ? <Trans i18nKey='range.skipSeenNeedsLifeList' components={{ page: <Link to='/life-list' /> }} /> : t('range.skipSeenHint')}
+          </p>
+        </div>
+        <div className='notification__controls'>
+          <input className='switch switch--small' type='checkbox' id='notable_skip_seen' name='notable_skip_seen'
+            checked={Boolean(user.notable_skip_seen)} disabled={patch.isPending || skipSeenBlocked}
+            onChange={(e) => patch.mutate({ notable_skip_seen: e.target.checked }, {
               onSuccess: () => toast.success(t('alertCenter.updated'), { position: 'bottom-center' }),
               onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
             })} />

@@ -117,27 +117,6 @@
   box-shadow: none;
 }
 
-/* A sub-option of the row above it, indented like the notable timing pills. */
-.notification--nested {
-  margin-left: 20px;
-  padding-top: 0;
-}
-
-/* An email card with a nested option: the option takes its own line under the card's switch. */
-.notification--has-nested {
-  flex-wrap: wrap;
-  row-gap: 4px;
-}
-
-.notification--has-nested > .notification__text {
-  flex: 1 1 0;
-}
-
-.notification--has-nested > .notification--nested {
-  flex-basis: calc(100% - 20px);
-  padding-bottom: 0;
-}
-
 .notification--sub .notification__text label {
   font-size: 0.98rem;
 }
@@ -267,7 +246,8 @@
 }
 
 /* Waiting for proof: its own row under the range, set off by a rule. */
-.alert-range .alert-range__proof {
+.alert-range .alert-range__proof,
+.alert-range .alert-range__skip-seen {
   padding: 10px 16px 12px;
   border-top: 1px solid var(--rule);
 }
