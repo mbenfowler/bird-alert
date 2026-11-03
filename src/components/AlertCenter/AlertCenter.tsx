@@ -13,6 +13,8 @@ import InstallSteps from '../InstallSteps/InstallSteps'
 import { isIOS, isStandalone } from '../../install'
 import { areaWord } from '../../usStates'
 import { hourLabel, t } from '../../i18n'
+import { Link } from 'react-router'
+import { Trans } from 'react-i18next'
 
 // Labels, hints and the "nothing to send" words are in the catalog under alertCenter.push.<field> and alertCenter.email.<field>.
 const PUSH_KINDS: PushPreference[] = ['push_watchlist_enabled', 'push_notable_enabled', 'push_first_of_season', 'push_lifer_enabled']
@@ -73,6 +75,33 @@ const AlertCenter = () => {
       onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
     })
   }
+
+  // Leaves life-list birds out of rare-bird alerts. It shapes the email too, so it works with push off;
+  // it waits for a life list, as lifer alerts do, but can always be switched off.
+  const skipSeenBlocked = !user.notable_skip_seen && lifeListSize < MIN_LIFE_LIST
+  const toggleSkipSeen = (e: ChangeEvent<HTMLInputElement>) => {
+    patchUser.mutate({ notable_skip_seen: e.target.checked }, {
+      onSuccess: () => toast.success(t('alertCenter.updated'), { position: 'bottom-center' }),
+      onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' })
+    })
+  }
+
+  // One field, two switches (under the notable push and under the email), so it can be reached
+  // wherever the person gets rare birds; both read and save the same value.
+  const skipSeenOption = (id: string) => (
+    <div className='notification notification--sub notification--nested'>
+      <div className='notification__text'>
+        <label htmlFor={id}>{t('alertCenter.skipSeen.label')}</label>
+        <p className='notification__hint'>
+          {skipSeenBlocked ? <Trans i18nKey='alertCenter.skipSeen.needsLifeList' components={{ page: <Link to='/life-list' /> }} /> : t('alertCenter.skipSeen.hint')}
+        </p>
+      </div>
+      <div className='notification__controls'>
+        <input className='switch switch--small' type='checkbox' id={id} name='notable_skip_seen' checked={Boolean(user.notable_skip_seen)}
+          disabled={pendingField === 'notable_skip_seen' || skipSeenBlocked} onChange={toggleSkipSeen} />
+      </div>
+    </div>
+  )
 
   const togglePush = (e: ChangeEvent<HTMLInputElement>) => {
     void (e.target.checked ? push.enable() : push.disable())
@@ -153,6 +182,7 @@ const AlertCenter = () => {
                   <input className='switch switch--small' type='checkbox' id={field} name={field} checked={Boolean(user[field])} disabled={!pushOn || pendingField === field || (field === 'push_lifer_enabled' && !user[field] && lifeListSize < MIN_LIFE_LIST)} onChange={togglePreference} />
                 </div>
               </div>
+              {field === 'push_notable_enabled' && skipSeenOption('notable_skip_seen')}
               {field === 'push_notable_enabled' && (
                 <fieldset className='timing' disabled={!pushOn || !user.push_notable_enabled || pendingField === 'push_notable_batched'}>
                   <legend className='visually-hidden'>{t('alertCenter.timingLegend')}</legend>
@@ -211,7 +241,7 @@ const AlertCenter = () => {
       <AlertRange />
 
       {EMAIL_PREFERENCES.map(({ field, preview }) => (
-        <div className='notification' key={field}>
+        <div className={`notification ${field === 'rare_sightings_email_enabled' ? 'notification--has-nested' : ''}`} key={field}>
           <div className='notification__text'>
             <label htmlFor={field}>{t(`alertCenter.email.${field}.label`)}</label>
             <p className='notification__hint'>{t(`alertCenter.email.${field}.hint`)}</p>
@@ -220,6 +250,7 @@ const AlertCenter = () => {
           <div className='notification__controls'>
             <input className='switch' type="checkbox" id={field} name={field} checked={Boolean(user[field])} disabled={pendingField === field} onChange={togglePreference} />
           </div>
+          {field === 'rare_sightings_email_enabled' && skipSeenOption('notable_skip_seen_email')}
         </div>
       ))}
     </section>

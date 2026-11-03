@@ -110,6 +110,11 @@
     "timingLegend": "À quelle vitesse envoyer les observations notables",
     "rightAway": "Tout de suite",
     "batch": "Regrouper aux 6 heures",
+    "skipSeen": {
+      "label": "Ignorer les oiseaux déjà sur ma liste à vie",
+      "hint": "Tu l’as déjà vu ? Tu ne recevras pas d’alerte d’oiseau rare pour lui, sauf s’il est dans ta liste de suivi.",
+      "needsLifeList": "<page>Importe d’abord ta liste à vie</page>"
+    },
     "quiet": "Heures de silence",
     "quietOn": "Aucune notification entre {{from}} et {{to}} ; elles arrivent après.",
     "quietOff": "Les notifications peuvent arriver à toute heure.",
@@ -140,7 +145,7 @@
     }
   },
   "alertMode": {
-    "recording": "Enregistrement : <link>XC{{xc}}</link> · {{recordist}} · {{license}}",
+    "recording": "Enregistrement : <page>XC{{xc}}</page> · {{recordist}} · {{license}}",
     "lights": "Lumières",
     "sound": "Son",
     "volume": "Volume",
@@ -624,7 +629,7 @@
     "hintEmpty": "Touche « Vu » sur n’importe quel oiseau que tu as vu, ou pars de ta liste à vie eBird ci-dessous.",
     "view": "Voir et gérer",
     "importTitle": "Partir de ta liste à vie eBird",
-    "step1": "Sur eBird, ouvre <link>Mon eBird → Liste à vie</link> (Monde, À vie).",
+    "step1": "Sur eBird, ouvre <page>Mon eBird → Liste à vie</page> (Monde, À vie).",
     "step2": "Au bas de la liste, choisis <b>Télécharger (CSV)</b>.",
     "step3": "Choisis ce fichier ici. Une nouvelle importation plus tard ajoute les nouveaux oiseaux et n’en retire jamais.",
     "importing": "Importation…",

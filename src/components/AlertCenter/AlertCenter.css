@@ -117,6 +117,27 @@
   box-shadow: none;
 }
 
+/* A sub-option of the row above it, indented like the notable timing pills. */
+.notification--nested {
+  margin-left: 20px;
+  padding-top: 0;
+}
+
+/* An email card with a nested option: the option takes its own line under the card's switch. */
+.notification--has-nested {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+
+.notification--has-nested > .notification__text {
+  flex: 1 1 0;
+}
+
+.notification--has-nested > .notification--nested {
+  flex-basis: calc(100% - 20px);
+  padding-bottom: 0;
+}
+
 .notification--sub .notification__text label {
   font-size: 0.98rem;
 }

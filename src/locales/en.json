@@ -100,6 +100,11 @@
     "timingLegend": "How quickly to send notable sightings",
     "rightAway": "Right away",
     "batch": "Batch every 6 hours",
+    "skipSeen": {
+      "label": "Skip birds already on my life list",
+      "hint": "Already seen it? You won’t get a rare-bird alert for it, unless it’s starred.",
+      "needsLifeList": "<page>Import your life list first</page>"
+    },
     "quiet": "Quiet hours",
     "quietOn": "No pushes between {{from}} and {{to}}; they arrive after.",
     "quietOff": "Pushes can arrive at any hour.",
@@ -130,7 +135,7 @@
     }
   },
   "alertMode": {
-    "recording": "Recording: <link>XC{{xc}}</link> · {{recordist}} · {{license}}",
+    "recording": "Recording: <page>XC{{xc}}</page> · {{recordist}} · {{license}}",
     "lights": "Lights",
     "sound": "Sound",
     "volume": "Volume",
@@ -572,7 +577,7 @@
     "hintEmpty": "Tap “Seen it” on any bird you’ve seen, or start from your eBird life list below.",
     "view": "View and manage",
     "importTitle": "Start from your eBird life list",
-    "step1": "On eBird, open <link>My eBird → Life List</link> (World, Life).",
+    "step1": "On eBird, open <page>My eBird → Life List</page> (World, Life).",
     "step2": "At the bottom of the list, choose <b>Download (CSV)</b>.",
     "step3": "Pick that file here. Importing again later adds new birds and never removes any.",
     "importing": "Importing…",

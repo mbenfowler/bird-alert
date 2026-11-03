@@ -30,6 +30,8 @@ export interface User {
   home_lng?: number | null
   /** Rare-bird alerts (push and email) wait until a report has proof: a reviewer's OK, a photo, or a second birder. */
   rare_alerts_need_proof?: boolean
+  /** Rare-bird alerts (the notable push and the uncommon sightings email) leave out birds already on the life list; starred birds still come through. */
+  notable_skip_seen?: boolean
   /** The saved place the person switched to by hand ("I'm here now"); null at home. */
   activePlace?: ActivePlace | null
   /** While away at a place, whether the home area keeps alerting too. */
@@ -120,6 +122,7 @@ export interface UserPatch {
   event_return_seen?: boolean
   range_mi?: number
   rare_alerts_need_proof?: boolean
+  notable_skip_seen?: boolean
   home_lat?: number | null
   home_lng?: number | null
   email?: string
