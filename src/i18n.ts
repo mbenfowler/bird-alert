@@ -1,29 +1,34 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import en from './locales/en.json'
+import esMX from './locales/es-MX.json'
+import frCA from './locales/fr-CA.json'
 
 /**
  * Every word the app shows comes from a catalog (src/locales), so a language is added by adding
- * its file here. Only English exists yet; Mexican Spanish and Canadian French come next.
+ * its file here: English, Mexican Spanish and Canadian French. src/locales.test.ts lists any key a
+ * translation is missing, so English added later shows up there to be translated.
  *
- * Two settings travel apart. Bird names follow the person's chosen locale for every language
- * eBird has (the server sends them already named), while the rest of the text follows the closest
- * catalog: until a catalog exists, the app stays in English. Dates and numbers are formatted for
- * whichever language the text is in, so a sentence never mixes two.
+ * Bird names follow the person's chosen locale (the server sends them already named), and the rest
+ * of the text follows the closest catalog: Spain's Spanish reads Mexico's, France's French reads
+ * Canada's, and any other language reads English. Dates and numbers are formatted for whichever
+ * language the text is in, so a sentence never mixes two.
  */
-export const catalogs = { en: { translation: en } }
+export const catalogs = { en: { translation: en }, 'es-MX': { translation: esMX }, 'fr-CA': { translation: frCA } }
 export type UiLanguage = keyof typeof catalogs
 
 // A catalog is one of the files above, or one added while the app runs (the end-to-end tests).
 const added = new Set<string>()
 const hasCatalog = (lang: string): lang is UiLanguage => Object.prototype.hasOwnProperty.call(catalogs, lang) || added.has(lang)
 
-/** The catalog for a locale: exact ('fr-CA'), else its language ('fr'), else English. */
+/** The catalog for a locale: exact ('fr-CA'), else its language ('fr'), else the language's other variety ('fr-FR' reads 'fr-CA'), else English. */
 export const uiLanguageFor = (locale?: string | null): UiLanguage => {
   if (!locale) return 'en'
   if (hasCatalog(locale)) return locale
-  const base = locale.split('-')[0].toLowerCase()
-  return hasCatalog(base) ? base : 'en'
+  const base = locale.split(/[-_]/)[0]!.toLowerCase()
+  if (hasCatalog(base)) return base
+  const variety = Object.keys(catalogs).find(lang => lang.toLowerCase().startsWith(`${base}-`))
+  return (variety as UiLanguage | undefined) ?? 'en'
 }
 
 const browserLocale = () => (typeof navigator !== 'undefined' && navigator.language) || 'en-US'

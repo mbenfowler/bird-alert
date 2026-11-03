@@ -29,7 +29,7 @@
     "lockIn": "Lock in details",
     "language": "Language",
     "languageBrowser": "Same as this browser",
-    "languageHint": "Bird names switch now; the rest of the app is in English for now.",
+    "languageHint": "The app, its bird names, and your emails and alerts all switch to it.",
     "languageSaved": "Language saved!"
   },
   "accuracy": {
@@ -787,7 +787,7 @@
     "turnOn": "Turn on alerts"
   },
   "range": {
-    "justCounty": "Just my county",
+    "justCounty": "Just my {{word}}",
     "km": "{{n}} km",
     "mi": "{{n}} mi",
     "wholeState": "All of {{name}}",
