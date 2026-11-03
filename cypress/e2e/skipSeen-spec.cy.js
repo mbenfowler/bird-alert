@@ -49,13 +49,13 @@ describe('Skip birds already on my life list', () => {
     // Under push: directly under the Notable sightings toggle, before the timing choices.
     cy.get('#push_notable_enabled').closest('.notification').next().should('have.class', 'notification--nested').within(() => {
       cy.contains('label', 'Skip birds already on my life list')
-      cy.contains('.notification__hint', 'Starred birds still come through. Applies to the Uncommon sightings email too.')
+      cy.contains('.notification__hint', 'Already seen it? You won’t get a rare-bird alert for it, unless it’s starred.')
     })
     cy.get('.notification-sub .notification--nested').next().should('have.class', 'timing')
     // Under the email: nested in its card, with a hint that points back to the push.
     cy.get('#rare_sightings_email_enabled').closest('.notification').find('.notification--nested').within(() => {
       cy.contains('label', 'Skip birds already on my life list')
-      cy.contains('.notification__hint', 'Starred birds still come through. Applies to Notable sightings push too.')
+      cy.contains('.notification__hint', 'Already seen it? You won’t get a rare-bird alert for it, unless it’s starred.')
     })
 
     cy.get(PUSH).should('not.be.checked').and('not.be.disabled')
@@ -90,7 +90,7 @@ describe('Skip birds already on my life list', () => {
       cy.get(id).should('be.disabled').and('not.be.checked')
       cy.get(id).closest('.notification--nested').find('.notification__hint a').should('have.text', 'Import your life list first').and('have.attr', 'href', '/life-list')
     })
-    cy.contains('.notification--nested', 'Starred birds still come through').should('not.exist')
+    cy.contains('.notification--nested', 'Already seen it?').should('not.exist')
   })
 
   it('can still be switched off when it is on and the life list has emptied', () => {
@@ -111,10 +111,10 @@ describe('Skip birds already on my life list', () => {
   it('in Spanish and French too', () => {
     openAlerts(lifeList(12), { ...TEST_USER, locale: 'es-MX', notable_skip_seen: true })
     cy.contains(`label[for="notable_skip_seen"]`, 'Omitir aves que ya están en mi lista de vida')
-    cy.get(EMAIL).closest('.notification--nested').should('contain', 'También aplica a las notificaciones push de avistamientos notables.')
+    cy.get(EMAIL).closest('.notification--nested').should('contain', '¿Ya la viste? No te llegará alerta de ave rara por ella, a menos que esté en tu lista de seguimiento.')
     openAlerts(lifeList(12), { ...TEST_USER, locale: 'fr-CA', notable_skip_seen: true })
     cy.contains(`label[for="notable_skip_seen_email"]`, 'Ignorer les oiseaux déjà sur ma liste à vie')
-    cy.get(EMAIL).closest('.notification--nested').should('contain', 'S’applique aussi aux notifications push des observations notables.')
+    cy.get(EMAIL).closest('.notification--nested').should('contain', 'Tu l’as déjà vu ? Tu ne recevras pas d’alerte d’oiseau rare pour lui, sauf s’il est dans ta liste de suivi.')
   })
 
   // Only for the PR and email screenshots: CYPRESS_SHOT=1. Push on for this device, notable on, the option on.

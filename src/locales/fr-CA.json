@@ -112,8 +112,7 @@
     "batch": "Regrouper aux 6 heures",
     "skipSeen": {
       "label": "Ignorer les oiseaux déjà sur ma liste à vie",
-      "hint": "Les oiseaux de ta liste de suivi passent quand même. S’applique aussi au courriel des observations peu communes.",
-      "hintEmail": "Les oiseaux de ta liste de suivi passent quand même. S’applique aussi aux notifications push des observations notables.",
+      "hint": "Tu l’as déjà vu ? Tu ne recevras pas d’alerte d’oiseau rare pour lui, sauf s’il est dans ta liste de suivi.",
       "needsLifeList": "<page>Importe d’abord ta liste à vie</page>"
     },
     "quiet": "Heures de silence",

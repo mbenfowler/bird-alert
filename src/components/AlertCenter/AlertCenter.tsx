@@ -88,12 +88,12 @@ const AlertCenter = () => {
 
   // One field, two switches (under the notable push and under the email), so it can be reached
   // wherever the person gets rare birds; both read and save the same value.
-  const skipSeenOption = (id: string, hintKey: 'hint' | 'hintEmail') => (
+  const skipSeenOption = (id: string) => (
     <div className='notification notification--sub notification--nested'>
       <div className='notification__text'>
         <label htmlFor={id}>{t('alertCenter.skipSeen.label')}</label>
         <p className='notification__hint'>
-          {skipSeenBlocked ? <Trans i18nKey='alertCenter.skipSeen.needsLifeList' components={{ page: <Link to='/life-list' /> }} /> : t(`alertCenter.skipSeen.${hintKey}`)}
+          {skipSeenBlocked ? <Trans i18nKey='alertCenter.skipSeen.needsLifeList' components={{ page: <Link to='/life-list' /> }} /> : t('alertCenter.skipSeen.hint')}
         </p>
       </div>
       <div className='notification__controls'>
@@ -182,7 +182,7 @@ const AlertCenter = () => {
                   <input className='switch switch--small' type='checkbox' id={field} name={field} checked={Boolean(user[field])} disabled={!pushOn || pendingField === field || (field === 'push_lifer_enabled' && !user[field] && lifeListSize < MIN_LIFE_LIST)} onChange={togglePreference} />
                 </div>
               </div>
-              {field === 'push_notable_enabled' && skipSeenOption('notable_skip_seen', 'hint')}
+              {field === 'push_notable_enabled' && skipSeenOption('notable_skip_seen')}
               {field === 'push_notable_enabled' && (
                 <fieldset className='timing' disabled={!pushOn || !user.push_notable_enabled || pendingField === 'push_notable_batched'}>
                   <legend className='visually-hidden'>{t('alertCenter.timingLegend')}</legend>
@@ -250,7 +250,7 @@ const AlertCenter = () => {
           <div className='notification__controls'>
             <input className='switch' type="checkbox" id={field} name={field} checked={Boolean(user[field])} disabled={pendingField === field} onChange={togglePreference} />
           </div>
-          {field === 'rare_sightings_email_enabled' && skipSeenOption('notable_skip_seen_email', 'hintEmail')}
+          {field === 'rare_sightings_email_enabled' && skipSeenOption('notable_skip_seen_email')}
         </div>
       ))}
     </section>

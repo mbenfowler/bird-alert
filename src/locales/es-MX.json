@@ -108,8 +108,7 @@
     "batch": "Agrupar cada 6 horas",
     "skipSeen": {
       "label": "Omitir aves que ya están en mi lista de vida",
-      "hint": "Las aves de tu lista de seguimiento siguen llegando. También aplica al correo de avistamientos poco comunes.",
-      "hintEmail": "Las aves de tu lista de seguimiento siguen llegando. También aplica a las notificaciones push de avistamientos notables.",
+      "hint": "¿Ya la viste? No te llegará alerta de ave rara por ella, a menos que esté en tu lista de seguimiento.",
       "needsLifeList": "<page>Primero importa tu lista de vida</page>"
     },
     "quiet": "Horas de silencio",
