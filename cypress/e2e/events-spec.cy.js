@@ -239,7 +239,7 @@ describe('Events', () => {
     cy.visit('http://localhost:3000/events/join/inv123')
     cy.contains('h1', 'Join Chiricahuas')
     cy.contains('.event-page', 'Cochise County, Arizona').and('contain', 'Big Day').and('contain', '3 birders so far')
-    cy.contains('.event-page a', 'Log in or sign up').should('have.attr', 'href', '/login')
+    cy.contains('.event-page a', 'Log in or sign up').should('have.attr', 'href', '/login?next=%2Fevents%2Fjoin%2Finv123')
     cy.window().then((win) => expect(JSON.parse(win.localStorage.getItem('bird-alert:join')).token).to.eq('inv123'))
     // Signing in (any way) brings them back to the invite.
     cy.then(() => { state.loggedIn = true })
