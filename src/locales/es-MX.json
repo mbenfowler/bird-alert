@@ -531,11 +531,11 @@
   "install": {
     "lede": "<b>En iPhone, las alertas necesitan Bird Alert! en tu pantalla de inicio.</b> Toma unos diez segundos:",
     "step1": "Toca <b>Compartir</b> en la barra de Safari.",
-    "step2": "Desplázate hacia abajo y toca <b>Agregar a pantalla de inicio</b>, luego <b>Agregar</b>.",
+    "step2": "Desplázate hacia abajo y toca <b>Agregar a inicio</b>, luego <b>Agregar</b>.",
     "step3": "Abre <b>Bird Alert!</b> desde tu pantalla de inicio, inicia sesión una vez más y activa las alertas."
   },
   "installNudge": {
-    "text": "<b>Recibe alertas en este iPhone:</b> toca Compartir <icon></icon> y luego <b>Agregar a pantalla de inicio</b>.",
+    "text": "<b>Recibe alertas en este iPhone:</b> toca Compartir <icon></icon> y luego <b>Agregar a inicio</b>.",
     "gotIt": "Entendido"
   },
   "landing": {
@@ -1483,6 +1483,7 @@
     "upcomingBanner_one": "<b>{{name}}</b> mañana",
     "upcomingBanner_many": "<b>{{name}}</b> en {{count}} días",
     "upcomingBanner_other": "<b>{{name}}</b> en {{count}} días",
-    "youLower": "tú"
+    "youLower": "tú",
+    "tripsMoved": "Los viajes ahora son eventos. Aquí encuentras los tuyos."
   }
 }
