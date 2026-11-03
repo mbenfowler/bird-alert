@@ -19,6 +19,20 @@ describe('Phone-width layout', () => {
       // The app's document, not the spec's: the class is set on the page under test.
       const colourFont = $el[0].ownerDocument.documentElement.classList.contains('has-colour-font')
       if (colourFont) expect(cs.fontFamily, 'colour font in use').to.match(/Bungee Spice/)
+      if (colourFont) {
+        // The colour font only counts when it really paints in colour (a Chrome once drew it black).
+        const canvas = $el[0].ownerDocument.createElement('canvas')
+        canvas.width = 120
+        canvas.height = 48
+        const ctx = canvas.getContext('2d')
+        ctx.fillStyle = '#000'
+        ctx.font = '40px "Bungee Spice"'
+        ctx.fillText('A', 4, 40)
+        const px = ctx.getImageData(0, 0, 120, 48).data
+        let orange = 0
+        for (let i = 0; i < px.length; i += 4) if (px[i + 3] > 200 && px[i] > 150 && px[i] - px[i + 2] > 80) orange++
+        expect(orange, 'colour font paints in colour').to.be.greaterThan(0)
+      }
       else expect(cs.webkitTextFillColor, 'gradient fallback').to.eq('rgba(0, 0, 0, 0)')
     })
   })

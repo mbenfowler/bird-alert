@@ -23,13 +23,31 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </React.StrictMode>
 )
 
-// "Alert!" in the bar is set in Bungee Spice, a colour font, only once the browser has actually
-// loaded it; until then, or if the load fails, the stylesheet keeps the orange gradient. Checking
-// support alone was not enough: a browser that can draw colour fonts but did not get the file
-// showed the fallback face in plain black.
+// "Alert!" in the bar is set in Bungee Spice, a colour font, only once the browser has loaded it
+// AND really draws it in colour; until then, or otherwise, the stylesheet keeps the orange gradient.
+// Neither support nor a load is proof: a browser that can draw colour fonts but did not get the file,
+// and a Chrome that loaded the file and still drew its glyphs black, both showed "Alert!" in black.
+const drawsInColour = () => {
+  try {
+    const canvas = document.createElement('canvas')
+    canvas.width = 120
+    canvas.height = 48
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })
+    if (!ctx) return false
+    ctx.fillStyle = '#000'
+    ctx.font = '40px "Bungee Spice"'
+    ctx.fillText('A', 4, 40)
+    const px = ctx.getImageData(0, 0, canvas.width, canvas.height).data
+    // Asked for black: any strongly orange pixel means the font's own colours were used.
+    for (let i = 0; i < px.length; i += 4) if (px[i + 3] > 200 && px[i] > 150 && px[i] - px[i + 2] > 80) return true
+    return false
+  } catch {
+    return false
+  }
+}
 if (typeof document !== 'undefined' && 'fonts' in document) {
   document.fonts.load('1em "Bungee Spice"')
-    .then((faces) => { if (faces.length && document.fonts.check('1em "Bungee Spice"')) document.documentElement.classList.add('has-colour-font') })
+    .then((faces) => { if (faces.length && document.fonts.check('1em "Bungee Spice"') && drawsInColour()) document.documentElement.classList.add('has-colour-font') })
     .catch(() => undefined)
 }
 
