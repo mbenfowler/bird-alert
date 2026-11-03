@@ -38,3 +38,6 @@ yarn-error.log*
 
 # Claude Code agent worktrees
 .claude/worktrees/
+
+# marketing renders: screenshots, photos, tiles, roads (marketing/out is committed)
+/marketing/.cache
