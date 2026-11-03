@@ -357,6 +357,16 @@
   min-width: 0;
 }
 
+.event-scouting__email-note {
+  min-width: 0;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.event-scouting__email-note--muted {
+  color: var(--muted);
+}
+
 .event-scouting__summary {
   display: flex;
   flex-direction: column;

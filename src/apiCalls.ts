@@ -145,6 +145,9 @@ export const getEventScouting = (id: Id) => {
     const locale = nameLocale()
     return api<EventScouting>('/saved', { params: { kind: 'event-scouting', id: String(id), ...(locale ? { locale } : {}) } })
 }
+/** Mails the scouting report to the signed-in member now. Errors: 409 confirm_email, 429 too_many, 503 mail_cap, 400 event_over. */
+export const postEventScoutingEmail = (id: Id) =>
+    api<{ sent: true; to: string }>('/saved', { method: 'POST', params: { kind: 'event-scouting-email', id: String(id) }, body: {} })
 /** The scouting route as the server suggests it, from the group's meeting point when one is saved. */
 export const getEventRoute = (id: Id) => {
     const locale = nameLocale()

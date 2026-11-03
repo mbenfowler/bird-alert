@@ -1,4 +1,5 @@
 import { stubAuth } from '../support/stubs'
+import { TEST_USER } from '../support/login'
 
 const COCHISE = 'US-AZ-003'
 const day = (offset) => { const d = new Date(); d.setDate(d.getDate() + offset); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
@@ -20,8 +21,8 @@ const report = (over = {}) => ({
   ...over
 })
 
-const open = (ev, scouting) => {
-  stubAuth({ loggedIn: true })
+const open = (ev, scouting, user = TEST_USER) => {
+  stubAuth({ loggedIn: true, user })
   cy.intercept('GET', '**/api/ebird/regions*', { statusCode: 200, body: [{ code: COCHISE, name: 'Cochise' }] })
   cy.intercept('GET', '**/api/birds*', { statusCode: 200, body: [
     { speciesCode: 'eletro', comName: 'Elegant Trogon', sciName: 'Trogon elegans', birdImg: null },
@@ -167,6 +168,93 @@ describe('Event scouting', () => {
     cy.get('.event-scouting__progress').should('have.text', '0 of 1 target reported this week')
     cy.get('.event-scouting__updated').should('not.exist')
     cy.get('.event-scouting__bird--missing').should('have.text', 'Elegant Trogon')
+  })
+
+  describe('Email me the scouting report now', () => {
+    const EMPTY = { checked_at: null, days_to_go: 6, using: 'likely_lifers', reported: [], unreported: [] }
+    const press = (reply) => {
+      cy.intercept('POST', '**/api/saved?kind=event-scouting-email*', reply).as('email')
+      cy.contains('[data-testid="event-scouting"] button', 'Email me the scouting report now').click()
+    }
+
+    it('shows even with no targets and nothing reported, near the heading', () => {
+      open(event({ targets: [] }), EMPTY)
+      cy.get('[data-testid="event-scouting"] .place__heading').next().should('have.class', 'event-scouting__email')
+        .find('button').should('have.text', 'Email me the scouting report now').and('be.enabled')
+    })
+
+    it('says Sending… while it goes, then where it went; the button stays usable', () => {
+      open(event(), EMPTY)
+      press({ statusCode: 200, body: { sent: true, to: 'm•••@gmail.com' }, delay: 400 })
+      cy.contains('button', 'Sending…').should('be.disabled')
+      cy.wait('@email').then(({ request }) => {
+        expect(request.url).to.include('id=5')
+        expect(request.headers).to.have.property('x-bird-alert', '1')
+      })
+      cy.get('.event-scouting__email [role="status"]').should('have.text', 'Sent to m•••@gmail.com. Check your inbox.')
+      cy.contains('button', 'Email me the scouting report now').should('be.enabled')
+    })
+
+    it('a confirmed address has no reminder', () => {
+      open(event(), EMPTY)
+      cy.get('.event-scouting__email button').should('have.length', 1)
+      cy.get('.event-scouting__confirm').should('not.exist')
+    })
+
+    it('an unconfirmed address: a reminder beside the button, and a resend that says it went', () => {
+      open(event(), EMPTY, { ...TEST_USER, email_confirmed: false })
+      cy.get('.event-scouting__email').within(() => {
+        cy.contains('button', 'Email me the scouting report now').should('be.enabled')
+        cy.get('.event-scouting__confirm').should('contain', 'Confirm your email to get scouting reports.')
+        cy.contains('button', 'Resend confirmation email').click()
+      })
+      cy.wait('@resendConfirmation')
+      cy.get('.event-scouting__email [role="status"]').should('have.text', 'Sent. Check your inbox (and spam).')
+      cy.contains('button', 'Resend confirmation email').should('not.exist')
+    })
+
+    it('a 409 confirm_email shows the same reminder line', () => {
+      open(event(), EMPTY)
+      press({ statusCode: 409, body: { error: 'confirm_email' } })
+      cy.wait('@email')
+      cy.get('.event-scouting__confirm').should('contain', 'Confirm your email to get scouting reports.')
+        .find('button').should('have.text', 'Resend confirmation email')
+      cy.get('.event-scouting__email .place-form__error').should('not.exist')
+    })
+
+    it('too many asks says how long to wait', () => {
+      open(event(), EMPTY)
+      press({ statusCode: 429, body: { error: 'too_many', retry_after_min: 12 } })
+      cy.get('.event-scouting__email [role="alert"]').should('have.text', 'You’ve asked for a few already. Try again in 12 minutes.')
+    })
+
+    it('the daily mail cap says try later', () => {
+      open(event(), EMPTY)
+      press({ statusCode: 503, body: { error: 'mail_cap' } })
+      cy.get('.event-scouting__email [role="alert"]').should('have.text', 'Email is busy right now. Try again later.')
+    })
+
+    it('an event that is over hides the button', () => {
+      open(event(), EMPTY)
+      press({ statusCode: 400, body: { error: 'event_over' } })
+      cy.wait('@email')
+      cy.get('.event-scouting__email').should('not.exist')
+    })
+
+    it('any other failure gives the short error line', () => {
+      open(event(), EMPTY)
+      press({ statusCode: 500, body: { error: 'Could not send the email' } })
+      cy.get('.event-scouting__email .place-form__error').should('have.text', 'Could not send the email')
+      cy.contains('button', 'Email me the scouting report now').should('be.enabled')
+    })
+
+    it('fits a phone with a long answer and the reminder beside it', () => {
+      cy.viewport(375, 740)
+      open(event(), EMPTY, { ...TEST_USER, email_confirmed: false })
+      press({ statusCode: 429, body: { error: 'too_many', retry_after_min: 45 } })
+      cy.get('.event-scouting__email [role="alert"]').should('exist')
+      cy.document().then(doc => expect(doc.documentElement.scrollWidth).to.be.at.most(375))
+    })
   })
 
   it('a past event has no scouting', () => {
