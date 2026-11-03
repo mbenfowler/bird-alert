@@ -103,8 +103,8 @@
     "skipSeen": {
       "label": "Skip birds already on my life list",
       "hint": "Starred birds still come through. Applies to the Uncommon sightings email too.",
-      "needsLifeList": "<page>Import your life list first</page>",
-      "emailNote": "Skips life-list birds"
+      "hintEmail": "Starred birds still come through. Applies to Notable sightings push too.",
+      "needsLifeList": "<page>Import your life list first</page>"
     },
     "quiet": "Quiet hours",
     "quietOn": "No pushes between {{from}} and {{to}}; they arrive after.",

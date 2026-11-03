@@ -109,8 +109,8 @@
     "skipSeen": {
       "label": "Omitir aves que ya están en mi lista de vida",
       "hint": "Las aves de tu lista de seguimiento siguen llegando. También aplica al correo de avistamientos poco comunes.",
-      "needsLifeList": "<page>Primero importa tu lista de vida</page>",
-      "emailNote": "Omite las aves de tu lista de vida"
+      "hintEmail": "Las aves de tu lista de seguimiento siguen llegando. También aplica a las notificaciones push de avistamientos notables.",
+      "needsLifeList": "<page>Primero importa tu lista de vida</page>"
     },
     "quiet": "Horas de silencio",
     "quietOn": "Sin notificaciones push entre {{from}} y {{to}}; llegan después.",

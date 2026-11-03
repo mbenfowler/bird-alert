@@ -86,6 +86,23 @@ const AlertCenter = () => {
     })
   }
 
+  // One field, two switches (under the notable push and under the email), so it can be reached
+  // wherever the person gets rare birds; both read and save the same value.
+  const skipSeenOption = (id: string, hintKey: 'hint' | 'hintEmail') => (
+    <div className='notification notification--sub notification--nested'>
+      <div className='notification__text'>
+        <label htmlFor={id}>{t('alertCenter.skipSeen.label')}</label>
+        <p className='notification__hint'>
+          {skipSeenBlocked ? <Trans i18nKey='alertCenter.skipSeen.needsLifeList' components={{ page: <Link to='/life-list' /> }} /> : t(`alertCenter.skipSeen.${hintKey}`)}
+        </p>
+      </div>
+      <div className='notification__controls'>
+        <input className='switch switch--small' type='checkbox' id={id} name='notable_skip_seen' checked={Boolean(user.notable_skip_seen)}
+          disabled={pendingField === 'notable_skip_seen' || skipSeenBlocked} onChange={toggleSkipSeen} />
+      </div>
+    </div>
+  )
+
   const togglePush = (e: ChangeEvent<HTMLInputElement>) => {
     void (e.target.checked ? push.enable() : push.disable())
   }
@@ -165,20 +182,7 @@ const AlertCenter = () => {
                   <input className='switch switch--small' type='checkbox' id={field} name={field} checked={Boolean(user[field])} disabled={!pushOn || pendingField === field || (field === 'push_lifer_enabled' && !user[field] && lifeListSize < MIN_LIFE_LIST)} onChange={togglePreference} />
                 </div>
               </div>
-              {field === 'push_notable_enabled' && (
-                <div className='notification notification--sub notification--nested'>
-                  <div className='notification__text'>
-                    <label htmlFor='notable_skip_seen'>{t('alertCenter.skipSeen.label')}</label>
-                    <p className='notification__hint'>
-                      {skipSeenBlocked ? <Trans i18nKey='alertCenter.skipSeen.needsLifeList' components={{ page: <Link to='/life-list' /> }} /> : t('alertCenter.skipSeen.hint')}
-                    </p>
-                  </div>
-                  <div className='notification__controls'>
-                    <input className='switch switch--small' type='checkbox' id='notable_skip_seen' name='notable_skip_seen' checked={Boolean(user.notable_skip_seen)}
-                      disabled={pendingField === 'notable_skip_seen' || skipSeenBlocked} onChange={toggleSkipSeen} />
-                  </div>
-                </div>
-              )}
+              {field === 'push_notable_enabled' && skipSeenOption('notable_skip_seen', 'hint')}
               {field === 'push_notable_enabled' && (
                 <fieldset className='timing' disabled={!pushOn || !user.push_notable_enabled || pendingField === 'push_notable_batched'}>
                   <legend className='visually-hidden'>{t('alertCenter.timingLegend')}</legend>
@@ -237,16 +241,16 @@ const AlertCenter = () => {
       <AlertRange />
 
       {EMAIL_PREFERENCES.map(({ field, preview }) => (
-        <div className='notification' key={field}>
+        <div className={`notification ${field === 'rare_sightings_email_enabled' ? 'notification--has-nested' : ''}`} key={field}>
           <div className='notification__text'>
             <label htmlFor={field}>{t(`alertCenter.email.${field}.label`)}</label>
             <p className='notification__hint'>{t(`alertCenter.email.${field}.hint`)}</p>
-            {field === 'rare_sightings_email_enabled' && user.notable_skip_seen && <p className='notification__hint' data-testid='skip-seen-email-note'>{t('alertCenter.skipSeen.emailNote')}</p>}
             <button type='button' className='test-push test-push--inline' data-preview={preview} onClick={() => previewEmail(preview, field)}>{t('alertCenter.sendNow')}</button>
           </div>
           <div className='notification__controls'>
             <input className='switch' type="checkbox" id={field} name={field} checked={Boolean(user[field])} disabled={pendingField === field} onChange={togglePreference} />
           </div>
+          {field === 'rare_sightings_email_enabled' && skipSeenOption('notable_skip_seen_email', 'hintEmail')}
         </div>
       ))}
     </section>

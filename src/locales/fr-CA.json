@@ -113,8 +113,8 @@
     "skipSeen": {
       "label": "Ignorer les oiseaux déjà sur ma liste à vie",
       "hint": "Les oiseaux de ta liste de suivi passent quand même. S’applique aussi au courriel des observations peu communes.",
-      "needsLifeList": "<page>Importe d’abord ta liste à vie</page>",
-      "emailNote": "Ignore les oiseaux de ta liste à vie"
+      "hintEmail": "Les oiseaux de ta liste de suivi passent quand même. S’applique aussi aux notifications push des observations notables.",
+      "needsLifeList": "<page>Importe d’abord ta liste à vie</page>"
     },
     "quiet": "Heures de silence",
     "quietOn": "Aucune notification entre {{from}} et {{to}} ; elles arrivent après.",
