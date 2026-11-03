@@ -5,7 +5,7 @@
  * person and event is invented. Rules, also in README.md:
  *  - only public eBird hotspots, never a personal location or anyone's yard;
  *  - no observer names; group members are invented first names;
- *  - checklist IDs are fake (S9000xxxx) and lead nowhere real.
+ *  - checklist IDs (S9000…) and location IDs (L99…) are past any eBird has issued.
  */
 
 /** The morning everything is rendered at: Saturday 25 April 2026, 7:12 am in Georgia. */
@@ -61,20 +61,20 @@ export const SPECIES = {
 /** Public eBird hotspots (names as eBird has them) with their rough coordinates. IDs are made up. */
 const HOT = {
   // Hall County, GA
-  elachee: { locId: 'L9100001', locName: 'Elachee Nature Science Center', lat: 34.2593, lng: -83.8474 },
-  laurel: { locId: 'L9100002', locName: 'Laurel Park', lat: 34.3448, lng: -83.8340 },
-  longwood: { locId: 'L9100003', locName: 'Lake Lanier--Longwood Park', lat: 34.3061, lng: -83.8346 },
-  doncarter: { locId: 'L9100004', locName: 'Don Carter State Park', lat: 34.3887, lng: -83.7462 },
-  rockcreek: { locId: 'L9100005', locName: 'Rock Creek Greenway', lat: 34.3000, lng: -83.8290 },
-  wilshire: { locId: 'L9100006', locName: 'Wilshire Trails', lat: 34.3120, lng: -83.8140 },
+  elachee: { locId: 'L99100001', locName: 'Elachee Nature Science Center', lat: 34.2593, lng: -83.8474 },
+  laurel: { locId: 'L99100002', locName: 'Laurel Park', lat: 34.3448, lng: -83.8340 },
+  longwood: { locId: 'L99100003', locName: 'Lake Lanier--Longwood Park', lat: 34.3061, lng: -83.8346 },
+  doncarter: { locId: 'L99100004', locName: 'Don Carter State Park', lat: 34.3887, lng: -83.7462 },
+  rockcreek: { locId: 'L99100005', locName: 'Rock Creek Greenway', lat: 34.3000, lng: -83.8290 },
+  wilshire: { locId: 'L99100006', locName: 'Wilshire Trails', lat: 34.3120, lng: -83.8140 },
   // Cochise County, AZ
-  ramsey: { locId: 'L9200001', locName: 'Ramsey Canyon Preserve', lat: 31.4459, lng: -110.3062 },
-  carr: { locId: 'L9200002', locName: 'Carr Canyon', lat: 31.4290, lng: -110.2880 },
-  eop: { locId: 'L9200003', locName: 'Sierra Vista Environmental Operations Park', lat: 31.5928, lng: -110.2290 },
-  sanpedro: { locId: 'L9200004', locName: 'San Pedro House', lat: 31.5476, lng: -110.1342 },
-  whitewater: { locId: 'L9200005', locName: 'Whitewater Draw Wildlife Area', lat: 31.3410, lng: -109.7180 },
-  cavecreek: { locId: 'L9200006', locName: 'Cave Creek Canyon--South Fork', lat: 31.8730, lng: -109.1880 },
-  huachuca: { locId: 'L9200007', locName: 'Huachuca Canyon', lat: 31.5370, lng: -110.3900 }
+  ramsey: { locId: 'L99200001', locName: 'Ramsey Canyon Preserve', lat: 31.4459, lng: -110.3062 },
+  carr: { locId: 'L99200002', locName: 'Carr Canyon', lat: 31.4290, lng: -110.2880 },
+  eop: { locId: 'L99200003', locName: 'Sierra Vista Environmental Operations Park', lat: 31.5928, lng: -110.2290 },
+  sanpedro: { locId: 'L99200004', locName: 'San Pedro House', lat: 31.5476, lng: -110.1342 },
+  whitewater: { locId: 'L99200005', locName: 'Whitewater Draw Wildlife Area', lat: 31.3410, lng: -109.7180 },
+  cavecreek: { locId: 'L99200006', locName: 'Cave Creek Canyon--South Fork', lat: 31.8730, lng: -109.1880 },
+  huachuca: { locId: 'L99200007', locName: 'Huachuca Canyon', lat: 31.5370, lng: -110.3900 }
 }
 
 /** Bird photos are served from here; render.mjs answers it from Wikipedia's lead images, cached. */

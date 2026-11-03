@@ -224,6 +224,7 @@ const SCREENS = [
       await page.addStyleTag({ content: '.alerts-list { flex-direction: column; gap: 60px !important; overflow: visible !important; -webkit-mask-image: none !important; mask-image: none !important; padding: 24px !important; } .alerts-collapse, .alerts-collapse__inner, #birdAlerts { overflow: visible !important; }' })
     },
     shot: async (page) => {
+      /** @type {Record<string, Buffer>} */
       const out = {}
       const cards = page.locator('.alerts-list .alerts-item')
       for (let i = 0; i < await cards.count(); i++) {

@@ -27,7 +27,9 @@
     "test:e2e": "cypress run --browser electron",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:webkit": "playwright test"
+    "test:webkit": "playwright test",
+    "slides": "node marketing/render.mjs",
+    "slides:check": "eslint marketing && tsc -p marketing/tsconfig.json"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -7,7 +7,7 @@ import cypress from 'eslint-plugin-cypress'
 import query from '@tanstack/eslint-plugin-query'
 
 export default tseslint.config(
-  { ignores: ['dist', 'build', 'node_modules'] },
+  { ignores: ['dist', 'build', 'node_modules', 'marketing/.cache', 'marketing/out'] },
   {
     files: ['src/**/*.{ts,tsx}', 'vite.config.mts'],
     extends: [js.configs.recommended, ...tseslint.configs.recommended, ...query.configs['flat/recommended']],
@@ -22,5 +22,11 @@ export default tseslint.config(
     files: ['cypress/**/*.js', 'cypress.config.js'],
     extends: [js.configs.recommended, cypress.configs.recommended],
     languageOptions: { globals: { ...globals.browser, ...globals.node } }
+  },
+  {
+    // The marketing renderer: Node, plus the functions it runs inside the page.
+    files: ['marketing/**/*.mjs'],
+    extends: [js.configs.recommended],
+    languageOptions: { ecmaVersion: 2022, sourceType: 'module', globals: { ...globals.node, ...globals.browser } }
   }
 )
