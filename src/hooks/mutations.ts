@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { releaseThisDevice } from './usePushNotifications'
-import { deleteAccount, deleteEvent, deleteEventTally, joinEvent, leaveEvent, patchEvent, patchEventMember, postEvent, postEventTally, putEventTargets, rotateEventInvite, startEventInvite, deletePlace, patchPlace, postPlace, putPlaceSeen, putPlaceTargets, deleteSavedBird, deleteSeenBird, importLifeList, logout, patchUser, postSavedBird, postSeenBird, putSavedRoute } from '../apiCalls'
+import { deleteAccount, deleteEvent, deleteEventTally, joinEvent, leaveEvent, patchEvent, patchEventMember, postEvent, postEventTally, putEventTargets, postEventScoutingEmail, rotateEventInvite, startEventInvite, deletePlace, patchPlace, postPlace, putPlaceSeen, putPlaceTargets, deleteSavedBird, deleteSeenBird, importLifeList, logout, patchUser, postSavedBird, postSeenBird, putSavedRoute } from '../apiCalls'
 import { clearLocalRoutes } from '../routePlan'
 import { queryKeys } from './queries'
 import type { Bird, EventInput, GroupEvent, Id, PlaceInput, SeenBird, User } from '../types'
@@ -192,3 +192,5 @@ export const useEventTallyMutation = () => {
   })
 }
 
+/** Emails the event's scouting report to me now. Nothing cached changes, so nothing is refetched. */
+export const useEventScoutingEmailMutation = () => useMutation({ mutationFn: (id: Id) => postEventScoutingEmail(id) })

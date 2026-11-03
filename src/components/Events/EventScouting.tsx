@@ -8,6 +8,8 @@ import RouteEditor from '../RouteEditor/RouteEditor'
 import { useGroupRoute } from './useGroupRoute'
 import { customRoute, speciesByPlace } from './customRoute'
 import { useDriveQuery, useEventRouteQuery, useEventScoutingQuery } from '../../hooks/queries'
+import { useEventScoutingEmailMutation } from '../../hooks/mutations'
+import { ApiError, errorMessage } from '../../apiCalls'
 import type { PlanPoint } from '../../routePlan'
 import { clockTime, daysUntil, t } from '../../i18n'
 import { editedAgo } from './editedAgo'
@@ -102,6 +104,20 @@ const PlaceCard = ({ place, n, active, open, onOpen, lifers }: { place: Place; n
   )
 }
 
+/** What the server said about the last "email me" press, as one short line. */
+const EmailNote = ({ result, error }: { result: { to: string } | undefined; error: unknown }) => {
+  if (result) return <span className='event-scouting__email-note' role='status'>{t('scoutingView.emailSent', { to: result.to })}</span>
+  if (!error) return null
+  const data = error instanceof ApiError && typeof error.data === 'object' && error.data !== null ? error.data as { error?: string; retry_after_min?: number } : null
+  const code = data?.error
+  const line = code === 'confirm_email'
+    ? <Trans i18nKey='scoutingView.emailConfirm' components={{ a: <Link className='link-text' to='/settings' /> }} />
+    : code === 'too_many' ? t('scoutingView.emailTooMany', { count: Math.max(1, Math.ceil(Number(data?.retry_after_min) || 1)) })
+      : code === 'mail_cap' ? t('scoutingView.emailBusy')
+        : errorMessage(error)
+  return <span className='place-form__error event-scouting__email-note' role='alert'>{line}</span>
+}
+
 /**
  * Where an event's target birds have been reported lately in its area, and which haven't been: the
  * morning scouting report, any time. A summary, a map of numbered places, a card per place (most
@@ -109,6 +125,9 @@ const PlaceCard = ({ place, n, active, open, onOpen, lifers }: { place: Place; n
  */
 const EventScouting = ({ event }: { event: GroupEvent }) => {
   const scouting = useEventScoutingQuery(event.id)
+  // Any member can have the report mailed now, even with nothing in it yet; the server says when the event is over.
+  const email = useEventScoutingEmailMutation()
+  const emailOver = email.error instanceof ApiError && (email.error.data as { error?: string } | null)?.error === 'event_over'
   const data = scouting.data
   const lifers = data?.using === 'likely_lifers'
   const places = useMemo(() => groupByPlace(data?.reported ?? []), [data?.reported])
@@ -232,6 +251,14 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
   return (
     <div className='event-page__section event-scouting' data-testid='event-scouting'>
       <p className='place__heading'>{head}</p>
+      {!emailOver && (
+        <p className='place__actions event-scouting__email'>
+          <button type='button' className='pill-button pill-button--small' disabled={email.isPending} onClick={() => email.mutate(event.id)}>
+            {email.isPending ? t('common.sending') : t('scoutingView.emailNow')}
+          </button>
+          {!email.isPending && <EmailNote result={email.data} error={email.error} />}
+        </p>
+      )}
       {scouting.isPending && <LoadingState variant='inline' label={t('scoutingView.loading')} />}
       {scouting.isError && <p className='notification__hint'>{t('scoutingView.failed')}</p>}
       {data && (

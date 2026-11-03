@@ -914,7 +914,13 @@
     "morePlaces_other": "Show {{count}} more places",
     "missing": "Still missing",
     "missingHint": "Nothing reported nearby in 2 weeks.",
-    "unconfirmed": "{{name}} (unconfirmed)"
+    "unconfirmed": "{{name}} (unconfirmed)",
+    "emailNow": "Email me the scouting report now",
+    "emailSent": "Sent to {{to}}. Check your inbox.",
+    "emailConfirm": "<a>Confirm your email address first</a>",
+    "emailTooMany_one": "You’ve asked for a few already. Try again in {{count}} minute.",
+    "emailTooMany_other": "You’ve asked for a few already. Try again in {{count}} minutes.",
+    "emailBusy": "Email is busy right now. Try again later."
   },
   "eventRoute": {
     "plan": "Plan a route",
