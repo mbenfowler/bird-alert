@@ -7,6 +7,7 @@ import { useEventPreviewQuery, useSessionQuery } from '../../hooks/queries'
 import { useJoinEventMutation } from '../../hooks/mutations'
 import { dateRange, t } from '../../i18n'
 import { forgetJoin, rememberJoin } from './pendingJoin'
+import { forgetNext, useLoginHere } from '../../returnTo'
 import '../AlertCenter/Places.css'
 import './Events.css'
 
@@ -21,6 +22,7 @@ const JoinEvent = () => {
   const user = session.isError ? null : session.data
   const preview = useEventPreviewQuery(token)
   const join = useJoinEventMutation()
+  const loginHere = useLoginHere()
   const [name, setName] = useState('')
   const [problem, setProblem] = useState<string | null>(null)
 
@@ -35,7 +37,7 @@ const JoinEvent = () => {
     if (!name.trim()) return setProblem(t('events.pickName'))
     setProblem(null)
     join.mutate({ token, displayName: name.trim() }, {
-      onSuccess: (joined) => { forgetJoin(); toast.success(t('events.joined'), { position: 'bottom-center' }); navigate(`/events/${encodeURIComponent(String(joined.id))}`) },
+      onSuccess: (joined) => { forgetJoin(); forgetNext(); toast.success(t('events.joined'), { position: 'bottom-center' }); navigate(`/events/${encodeURIComponent(String(joined.id))}`) },
       onError: (error) => setProblem(errorMessage(error))
     })
   }
@@ -65,7 +67,7 @@ const JoinEvent = () => {
           </form>
         : <div className='event-page__join'>
             <p>{t('events.joinSignIn')}</p>
-            <Link className='pill-button pill-button--primary' to='/login'>{t('events.joinSignInButton')}</Link>
+            <Link className='pill-button pill-button--primary' to={loginHere}>{t('events.joinSignInButton')}</Link>
           </div>}
     </section>
   )

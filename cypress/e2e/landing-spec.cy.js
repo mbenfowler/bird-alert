@@ -68,7 +68,7 @@ describe('Shared links', () => {
     cy.get('.shared__stops > li').should('have.length', 2).last().should('contain', '↓ 22 min drive · 14.1 mi')
     cy.get('.sightings-map .map-stop').should('have.length', 2)
     cy.contains('a', 'Open the route in Maps').should('have.attr', 'href').and('include', 'destination=34.39%2C-83.81').and('not.include', 'origin=')
-    cy.contains('.shared__invite a', 'Start free').should('have.attr', 'href', '/login')
+    cy.contains('.shared__invite a', 'Start free').should('have.attr', 'href', '/login?next=%2Fshare%2Fr%2Froute12345')
   })
 
   it('a shared sighting shows the bird, the place and the way there', () => {

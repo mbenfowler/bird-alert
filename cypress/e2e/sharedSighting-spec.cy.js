@@ -15,7 +15,7 @@ describe('A shared sighting', () => {
     cy.contains('h1', 'Mottled Owl')
     cy.get('.shared__restricted').should('contain', 'Restricted access: this spot is private or by arrangement.')
     cy.get('.shared__pitch').should('contain', 'Bird Alert sends alerts like this the moment a rare bird is reported near you. Free, no ads.')
-      .contains('a', 'Get alerts for my area').should('have.attr', 'href', '/login')
+      .contains('a', 'Get alerts for my area').should('have.attr', 'href', '/login?next=%2Fshare%2Fs%2Fowl1234567')
     cy.get('.shared__invite').should('exist')
     cy.contains('a', 'Open in Bird Alert').should('not.exist')
     // No share sheet on a computer: the page's own link is copied.
