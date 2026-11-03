@@ -59,12 +59,14 @@ const open = ({ route, user = TEST_USER, geo = null, stored = null, setup = null
   // The group's saved route, kept by a fake server: versions, a 409 with the current record when stale.
   cy.intercept('GET', '**/api/saved?kind=event-route-plan*', (req) => req.reply({ statusCode: 200, body: plan.record })).as('plan')
   cy.intercept('PUT', '**/api/saved?kind=event-route-plan*', (req) => {
-    if (plan.fail) { plan.fail -= 1; return req.reply({ statusCode: 500, body: { error: 'boom' } }) }
+    // plan.delay: a slow server, so Saving… shows for a while.
+    const delay = plan.delay || 0
+    if (plan.fail) { plan.fail -= 1; return req.reply({ statusCode: 500, body: { error: 'boom' }, delay }) }
     if (req.body.version !== plan.record.version) return req.reply({ statusCode: 409, body: { error: 'Someone changed the route', current: plan.record } })
     plan.record = { start: req.body.start, stops: req.body.stops, version: plan.record.version + 1, updated_at: new Date().toISOString(), updated_by_name: 'Matt', updated_by_you: true }
     // The server adds what it works out: each stop's suggested stay, the legs and totals.
     if (plan.decorate) plan.record = plan.decorate(plan.record)
-    req.reply({ statusCode: 200, body: plan.record })
+    req.reply({ statusCode: 200, body: plan.record, delay })
   }).as('savePlan')
   cy.intercept('DELETE', '**/api/saved?kind=event-route-plan*', (req) => {
     if (Number(new URL(req.url).searchParams.get('version')) !== plan.record.version) return req.reply({ statusCode: 409, body: { error: 'Someone changed the route', current: plan.record } })
@@ -463,7 +465,7 @@ describe('Event route', () => {
         cy.wait('@plan')
         cy.wait('@drive')
         texts('[data-testid="route-stop"] .event-route__stay').should('deep.equal', ['Stay 1 h', 'Stay 40 min suggested'])
-        texts('[data-testid="route-stop"] .event-route__leg').should('deep.equal', ['↓ 10 min · 5 mi'])
+        cy.get('[data-testid="route-stop"] .event-route__leg').should('have.length', 1).and('have.text', '↓ 10 min · 5 mi')
         cy.get('[data-testid="route-totals"]').should('have.text', 'Driving 10 min · At stops 1 h 40 min · Total 1 h 50 min')
       })
 
@@ -599,6 +601,73 @@ describe('Event route', () => {
       it('− and + never move on a phone either', () => {
         cy.viewport(375, 740)
         buttonsStayPut()
+        cy.document().then(doc => expect(doc.documentElement.scrollWidth).to.be.at.most(375))
+      })
+
+      // Saving…, Saved, a failed save with its retry and someone else's change all come and go
+      // while the stays are tapped; no stepper button moves, across or down.
+      const nothingMovesWhileSaving = () => {
+        const plan = { ...savedPlan(), delay: 600 }
+        const buttons = '[data-testid="route-editor"] .go__stay-step'
+        // Measured on the page, not the window: Cypress scrolls a button into view to tap it.
+        const at = () => cy.get(buttons).then(els => [...els].map(el => {
+          const r = el.getBoundingClientRect()
+          const win = el.ownerDocument.defaultView
+          return [r.x + win.scrollX, r.y + win.scrollY]
+        }))
+        const still = (start) => at().should((now) => {
+          expect(now).to.have.length(start.length)
+          now.forEach(([x, y], i) => {
+            expect(Math.abs(x - start[i][0]), `button ${i} x`).to.be.at.most(0.5)
+            expect(Math.abs(y - start[i][1]), `button ${i} y`).to.be.at.most(0.5)
+          })
+        })
+        const status = () => cy.get('[data-testid="route-status"]')
+        open({ route: timed(), plan, setup: stubDrive })
+        cy.contains('button', 'Plan a route').click()
+        cy.wait('@plan')
+        cy.contains('button', 'Edit route').click()
+        cy.get(buttons).should('have.length', 4)
+        stepper(1).find('.go__stay-value').should('have.text', '40 min')
+        status().should('have.class', 'is-empty')
+        at().then((start) => {
+          // Several stays, each saved a moment later: Saving… while the slow PUT is out, then Saved.
+          ;[['More', 'Cave Creek Canyon', '45 min', 1], ['More', 'Southwestern Research Station', '30 min', 0], ['Less', 'Cave Creek Canyon', '40 min', 1]].forEach(([which, name, text, i]) => {
+            cy.get(`[aria-label="${which} time at ${name}"]`).click()
+            still(start)
+            stepper(i).find('.go__stay-value').should('have.text', text)
+            status().should('contain', 'Saving…')
+            still(start)
+            cy.wait('@savePlan')
+            status().should('contain', 'Saved')
+            still(start)
+          })
+          // A failed save: the retry line, then Try again.
+          cy.wrap(null).then(() => { plan.fail = 1 })
+          cy.get('[aria-label="Less time at Southwestern Research Station"]').click()
+          cy.contains('[data-testid="route-status"] .event-route__save', 'Couldn’t save the route.')
+          still(start)
+          cy.contains('[data-testid="route-status"] button', 'Try again').click()
+          status().should('contain', 'Saved')
+          still(start)
+          // Someone else saved meanwhile: their route (the same stops) comes in, with a line saying so.
+          cy.wrap(null).then(() => { plan.record = decorate({ ...plan.record, version: plan.record.version + 1, updated_by_name: 'Sam', updated_by_you: false }) })
+          cy.get('[aria-label="More time at Cave Creek Canyon"]').click()
+          cy.contains('[data-testid="route-status"]', 'Sam just changed the route.')
+          still(start)
+          // The next tap clears that line; still nothing moves.
+          cy.get('[aria-label="More time at Cave Creek Canyon"]').click()
+          still(start)
+          status().should('contain', 'Saved')
+          still(start)
+        })
+      }
+
+      it('nothing moves while edits save, fail, retry or meet someone else’s', nothingMovesWhileSaving)
+
+      it('nothing moves while edits save, on a phone too', () => {
+        cy.viewport(375, 740)
+        nothingMovesWhileSaving()
         cy.document().then(doc => expect(doc.documentElement.scrollWidth).to.be.at.most(375))
       })
 

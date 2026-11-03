@@ -340,13 +340,16 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
                   <button type='button' className='link-button link-text' onClick={group.declineOffer}>{t('eventRoute.offerDiscard')}</button>
                 </p>
               )}
-              {group.note && <p className='notification__hint event-route__changed' role='status'>{group.note.updated_by_name ? t('eventRoute.changedBy', { name: group.note.updated_by_name }) : t('eventRoute.changed')}</p>}
-              {group.status !== 'idle' && (
-                <p className='event-route__note event-route__save' role='status'>
-                  {group.status === 'saving' ? t('eventRoute.saving') : group.status === 'saved' ? t('eventRoute.saved') : t('eventRoute.saveFailed')}
-                  {group.status === 'failed' && <> <button type='button' className='link-button link-text' onClick={group.retry}>{t('eventRoute.retry')}</button></>}
-                </p>
-              )}
+              {/* Saving…, Saved, a failed save and someone else's change share one line that is always
+                  there at the same height, so nothing below it moves while someone is tapping. */}
+              <p className={`event-route__status ${group.status === 'idle' && !group.note ? 'is-empty' : ''}`} role='status' data-testid='route-status'>
+                {group.status !== 'idle'
+                  ? <span className='event-route__save'>
+                      {group.status === 'saving' ? t('eventRoute.saving') : group.status === 'saved' ? t('eventRoute.saved') : t('eventRoute.saveFailed')}
+                      {group.status === 'failed' && <> <button type='button' className='link-button link-text' onClick={group.retry}>{t('eventRoute.retry')}</button></>}
+                    </span>
+                  : group.note && <span className='event-route__changed'>{group.note.updated_by_name ? t('eventRoute.changedBy', { name: group.note.updated_by_name }) : t('eventRoute.changed')}</span>}
+              </p>
               {editing
                 ? <div className='go__route is-editing event-route__editor' data-testid='route-editor'>
                     <RouteEditor state={event.state} stops={shownStops} start={start ? { locId: null, ...start } : null} editing
