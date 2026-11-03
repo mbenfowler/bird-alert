@@ -1100,6 +1100,19 @@
     "skipped_many": "{{count}} autres lieux n’ont que des oiseaux que tu verrais déjà.",
     "skipped_other": "{{count}} autres lieux n’ont que des oiseaux que tu verrais déjà."
   },
+  "routeTimes": {
+    "stay": "Sur place : {{time}}",
+    "stayLabel": "Sur place",
+    "suggested": "suggéré",
+    "useSuggested": "revenir au temps suggéré",
+    "less": "Moins de temps à {{name}}",
+    "more": "Plus de temps à {{name}}",
+    "type": "Temps à {{name}} : {{time}}. Touche pour taper les minutes",
+    "input": "Minutes à {{name}}",
+    "unknown": "–",
+    "totals": "Route {{drive}} · Arrêts {{stay}} · <b>Total {{total}}</b>",
+    "totalsNoDrive": "Arrêts {{stay}}"
+  },
   "season": {
     "collecting": "On recueille encore une année de mentions pour {{regionName}} ; reviens dans un jour ou deux.",
     "label": "Mois où on signale {{name}} ({{regionName}})",

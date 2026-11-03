@@ -1083,6 +1083,19 @@
     "skipped_many": "{{count}} lugares más solo tienen aves que ya verías.",
     "skipped_other": "{{count}} lugares más solo tienen aves que ya verías."
   },
+  "routeTimes": {
+    "stay": "Tiempo ahí: {{time}}",
+    "stayLabel": "Tiempo ahí",
+    "suggested": "sugerido",
+    "useSuggested": "usar el sugerido",
+    "less": "Menos tiempo en {{name}}",
+    "more": "Más tiempo en {{name}}",
+    "type": "Tiempo en {{name}}: {{time}}. Toca para escribir los minutos",
+    "input": "Minutos en {{name}}",
+    "unknown": "–",
+    "totals": "Manejo {{drive}} · En paradas {{stay}} · <b>Total {{total}}</b>",
+    "totalsNoDrive": "En paradas {{stay}}"
+  },
   "season": {
     "collecting": "Todavía estamos reuniendo un año de reportes de {{regionName}}; vuelve en uno o dos días.",
     "label": "Meses en que se reporta {{name}} en {{regionName}}",
