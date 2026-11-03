@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import ErrorMessage from '../Error/ErrorMessage'
 import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
@@ -39,6 +39,8 @@ const EventRow = ({ event }: { event: GroupEvent }) => {
  */
 const EventsPage = () => {
   const events = useEventsQuery()
+  // Arrived from an old trip link (see oldTripId): say where trips went.
+  const tripsMoved = Boolean((useLocation().state as { tripsMoved?: boolean } | null)?.tripsMoved)
   const [showArchived, setShowArchived] = useState(false)
   const all = events.data ?? []
   const upcoming = all.filter(e => !e.archived && !isPast(e))
@@ -51,6 +53,7 @@ const EventsPage = () => {
         <h1 className='fredericka event-page__title'>{t('events.pageTitle')}</h1>
         <Link className='pill-button pill-button--primary' to='/events/new'>{t('events.new')}</Link>
       </div>
+      {tripsMoved && <p className='notification__hint events-page__moved' role='status' data-testid='trips-moved'>{t('events.tripsMoved')}</p>}
       <p className='notification__hint'>{t('events.pageHint')}</p>
       {events.isPending && <LoadingState />}
       {events.isError && <ErrorMessage networkError={errorMessage(events.error)} />}
