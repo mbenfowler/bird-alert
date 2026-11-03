@@ -211,11 +211,24 @@ const SCREENS = [
   },
   {
     name: 'alerts', path: '/?region=US-AZ-003', ready: '#notable',
-    before: async (page) => { await page.click('#notable'); await page.waitForSelector('.alerts-list .alert-card[data-aba="5"]') },
+    before: async (page) => {
+      await page.click('#notable')
+      await page.waitForSelector('.alerts-list .alert-card[data-aba="5"]')
+      // The cards are shot one by one, so lay the row out as a column with nothing clipped or faded;
+      // the cards themselves are drawn as the app draws them.
+      await page.addStyleTag({ content: '.alerts-list { flex-direction: column; gap: 60px !important; overflow: visible !important; -webkit-mask-image: none !important; mask-image: none !important; padding: 24px !important; } .alerts-collapse, .alerts-collapse__inner, #birdAlerts { overflow: visible !important; }' })
+    },
     shot: async (page) => {
       const out = {}
       const cards = page.locator('.alerts-list .alerts-item')
-      for (let i = 0; i < await cards.count(); i++) out[`alert-${i + 1}`] = await cards.nth(i).screenshot()
+      for (let i = 0; i < await cards.count(); i++) {
+        // With a margin, so the card's heat glow fades into the grey instead of stopping at a hard edge.
+        await cards.nth(i).scrollIntoViewIfNeeded()
+        const box = await cards.nth(i).boundingBox()
+        if (!box) continue
+        const pad = 18
+        out[`alert-${i + 1}`] = await page.screenshot({ clip: { x: box.x - pad, y: box.y - pad, width: box.width + pad * 2, height: box.height + pad * 2 } })
+      }
       return out
     }
   },
