@@ -1110,7 +1110,7 @@
     "type": "Temps à {{name}} : {{time}}. Touche pour taper les minutes",
     "input": "Minutes à {{name}}",
     "unknown": "–",
-    "totals": "Route {{drive}} · Arrêts {{stay}} · <b>Total {{total}}</b>",
+    "totals": "Conduite {{drive}} · Arrêts {{stay}} · <b>Total {{total}}</b>",
     "totalsNoDrive": "Arrêts {{stay}}"
   },
   "season": {
