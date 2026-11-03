@@ -18,7 +18,7 @@ import { shareThing } from '../../share'
 import type { GoPlace } from '../../types'
 import AccuracyBadge from '../AccuracyBadge/AccuracyBadge'
 import './WhereToGo.css'
-import { countyWord } from '../../usStates'
+import { areaWord } from '../../usStates'
 import { number, t } from '../../i18n'
 import { Trans } from 'react-i18next'
 
@@ -37,7 +37,7 @@ const WhereToGo = () => {
   const seenAt = useShownSeen(user)
   const { custom, setCustom, start, setStart, saveFailed, seen, lifers, setLiferMode, codes, go, route, stops } = useGoPlan(region, targets, seenAt)
   const regions = useRegionsQuery(user.state)
-  const regionName = regions.data?.find(r => r.code === region)?.name ?? t('range.yourCounty', { word: countyWord(user.state) })
+  const regionName = regions.data?.find(r => r.code === region)?.name ?? t('range.yourCounty', areaWord(user.state))
   const [selected, setSelected] = useState<string | null>(null)
   // One private place at a time can open its public lands; the map focuses on them meanwhile.
   const [openNearby, setOpenNearby] = useState<string | null>(null)
@@ -197,7 +197,7 @@ const WhereToGo = () => {
             {!editing && <>
             <h2 className='fredericka go__subhead'>{t('go.bestPlaces')}</h2>
             {!places.length && <p className='list-note go__empty'>{gathering
-              ? t('go.gathering', { regionName, word: countyWord(user.state) })
+              ? t('go.gathering', { regionName, ...areaWord(user.state) })
               : t('go.noneReported', { regionName })}</p>}
             <ol className='go__places'>
               {places.map(place => (

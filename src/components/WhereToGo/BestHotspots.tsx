@@ -7,7 +7,7 @@ import { errorMessage } from '../../apiCalls'
 import { useBestHotspotsQuery, useBirdsQuery, useRegionsQuery, useSpeciesHotspotsQuery } from '../../hooks/queries'
 import { useShownArea, useShownTargets } from '../../shownArea'
 import { useDocked } from '../../hooks/useDocked'
-import { countyWord } from '../../usStates'
+import { areaWord } from '../../usStates'
 import { useGoPlan } from '../../hooks/useGoPlan'
 import { MAX_ROUTE_STOPS } from '../../routePlan'
 import BirdPicker from './BirdPicker'
@@ -77,7 +77,7 @@ const BestHotspots = ({ onOpenRoute }: { onOpenRoute: () => void }) => {
     ?? birds.data?.find(b => b.speciesCode === species)?.comName ?? null
   const shown = species ? forBird : best
   const regions = useRegionsQuery(user.state)
-  const regionName = regions.data?.find(r => r.code === region)?.name ?? t('range.yourCounty', { word: countyWord(user.state) })
+  const regionName = regions.data?.find(r => r.code === region)?.name ?? t('range.yourCounty', areaWord(user.state))
   const [selected, setSelected] = useState<string | null>(null)
 
   const rows = useMemo<Row[]>(() => species
@@ -169,7 +169,7 @@ const BestHotspots = ({ onOpenRoute }: { onOpenRoute: () => void }) => {
           <div className='go__list-col'>
             <div className='go__scroll'>
               {!rows.length && <p className='list-note go__empty'>{gathering
-                ? t('best.gathering', { regionName, word: countyWord(user.state) })
+                ? t('best.gathering', { regionName, ...areaWord(user.state) })
                 : species
                   ? t('best.noneBird', { regionName, bird: birdName ?? t('best.thisBird'), period: t(period.phrase) })
                   : t('best.none', { regionName, period: t(period.phrase) })}</p>}

@@ -113,6 +113,16 @@ const COUNTY_WORDS: Record<string, 'county' | 'municipality'> = { US: 'county', 
 const countyKind = (state: string) => COUNTY_WORDS[countryOf(state)] ?? 'area'
 export const countyWord = (state: string) => t(`county.word.${countyKind(state)}`)
 
+/**
+ * The word for a sentence's {{word}}, with its kind as the i18next context, so a language whose
+ * words differ in gender can agree with it ("ton comté", "ta municipalité"): t(key, { ...areaWord(state) }).
+ */
+export const areaWord = (state: string) => areaWordOfKind(countyKind(state))
+export const areaWordOfKind = (kind: string) => {
+  const context = kind === 'county' || kind === 'municipality' ? kind : 'area'
+  return { word: t(`county.word.${context}`), context }
+}
+
 /** The same word for a label: "County", "Area" or "Municipality". */
 export const countyLabel = (state: string) => t(`county.label.${countyKind(state)}`)
 

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { CloseIcon, LocateIcon, SearchIcon } from '../Icons/Icons'
 import { errorMessage, getAreaAt, getAreaSearch } from '../../apiCalls'
 import { useCountriesQuery, useProvincesQuery, useRegionsQuery } from '../../hooks/queries'
-import { countryOf, countyName, rememberStateNames } from '../../usStates'
+import { areaWordOfKind, countryOf, countyName, rememberStateNames } from '../../usStates'
 import type { Area } from '../../types'
 import '../PlaceSearch/PlaceSearch.css'
 import './AreaPicker.css'
@@ -116,7 +116,7 @@ const AreaPicker = ({ onPick, startBrowsing = false, current = null }: { onPick:
       )}
       {near && (
         <ul className='place-search__results area-picker__results' aria-label={t('area.yours')}>
-          <li><button type='button' onClick={() => onPick(pickedFrom(near))}><strong>{areaLabel(near)}</strong><span>{t('area.tapToUse', { word: near.countyWord })}</span></button></li>
+          <li><button type='button' onClick={() => onPick(pickedFrom(near))}><strong>{areaLabel(near)}</strong><span>{t('area.tapToUse', areaWordOfKind(near.countyWord))}</span></button></li>
         </ul>
       )}
       {locateNote && <p className='place-search__hint area-picker__note' role='status'>{locateNote}</p>}

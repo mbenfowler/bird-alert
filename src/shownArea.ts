@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useSyncExternalStore } from 'react'
 import { useSearchParams } from 'react-router'
 import { useCurrentUser, usePlaceSeenQuery, usePlacesQuery, useRegionsQuery } from './hooks/queries'
-import { countyName, countyWord, stateOfRegion } from './usStates'
+import { countyName, areaWord, stateOfRegion } from './usStates'
 import { t } from './i18n'
 import type { ActivePlace } from './types'
 
@@ -101,5 +101,5 @@ export const useShownSeen = (shown: ShownArea): Set<string> | null => {
 export const useAreaName = (state: string, region: string) => {
   const regions = useRegionsQuery(state)
   const name = regions.data?.find(r => r.code === region)?.name
-  return name ? countyName(name, state) : t('range.yourCounty', { word: countyWord(state) })
+  return name ? countyName(name, state) : t('range.yourCounty', areaWord(state))
 }

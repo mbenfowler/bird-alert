@@ -4,7 +4,7 @@ import { errorMessage } from '../../apiCalls'
 import { useCurrentUser, useRegionsQuery } from '../../hooks/queries'
 import { usePatchUserMutation } from '../../hooks/mutations'
 import { useDistanceUnit } from '../../distance'
-import { countyName, countyWord, stateName } from '../../usStates'
+import { countyName, areaWord, stateName } from '../../usStates'
 import PlaceSearch from '../PlaceSearch/PlaceSearch'
 import { t } from '../../i18n'
 
@@ -31,7 +31,7 @@ const AlertRange = () => {
   const state = stateName(user.state)
   // Where the home area already is the whole province (no counties there), there's nothing wider to offer.
   const choices = RANGES.filter(mi => mi !== WHOLE_STATE || (user.location ?? '').split('-').length > 2)
-  const label = (mi: number) => mi === 0 ? t('range.justCounty')
+  const label = (mi: number) => mi === 0 ? t('range.justCounty', areaWord(user.state))
     : mi === WHOLE_STATE ? (state ? t('range.wholeState', { name: state }) : t('range.wholeStateUnnamed'))
     : unit === 'km' ? t('range.km', { n: Math.round(mi * 1.609344 / 5) * 5 }) : t('range.mi', { n: mi })
   const ownSpot = user.home_lat != null && user.home_lng != null
@@ -55,7 +55,7 @@ const AlertRange = () => {
       {range > 0 && (
         <div className='alert-range__home'>
           <p className='notification__hint'>
-            {ownSpot ? t('range.fromSpot') : t('range.fromCenter', { place: county ? countyName(county, user.state) : t('range.yourCounty', { word: countyWord(user.state) }) })}{' '}
+            {ownSpot ? t('range.fromSpot') : t('range.fromCenter', { place: county ? countyName(county, user.state) : t('range.yourCounty', areaWord(user.state)) })}{' '}
             {!choosing && <button type='button' className='link-button link-text' onClick={() => setChoosing(true)}>{ownSpot ? t('range.change') : t('range.ownSpot')}</button>}
             {!choosing && ownSpot && <>{' · '}<button type='button' className='link-button link-text' onClick={() => patch.mutate({ home_lat: null, home_lng: null })}>{t('range.useCenter')}</button></>}
           </p>

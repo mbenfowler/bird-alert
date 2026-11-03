@@ -4,7 +4,7 @@ import { toast } from 'react-toastify'
 import { resendConfirmationEmail, requestPasswordReset, errorMessage } from '../../apiCalls'
 import { useCurrentUser, useNameLocalesQuery, useRegionsQuery } from '../../hooks/queries'
 import { usePatchUserMutation } from '../../hooks/mutations'
-import { countyName, countyWord, stateName } from '../../usStates'
+import { countyName, areaWord, stateName } from '../../usStates'
 import AreaPicker from '../AreaPicker/AreaPicker'
 import './Form.css'
 import { t } from '../../i18n'
@@ -90,7 +90,7 @@ const Form = () => {
                 <span className='field__label'>{t('account.where')}</span>
                 {!changingArea && (
                     <p className='settings-card__area'>
-                        <strong data-testid='current-area'>{areaLabel || (form.location ? form.location : t('account.noArea', { word: countyWord(form.state || 'GA') }))}</strong>{' '}
+                        <strong data-testid='current-area'>{areaLabel || (form.location ? form.location : t('account.noArea', areaWord(form.state || 'GA')))}</strong>{' '}
                         <button type='button' className='link-button link-text' onClick={() => setChangingArea(true)}>{t('common.change')}</button>
                     </p>
                 )}

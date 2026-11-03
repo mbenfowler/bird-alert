@@ -4,7 +4,7 @@
  * levelled, kept in public/sounds/alerts (credits in CREDITS.txt there and in BIRD_CALLS here);
  * spoken ones use the device's own voice and say the bird's name. All free.
  */
-import { t } from './i18n'
+import i18n, { t } from './i18n'
 export type AlertKind = 'watchlist' | 'notable' | 'mega' | 'lifer'
 export type SoundGroup = 'Sci-fi' | 'Bird calls' | 'Spoken' | 'Classic' | 'Off'
 export interface PlayContext { bird: string; code: number | null; volume: number; voice?: string | null }
@@ -145,10 +145,22 @@ const VOICES: { label: string; match: RegExp }[] = [
 /** Fallbacks on devices without Daniel (Windows, Android): their natural voices. */
 const FALLBACK_VOICES = [/\b(Natural|Premium|Enhanced)\b/i, /^Google UK English Male/i, /^Google US English/i, /^Microsoft (Ryan|Guy|Aria|Jenny)/i]
 
+/**
+ * The page's language when it isn't English ('es-MX', 'fr-CA'): spoken alerts are in the words of the
+ * page, so they need a voice that speaks it. Null in English, where the hand-picked voices apply.
+ */
+const otherLanguage = () => (/^en\b/i.test(i18n.language || 'en') ? null : i18n.language)
+const speaks = (v: SpeechSynthesisVoice, lang: string) => v.lang.replace('_', '-').toLowerCase().split('-')[0] === lang.toLowerCase().split('-')[0]
+/** This device's voices in that language, its own region's first ('fr-CA' before 'fr-FR'). */
+const voicesIn = (all: SpeechSynthesisVoice[], lang: string) => all.filter((v) => speaks(v, lang))
+  .sort((a, b) => Number(b.lang.replace('_', '-').toLowerCase() === lang.toLowerCase()) - Number(a.lang.replace('_', '-').toLowerCase() === lang.toLowerCase()) || Number(b.localService) - Number(a.localService))
+
 /** The voices on this device that can be chosen, Daniel first: { label, name }. */
 export const alertVoices = (): { label: string; name: string }[] => {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return []
   const all = window.speechSynthesis.getVoices()
+  const lang = otherLanguage()
+  if (lang) return voicesIn(all, lang).map((v) => ({ label: v.name.replace(/\s*\([^)]*\)\s*$/, '').replace(/^(Microsoft|Google)\s+/, '').trim() || v.name, name: v.name }))
   const picked = VOICES.flatMap(({ label, match }) => { const v = all.find((x) => match.test(x.name)); return v ? [{ label, name: v.name }] : [] })
   // The high-quality voices a person downloads (Mac: Premium and Enhanced, which only Safari offers pages; Windows: Natural) are worth offering too.
   // Safari names them plainly ("Matilda") and says "premium" or "enhanced" in the voice's id instead.
@@ -160,6 +172,12 @@ export const alertVoices = (): { label: string; name: string }[] => {
 /** The chosen voice if this device has it, else Daniel, else the device's best natural English voice. */
 const pickVoice = (name?: string | null) => {
   const all = typeof window !== 'undefined' && 'speechSynthesis' in window ? window.speechSynthesis.getVoices() : []
+  // In Spanish or French, the chosen voice if it speaks the language, else the device's best one that does.
+  const lang = otherLanguage()
+  if (lang) {
+    const own = voicesIn(all, lang)
+    return own.find((v) => v.name === name) ?? own[0] ?? null
+  }
   const chosen = all.find((v) => v.name === name) ?? all.find((v) => VOICES[0]!.match.test(v.name))
   if (chosen) return chosen
   const english = all.filter((v) => /^en(-|_|$)/i.test(v.lang))
@@ -174,7 +192,7 @@ const say = (text: (ctx: PlayContext) => string) => (ctx: PlayContext) => new Pr
   const synth = window.speechSynthesis
   const u = new SpeechSynthesisUtterance(text(ctx))
   const voice = pickVoice(ctx.voice)
-  if (voice) { u.voice = voice; u.lang = voice.lang }
+  if (voice) { u.voice = voice; u.lang = voice.lang } else if (otherLanguage()) u.lang = otherLanguage()!
   u.volume = Math.min(1, ctx.volume)
   u.rate = 1
   u.pitch = 1

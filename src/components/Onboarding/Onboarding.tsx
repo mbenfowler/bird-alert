@@ -5,7 +5,7 @@ import { queryKeys, useArrivalsQuery, useBirdsQuery, useCurrentUser, useNotableT
 import { useImportLifeListMutation, usePatchUserMutation } from '../../hooks/mutations'
 import { usePushNotifications } from '../../hooks/usePushNotifications'
 import { useQueryClient } from '@tanstack/react-query'
-import { countyWord, stateName, subnational1 } from '../../usStates'
+import { areaWord, stateName, subnational1 } from '../../usStates'
 import AreaPicker, { type PickedArea } from '../AreaPicker/AreaPicker'
 import type { UserPatch } from '../../types'
 import { isIOS, isStandalone } from '../../install'
@@ -138,7 +138,7 @@ const Onboarding = () => {
           <>
             <h1 className='fredericka onboard__title'>{t('onboard.birdsTitle')}</h1>
             <p className='onboard__lede'>{t('onboard.birdsLede')}</p>
-            {fromState && tiles.length > 0 && <p className='onboard__lede'>{t('onboard.fromState', { word: countyWord(user.state), state: stateName(user.state) ?? t('onboard.yourState') })}</p>}
+            {fromState && tiles.length > 0 && <p className='onboard__lede'>{t('onboard.fromState', { ...areaWord(user.state), state: stateName(user.state) ?? t('onboard.yourState') })}</p>}
             {tiles.length ? (
               <ul className='onboard__tiles'>
                 {tiles.map(({ code, tag, bird }) => {
