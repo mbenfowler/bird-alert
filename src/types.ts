@@ -555,12 +555,30 @@ export interface EventRoutePlan {
   /** The meeting point. */
   start: { name: string; lat: number; lng: number } | null
   /** null follows the suggestion. */
-  stops: { locId: string | null; name: string; lat: number; lng: number }[] | null
+  stops: RoutePlanStop[] | null
   version: number
   updated_at?: string | null
   /** The member's display name for this event, or null. */
   updated_by_name?: string | null
   updated_by_you?: boolean
+  /** The drive into each stop (from the one before, or the start); the first is null with no start. */
+  legs?: ({ min: number; mi: number } | null)[]
+  totals?: { drive_min: number | null; stay_min: number; total_min: number }
+  /** Drive times came from the road router. */
+  routed?: boolean
+}
+
+/** A stop on the group's route. */
+export interface RoutePlanStop {
+  locId: string | null
+  name: string
+  lat: number
+  lng: number
+  /** Minutes the group means to spend here, 0–480; null (or absent) takes the suggestion. */
+  stay_min?: number | null
+  /** What the server suggests for this place, from its targets. */
+  suggested_stay_min?: number | null
+  targets_here?: number
 }
 
 /** An event's scouting picture: its target birds (or likely lifers) reported lately in its area, and those not. */
@@ -606,6 +624,10 @@ export interface EventRoute {
     merged?: { locId: string; locName: string }[]
     /** Every target reported here, for working out what a route of the viewer's own covers. */
     species?: string[]
+    /** Minutes to spend here: the server's suggestion, and on the group's route the group's own (null: the suggestion). */
+    suggested_stay_min?: number | null
+    stay_min?: number | null
+    targets_here?: number
   }[]
   /** Optional stops that add birds but cost a lot of driving, best value first. */
   extras?: {
@@ -628,6 +650,8 @@ export interface EventRoute {
   names?: Record<string, string>
   total_min: number | null
   total_mi: number | null
+  /** The suggested minutes at all the stops together. */
+  stay_min_total?: number
   covered: number
   reported: number
   /** Places with reports whose birds the stops already cover. */

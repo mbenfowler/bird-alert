@@ -54,7 +54,9 @@ export const useGroupRoute = (eventId: Id, open: boolean, editing: boolean) => {
     const version = queryClient.getQueryData<EventRoutePlan>(key)?.version ?? 0
     setStatus('saving')
     try {
-      const record = await putEventRoutePlan(eventId, { start: sent.start, stops: sent.stops, version })
+      // Only what the group chose goes back: the place and its minutes (null: the suggestion's).
+      const stops = sent.stops?.map(({ locId, name, lat, lng, stay_min }) => ({ locId, name, lat, lng, stay_min: stay_min ?? null })) ?? null
+      const record = await putEventRoutePlan(eventId, { start: sent.start, stops, version })
       queryClient.setQueryData(key, record)
       if (draftRef.current === sent) { draftRef.current = null; setDraft(null) }
       setStatus('saved')
@@ -114,7 +116,9 @@ export const useGroupRoute = (eventId: Id, open: boolean, editing: boolean) => {
 
   const current: RoutePlan | null = draft ?? (saved && (saved.stops !== null || saved.start) ? { start: saved.start, stops: saved.stops } : null)
   return {
-    query, saved, current, status, note, retry: () => void save(), edit, reset, resetting,
+    query, saved, current, status, note,
+    /** An edit is waiting to be saved, so the saved record's drive times are for other stops. */
+    unsaved: draft !== null, retry: () => void save(), edit, reset, resetting,
     offer, acceptOffer, declineOffer
   }
 }

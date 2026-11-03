@@ -993,6 +993,19 @@
     "skipped_one": "{{count}} other place only has birds you’d already see.",
     "skipped_other": "{{count}} other places only have birds you’d already see."
   },
+  "routeTimes": {
+    "stay": "Stay {{time}}",
+    "stayLabel": "Stay",
+    "suggested": "suggested",
+    "useSuggested": "use suggested",
+    "less": "Less time at {{name}}",
+    "more": "More time at {{name}}",
+    "type": "Time at {{name}}: {{time}}. Tap to type the minutes",
+    "input": "Minutes at {{name}}",
+    "unknown": "–",
+    "totals": "Driving {{drive}} · At stops {{stay}} · <b>Total {{total}}</b>",
+    "totalsNoDrive": "At stops {{stay}}"
+  },
   "season": {
     "collecting": "We are still collecting a year of reports for {{regionName}}; check back in a day or two.",
     "label": "Months {{name}} is reported in {{regionName}}",
@@ -1308,6 +1321,7 @@
     "addToLifeList": "Add to my life list",
     "pageTitle": "Events",
     "pageHint": "Big Days, trips and mornings out, on your own or with your group: targets, scouting before you go, and a tally on the day.",
+    "tripsMoved": "Trips are now Events. Find yours here.",
     "new": "New event",
     "newTitle": "New event",
     "newHint": "Just you to start. You can invite your group any time.",
