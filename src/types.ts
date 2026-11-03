@@ -546,6 +546,21 @@ export interface EventView {
   targets: { code: string; comName?: string }[]
   tally: { code: string; comName?: string; added_at: string }[]
   count: number
+  /** The group's route, when it has one (no start: the meeting point stays private). */
+  route?: { start: null; stops: EventRoutePlan['stops'] } | null
+}
+
+/** The group's own route for an event, kept on the event so every member sees and edits the same one. */
+export interface EventRoutePlan {
+  /** The meeting point. */
+  start: { name: string; lat: number; lng: number } | null
+  /** null follows the suggestion. */
+  stops: { locId: string | null; name: string; lat: number; lng: number }[] | null
+  version: number
+  updated_at?: string | null
+  /** The member's display name for this event, or null. */
+  updated_by_name?: string | null
+  updated_by_you?: boolean
 }
 
 /** An event's scouting picture: its target birds (or likely lifers) reported lately in its area, and those not. */
@@ -607,6 +622,8 @@ export interface EventRoute {
     species?: string[]
   }[]
   covered_with_extras?: number
+  /** Some eBird reports couldn't be loaded, so the plan may change on refresh. */
+  incomplete?: boolean
   /** Target names by code, for the birds of a route of the viewer's own. */
   names?: Record<string, string>
   total_min: number | null

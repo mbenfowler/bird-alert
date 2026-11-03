@@ -5,11 +5,12 @@ import SightingsMap, { type MapPoint } from '../SightingsMap/SightingsMap'
 import { LoadingState } from '../Loading/Loading'
 import EventRoute, { type RouteBird } from './EventRoute'
 import RouteEditor from '../RouteEditor/RouteEditor'
-import { readChoices, round2, saveChoices, type RouteChoices } from './routeChoices'
+import { useGroupRoute } from './useGroupRoute'
 import { customRoute, speciesByPlace } from './customRoute'
 import { useDriveQuery, useEventRouteQuery, useEventScoutingQuery } from '../../hooks/queries'
 import type { PlanPoint } from '../../routePlan'
 import { clockTime, daysUntil, t } from '../../i18n'
+import { editedAgo } from './editedAgo'
 import { prefersReducedMotion } from '../../routeDraw'
 import type { EventScouting as Scouting, GroupEvent } from '../../types'
 
@@ -121,27 +122,36 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
     if (scrollTo) document.getElementById(cardId(scrollTo.n))?.scrollIntoView({ block: 'center', behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
   }, [scrollTo])
   // The route is only asked for when someone presses Plan a route. The server's plan is the
-  // suggestion; the viewer can make it their own (the shared route editor), and their stops and start
-  // are remembered in this browser, per event.
+  // suggestion; the group's own route (and its meeting point) is kept on the event, so every member
+  // sees and edits the same one.
   const [routeOpen, setRouteOpen] = useState(false)
   const [editing, setEditing] = useState(false)
-  const [choices, setChoicesState] = useState<RouteChoices>(() => readChoices(event.id))
-  const setChoices = (next: RouteChoices) => { setChoicesState(next); saveChoices(event.id, next); setPickedExtra(null) }
-  const from = choices.start ? `${round2(choices.start.lat)},${round2(choices.start.lng)}` : null
-  const routeQuery = useEventRouteQuery(event.id, from, routeOpen)
+  const [confirmReset, setConfirmReset] = useState(false)
+  const group = useGroupRoute(event.id, routeOpen, editing)
+  const routeQuery = useEventRouteQuery(event.id, routeOpen)
   const suggested = routeOpen ? routeQuery.data : undefined
   const reports = useMemo(() => data?.reported ?? [], [data?.reported])
   const toPoint = (s: { locId: string; locName: string; lat: number; lng: number }): PlanPoint => ({ locId: s.locId || null, name: s.locName, lat: s.lat, lng: s.lng })
-  const customStops = choices.stops
-  const drivePoints = useMemo(() => [...(choices.start ? [choices.start] : []), ...(customStops ?? [])].map(p => ({ lat: p.lat, lng: p.lng })), [choices.start, customStops])
+  const start = group.current?.start ?? null
+  const customStops = group.current?.stops ?? null
+  const drivePoints = useMemo(() => [...(start ? [start] : []), ...(customStops ?? [])].map(p => ({ lat: p.lat, lng: p.lng })), [start, customStops])
   const drive = useDriveQuery(drivePoints, routeOpen && customStops !== null)
   const route = !routeOpen ? undefined : customStops !== null
-    ? customRoute({ suggested, reported: reports, stops: customStops, start: choices.start, drive: drive.data, driveFailed: drive.isError })
+    ? customRoute({ suggested, reported: reports, stops: customStops, start, drive: drive.data, driveFailed: drive.isError })
     : suggested
   const shownStops = customStops ?? (suggested?.stops ?? []).map(toPoint)
-  const editStops = (stops: PlanPoint[]) => setChoices({ ...choices, stops })
-  const editStart = (start: PlanPoint | null) => setChoices({ ...choices, start: start ? { name: start.name, lat: round2(start.lat), lng: round2(start.lng), ...(start.locId === null && start.name === t('route.myLocation') ? { mine: true } : {}) } : null })
-  const backToSuggested = () => setChoices({ ...choices, stops: null })
+  const editStops = (stops: PlanPoint[]) => { setPickedExtra(null); group.edit({ start, stops: stops.map(({ locId, name, lat, lng }) => ({ locId, name, lat, lng })) }) }
+  // The meeting point alone can be saved: the suggestion then starts there.
+  const editStart = (next: PlanPoint | null) => group.edit({ start: next ? { name: next.name, lat: next.lat, lng: next.lng } : null, stops: customStops })
+  const saved = group.saved
+  const heading = customStops !== null
+    ? [
+        t('eventRoute.groupRoute'),
+        saved && saved.version > 0 ? (saved.updated_by_you ? t('eventRoute.editedByYou') : saved.updated_by_name ? t('eventRoute.editedBy', { name: saved.updated_by_name }) : t('eventRoute.editedByMember')) : null,
+        saved?.updated_at ? editedAgo(saved.updated_at) : null
+      ].filter(Boolean).join(' · ')
+    : null
+  const resetNow = async () => { if (await group.reset()) { setConfirmReset(false); setEditing(false) } }
 
   // In the editor: each stop's new birds in visit order; to add, the suggestion's extras and every
   // other place in the scouting list, each with what it would add now.
@@ -174,7 +184,7 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
       ? <BirdChip bird={known} />
       : <span className='event-scouting__bird'>{bird.comName ?? bird.code}</span>
   }
-  const startLabel = choices.start ? (choices.start.mine ? t('route.myLocation') : choices.start.name) : t('eventRoute.meetingPoint')
+  const startLabel = start ? start.name : t('eventRoute.meetingPoint')
   const routeOnMap = route && route.stops.length > 0
     ? {
         path: route.geometry,
@@ -237,7 +247,7 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
           )}
           {data.checked_at && <p className='event-scouting__updated'>{t('scoutingView.updated', { time: clockTime(new Date(data.checked_at)) })}</p>}
           {places.length > 0 && (
-            <button type='button' className='pill-button pill-button--small event-scouting__plan' aria-expanded={routeOpen} onClick={() => { setRouteOpen(open => !open); setEditing(false); setPickedExtra(null) }}>
+            <button type='button' className='pill-button pill-button--small event-scouting__plan' aria-expanded={routeOpen} onClick={() => { setRouteOpen(open => !open); setEditing(false); setConfirmReset(false); setPickedExtra(null) }}>
               {routeOpen ? t('eventRoute.hide') : t('eventRoute.plan')}
             </button>
           )}
@@ -247,24 +257,48 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
             </div>
           )}
           {routeOpen && (
-            editing
-              ? <div className='go__route is-editing event-route__editor' data-testid='route-editor'>
-                  <RouteEditor state={event.state} stops={shownStops} start={choices.start ? { locId: null, ...choices.start } : null} editing
-                    arriving={route ? route.stops.map(s => (typeof s.leg_min === 'number' && typeof s.leg_mi === 'number' ? { minutes: s.leg_min, miles: s.leg_mi } : null)) : []}
-                    describe={(_stop, i) => <span>{newAt[i] ? t('eventRoute.newBirds', { count: newAt[i] }) : t('eventRoute.noNewBirds')}</span>}
-                    suggestions={suggestions} suggestionsLabel={t('eventRoute.addFromList')} custom={customStops !== null}
-                    between={route && <p className='go__covers'>{t(lifers ? 'eventRoute.coversLifers' : 'eventRoute.covers', { got: route.covered, count: route.reported })}</p>}
-                    onStops={editStops} onStart={editStart} onReset={backToSuggested} onDone={() => setEditing(false)} resetLabel={t('eventRoute.backSuggested')} />
-                </div>
-              : <EventRoute route={route} pending={customStops === null && routeQuery.isPending} updating={customStops === null ? routeQuery.isPlaceholderData : drive.isPlaceholderData}
-                  failed={customStops === null && routeQuery.isError} custom={customStops !== null}
-                  state={event.state} start={choices.start} onStart={start => setChoices({ ...choices, start })} lifers={lifers} picked={pickedExtra} renderBird={routeBird}
-                  actions={(
-                    <>
-                      <button type='button' className='pill-button pill-button--small event-route__edit' onClick={() => setEditing(true)}>{t('eventRoute.edit')}</button>
-                      {customStops !== null && <button type='button' className='link-button link-text event-route__reset' onClick={backToSuggested}>{t('eventRoute.backSuggested')}</button>}
-                    </>
-                  )} />
+            <>
+              {group.offer && (
+                <p className='place__actions event__confirm event-route__offer' role='alert'>
+                  <span>{t('eventRoute.offer')}</span>
+                  <button type='button' className='pill-button pill-button--small' onClick={group.acceptOffer}>{t('eventRoute.offerSave')}</button>
+                  <button type='button' className='link-button link-text' onClick={group.declineOffer}>{t('eventRoute.offerDiscard')}</button>
+                </p>
+              )}
+              {group.note && <p className='notification__hint event-route__changed' role='status'>{group.note.updated_by_name ? t('eventRoute.changedBy', { name: group.note.updated_by_name }) : t('eventRoute.changed')}</p>}
+              {group.status !== 'idle' && (
+                <p className='event-route__note event-route__save' role='status'>
+                  {group.status === 'saving' ? t('eventRoute.saving') : group.status === 'saved' ? t('eventRoute.saved') : t('eventRoute.saveFailed')}
+                  {group.status === 'failed' && <> <button type='button' className='link-button link-text' onClick={group.retry}>{t('eventRoute.retry')}</button></>}
+                </p>
+              )}
+              {editing
+                ? <div className='go__route is-editing event-route__editor' data-testid='route-editor'>
+                    <RouteEditor state={event.state} stops={shownStops} start={start ? { locId: null, ...start } : null} editing
+                      arriving={route ? route.stops.map(s => (typeof s.leg_min === 'number' && typeof s.leg_mi === 'number' ? { minutes: s.leg_min, miles: s.leg_mi } : null)) : []}
+                      describe={(_stop, i) => <span>{newAt[i] ? t('eventRoute.newBirds', { count: newAt[i] }) : t('eventRoute.noNewBirds')}</span>}
+                      suggestions={suggestions} suggestionsLabel={t('eventRoute.addFromList')} custom={customStops !== null}
+                      between={route && <p className='go__covers'>{t(lifers ? 'eventRoute.coversLifers' : 'eventRoute.covers', { got: route.covered, count: route.reported })}</p>}
+                      onStops={editStops} onStart={editStart} onReset={() => setConfirmReset(true)} onDone={() => setEditing(false)}
+                      resetLabel={t('eventRoute.backSuggested')} startLabel={t('eventRoute.meetingPoint')} startEmpty={t('eventRoute.noMeetingPoint')} />
+                  </div>
+                : <EventRoute route={route} pending={customStops === null && routeQuery.isPending} updating={customStops === null ? routeQuery.isPlaceholderData : drive.isPlaceholderData}
+                    failed={customStops === null && routeQuery.isError} heading={heading}
+                    start={start} lifers={lifers} picked={pickedExtra} renderBird={routeBird}
+                    actions={(
+                      <>
+                        <button type='button' className='pill-button pill-button--small event-route__edit' onClick={() => setEditing(true)}>{t('eventRoute.edit')}</button>
+                        {customStops !== null && <button type='button' className='link-button link-text event-route__reset' onClick={() => setConfirmReset(true)}>{t('eventRoute.backSuggested')}</button>}
+                      </>
+                    )} />}
+              {confirmReset && (
+                <p className='place__actions event__confirm' role='alert'>
+                  <span>{t('eventRoute.resetSure')}</span>
+                  <button type='button' className='pill-button pill-button--small' disabled={group.resetting} onClick={() => void resetNow()}>{t('eventRoute.resetYes')}</button>
+                  <button type='button' className='link-button link-text' onClick={() => setConfirmReset(false)}>{t('common.cancel')}</button>
+                </p>
+              )}
+            </>
           )}
           {routeOpen ? null : places.length
             ? <ol className='event-scouting__places'>

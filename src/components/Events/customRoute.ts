@@ -1,8 +1,8 @@
 import type { PlanPoint } from '../../routePlan'
 import type { Drive, EventRoute, EventScouting } from '../../types'
-import type { RouteStart } from './routeChoices'
 
 type Report = EventScouting['reported'][number]
+type Start = { name: string; lat: number; lng: number }
 type Stop = EventRoute['stops'][number]
 
 /**
@@ -40,7 +40,7 @@ export const customRoute = ({ suggested, reported, stops, start, drive, driveFai
   suggested: EventRoute | undefined
   reported: Report[]
   stops: PlanPoint[]
-  start: RouteStart | null
+  start: Start | null
   drive: Drive | null | undefined
   driveFailed: boolean
 }): EventRoute => {

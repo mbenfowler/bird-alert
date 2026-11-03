@@ -1,4 +1,4 @@
-import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, Place, Province, Area,SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, BestHotspots, SpeciesHotspots, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share, Passkey, Chase, PersistenceClass, Id, SavedPlace, PlaceInput, PlaceSuggestion, LifersScope, GroupEvent, EventInput, EventPreview, EventView, EventScouting, EventRoute } from './types'
+import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, Place, Province, Area,SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, BestHotspots, SpeciesHotspots, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share, Passkey, Chase, PersistenceClass, Id, SavedPlace, PlaceInput, PlaceSuggestion, LifersScope, GroupEvent, EventInput, EventPreview, EventView, EventScouting, EventRoute, EventRoutePlan } from './types'
 import { arrival } from './arrival'
 import { isStandalone } from './install'
 import { nameLocale, signupLocale } from './i18n'
@@ -10,10 +10,13 @@ const API_BASE = '/api'
 
 export class ApiError extends Error {
     status: number
-    constructor(message: string, status: number) {
+    /** The response body, for an error that carries an answer (a 409 with the current record). */
+    data: unknown
+    constructor(message: string, status: number, data: unknown = null) {
         super(message)
         this.name = 'ApiError'
         this.status = status
+        this.data = data
     }
 }
 
@@ -29,7 +32,7 @@ const parseResponse = async <T,>(res: Response): Promise<T> => {
     }
     if (!res.ok) {
         const serverMessage = typeof data === 'object' && data !== null && 'error' in data ? String((data as { error: unknown }).error) : null
-        throw new ApiError(serverMessage || `HTTP Error: ${res.status} ${res.statusText}`, res.status)
+        throw new ApiError(serverMessage || `HTTP Error: ${res.status} ${res.statusText}`, res.status, data)
     }
     return data as T
 }
@@ -142,11 +145,19 @@ export const getEventScouting = (id: Id) => {
     const locale = nameLocale()
     return api<EventScouting>('/saved', { params: { kind: 'event-scouting', id: String(id), ...(locale ? { locale } : {}) } })
 }
-/** The scouting route, as the server suggests it; `from` is a rounded "lat,lng" start (else the meeting point or the first stop). */
-export const getEventRoute = (id: Id, from: string | null) => {
+/** The scouting route as the server suggests it, from the group's meeting point when one is saved. */
+export const getEventRoute = (id: Id) => {
     const locale = nameLocale()
-    return api<EventRoute>('/saved', { params: { kind: 'event-route', id: String(id), ...(from ? { from } : {}), ...(locale ? { locale } : {}) } })
+    return api<EventRoute>('/saved', { params: { kind: 'event-route', id: String(id), ...(locale ? { locale } : {}) } })
 }
+/** The group's own route for an event: nothing saved is `{ start: null, stops: null, version: 0 }`. */
+export const getEventRoutePlan = (id: Id) => api<EventRoutePlan>('/saved', { params: { kind: 'event-route-plan', id: String(id) } })
+/** Save the group's route; a stale `version` is a 409 whose body is `{ error, current }`. */
+export const putEventRoutePlan = (id: Id, plan: { start: EventRoutePlan['start']; stops: EventRoutePlan['stops']; version: number }) =>
+    api<EventRoutePlan>('/saved', { method: 'PUT', params: { kind: 'event-route-plan', id: String(id) }, body: plan })
+/** Back to the suggestion for everyone; the same 409 rule. */
+export const deleteEventRoutePlan = (id: Id, version: number) =>
+    api<EventRoutePlan | null>('/saved', { method: 'DELETE', params: { kind: 'event-route-plan', id: String(id), version: String(version) } })
 export const getEventView = (token: string) => api<EventView>('/saved', { params: { kind: 'event-view', token } })
 export const getSavedRoute = (region: string) => api<SavedRoute>('/saved', { params: { kind: 'route', region } })
 /** Only the fields given change: `stops: null` goes back to the suggestion, `start: null` clears the start. */
