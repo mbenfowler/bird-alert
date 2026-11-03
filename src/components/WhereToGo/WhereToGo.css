@@ -660,3 +660,76 @@
 .best__bird-chip button:focus-visible {
     background: rgba(0, 0, 0, 0.1);
 }
+
+/* Time at a stop (the event route): −/+ in 5-minute steps, the time tappable to type it. */
+.go__stay {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    margin: 4px 0 0 36px;
+    color: var(--muted);
+    font-family: system-ui, sans-serif;
+    font-size: 0.85rem;
+}
+
+.go__stay-label {
+    margin-right: 2px;
+}
+
+.go__stay-step {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.go__stay-step:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.go__stay-value {
+    min-width: 64px;
+    min-height: 32px;
+    padding: 2px 6px;
+    border: none;
+    border-bottom: 1px dashed var(--line);
+    background: none;
+    color: var(--ink);
+    font: inherit;
+    font-weight: 600;
+    cursor: text;
+}
+
+.go__stay-input {
+    width: 72px;
+    min-height: 32px;
+    padding: 2px 6px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+}
+
+.go__stay-tag {
+    padding: 0 6px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+.go__stay-reset {
+    font-size: 0.8rem;
+}

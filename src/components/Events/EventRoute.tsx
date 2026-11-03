@@ -4,6 +4,8 @@ import { LoadingState } from '../Loading/Loading'
 import { mapsUrl } from '../../routePlan'
 import { shortDistance, useDistanceUnit, type DistanceUnit } from '../../distance'
 import { t } from '../../i18n'
+import { duration } from '../../duration'
+import { routeStay } from './customRoute'
 import { prefersReducedMotion } from '../../routeDraw'
 import type { EventRoute as Route } from '../../types'
 
@@ -16,12 +18,7 @@ type RenderBird = (bird: RouteBird, place: { locId: string }) => ReactNode
 const BIRDS_SHOWN = 5
 const EXTRAS_SHOWN = 3
 
-/** "42 min", "3 h", "3 h 10 min". */
-const driveTime = (minutes: number) => {
-  const m = Math.round(minutes)
-  if (m < 60) return t('eventRoute.min', { m })
-  return m % 60 ? t('eventRoute.hMin', { h: Math.floor(m / 60), m: m % 60 }) : t('eventRoute.h', { h: m / 60 })
-}
+const driveTime = duration
 
 /** Google Maps directions to one place, from wherever the phone is. */
 const directionsTo = (place: Place) => `https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}`
@@ -69,6 +66,27 @@ const Directions = ({ place }: { place: Place }) => (
     aria-label={t('eventRoute.directionsTo', { place: place.locName })}>{t('eventRoute.directions')}</a>
 )
 
+/** "Stay 45 min", with a muted "suggested" when the group hasn't set its own. */
+export const StayText = ({ stop }: { stop: Pick<Stop, 'stay_min' | 'suggested_stay_min'> }) => {
+  const minutes = stop.stay_min ?? stop.suggested_stay_min
+  if (typeof minutes !== 'number') return null
+  return (
+    <p className='event-route__stay'>
+      {t('routeTimes.stay', { time: duration(minutes) })}
+      {(stop.stay_min === null || stop.stay_min === undefined) && <> <span className='event-route__tag event-route__stay-tag'>{t('routeTimes.suggested')}</span></>}
+    </p>
+  )
+}
+
+/** "Driving 1 h 49 min · At stops 3 h 30 min · Total 5 h 19 min"; without drive times, just the stops. */
+export const RouteTotals = ({ drive, stay }: { drive: number | null; stay: number }) => (
+  <p className='event-route__totals' data-testid='route-totals'>
+    {typeof drive === 'number'
+      ? <Trans i18nKey='routeTimes.totals' values={{ drive: duration(drive), stay: duration(stay), total: duration(drive + stay) }} components={{ b: <strong /> }} />
+      : t('routeTimes.totalsNoDrive', { stay: duration(stay) })}
+  </p>
+)
+
 const RouteStop = ({ stop, n, unit, renderBird }: { stop: Stop; n: number; unit: DistanceUnit; renderBird: RenderBird }) => (
   <li className='event-route__stop' data-testid='route-stop'>
     {typeof stop.leg_min === 'number' && typeof stop.leg_mi === 'number' && (
@@ -80,6 +98,7 @@ const RouteStop = ({ stop, n, unit, renderBird }: { stop: Stop; n: number; unit:
         <Name place={stop} />
         <Directions place={stop} />
       </p>
+      <StayText stop={stop} />
       <Merged place={stop} />
       {stop.new_birds.length > 0
         ? <>
@@ -146,6 +165,8 @@ const EventRoute = ({ route, pending, updating, failed, heading = null, start, l
   const withExtras = route && typeof route.covered_with_extras === 'number' && route.covered_with_extras > route.covered ? route.covered_with_extras : null
   const coversKey = lifers ? 'eventRoute.coversLifers' : 'eventRoute.covers'
   const custom = heading !== null
+  // Older servers send no stays; then there is nothing to add up.
+  const hasStays = Boolean(route && (typeof route.stay_min_total === 'number' || route.stops.some(s => typeof (s.stay_min ?? s.suggested_stay_min) === 'number')))
   const startControl = (
     <p className='event-route__note event-route__start-name'>
       {start ? t('eventRoute.startingFrom', { name: start.name }) : t(route?.from ? 'eventRoute.fromMeetingPoint' : 'eventRoute.fromFirstStop')}
@@ -186,6 +207,7 @@ const EventRoute = ({ route, pending, updating, failed, heading = null, start, l
               <ol className='event-route__stops'>
                 {route.stops.map((stop, i) => <RouteStop key={`${stop.locId}-${i}`} stop={stop} n={i + 1} unit={unit} renderBird={renderBird} />)}
               </ol>
+              {hasStays && <RouteTotals drive={route.routed ? route.total_min : null} stay={routeStay(route)} />}
               <div className='event-route__actions'>
                 {whole && <a className='pill-button pill-button--small event-route__maps' href={whole} target='_blank' rel='noreferrer'>{t('eventRoute.openMaps')}</a>}
                 {actions}

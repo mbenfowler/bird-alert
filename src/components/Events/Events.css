@@ -620,6 +620,23 @@ a.event-scouting__bird:hover {
 }
 
 /* A personal spot, and the personal spots folded into a hotspot: quiet notes beside the name. */
+.event-route__stay {
+  margin: 2px 0 0 34px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.event-route__totals {
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.event-route__totals strong {
+  color: var(--ink);
+}
+
 .event-route__tag {
   display: inline-block;
   padding: 0 6px;
