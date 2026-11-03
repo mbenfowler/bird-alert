@@ -44,7 +44,7 @@ const routed = (over = {}) => ({
 
 const STORE_KEY = 'bird-alert:event-route:5'
 
-const open = ({ route, user = TEST_USER, geo = null, stored = null, setup = null, plan = { record: { start: null, stops: null, version: 0 } } } = {}) => {
+const open = ({ route, user = TEST_USER, geo = null, stored = null, setup = null, plan = { record: { start: null, stops: null, version: 0 } }, path = '/events/5', beforeLoad = null } = {}) => {
   stubAuth({ loggedIn: true, user })
   cy.intercept('GET', '**/api/ebird/regions*', { statusCode: 200, body: [{ code: COCHISE, name: 'Cochise' }] })
   cy.intercept('GET', '**/api/birds*', { statusCode: 200, body: [] })
@@ -78,7 +78,8 @@ const open = ({ route, user = TEST_USER, geo = null, stored = null, setup = null
     } })
   }).as('placeSearch')
   if (setup) setup()
-  cy.visit('http://localhost:3000/events/5', { onBeforeLoad: (win) => {
+  cy.visit(`http://localhost:3000${path}`, { onBeforeLoad: (win) => {
+    if (beforeLoad) beforeLoad(win)
     if (stored) win.localStorage.setItem(STORE_KEY, JSON.stringify(stored))
     if (geo) cy.stub(win.navigator.geolocation, 'getCurrentPosition').callsFake(geo)
   } })
@@ -251,6 +252,46 @@ describe('Event route', () => {
       cy.contains('button', 'Back to the suggested route').should('not.exist')
       cy.contains('button', 'Edit route')
       cy.contains('Start somewhere else').should('not.exist')
+    })
+
+    // The scouting email's route buttons link to /events/<id>#route.
+    const inView = () => cy.get('#route').should(el => {
+      const r = el[0].getBoundingClientRect()
+      expect(r.top).to.be.within(0, 200)
+    })
+
+    it('#route opens the suggestion when nothing is saved, and scrolls to it', () => {
+      cy.viewport(375, 667)
+      open({ route: suggestion(), setup: stubDrive, path: '/events/5#route' })
+      cy.wait('@plan')
+      cy.wait('@route')
+      cy.contains('button', 'Hide route').should('have.attr', 'aria-expanded', 'true').and('have.id', 'route')
+      cardStops().should('deep.equal', ['Rustler Park', 'Cave Creek Canyon', 'Southwestern Research Station'])
+      cy.get('.event-route__heading').should('not.exist')
+      cy.window().its('scrollY').should('be.greaterThan', 0)
+      inView()
+    })
+
+    it('#route opens the group’s saved route instead, and jumps there with reduced motion', () => {
+      cy.viewport(375, 667)
+      const server = { record: { start: { name: 'Portal Store', lat: 31.91, lng: -109.14 }, stops: twoStops, version: 3, updated_at: ago(130), updated_by_name: 'Sam' } }
+      open({ route: suggestion(), plan: server, setup: stubDrive, path: '/events/5#route', beforeLoad: (win) => {
+        const real = win.matchMedia.bind(win)
+        cy.stub(win, 'matchMedia').callsFake(q => (q.includes('prefers-reduced-motion') ? { matches: true, media: q, addEventListener () {}, removeEventListener () {}, addListener () {}, removeListener () {} } : real(q)))
+        cy.spy(win.Element.prototype, 'scrollIntoView').as('scrollIntoView')
+      } })
+      cy.wait('@plan')
+      cy.get('.event-route__heading').should('have.text', 'Your group’s route · edited by Sam · 2 hours ago')
+      cardStops().should('deep.equal', ['Southwestern Research Station', 'Cave Creek Canyon'])
+      cy.get('@scrollIntoView').should('have.been.calledWithMatch', { behavior: 'auto' })
+      cy.get('@scrollIntoView').should('not.have.been.calledWithMatch', { behavior: 'smooth' })
+      inView()
+    })
+
+    it('without #route the route stays closed', () => {
+      open({ route: suggestion(), setup: stubDrive })
+      cy.contains('button', 'Plan a route').should('have.attr', 'aria-expanded', 'false')
+      cy.get('[data-testid="route-stop"]').should('not.exist')
     })
 
     it('a saved route shows instead of the suggestion, with who edited it and when', () => {
