@@ -3,10 +3,10 @@ import { Link, useLocation } from 'react-router'
 import { Trans } from 'react-i18next'
 import SightingsMap, { type MapPoint } from '../SightingsMap/SightingsMap'
 import { LoadingState } from '../Loading/Loading'
-import EventRoute, { type RouteBird } from './EventRoute'
+import EventRoute, { RouteTotals, type RouteBird } from './EventRoute'
 import RouteEditor from '../RouteEditor/RouteEditor'
 import { useGroupRoute } from './useGroupRoute'
-import { customRoute, speciesByPlace } from './customRoute'
+import { customRoute, speciesByPlace, stayTotal, withStays } from './customRoute'
 import { useDriveQuery, useEventRouteQuery, useEventScoutingQuery, useSessionQuery } from '../../hooks/queries'
 import { useEventScoutingEmailMutation } from '../../hooks/mutations'
 import { toast } from 'react-toastify'
@@ -15,6 +15,8 @@ import type { PlanPoint } from '../../routePlan'
 import { clockTime, daysUntil, t } from '../../i18n'
 import { editedAgo } from './editedAgo'
 import { prefersReducedMotion } from '../../routeDraw'
+import { duration } from '../../duration'
+import { shortDistance, useDistanceUnit } from '../../distance'
 import type { EventScouting as Scouting, GroupEvent } from '../../types'
 
 type Report = Scouting['reported'][number]
@@ -188,11 +190,17 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
   const customStops = group.current?.stops ?? null
   const drivePoints = useMemo(() => [...(start ? [start] : []), ...(customStops ?? [])].map(p => ({ lat: p.lat, lng: p.lng })), [start, customStops])
   const drive = useDriveQuery(drivePoints, routeOpen && customStops !== null)
+  // Each stop's time there: the group's minutes, else the suggestion's.
+  const shownStops = withStays(customStops ?? (suggested?.stops ?? []).map(toPoint), group.saved?.stops, suggested)
+  // Drive times come from /ebird/drive as the stops change; until it answers, the saved record's own.
   const route = !routeOpen ? undefined : customStops !== null
-    ? customRoute({ suggested, reported: reports, stops: customStops, start, drive: drive.data, driveFailed: drive.isError })
+    ? customRoute({ suggested, reported: reports, stops: shownStops, start, drive: drive.data, driveFailed: drive.isError, server: group.unsaved ? null : group.saved })
     : suggested
-  const shownStops = customStops ?? (suggested?.stops ?? []).map(toPoint)
-  const editStops = (stops: PlanPoint[]) => { setPickedExtra(null); group.edit({ start, stops: stops.map(({ locId, name, lat, lng }) => ({ locId, name, lat, lng })) }) }
+  const keep = (stops: PlanPoint[]) => stops.map(stop => ({ locId: stop.locId, name: stop.name, lat: stop.lat, lng: stop.lng, stay_min: (stop as { stay_min?: number | null }).stay_min ?? null }))
+  const editStops = (stops: PlanPoint[]) => { setPickedExtra(null); group.edit({ start, stops: keep(stops) }) }
+  const editStay = (i: number, minutes: number | null) => group.edit({ start, stops: keep(shownStops).map((stop, j) => (j === i ? { ...stop, stay_min: minutes } : stop)) })
+  const hasStays = shownStops.some(s => typeof (s.stay_min ?? s.suggested_stay_min) === 'number')
+  const unit = useDistanceUnit()
   // The meeting point alone can be saved: the suggestion then starts there.
   const editStart = (next: PlanPoint | null) => group.edit({ start: next ? { name: next.name, lat: next.lat, lng: next.lng } : null, stops: customStops })
   const saved = group.saved
@@ -332,20 +340,30 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
                   <button type='button' className='link-button link-text' onClick={group.declineOffer}>{t('eventRoute.offerDiscard')}</button>
                 </p>
               )}
-              {group.note && <p className='notification__hint event-route__changed' role='status'>{group.note.updated_by_name ? t('eventRoute.changedBy', { name: group.note.updated_by_name }) : t('eventRoute.changed')}</p>}
-              {group.status !== 'idle' && (
-                <p className='event-route__note event-route__save' role='status'>
-                  {group.status === 'saving' ? t('eventRoute.saving') : group.status === 'saved' ? t('eventRoute.saved') : t('eventRoute.saveFailed')}
-                  {group.status === 'failed' && <> <button type='button' className='link-button link-text' onClick={group.retry}>{t('eventRoute.retry')}</button></>}
-                </p>
-              )}
+              {/* Saving…, Saved, a failed save and someone else's change share one line that is always
+                  there at the same height, so nothing below it moves while someone is tapping. */}
+              <p className={`event-route__status ${group.status === 'idle' && !group.note ? 'is-empty' : ''}`} role='status' data-testid='route-status'>
+                {group.status !== 'idle'
+                  ? <span className='event-route__save'>
+                      {group.status === 'saving' ? t('eventRoute.saving') : group.status === 'saved' ? t('eventRoute.saved') : t('eventRoute.saveFailed')}
+                      {group.status === 'failed' && <> <button type='button' className='link-button link-text' onClick={group.retry}>{t('eventRoute.retry')}</button></>}
+                    </span>
+                  : group.note && <span className='event-route__changed'>{group.note.updated_by_name ? t('eventRoute.changedBy', { name: group.note.updated_by_name }) : t('eventRoute.changed')}</span>}
+              </p>
               {editing
                 ? <div className='go__route is-editing event-route__editor' data-testid='route-editor'>
                     <RouteEditor state={event.state} stops={shownStops} start={start ? { locId: null, ...start } : null} editing
                       arriving={route ? route.stops.map(s => (typeof s.leg_min === 'number' && typeof s.leg_mi === 'number' ? { minutes: s.leg_min, miles: s.leg_mi } : null)) : []}
                       describe={(_stop, i) => <span>{newAt[i] ? t('eventRoute.newBirds', { count: newAt[i] }) : t('eventRoute.noNewBirds')}</span>}
                       suggestions={suggestions} suggestionsLabel={t('eventRoute.addFromList')} custom={customStops !== null}
-                      between={route && <p className='go__covers'>{t(lifers ? 'eventRoute.coversLifers' : 'eventRoute.covers', { got: route.covered, count: route.reported })}</p>}
+                      between={route && (
+                        <>
+                          {hasStays && <RouteTotals drive={route.routed ? route.total_min : null} stay={stayTotal(shownStops)} />}
+                          <p className='go__covers'>{t(lifers ? 'eventRoute.coversLifers' : 'eventRoute.covers', { got: route.covered, count: route.reported })}</p>
+                        </>
+                      )}
+                      stays={{ of: (i) => ({ minutes: shownStops[i]?.stay_min ?? null, suggested: shownStops[i]?.suggested_stay_min ?? null }), onChange: editStay }}
+                      legLabel={(leg) => t('eventRoute.leg', { time: duration(leg.minutes), distance: shortDistance(leg.miles, unit) })}
                       onStops={editStops} onStart={editStart} onReset={() => setConfirmReset(true)} onDone={() => setEditing(false)}
                       resetLabel={t('eventRoute.backSuggested')} startLabel={t('eventRoute.meetingPoint')} startEmpty={t('eventRoute.noMeetingPoint')} />
                   </div>

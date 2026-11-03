@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { customRoute } from './customRoute'
+import { customRoute, routeStay, stayTotal, withStays } from './customRoute'
 import type { EventRoute } from '../../types'
 
 const suggested: EventRoute = {
@@ -38,5 +38,24 @@ describe('customRoute', () => {
     expect(route.geometry).toEqual(drive.geometry)
     const none = customRoute({ suggested, reported: [], stops: [], start: null, drive: null, driveFailed: false })
     expect([none.stops, none.covered, none.geometry]).toEqual([[], 0, []])
+  })
+
+  it('stays: the group’s minutes, else the saved suggestion, else the suggested route’s; totals add them up', () => {
+    const withSuggestion: EventRoute = { ...suggested, stops: suggested.stops.map((s, i) => ({ ...s, suggested_stay_min: [45, 30][i] })), stay_min_total: 75 }
+    const stops = withStays([{ ...point('L2', 'Two', 2), stay_min: 60 }, point('L1', 'One', 1), point(null, 'Typed', 7)], [{ ...point('L1', 'One', 1), suggested_stay_min: 20 }], withSuggestion)
+    expect(stops.map(s => [s.stay_min, s.suggested_stay_min])).toEqual([[60, 30], [null, 20], [null, null]])
+    expect(stayTotal(stops)).toBe(80)
+    expect(routeStay(withSuggestion)).toBe(75)
+    expect(routeStay(customRoute({ suggested, reported: [], stops, start: null, drive: null, driveFailed: false }))).toBe(80)
+  })
+
+  it('takes the saved record’s legs and drive total until /ebird/drive answers', () => {
+    const stops = [point('L1', 'One', 1), point('L2', 'Two', 2)]
+    const server = { legs: [null, { min: 24, mi: 12 }], totals: { drive_min: 24, stay_min: 0, total_min: 24 }, routed: true }
+    const route = customRoute({ suggested, reported: [], stops, start: null, drive: undefined, driveFailed: false, server })
+    expect(route.stops.map(s => [s.leg_min, s.leg_mi])).toEqual([[null, null], [24, 12]])
+    expect([route.total_min, route.total_mi, route.routed]).toEqual([24, 12, true])
+    const unrouted = customRoute({ suggested, reported: [], stops, start: null, drive: undefined, driveFailed: true, server: { legs: [null, null], totals: { drive_min: null, stay_min: 0, total_min: 0 }, routed: false } })
+    expect([unrouted.total_min, unrouted.routed]).toEqual([null, false])
   })
 })
