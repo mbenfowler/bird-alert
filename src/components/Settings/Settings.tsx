@@ -1,4 +1,4 @@
-import { useNavigate, useSearchParams } from 'react-router'
+import { Navigate, useNavigate, useSearchParams } from 'react-router'
 import Form from '../Form/Form'
 import AlertCenter from '../AlertCenter/AlertCenter'
 import LifeList from '../LifeList/LifeList'
@@ -7,7 +7,7 @@ import PasskeySettings from '../PasskeySettings/PasskeySettings'
 import Feedback from '../Feedback/Feedback'
 import DeleteAccount from '../DeleteAccount/DeleteAccount'
 import { useLogoutMutation } from '../../hooks/mutations'
-import { settingsTabFor, SETTINGS_TABS, type SettingsTab } from './settingsTab'
+import { oldTripId, settingsTabFor, SETTINGS_TABS, type SettingsTab } from './settingsTab'
 import './Settings.css'
 import { t } from '../../i18n'
 
@@ -23,6 +23,9 @@ const Settings = () => {
     const tab = settingsTabFor(params, window.location.hash)
     const pick = (next: SettingsTab) => setParams(next === 'account' ? new URLSearchParams() : { tab: next }, { replace: true })
     const handleLogout = () => logoutMutation.mutate(undefined, { onSettled: () => navigate('/login') })
+
+    // An old trip link: trips are events now, so it goes to the events list, which says so.
+    if (oldTripId(params, window.location.hash)) return <Navigate to='/events' replace state={{ tripsMoved: true }} />
 
     return (
         <section id='userSettings'>
