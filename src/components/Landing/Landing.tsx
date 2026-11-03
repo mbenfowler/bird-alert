@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { useBirdsQuery, useNotableThisWeekQuery, useObservationsQuery, useRegionsQuery } from '../../hooks/queries'
-import { countyName as fullCountyName, countyWord, stateName as fullStateName, stateOfCode, stateOfRegion } from '../../usStates'
+import { countyName as fullCountyName, areaWord, stateName as fullStateName, stateOfCode, stateOfRegion } from '../../usStates'
 import AreaPicker from '../AreaPicker/AreaPicker'
 import type { Observation } from '../../types'
 import './Landing.css'
@@ -102,7 +102,7 @@ const Landing = () => {
           {notable.isPending ? (
               <ul className='landing__birds' aria-busy='true'>{Array.from({ length: 4 }, (_, i) => <li key={i} className='landing__bird is-loading'><span className='landing__thumb' /><span className='landing__bar' /></li>)}</ul>
             ) : notable.isError ? <p className='landing__live-note'>{t('landing.ebirdDown')}</p>
-            : !rows.length ? <p className='landing__live-note'>{t('landing.quiet', { place: placeName ?? t('landing.thisArea', { word: countyWord(state) }) })}</p>
+            : !rows.length ? <p className='landing__live-note'>{t('landing.quiet', { place: placeName ?? t('landing.thisArea', areaWord(state)) })}</p>
             : (
               <ul className='landing__birds'>
                 {rows.map(({ latest: o, reports, places }) => (
@@ -120,7 +120,7 @@ const Landing = () => {
             )}
           {total > SHOWN && <p className='landing__live-more'>{t('landing.more', { count: total - SHOWN })}</p>}
           {speciesLately > 0 && (
-            <p className='landing__stat'><Trans i18nKey='landing.stat' count={speciesLately} values={{ count: speciesLately, place: placeName ?? t('landing.thisArea', { word: countyWord(state) }) }} components={{ b: <strong /> }} /></p>
+            <p className='landing__stat'><Trans i18nKey='landing.stat' count={speciesLately} values={{ count: speciesLately, place: placeName ?? t('landing.thisArea', areaWord(state)) }} components={{ b: <strong /> }} /></p>
           )}
           <Link className='landing__live-cta' to='/login'>{t('landing.liveCta')}</Link>
         </section>

@@ -10,7 +10,7 @@ import { useBirdsQuery, useCurrentUser, usePlaceSeenQuery, usePlaceSuggestionsQu
 import { useDeletePlaceMutation, usePatchUserMutation, usePlaceSeenMutation, usePlaceTargetsMutation, useSavePlaceMutation } from '../../hooks/mutations'
 import { useAreaName } from '../../shownArea'
 import { unitFor } from '../../distance'
-import { stateName, stateOfRegion } from '../../usStates'
+import { areaWord, stateName, stateOfRegion } from '../../usStates'
 import { t } from '../../i18n'
 import type { SavedPlace } from '../../types'
 import './AlertCenter.css'
@@ -24,8 +24,8 @@ const dayString = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).pa
 const today = () => dayString(new Date())
 const inTwoWeeks = () => { const d = new Date(); d.setDate(d.getDate() + 14); return dayString(d) }
 
-/** "Just my county", "25 km", "All of Colorado": the same choices as home's reach, in the place's own units. */
-const rangeLabel = (mi: number, state: string) => mi === 0 ? t('range.justCounty')
+/** "Just my county" ("Just my area" outside the US), "25 km", "All of Colorado": the same choices as home's reach, in the place's own units. */
+const rangeLabel = (mi: number, state: string) => mi === 0 ? t('range.justCounty', areaWord(state))
   : mi === WHOLE_STATE ? (stateName(state) ? t('range.wholeState', { name: stateName(state) }) : t('range.wholeStateUnnamed'))
   : unitFor(state) === 'km' ? t('range.km', { n: Math.round(mi * 1.609344 / 5) * 5 }) : t('range.mi', { n: mi })
 

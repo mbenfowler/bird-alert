@@ -11,7 +11,7 @@ import AlertModeSettings from '../AlertModeSettings/AlertModeSettings'
 import AlertRange from './AlertRange'
 import InstallSteps from '../InstallSteps/InstallSteps'
 import { isIOS, isStandalone } from '../../install'
-import { countyWord } from '../../usStates'
+import { areaWord } from '../../usStates'
 import { hourLabel, t } from '../../i18n'
 
 // Labels, hints and the "nothing to send" words are in the catalog under alertCenter.push.<field> and alertCenter.email.<field>.
@@ -94,7 +94,7 @@ const AlertCenter = () => {
         render: ({ data }: { data: EmailPreviewResult }) => data.sent ? t('alertCenter.previewSent', { email: user.email })
           : data.reason === 'nothing' ? t('alertCenter.previewNothing', { nothing: t(`alertCenter.email.${field}.nothing`) })
           : data.reason === 'unconfirmed' ? t('alertCenter.previewUnconfirmed')
-          : t('alertCenter.previewNoArea', { word: countyWord(user.state) }),
+          : t('alertCenter.previewNoArea', areaWord(user.state)),
         position: 'bottom-center'
       },
       error: { render: ({ data }) => errorMessage(data), position: 'bottom-center' }

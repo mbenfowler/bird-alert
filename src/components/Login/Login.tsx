@@ -5,7 +5,7 @@ import { getUserExists, login, signup, requestPasswordReset, errorMessage } from
 import { useRegionsQuery, useSessionQuery } from '../../hooks/queries'
 import { useSetSession } from '../../hooks/mutations'
 import { addPasskey, cancelPasskeyAutofill, isDeviceLock, passkeysSupported, signInWithPasskey, unlockName, wasCancelled } from '../../passkeys'
-import { countyName as fullCountyName, countyWord, stateName as fullStateName, stateOfRegion } from '../../usStates'
+import { countyName as fullCountyName, areaWord, stateName as fullStateName, stateOfRegion } from '../../usStates'
 import AreaPicker from '../AreaPicker/AreaPicker'
 import type { User } from '../../types'
 import { nextAfterLogin, rememberNext } from '../../returnTo'
@@ -192,7 +192,7 @@ const Login = () => {
           </div>
 
           {step === 'signup' && county && !changingCounty && (
-            <p className='login-county'><Trans i18nKey='login.yourCounty' values={{ word: countyWord(countyState), place: pickedLabel ?? [countyName ? fullCountyName(countyName, countyState) : county, stateName].filter(Boolean).join(', ') }} components={{ b: <strong /> }} /> <button type='button' className='login-link' onClick={() => setChangingCounty(true)}>{t('login.change')}</button></p>
+            <p className='login-county'><Trans i18nKey='login.yourCounty' context={areaWord(countyState).context} values={{ word: areaWord(countyState).word, place: pickedLabel ?? [countyName ? fullCountyName(countyName, countyState) : county, stateName].filter(Boolean).join(', ') }} components={{ b: <strong /> }} /> <button type='button' className='login-link' onClick={() => setChangingCounty(true)}>{t('login.change')}</button></p>
           )}
           {step === 'signup' && changingCounty && (
             <div className='login-county-pick'>
