@@ -7,9 +7,10 @@ import EventRoute, { type RouteBird } from './EventRoute'
 import RouteEditor from '../RouteEditor/RouteEditor'
 import { useGroupRoute } from './useGroupRoute'
 import { customRoute, speciesByPlace } from './customRoute'
-import { useDriveQuery, useEventRouteQuery, useEventScoutingQuery } from '../../hooks/queries'
+import { useDriveQuery, useEventRouteQuery, useEventScoutingQuery, useSessionQuery } from '../../hooks/queries'
 import { useEventScoutingEmailMutation } from '../../hooks/mutations'
-import { ApiError, errorMessage } from '../../apiCalls'
+import { toast } from 'react-toastify'
+import { ApiError, errorMessage, resendConfirmationEmail } from '../../apiCalls'
 import type { PlanPoint } from '../../routePlan'
 import { clockTime, daysUntil, t } from '../../i18n'
 import { editedAgo } from './editedAgo'
@@ -104,18 +105,41 @@ const PlaceCard = ({ place, n, active, open, onOpen, lifers }: { place: Place; n
   )
 }
 
-/** What the server said about the last "email me" press, as one short line. */
+const emailCode = (error: unknown) => {
+  const data = error instanceof ApiError && typeof error.data === 'object' && error.data !== null ? error.data as { error?: string; retry_after_min?: number } : null
+  return { code: data?.error, retryAfter: data?.retry_after_min }
+}
+
+/** What the server said about the last "email me" press, as one short line. An unconfirmed address has its own line. */
 const EmailNote = ({ result, error }: { result: { to: string } | undefined; error: unknown }) => {
   if (result) return <span className='event-scouting__email-note' role='status'>{t('scoutingView.emailSent', { to: result.to })}</span>
   if (!error) return null
-  const data = error instanceof ApiError && typeof error.data === 'object' && error.data !== null ? error.data as { error?: string; retry_after_min?: number } : null
-  const code = data?.error
-  const line = code === 'confirm_email'
-    ? <Trans i18nKey='scoutingView.emailConfirm' components={{ a: <Link className='link-text' to='/settings' /> }} />
-    : code === 'too_many' ? t('scoutingView.emailTooMany', { count: Math.max(1, Math.ceil(Number(data?.retry_after_min) || 1)) })
-      : code === 'mail_cap' ? t('scoutingView.emailBusy')
-        : errorMessage(error)
+  const { code, retryAfter } = emailCode(error)
+  if (code === 'confirm_email' || code === 'event_over') return null
+  const line = code === 'too_many' ? t('scoutingView.emailTooMany', { count: Math.max(1, Math.ceil(Number(retryAfter) || 1)) })
+    : code === 'mail_cap' ? t('scoutingView.emailBusy')
+      : errorMessage(error)
   return <span className='place-form__error event-scouting__email-note' role='alert'>{line}</span>
+}
+
+/** Scouting reports only reach a confirmed address: says so, with a resend, sent the way the confirm nudge sends it. */
+const ConfirmLine = () => {
+  const [sending, setSending] = useState(false)
+  const [sent, setSent] = useState(false)
+  const resend = () => {
+    setSending(true)
+    resendConfirmationEmail()
+      .then(() => setSent(true))
+      .catch((error) => toast.error(errorMessage(error), { position: 'bottom-center' }))
+      .finally(() => setSending(false))
+  }
+  if (sent) return <span className='event-scouting__email-note event-scouting__email-note--muted' role='status'>{t('scoutingView.confirmSent')}</span>
+  return (
+    <span className='event-scouting__email-note event-scouting__email-note--muted event-scouting__confirm' role='status'>
+      {t('scoutingView.confirmFirst')}{' '}
+      <button type='button' className='link-button link-text' onClick={resend} disabled={sending}>{sending ? t('common.sending') : t('scoutingView.confirmResend')}</button>
+    </span>
+  )
 }
 
 /**
@@ -127,7 +151,10 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
   const scouting = useEventScoutingQuery(event.id)
   // Any member can have the report mailed now, even with nothing in it yet; the server says when the event is over.
   const email = useEventScoutingEmailMutation()
-  const emailOver = email.error instanceof ApiError && (email.error.data as { error?: string } | null)?.error === 'event_over'
+  const emailError = emailCode(email.error).code
+  const emailOver = emailError === 'event_over'
+  const user = useSessionQuery().data
+  const unconfirmed = user?.email_confirmed === false || emailError === 'confirm_email'
   const data = scouting.data
   const lifers = data?.using === 'likely_lifers'
   const places = useMemo(() => groupByPlace(data?.reported ?? []), [data?.reported])
@@ -257,6 +284,7 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
             {email.isPending ? t('common.sending') : t('scoutingView.emailNow')}
           </button>
           {!email.isPending && <EmailNote result={email.data} error={email.error} />}
+          {unconfirmed && <ConfirmLine />}
         </p>
       )}
       {scouting.isPending && <LoadingState variant='inline' label={t('scoutingView.loading')} />}

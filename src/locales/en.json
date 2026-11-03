@@ -917,7 +917,9 @@
     "unconfirmed": "{{name}} (unconfirmed)",
     "emailNow": "Email me the scouting report now",
     "emailSent": "Sent to {{to}}. Check your inbox.",
-    "emailConfirm": "<a>Confirm your email address first</a>",
+    "confirmFirst": "Confirm your email to get scouting reports.",
+    "confirmResend": "Resend confirmation email",
+    "confirmSent": "Sent. Check your inbox (and spam).",
     "emailTooMany_one": "You’ve asked for a few already. Try again in {{count}} minute.",
     "emailTooMany_other": "You’ve asked for a few already. Try again in {{count}} minutes.",
     "emailBusy": "Email is busy right now. Try again later."

@@ -363,6 +363,10 @@
   overflow-wrap: anywhere;
 }
 
+.event-scouting__email-note--muted {
+  color: var(--muted);
+}
+
 .event-scouting__summary {
   display: flex;
   flex-direction: column;
