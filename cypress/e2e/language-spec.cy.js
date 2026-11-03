@@ -4,16 +4,17 @@ import { TEST_USER } from '../support/login'
 const LOCALES = [{ locale: 'en', name: 'English' }, { locale: 'es-MX', name: 'Español (México)' }, { locale: 'fr-CA', name: 'Français (Canada)' }]
 
 describe('Language', () => {
-  it('sets the language for bird names in Settings, and says the rest stays in English for now', () => {
+  it('sets the language in Settings, and the page switches to it', () => {
     stubAuth({ loggedIn: true })
     cy.intercept('GET', '**/api/ebird/name-locales*', { statusCode: 200, body: LOCALES }).as('locales')
     cy.visit('http://localhost:3000/settings')
     cy.wait('@locales')
     cy.get('select[name="locale"]').should('have.value', '')
-    cy.contains('Bird names switch now; the rest of the app is in English for now.')
+    cy.contains('The app, its bird names, and your emails and alerts all switch to it.')
     cy.get('select[name="locale"]').select('es-MX')
     cy.wait('@patchUser').its('request.body').should('deep.equal', { locale: 'es-MX' })
-    cy.contains('Language saved!')
+    cy.get('html').should('have.attr', 'lang', 'es-MX')
+    cy.contains('h2', 'Tus datos')
   })
 
   it('asks for bird names in the chosen language, in the address so each language caches apart', () => {
@@ -32,7 +33,7 @@ describe('Language', () => {
     cy.visit('http://localhost:3000/settings')
     cy.contains('#settingsText', 'Settings')
     cy.contains('h2', 'Your details')
-    // A made-up catalog stands in for the Spanish and French ones still to come.
+    // A made-up catalog: any language added later switches the same way.
     cy.window().then((win) => {
       win.__addCatalog('xx', { nav: { settings: 'Réglages' }, account: { title: 'Vos coordonnées' } })
       return win.__applyLocale('xx')
