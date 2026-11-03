@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions, getCountries, getProvinces,
-  getSavedBirds, getPlaces, getPlaceSeen, getPlaceSuggestions, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase, getNameLocales, getEvents, getEventPreview, getEventView, getEventScouting, getEventRoute, getEventSuggestions } from '../apiCalls'
+  getSavedBirds, getPlaces, getPlaceSeen, getPlaceSuggestions, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase, getNameLocales, getEvents, getEventPreview, getEventView, getEventScouting, getEventRoute, getEventRoutePlan, getEventSuggestions } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
 import { nameLocale } from '../i18n'
 import type { Id, LifersScope, PersistenceClass, User } from '../types'
@@ -440,15 +440,29 @@ export const useEventScoutingQuery = (id: Id | null) =>
     select: (answer) => ({ ...answer, reported: Array.isArray(answer?.reported) ? answer.reported : [], unreported: Array.isArray(answer?.unreported) ? answer.unreported : [] })
   })
 
-/** The suggested scouting route, fetched only once asked for; `from` is a rounded "lat,lng" start. A new start keeps the last route showing until the new one comes. */
-export const useEventRouteQuery = (id: Id, from: string | null, enabled: boolean) =>
+/** The suggested scouting route, fetched only once asked for. */
+export const useEventRouteQuery = (id: Id, enabled: boolean) =>
   useQuery({
-    queryKey: ['event-route', id, from, nameLocale()] as const,
-    queryFn: () => getEventRoute(id, from),
+    queryKey: ['event-route', id, nameLocale()] as const,
+    queryFn: () => getEventRoute(id),
     enabled,
     placeholderData: keepPreviousData,
     staleTime: 30 * 60 * 1000,
     select: (answer) => ({ ...answer, stops: Array.isArray(answer?.stops) ? answer.stops : [], extras: Array.isArray(answer?.extras) ? answer.extras : [], geometry: Array.isArray(answer?.geometry) ? answer.geometry : [] })
+  })
+
+/**
+ * The group's saved route, while the route panel is open: fresh on focus and each minute, so
+ * everyone sees the same one, except while this viewer is mid-edit (`quiet`).
+ */
+export const useEventRoutePlanQuery = (id: Id, enabled: boolean, quiet: boolean) =>
+  useQuery({
+    queryKey: ['event-route-plan', id] as const,
+    queryFn: () => getEventRoutePlan(id),
+    enabled,
+    staleTime: 0,
+    refetchOnWindowFocus: !quiet,
+    refetchInterval: enabled && !quiet ? 60 * 1000 : false
   })
 
 /** What an invite link is for, before joining (no sign-in needed). */

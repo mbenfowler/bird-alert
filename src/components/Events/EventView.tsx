@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router'
 import { LoadingState } from '../Loading/Loading'
+import SightingsMap from '../SightingsMap/SightingsMap'
 import { useEventViewQuery, useSessionQuery } from '../../hooks/queries'
 import { dateRange, t } from '../../i18n'
 import '../Shared/Shared.css'
@@ -20,6 +21,8 @@ const EventView = () => {
   if (view.isError || !view.data) return <section className='event-page'><p className='event-page__missing'>{t('events.viewMissing')}</p></section>
   const v = view.data
   const tally = [...(v.tally ?? [])].sort((a, b) => b.added_at.localeCompare(a.added_at))
+  // The group's route, read-only: no start (the meeting point stays with the group).
+  const stops = (Array.isArray(v.route?.stops) ? v.route.stops : []).filter(s => Number.isFinite(s.lat) && Number.isFinite(s.lng))
   return (
     <article className='event-page'>
       <h1 className='fredericka event-page__title'>{v.name}</h1>
@@ -42,6 +45,21 @@ const EventView = () => {
             </>
           : <p className='notification__hint'>{t('events.viewNoTally')}</p>}
       </section>
+      {stops.length > 0 && (
+        <section className='event-page__section' aria-labelledby='viewRoute' data-testid='view-route'>
+          <h2 id='viewRoute' className='event-page__subhead'>{t('events.viewRoute')}</h2>
+          <ol className='event-view__stops'>
+            {stops.map((stop, i) => (
+              <li key={`${stop.locId ?? ''}-${i}`}><span className='event-scouting__num' aria-hidden='true'>{i + 1}</span><span>{stop.name}</span></li>
+            ))}
+          </ol>
+          <div className='event-scouting__map'>
+            {/* Straight lines between the stops: this page needs no account, and the order is what matters. */}
+            <SightingsMap points={[]} height={220} ariaLabel={t('events.viewRouteMap', { name: v.name })}
+              route={{ path: stops.map(s => [s.lat, s.lng] as [number, number]), stops: stops.map((s, i) => ({ lat: s.lat, lng: s.lng, label: `${i + 1}. ${s.name}` })) }} />
+          </div>
+        </section>
+      )}
       {v.targets.length > 0 && (
         <section className='event-page__section' aria-labelledby='viewTargets'>
           <h2 id='viewTargets' className='event-page__subhead'>{t('events.viewTargets')}</h2>

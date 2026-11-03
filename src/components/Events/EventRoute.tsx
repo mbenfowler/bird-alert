@@ -1,12 +1,10 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Trans } from 'react-i18next'
 import { LoadingState } from '../Loading/Loading'
-import PlaceSearch from '../PlaceSearch/PlaceSearch'
 import { mapsUrl } from '../../routePlan'
 import { shortDistance, useDistanceUnit, type DistanceUnit } from '../../distance'
 import { t } from '../../i18n'
 import { prefersReducedMotion } from '../../routeDraw'
-import { round2, type RouteStart } from './routeChoices'
 import type { EventRoute as Route } from '../../types'
 
 type Stop = Route['stops'][number]
@@ -114,65 +112,20 @@ const ExtraRow = ({ extra, i, active, unit, renderBird }: { extra: Extra; i: num
 }
 
 /**
- * Where the route starts: the viewer's own pick (a town, address, hotspot, typed coordinates or
- * their location), else the event's meeting point, else the first stop.
- */
-const StartControl = ({ state, start, meetingPoint, onStart }: { state: string; start: RouteStart | null; meetingPoint: boolean; onStart: (start: RouteStart | null) => void }) => {
-  const [choosing, setChoosing] = useState(false)
-  const [locating, setLocating] = useState<'idle' | 'busy' | 'failed'>('idle')
-  const choose = (next: RouteStart | null) => { setChoosing(false); setLocating('idle'); onStart(next) }
-  const locate = () => {
-    if (!('geolocation' in navigator)) { setLocating('failed'); return }
-    setLocating('busy')
-    navigator.geolocation.getCurrentPosition(
-      (pos) => choose({ name: t('route.myLocation'), lat: round2(pos.coords.latitude), lng: round2(pos.coords.longitude), mine: true }),
-      () => setLocating('failed'),
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 }
-    )
-  }
-  if (choosing) {
-    return (
-      <div className='event-route__start event-route__start--choosing'>
-        <PlaceSearch state={state} label={t('eventRoute.startFrom')} placeholder={t('eventRoute.startPlaceholder')} autoFocus
-          onPick={(p) => choose({ name: p.name, lat: round2(p.lat), lng: round2(p.lng) })} />
-        <div className='event-route__start-actions'>
-          <button type='button' className='pill-button pill-button--small' onClick={locate} disabled={locating === 'busy'}>
-            {locating === 'busy' ? t('route.finding') : t('route.useLocation')}
-          </button>
-          <button type='button' className='link-button link-text' onClick={() => { setChoosing(false); setLocating('idle') }}>{t('common.cancel')}</button>
-        </div>
-        {locating === 'failed' && <p className='event-route__note' role='status'>{t('eventRoute.locateFailed')}</p>}
-      </div>
-    )
-  }
-  return (
-    <div className='event-route__start'>
-      <span className='event-route__note event-route__start-name'>
-        {start ? (start.mine ? t('eventRoute.fromYou') : t('eventRoute.startingFrom', { name: start.name })) : t(meetingPoint ? 'eventRoute.fromMeetingPoint' : 'eventRoute.fromFirstStop')}
-      </span>
-      <button type='button' className='link-button link-text' onClick={() => setChoosing(true)}>{t(start ? 'eventRoute.change' : 'eventRoute.startElsewhere')}</button>
-      {start && <button type='button' className='link-button link-text' onClick={() => choose(null)}>{t('eventRoute.clear')}</button>}
-    </div>
-  )
-}
-
-/**
  * The scouting route: the fewest places that cover the most reported targets, in drive order, with
  * the drive between them and links into Google Maps, then the optional stops worth it with time to
  * spare. Stops can be taken out and optional ones put in; the route is planned again each time.
  */
-const EventRoute = ({ route, pending, updating, failed, custom = false, state, start, onStart, lifers, picked, renderBird, actions }: {
+const EventRoute = ({ route, pending, updating, failed, heading = null, start, lifers, picked, renderBird, actions }: {
   route: Route | undefined
   pending: boolean
   /** An edit is on its way; the last route stays up meanwhile. */
   updating: boolean
   failed: boolean
-  /** The viewer's own route rather than the suggestion. */
-  custom?: boolean
-  /** The event's state or province, for the start search. */
-  state: string
-  start: RouteStart | null
-  onStart: (start: RouteStart | null) => void
+  /** The group's own route: "Your group's route · edited by Sam · 2 hours ago". Null for the suggestion. */
+  heading?: string | null
+  /** The group's meeting point, when one is saved. */
+  start: { name: string } | null
   lifers: boolean
   /** An optional stop whose pin was tapped; each tap is a new object. */
   picked: { i: number } | null
@@ -192,13 +145,17 @@ const EventRoute = ({ route, pending, updating, failed, custom = false, state, s
   const extrasShown = allExtras || (picked && picked.i >= EXTRAS_SHOWN) ? extras : extras.slice(0, EXTRAS_SHOWN)
   const withExtras = route && typeof route.covered_with_extras === 'number' && route.covered_with_extras > route.covered ? route.covered_with_extras : null
   const coversKey = lifers ? 'eventRoute.coversLifers' : 'eventRoute.covers'
-  const startControl = <StartControl state={state} start={start} meetingPoint={Boolean(route?.from) && !start} onStart={onStart} />
+  const custom = heading !== null
+  const startControl = (
+    <p className='event-route__note event-route__start-name'>
+      {start ? t('eventRoute.startingFrom', { name: start.name }) : t(route?.from ? 'eventRoute.fromMeetingPoint' : 'eventRoute.fromFirstStop')}
+    </p>
+  )
 
   return (
     <div className={`event-route ${updating ? 'is-updating' : ''}`} data-testid='event-route' aria-busy={updating || pending}>
       {pending && <LoadingState variant='inline' label={t('eventRoute.loading')} />}
       {failed && <p className='notification__hint'>{t('eventRoute.failed')}</p>}
-      {failed && start && startControl}
       {failed && actions}
       {route && !pending && (
         route.stops.length === 0
@@ -220,7 +177,8 @@ const EventRoute = ({ route, pending, updating, failed, custom = false, state, s
                     ? t(`${coversKey}Extras`, { got: route.covered, count: route.reported, extras: withExtras })
                     : t(coversKey, { got: route.covered, count: route.reported })}
                 </p>
-                {custom && <p className='event-route__note'>{t('eventRoute.yours')}</p>}
+                {custom && <p className='event-route__note event-route__heading'>{heading}</p>}
+                {!custom && route.incomplete && <p className='event-route__note'>{t('eventRoute.incomplete')}</p>}
                 {!route.routed && <p className='event-route__note'>{t(custom ? 'eventRoute.unroutedCustom' : 'eventRoute.unrouted')}</p>}
                 {updating && <p className='event-route__note' role='status'>{t('eventRoute.updating')}</p>}
               </div>

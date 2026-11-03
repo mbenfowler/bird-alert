@@ -44,7 +44,7 @@ const routed = (over = {}) => ({
 
 const STORE_KEY = 'bird-alert:event-route:5'
 
-const open = ({ route, user = TEST_USER, geo = null, stored = null, setup = null } = {}) => {
+const open = ({ route, user = TEST_USER, geo = null, stored = null, setup = null, plan = { record: { start: null, stops: null, version: 0 } } } = {}) => {
   stubAuth({ loggedIn: true, user })
   cy.intercept('GET', '**/api/ebird/regions*', { statusCode: 200, body: [{ code: COCHISE, name: 'Cochise' }] })
   cy.intercept('GET', '**/api/birds*', { statusCode: 200, body: [] })
@@ -56,6 +56,19 @@ const open = ({ route, user = TEST_USER, geo = null, stored = null, setup = null
     const body = typeof route === 'function' ? route(params.get('from'), params) : route
     req.reply(body && body.statusCode ? body : { statusCode: 200, body })
   }).as('route')
+  // The group's saved route, kept by a fake server: versions, a 409 with the current record when stale.
+  cy.intercept('GET', '**/api/saved?kind=event-route-plan*', (req) => req.reply({ statusCode: 200, body: plan.record })).as('plan')
+  cy.intercept('PUT', '**/api/saved?kind=event-route-plan*', (req) => {
+    if (plan.fail) { plan.fail -= 1; return req.reply({ statusCode: 500, body: { error: 'boom' } }) }
+    if (req.body.version !== plan.record.version) return req.reply({ statusCode: 409, body: { error: 'Someone changed the route', current: plan.record } })
+    plan.record = { start: req.body.start, stops: req.body.stops, version: plan.record.version + 1, updated_at: new Date().toISOString(), updated_by_name: 'Matt', updated_by_you: true }
+    req.reply({ statusCode: 200, body: plan.record })
+  }).as('savePlan')
+  cy.intercept('DELETE', '**/api/saved?kind=event-route-plan*', (req) => {
+    if (Number(new URL(req.url).searchParams.get('version')) !== plan.record.version) return req.reply({ statusCode: 409, body: { error: 'Someone changed the route', current: plan.record } })
+    plan.record = { start: null, stops: null, version: plan.record.version + 1 }
+    req.reply({ statusCode: 200, body: plan.record })
+  }).as('deletePlan')
   cy.intercept('GET', '**/api/ebird/place-search*', (req) => {
     const params = new URL(req.url).searchParams
     const q = params.get('q') ?? ''
@@ -141,37 +154,6 @@ describe('Event route', () => {
     cy.get('.event-scouting__map .map-stop').should('have.length', 3)
   })
 
-  it('starts from the viewer’s location, rounded, when asked; a refusal says so', () => {
-    let refuse = false
-    open({
-      route: (from) => (from ? routed({ from: { lat: 31.95, lng: -109.31 }, stops: routed().stops.map((s, i) => (i ? s : { ...s, leg_min: 20, leg_mi: 9 })) }) : routed()),
-      geo: (ok, fail) => (refuse ? fail({ code: 1, message: 'User denied Geolocation' }) : ok({ coords: { latitude: 31.94823, longitude: -109.31177, accuracy: 30 } }))
-    })
-    cy.contains('button', 'Plan a route').click()
-    cy.wait('@route')
-    cy.contains('.event-route__start', 'Starting at the first stop.')
-    cy.contains('button', 'Start somewhere else').click()
-    cy.contains('button', 'Use my location').click()
-    cy.wait('@route').its('request.url').should('include', 'from=31.95%2C-109.31')
-    cy.get('[data-testid="event-route"]').within(() => {
-      cy.contains('Starting from your location.')
-      cy.get('[data-testid="route-stop"]').first().find('.event-route__leg').should('have.text', '↓ 20 min · 9 mi')
-      cy.get('a.event-route__maps').invoke('attr', 'href').then(href => {
-        const url = new URL(href)
-        expect(url.searchParams.get('origin')).to.equal('31.95,-109.31')
-        expect(url.searchParams.get('destination')).to.equal('31.87,-109.2')
-        expect(url.searchParams.get('waypoints')).to.equal('31.9,-109.27|31.88,-109.17')
-      })
-      cy.contains('button', 'Clear').click()
-      cy.contains('.event-route__start', 'Starting at the first stop.')
-      cy.wrap(null).then(() => { refuse = true })
-      cy.contains('button', 'Start somewhere else').click()
-      cy.contains('button', 'Use my location').click()
-      cy.contains('[role="status"]', 'Couldn’t get your location. Type a town, address or coordinates instead.')
-      cy.get('[data-testid="route-stop"]').should('have.length', 3)
-    })
-  })
-
   it('lists the optional stops lightly, marks personal and merged spots, and starts at the meeting point', () => {
     const extras = [
       { locId: 'L500', locName: 'Paradise', lat: 31.93, lng: -109.22, new_birds: [{ code: 'zz', comName: 'Zone-tailed Hawk' }, { code: 'x1', comName: 'Other One' }, { code: 'e3', comName: 'Extra Three' }], add_min: 69, add_mi: 38, private: false, merged: [] },
@@ -185,8 +167,7 @@ describe('Event route', () => {
     cy.wait('@route').its('request.url').should('not.include', 'from=')
     cy.get('[data-testid="event-route"]').within(() => {
       cy.get('.event-route__covers').should('have.text', 'Covers 9 of 12 targets reported this week · 12 with the extras')
-      cy.contains('.event-route__start', 'Starting from the event’s meeting point.')
-      cy.contains('button', 'Start somewhere else')
+      cy.contains('.event-route__start-name', 'Starting from the event’s meeting point.')
       cy.get('a.event-route__maps').invoke('attr', 'href').should('include', 'origin=31.97%2C-109.3')
       // Personal and merged spots.
       cy.get('[data-testid="route-stop"]').eq(0).within(() => {
@@ -238,60 +219,14 @@ describe('Event route', () => {
     })
   })
 
-  describe('choosing the start', () => {
-    const fromRoute = (from) => (from ? routed({ from: { lat: Number(from.split(',')[0]), lng: Number(from.split(',')[1]) } }) : routed())
-    const stored = (win) => JSON.parse(win.localStorage.getItem(STORE_KEY) ?? 'null')
-
-    it('a typed town or address, remembered, and cleared back to the first stop', () => {
-      open({ route: fromRoute })
-      cy.contains('button', 'Plan a route').click()
-      cy.wait('@route')
-      cy.contains('button', 'Start somewhere else').click()
-      cy.get('.event-route__start input[type="search"]').should('have.attr', 'placeholder', 'Town, address, hotspot or lat, long').type('Portal')
-      // Hotspots as you type, towns and addresses on Enter.
-      cy.contains('.place-search__results button', 'Portal Peak Lodge')
-      cy.get('.event-route__start input[type="search"]').type('{enter}')
-      cy.get('@placeSearch.all').should(calls => expect(calls.some(c => c.request.url.includes('state=AZ') && c.request.url.includes('addresses=1'))).to.equal(true))
-      cy.contains('.place-search__results button', 'Portal, Arizona, United States').click()
-      cy.wait('@route').its('request.url').should('include', 'from=31.91%2C-109.14')
-      cy.contains('.event-route__start', 'Starting from Portal, Arizona, United States.')
-      cy.window().then(win => expect(stored(win)).to.deep.equal({ start: { name: 'Portal, Arizona, United States', lat: 31.91, lng: -109.14 }, stops: null }))
-      cy.contains('.event-route__start button', 'Change').click()
-      cy.get('.event-route__start input[type="search"]').should('be.visible')
-      cy.contains('.event-route__start button', 'Cancel').click()
-      // Back to the route already planned without a start.
-      cy.contains('.event-route__start button', 'Clear').click()
-      cy.contains('.event-route__start', 'Starting at the first stop.')
-      cy.window().then(win => expect(stored(win)).to.equal(null))
-    })
-
-    it('typed coordinates become a start of their own', () => {
-      open({ route: fromRoute })
-      cy.contains('button', 'Plan a route').click()
-      cy.wait('@route')
-      cy.contains('button', 'Start somewhere else').click()
-      cy.get('.event-route__start input[type="search"]').type('31.9512 -109.3133')
-      cy.get('.place-search__results button').should('have.length', 1).and('have.text', 'Use 31.9512, -109.3133').click()
-      cy.wait('@route').its('request.url').should('include', 'from=31.95%2C-109.31')
-      cy.contains('.event-route__start', 'Starting from 31.9512, -109.3133.')
-      cy.get('a.event-route__maps').invoke('attr', 'href').should('include', 'origin=31.95%2C-109.31')
-    })
-
-    it('a remembered start is used straight away', () => {
-      open({ route: fromRoute, stored: { start: { name: 'Portal', lat: 31.91, lng: -109.14 }, stops: null } })
-      cy.contains('button', 'Plan a route').click()
-      cy.wait('@route').its('request.url').should('include', 'from=31.91%2C-109.14')
-      cy.contains('.event-route__start', 'Starting from Portal.')
-    })
-  })
-
-  describe('a route of your own', () => {
+  describe('the group’s route', () => {
     // The suggestion, with every place's targets (`species`) and their names, for coverage worked out here.
-    const suggestion = () => routed({
+    const suggestion = (over = {}) => routed({
       stops: routed().stops.map((s, i) => ({ ...s, species: [['mexchi', 'b1', 'b2'], ['eletro', 'mexchi'], ['zz']][i] })),
       extras: [{ locId: 'L500', locName: 'Paradise', lat: 31.93, lng: -109.22, new_birds: [{ code: 'pa', comName: 'Painted Redstart' }], add_min: 69, add_mi: 38, species: ['pa', 'zz'] }],
       names: { mexchi: 'Mexican Chickadee', b1: 'Bird b1', b2: 'Bird b2', eletro: 'Elegant Trogon', zz: 'Zone-tailed Hawk', pa: 'Painted Redstart' },
-      covered: 5, reported: 7, skipped: 0
+      covered: 5, reported: 7, skipped: 0,
+      ...over
     })
     // The drive between the stops in the order given: 10 min and 5 mi a leg.
     const stubDrive = () => cy.intercept('GET', '**/api/ebird/drive*', (req) => {
@@ -301,95 +236,188 @@ describe('Event route', () => {
     }).as('drive')
     const names = (sel) => cy.get(sel).then(els => [...els].map(e => e.textContent))
     const editorStops = () => names('[data-testid="route-editor"] .go__stop-text strong')
-    const stored = (win) => JSON.parse(win.localStorage.getItem(STORE_KEY) ?? 'null')
+    const cardStops = () => names('[data-testid="route-stop"] .event-scouting__place-name')
+    const twoStops = [{ locId: 'L400', name: 'Southwestern Research Station', lat: 31.87, lng: -109.2 }, { locId: 'L123', name: 'Cave Creek Canyon', lat: 31.88, lng: -109.17 }]
+    const ago = (minutes) => new Date(Date.now() - minutes * 60000).toISOString()
 
-    it('edits the suggestion in the shared route editor: reorder, remove, add from the list or by search, remove all', () => {
-      open({ route: suggestion(), setup: stubDrive })
+    it('nothing saved: the suggestion, with Edit route to start the group’s own', () => {
+      const server = { record: { start: null, stops: null, version: 0 } }
+      open({ route: suggestion(), plan: server, setup: stubDrive })
       cy.contains('button', 'Plan a route').click()
-      cy.wait('@route')
-      cy.get('a.event-route__maps').should('exist')
-      cy.contains('button', 'Put back').should('not.exist')
-      cy.contains('button', 'Edit route').click()
-      cy.get('[data-testid="route-editor"]').should('be.visible')
-      editorStops().should('deep.equal', ['Rustler Park', 'Cave Creek Canyon', 'Southwestern Research Station'])
-      cy.get('[data-testid="route-editor"] .go__stop-text span').first().should('have.text', '+3 new')
-      // Opening the editor changes nothing until something is changed.
-      cy.window().then(win => expect(stored(win)).to.equal(null))
-
-      // Reorder: the new birds follow the visit order, and the route is remembered.
-      cy.get('[aria-label="Move Rustler Park down"]').click()
-      editorStops().should('deep.equal', ['Cave Creek Canyon', 'Rustler Park', 'Southwestern Research Station'])
-      names('[data-testid="route-editor"] .go__stop-text span').should('deep.equal', ['+2 new', '+2 new', '+1 new'])
-      cy.get('[data-testid="route-editor"] .go__covers').should('have.text', 'Covers 5 of 7 targets reported this week')
-      cy.window().then(win => expect(stored(win).stops.map(s => s.locId)).to.deep.equal(['L123', 'L200', 'L400']))
-      // The map follows the new order.
-      cy.get('.event-scouting__map .map-stop:not(.map-stop--start)').should('have.length', 3)
-
-      // Remove, then add from the list: the suggestion's extras and the scouting places, with what each adds.
-      cy.get('[aria-label="Remove Southwestern Research Station"]').click()
-      editorStops().should('have.length', 2)
-      cy.get('[data-testid="route-editor"] input[type="search"]').should('exist')
-      cy.contains('[data-testid="route-editor"] .place-search__results button', 'Paradise').should('contain', '+2 birds').click()
-      editorStops().should('deep.equal', ['Cave Creek Canyon', 'Rustler Park', 'Paradise'])
-      cy.get('[data-testid="route-editor"] .go__covers').should('have.text', 'Covers 6 of 7 targets reported this week')
-
-      // Add by search: a place with none of the targets adds no birds.
-      cy.get('[data-testid="route-editor"] .go__add input[type="search"]').type('Portal')
-      cy.contains('[data-testid="route-editor"] .place-search__results button', 'Portal Peak Lodge').click()
-      editorStops().should('have.length', 4).its(3).should('equal', 'Portal Peak Lodge')
-      cy.get('[data-testid="route-editor"] .go__stop-text span').last().should('have.text', 'No new birds on this route')
-
-      // Done: the panel reads like the suggestion, with the drive between the stops from /ebird/drive.
-      cy.contains('[data-testid="route-editor"] button', 'Done').click()
-      cy.get('[data-testid="event-route"]').within(() => {
-        cy.contains('.event-route__note', 'Your own route.')
-        cy.get('.event-route__headline').should('have.text', '4 stops · about 30 min of driving · 15 mi')
-        cy.get('.event-route__covers').should('have.text', 'Covers 6 of 7 targets reported this week')
-        names('[data-testid="route-stop"] .event-scouting__place-name').should('deep.equal', ['Cave Creek Canyon', 'Rustler Park', 'Paradise', 'Portal Peak Lodge'])
-        cy.get('[data-testid="route-stop"]').eq(1).find('.event-route__leg').should('have.text', '↓ 10 min · 5 mi')
-        cy.get('[data-testid="route-extras"]').should('not.exist')
-      })
-      cy.get('.event-scouting__map .map-stop:not(.map-stop--start)').should('have.length', 4)
-
-      // Remove every stop: an empty route, and the editor's add box is still there.
-      cy.contains('button', 'Edit route').click()
-      cy.get('[data-testid="route-editor"] [aria-label^="Remove "]').should('have.length', 4)
-      for (let i = 0; i < 4; i++) cy.get('[data-testid="route-editor"] [aria-label^="Remove "]').first().click()
-      cy.contains('[data-testid="route-editor"]', 'No stops yet. Add one below.')
-      cy.get('[data-testid="route-editor"] .go__add input[type="search"]').should('be.visible')
-      cy.window().then(win => expect(stored(win)).to.deep.equal({ start: null, stops: [] }))
-      cy.contains('[data-testid="route-editor"] button', 'Done').click()
-      cy.contains('[data-testid="event-route"]', 'No reported places to plan a route through yet.')
-      cy.contains('[data-testid="event-route"] button', 'Edit route')
+      cy.wait('@plan')
+      cardStops().should('deep.equal', ['Rustler Park', 'Cave Creek Canyon', 'Southwestern Research Station'])
+      cy.get('.event-route__heading').should('not.exist')
+      cy.contains('.event-route__start-name', 'Starting at the first stop.')
+      cy.contains('button', 'Back to the suggested route').should('not.exist')
+      cy.contains('button', 'Edit route')
+      cy.contains('Start somewhere else').should('not.exist')
     })
 
-    it('a reload keeps the route of your own; back to the suggestion forgets it', () => {
-      const mine = { start: null, stops: [{ locId: 'L400', name: 'Southwestern Research Station', lat: 31.87, lng: -109.2 }, { locId: 'L123', name: 'Cave Creek Canyon', lat: 31.88, lng: -109.17 }] }
-      open({ route: suggestion(), stored: mine, setup: stubDrive })
+    it('a saved route shows instead of the suggestion, with who edited it and when', () => {
+      const server = { record: { start: { name: 'Portal Store', lat: 31.91, lng: -109.14 }, stops: twoStops, version: 3, updated_at: ago(130), updated_by_name: 'Sam' } }
+      open({ route: suggestion(), plan: server, setup: stubDrive })
       cy.contains('button', 'Plan a route').click()
-      cy.wait('@route').its('request.url').should('not.include', 'add=').and('not.include', 'drop=')
+      cy.wait('@plan').its('request.url').should('include', 'id=5')
       cy.wait('@drive')
-      names('[data-testid="route-stop"] .event-scouting__place-name').should('deep.equal', ['Southwestern Research Station', 'Cave Creek Canyon'])
+      cy.get('.event-route__heading').should('have.text', 'Your group’s route · edited by Sam · 2 hours ago')
+      cardStops().should('deep.equal', ['Southwestern Research Station', 'Cave Creek Canyon'])
+      cy.contains('.event-route__start-name', 'Meeting point: Portal Store.')
       cy.get('.event-route__covers').should('have.text', 'Covers 3 of 7 targets reported this week')
-      cy.reload()
+      cy.get('.event-route__headline').should('have.text', '2 stops · about 20 min of driving · 10 mi')
+      cy.get('.event-scouting__map .map-stop:not(.map-stop--start)').should('have.length', 2)
+      cy.get('.event-scouting__map .map-stop--start').should('have.length', 1)
+      cy.get('[data-testid="route-extras"]').should('not.exist')
+    })
+
+    it('edits save to the group a moment after the last one, with the version they were made on', () => {
+      const server = { record: { start: null, stops: null, version: 0 } }
+      open({ route: suggestion(), plan: server, setup: stubDrive })
       cy.contains('button', 'Plan a route').click()
-      names('[data-testid="route-stop"] .event-scouting__place-name').should('deep.equal', ['Southwestern Research Station', 'Cave Creek Canyon'])
+      cy.wait('@plan')
+      cy.contains('button', 'Edit route').click()
+      cy.get('[data-testid="route-editor"] .go__start-label').should('have.text', 'Meeting point')
+      editorStops().should('deep.equal', ['Rustler Park', 'Cave Creek Canyon', 'Southwestern Research Station'])
+      // Two quick edits, one save.
+      cy.get('[aria-label="Move Rustler Park down"]').click()
+      cy.get('[aria-label="Remove Southwestern Research Station"]').click()
+      editorStops().should('deep.equal', ['Cave Creek Canyon', 'Rustler Park'])
+      cy.contains('.event-route__save', 'Saved')
+      cy.get('@savePlan.all').should('have.length', 1)
+      cy.get('@savePlan').its('request.body').should('deep.equal', {
+        start: null, version: 0,
+        stops: [{ locId: 'L123', name: 'Cave Creek Canyon', lat: 31.88, lng: -109.17 }, { locId: 'L200', name: 'Rustler Park', lat: 31.9, lng: -109.27 }]
+      })
+      // The next edit goes with the new version: add from the list, and a meeting point typed as coordinates.
+      cy.contains('[data-testid="route-editor"] .place-search__results button', 'Paradise').should('contain', '+2 birds').click()
+      cy.contains('.event-route__save', 'Saved')
+      cy.get('@savePlan').its('request.body.version').should('equal', 1)
+      cy.contains('[data-testid="route-editor"] .go__start button', 'Set').click()
+      cy.get('[data-testid="route-editor"] .go__start-picker input[type="search"]').type('31.9512, -109.3133')
+      cy.contains('[data-testid="route-editor"] .go__start-picker button', 'Use 31.9512, -109.3133').click()
+      cy.get('@savePlan.all').should('have.length', 3).its(2).its('request.body').should('deep.include', { start: { name: '31.9512, -109.3133', lat: 31.9512, lng: -109.3133 }, version: 2 })
+      cy.contains('[data-testid="route-editor"] button', 'Done').click()
+      cy.get('.event-route__heading').should('contain', 'Your group’s route · edited by you · just now')
+      cardStops().should('deep.equal', ['Cave Creek Canyon', 'Rustler Park', 'Paradise'])
+    })
+
+    it('someone else’s newer save wins: their route comes in and says who changed it', () => {
+      const server = { record: { start: null, stops: twoStops, version: 4, updated_at: ago(5), updated_by_name: 'Sam' } }
+      open({ route: suggestion(), plan: server, setup: stubDrive })
+      cy.contains('button', 'Plan a route').click()
+      cy.wait('@plan')
+      cy.contains('button', 'Edit route').click()
+      // Meanwhile Sam saves version 5 with one stop.
+      cy.wrap(null).then(() => { server.record = { start: null, stops: [twoStops[1]], version: 5, updated_at: ago(0), updated_by_name: 'Sam' } })
+      cy.get('[aria-label="Remove Southwestern Research Station"]').click()
+      cy.wait('@savePlan').its('response.statusCode').should('equal', 409)
+      cy.contains('[role="status"]', 'Sam just changed the route.')
+      editorStops().should('deep.equal', ['Cave Creek Canyon'])
+      cy.contains('.event-route__save', 'Saved').should('not.exist')
+    })
+
+    it('a failed save keeps the edit on screen, to try again', () => {
+      const server = { record: { start: null, stops: twoStops, version: 1 }, fail: 1 }
+      open({ route: suggestion(), plan: server, setup: stubDrive })
+      cy.contains('button', 'Plan a route').click()
+      cy.contains('button', 'Edit route').click()
+      cy.get('[aria-label="Move Southwestern Research Station down"]').click()
+      cy.contains('.event-route__save', 'Couldn’t save the route.')
+      editorStops().should('deep.equal', ['Cave Creek Canyon', 'Southwestern Research Station'])
+      cy.contains('.event-route__save button', 'Try again').click()
+      cy.contains('.event-route__save', 'Saved')
+      cy.wrap(null).then(() => expect(server.record.stops.map(s => s.locId)).to.deep.equal(['L123', 'L400']))
+    })
+
+    it('back to the suggested route asks first, then clears it for everyone', () => {
+      const server = { record: { start: null, stops: twoStops, version: 2, updated_at: ago(30), updated_by_name: 'Sam' } }
+      open({ route: suggestion(), plan: server, setup: stubDrive })
+      cy.contains('button', 'Plan a route').click()
+      cy.wait('@plan')
       cy.contains('button', 'Back to the suggested route').click()
-      names('[data-testid="route-stop"] .event-scouting__place-name').should('deep.equal', ['Rustler Park', 'Cave Creek Canyon', 'Southwestern Research Station'])
-      cy.contains('.event-route__note', 'Your own route.').should('not.exist')
+      cy.contains('[role="alert"]', 'Go back to the suggested route? This clears the route for everyone in the group.')
+      cy.contains('[role="alert"] button', 'Cancel').click()
+      cy.get('@deletePlan.all').should('have.length', 0)
+      cy.contains('button', 'Back to the suggested route').click()
+      cy.contains('[role="alert"] button', 'Go back').click()
+      cy.wait('@deletePlan').its('request.url').should('include', 'version=2')
+      cardStops().should('deep.equal', ['Rustler Park', 'Cave Creek Canyon', 'Southwestern Research Station'])
+      cy.get('.event-route__heading').should('not.exist')
       cy.contains('button', 'Back to the suggested route').should('not.exist')
-      cy.window().then(win => expect(stored(win)).to.equal(null))
-      cy.get('[data-testid="route-extras"]').should('exist')
+    })
+
+    it('offers a route made on this device before routes were shared, once', () => {
+      const server = { record: { start: null, stops: null, version: 0 } }
+      open({ route: suggestion(), plan: server, setup: stubDrive, stored: { start: null, stops: twoStops } })
+      cy.contains('button', 'Plan a route').click()
+      cy.contains('[role="alert"]', 'Save the route you made earlier for the group?').contains('button', 'Save').click()
+      cy.wait('@savePlan').its('request.body').should('deep.equal', { start: null, stops: twoStops, version: 0 })
+      cardStops().should('deep.equal', ['Southwestern Research Station', 'Cave Creek Canyon'])
+      cy.window().then(win => expect(win.localStorage.getItem(STORE_KEY)).to.equal(null))
+      cy.contains('Save the route you made earlier').should('not.exist')
+    })
+
+    it('discarding the old route clears it; a group that has a route never sees the offer', () => {
+      open({ route: suggestion(), plan: { record: { start: null, stops: null, version: 0 } }, setup: stubDrive, stored: { start: null, stops: twoStops } })
+      cy.contains('button', 'Plan a route').click()
+      cy.contains('[role="alert"]', 'Save the route you made earlier for the group?').contains('button', 'Discard').click()
+      cy.contains('Save the route you made earlier').should('not.exist')
+      cy.window().then(win => expect(win.localStorage.getItem(STORE_KEY)).to.equal(null))
+      cy.get('@savePlan.all').should('have.length', 0)
+      cardStops().should('deep.equal', ['Rustler Park', 'Cave Creek Canyon', 'Southwestern Research Station'])
+
+      open({ route: suggestion(), plan: { record: { start: null, stops: [twoStops[0]], version: 1 } }, setup: stubDrive, stored: { start: null, stops: twoStops } })
+      cy.contains('button', 'Plan a route').click()
+      cardStops().should('deep.equal', ['Southwestern Research Station'])
+      cy.contains('Save the route you made earlier').should('not.exist')
+      cy.window().then(win => expect(win.localStorage.getItem(STORE_KEY)).to.equal(null))
+    })
+
+    it('says when some reports couldn’t be loaded', () => {
+      open({ route: suggestion({ incomplete: true }), plan: { record: { start: null, stops: null, version: 0 } } })
+      cy.contains('button', 'Plan a route').click()
+      cy.contains('.event-route__note', 'Some reports couldn’t be loaded, so this may change on refresh.')
     })
 
     it('the editor fits a phone without scrolling sideways', () => {
       cy.viewport(375, 740)
-      open({ route: suggestion(), setup: stubDrive })
+      open({ route: suggestion(), plan: { record: { start: { name: 'A very long meeting point name at the trailhead parking area', lat: 31.9, lng: -109.2 }, stops: twoStops, version: 1, updated_by_name: null, updated_at: ago(3000) } }, setup: stubDrive })
       cy.contains('button', 'Plan a route').click()
+      cy.get('.event-route__heading').should('have.text', 'Your group’s route · edited by a group member · 2 days ago')
+      cy.document().then(doc => expect(doc.documentElement.scrollWidth).to.be.at.most(375))
       cy.contains('button', 'Edit route').click()
-      cy.get('[data-testid="route-editor"] .go__stop').should('have.length', 3)
+      cy.get('[data-testid="route-editor"] .go__stop').should('have.length', 2)
       cy.document().then(doc => expect(doc.documentElement.scrollWidth).to.be.at.most(375))
     })
+  })
+
+  it('the view-only page shows the group’s route, read-only, with no start', () => {
+    cy.viewport(375, 740)
+    stubAuth({ loggedIn: false })
+    cy.intercept('GET', '**/api/saved?kind=event-view*', { statusCode: 200, body: {
+      name: 'Chiricahuas', area: 'Cochise County, Arizona', starts_on: day(6), ends_on: day(6), kind: 'bigday', active: false,
+      targets: [], tally: [], count: 0,
+      route: { start: null, stops: [{ locId: 'L200', name: 'Rustler Park', lat: 31.9, lng: -109.27 }, { locId: null, name: 'A long-named pull-off on the Pinery Canyon road past the campground', lat: 31.88, lng: -109.17 }] }
+    } }).as('view')
+    cy.visit('http://localhost:3000/events/view/view456')
+    cy.wait('@view')
+    cy.get('[data-testid="view-route"]').within(() => {
+      cy.contains('h2', 'The route')
+      cy.get('.event-view__stops li').should('have.length', 2).first().should('have.text', '1Rustler Park')
+      cy.get('.map-stop:not(.map-stop--start)').should('have.length', 2)
+      cy.get('.map-stop--start').should('not.exist')
+      cy.get('path.map-route').should('exist')
+      cy.get('button, input').should('not.exist')
+    })
+    cy.document().then(doc => expect(doc.documentElement.scrollWidth).to.be.at.most(375))
+  })
+
+  it('the view-only page without a route has no route section', () => {
+    stubAuth({ loggedIn: false })
+    cy.intercept('GET', '**/api/saved?kind=event-view*', { statusCode: 200, body: { name: 'Chiricahuas', starts_on: day(6), ends_on: day(6), targets: [], tally: [], count: 0, route: null } }).as('view')
+    cy.visit('http://localhost:3000/events/view/view456')
+    cy.wait('@view')
+    cy.get('.event-page__title').should('have.text', 'Chiricahuas')
+    cy.get('[data-testid="view-route"]').should('not.exist')
   })
 
   it('reads in kilometres outside the US', () => {

@@ -34,6 +34,9 @@ export interface RouteEditorProps {
   onStopClick?: (stop: PlanPoint) => void
   /** The reset button's words, when the page says it differently. */
   resetLabel?: string
+  /** What the start is called, and what it says when there is none, when the page says it differently. */
+  startLabel?: string
+  startEmpty?: string
 }
 
 const legText = (leg: Leg, unit: DistanceUnit) => leg ? t('route.leg', { minutes: leg.minutes, distance: shortDistance(leg.miles, unit) }) : t('route.legUnknown')
@@ -44,7 +47,7 @@ const legText = (leg: Leg, unit: DistanceUnit) => leg ? t('route.leg', { minutes
  * the shortest order, set where the day starts, and go back to the suggestion. Shared by the
  * morning route on Where to go and an event's route.
  */
-const RouteEditor = ({ state, stops, start, arriving, editing, describe, suggestions, suggestionsLabel, preview = null, between, custom, onStops, onStart, onReset, onDone, onStopClick, resetLabel }: RouteEditorProps) => {
+const RouteEditor = ({ state, stops, start, arriving, editing, describe, suggestions, suggestionsLabel, preview = null, between, custom, onStops, onStart, onReset, onDone, onStopClick, resetLabel, startLabel, startEmpty }: RouteEditorProps) => {
   const unit = useDistanceUnit()
   const [settingStart, setSettingStart] = useState(false)
   const [locating, setLocating] = useState<'idle' | 'busy' | 'failed'>('idle')
@@ -111,8 +114,8 @@ const RouteEditor = ({ state, stops, start, arriving, editing, describe, suggest
         <div className='go__start'>
           <span className='go__start-dot' aria-hidden='true' />
           <span className='go__start-text'>
-            <span className='go__start-label'>{t('route.start')}</span>
-            <strong>{start ? start.name : t('route.startAnywhere')}</strong>
+            <span className='go__start-label'>{startLabel ?? t('route.start')}</span>
+            <strong>{start ? start.name : startEmpty ?? t('route.startAnywhere')}</strong>
           </span>
           {editing && !settingStart && <button type='button' className='go__link-button' onClick={() => setSettingStart(true)}>{start ? t('common.change') : t('route.set')}</button>}
           {editing && start && !settingStart && <button type='button' className='go__icon-button' aria-label={t('route.clearStart')} onClick={() => onStart(null)}><CloseIcon /></button>}

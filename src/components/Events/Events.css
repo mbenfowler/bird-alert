@@ -707,3 +707,24 @@ a.event-scouting__bird:hover {
   align-items: center;
   gap: 6px 12px;
 }
+
+/* The view-only page's route: numbered stops, then the map. */
+.event-view__stops {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.event-view__stops li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.event-route__save {
+  margin: 0;
+}
