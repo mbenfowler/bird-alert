@@ -198,8 +198,13 @@ const settle = async (page) => {
 
 /** The phone's whole screen, from the top of the page (or from a scroll position). */
 const viewport = (name) => async (page) => ({ [name]: await page.screenshot() })
-/** One element, as it sits on the page. */
-const element = (name, selector) => async (page) => ({ [name]: await page.locator(selector).first().screenshot() })
+/** One element, as it sits on the page, with a little of the page around it (`pad` CSS px). */
+const shoot = async (page, selector, pad = 12) => {
+  const box = await page.locator(selector).first().evaluate((el) => { const r = el.getBoundingClientRect(); return { x: r.x + scrollX, y: r.y + scrollY, width: r.width, height: r.height } })
+  const x = Math.max(0, box.x - pad)
+  return page.screenshot({ fullPage: true, clip: { x, y: Math.max(0, box.y - pad), width: Math.min(390 - x, box.width + pad * 2), height: box.height + pad * 2 } })
+}
+const element = (name, selector) => async (page) => ({ [name]: await shoot(page, selector) })
 
 /** A rare report's own page, in the area it was reported in. */
 const sightingPath = (code) => `/sighting/${code}/${NOTABLE.find(o => o.speciesCode === code)?.subId}?region=US-AZ-003`
@@ -223,11 +228,11 @@ const SCREENS = [
       const cards = page.locator('.alerts-list .alerts-item')
       for (let i = 0; i < await cards.count(); i++) {
         // With a margin, so the card's heat glow fades into the grey instead of stopping at a hard edge.
-        await cards.nth(i).scrollIntoViewIfNeeded()
-        const box = await cards.nth(i).boundingBox()
+        // boundingBox is viewport-relative; a full-page clip wants page coordinates.
+        const box = await cards.nth(i).evaluate((el) => { const r = el.getBoundingClientRect(); return { x: r.x + scrollX, y: r.y + scrollY, width: r.width, height: r.height } })
         if (!box) continue
         const pad = 18
-        out[`alert-${i + 1}`] = await page.screenshot({ clip: { x: box.x - pad, y: box.y - pad, width: box.width + pad * 2, height: box.height + pad * 2 } })
+        out[`alert-${i + 1}`] = await page.screenshot({ fullPage: true, clip: { x: box.x - pad, y: box.y - pad, width: box.width + pad * 2, height: box.height + pad * 2 } })
       }
       return out
     }
@@ -259,8 +264,8 @@ const SCREENS = [
   {
     name: 'route', path: '/events/7#route', ready: '[data-testid="route-stop"]',
     shot: async (page) => ({
-      route: await page.locator('[data-testid="event-scouting"]').screenshot(),
-      people: await page.locator('.event-detail__people').screenshot()
+      route: await shoot(page, '[data-testid="event-scouting"]'),
+      people: await shoot(page, '.event-detail__people')
     })
   },
   {
