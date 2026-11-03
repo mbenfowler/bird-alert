@@ -1,0 +1,158 @@
+/* Shared by every slide: 1080x1350 (the story is 1080x1920). The app's own fonts and colours. */
+@import url('https://fonts.googleapis.com/css2?family=Bungee&family=Bungee+Spice&family=Fredericka+the+Great&display=block');
+
+:root {
+  --bg: #d3d3d3;
+  --surface: #ffffff;
+  --ink: #111111;
+  --muted: #4f4f4f;
+  --accent: #ffd700;
+  --link: #163a99;
+  --sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { width: 1080px; height: 1350px; overflow: hidden; }
+body.story, html:has(body.story) { height: 1920px; }
+
+body {
+  position: relative;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.slide { position: absolute; inset: 0; padding: 96px 80px 80px; }
+
+/* The wordmark: "BIRD" in Bungee, "ALERT!" in the same orange gradient the app falls back to
+   (a colour font would need a browser that really paints it; the gradient never comes out black). */
+.wordmark { font-family: 'Bungee', sans-serif; font-size: 52px; line-height: 1; letter-spacing: 0.01em; white-space: nowrap; }
+.wordmark .alert {
+  background: linear-gradient(180deg, #ffd95c 0%, #ff8f24 48%, #d9341a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: #ff8c1a;
+}
+
+.pill {
+  display: inline-block;
+  padding: 10px 26px 11px;
+  border: 4px solid var(--ink);
+  border-radius: 999px;
+  background: var(--accent);
+  font: 700 32px/1.15 var(--sans);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.pill--plain { background: var(--surface); }
+
+.counter { position: absolute; top: 88px; right: 72px; font: 700 34px/1 var(--sans); color: var(--muted); }
+
+h1 {
+  font-family: 'Fredericka the Great', serif;
+  font-weight: 400;
+  font-size: 92px;
+  line-height: 1.08;
+  letter-spacing: 0.005em;
+  margin-top: 28px;
+}
+h1.big { font-size: 112px; }
+
+.body { font: 400 38px/1.42 var(--sans); color: #2b2b2b; letter-spacing: -0.01em; }
+.small { font: 400 27px/1.4 var(--sans); color: var(--muted); }
+.url { font: 700 40px/1 var(--sans); letter-spacing: -0.01em; }
+
+/* A phone: the app's screenshot in a black bezel, tilted a little. */
+.phone {
+  position: absolute;
+  width: 470px;
+  border-radius: 64px;
+  padding: 16px;
+  background: #121212;
+  box-shadow: -22px 26px 0 rgba(0, 0, 0, 0.16), 0 0 0 3px #3a3a3a inset;
+}
+.phone img { display: block; width: 100%; border-radius: 50px; }
+.phone .clip { overflow: hidden; border-radius: 50px; background: #fff; }
+.phone .clip img { border-radius: 0; }
+.tilt-r { transform: rotate(4deg); }
+.tilt-l { transform: rotate(-4deg); }
+
+/* A piece of the app lifted out of the screen: a white card with the app's black rim. */
+.lift {
+  position: absolute;
+  background: var(--surface);
+  border: 4px solid var(--ink);
+  border-radius: 28px;
+  box-shadow: 14px 16px 0 var(--ink);
+  overflow: hidden;
+}
+.lift img { display: block; width: 100%; }
+
+/* A notification as iOS shows it on the lock screen. */
+.push {
+  position: absolute;
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: 4px 20px;
+  align-items: start;
+  padding: 22px 26px 24px;
+  border-radius: 34px;
+  background: rgba(246, 246, 246, 0.94);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
+  font-family: var(--sans);
+}
+.push img { grid-row: span 3; width: 64px; height: 64px; border-radius: 15px; }
+.push .app { font: 600 22px/1.2 var(--sans); color: #5b5b5b; text-transform: uppercase; letter-spacing: 0.02em; }
+.push .time { font: 400 22px/1.2 var(--sans); color: #6b6b6b; }
+.push .title { grid-column: 2 / 4; font: 600 29px/1.25 var(--sans); }
+.push .text { grid-column: 2 / 4; font: 400 27px/1.3 var(--sans); color: #222; }
+
+.foot { position: absolute; left: 80px; right: 80px; bottom: 64px; }
+
+/* An Audubon plate as an old print: cream paper with a torn (deckled) edge, a strip of tape, a
+   soft shadow, a slight tilt, and an italic caption under it. Each slide sets where it sits, its
+   size and tilt (--tilt), and the crop (--zoom and --focus on the img):
+   <figure class="print" style="left: …; top: …; width: …; --tilt: -5deg">
+     <div class="print__paper"><div class="print__art" style="height: …"><img src="../.cache/plates/….jpg" style="--zoom: 1.4; --focus: 50% 30%"></div></div>
+     <figcaption>Bird, after Audubon</figcaption>
+   </figure>
+   The torn edge is the #deckle SVG filter that each slide with a print carries. */
+.print { position: absolute; margin: 0; transform: rotate(var(--tilt, -4deg)); }
+.print__paper { position: relative; padding: 18px; }
+.print__paper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #f3ead2;
+  box-shadow: inset 0 0 18px rgba(150, 120, 60, 0.25);
+  filter: url(#deckle) drop-shadow(10px 14px 14px rgba(0, 0, 0, 0.28));
+}
+/* The art is cropped by its box: object-fit fills it, --zoom and --focus pick the part of the plate. */
+.print__art { position: relative; overflow: hidden; }
+.print__art img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: var(--focus, 50% 50%); transform: scale(var(--zoom, 1)); transform-origin: var(--focus, 50% 50%); filter: sepia(0.12) saturate(0.92); }
+/* Translucent tape across the top edge. */
+.print__paper::after {
+  content: '';
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  width: 46%;
+  height: 40px;
+  transform: translateX(-50%) rotate(-2deg);
+  background: rgba(255, 252, 228, 0.55);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+.print figcaption {
+  /* One line, even when it runs a little wider than the print. */
+  margin: 12px -60px 0;
+  white-space: nowrap;
+  text-align: center;
+  font: italic 400 21px/1.2 Georgia, 'Times New Roman', serif;
+  color: #3d3d3d;
+}
+
+/* The credit for the bird photos inside the phone screens. */
+.credit { font: 400 19px/1.35 var(--sans); color: #555; }
