@@ -110,11 +110,6 @@
     "timingLegend": "À quelle vitesse envoyer les observations notables",
     "rightAway": "Tout de suite",
     "batch": "Regrouper aux 6 heures",
-    "skipSeen": {
-      "label": "Ignorer les oiseaux déjà sur ma liste à vie",
-      "hint": "Tu l’as déjà vu ? Tu ne recevras pas d’alerte d’oiseau rare pour lui, sauf s’il est dans ta liste de suivi.",
-      "needsLifeList": "<page>Importe d’abord ta liste à vie</page>"
-    },
     "quiet": "Heures de silence",
     "quietOn": "Aucune notification entre {{from}} et {{to}} ; elles arrivent après.",
     "quietOff": "Les notifications peuvent arriver à toute heure.",
@@ -886,7 +881,10 @@
     "homeSpot": "Endroit de référence",
     "homePlaceholder": "Ta ville, ton adresse ou un point chaud",
     "proof": "Seulement s’il y a une preuve",
-    "proofHint": "Les alertes d’oiseaux rares attendent qu’une mention ait une photo, l’approbation d’un réviseur eBird ou un deuxième observateur. Les alertes de liste de suivi ne sont pas touchées."
+    "proofHint": "Les alertes d’oiseaux rares attendent qu’une mention ait une photo, l’approbation d’un réviseur eBird ou un deuxième observateur. Les alertes de liste de suivi ne sont pas touchées.",
+    "skipSeen": "Ignorer les oiseaux déjà sur ma liste à vie",
+    "skipSeenHint": "Tu l’as déjà vu ? Tu ne recevras pas d’alerte d’oiseau rare pour lui, sauf s’il est dans ta liste de suivi.",
+    "skipSeenNeedsLifeList": "<page>Importe d’abord ta liste à vie</page>"
   },
   "reset": {
     "done": "Le mot de passe a été réinitialisé ! Connecte-toi.",

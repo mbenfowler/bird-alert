@@ -106,11 +106,6 @@
     "timingLegend": "Qué tan rápido enviar los avistamientos notables",
     "rightAway": "Al momento",
     "batch": "Agrupar cada 6 horas",
-    "skipSeen": {
-      "label": "Omitir aves que ya están en mi lista de vida",
-      "hint": "¿Ya la viste? No te llegará alerta de ave rara por ella, a menos que esté en tu lista de seguimiento.",
-      "needsLifeList": "<page>Primero importa tu lista de vida</page>"
-    },
     "quiet": "Horas de silencio",
     "quietOn": "Sin notificaciones push entre {{from}} y {{to}}; llegan después.",
     "quietOff": "Las notificaciones push pueden llegar a cualquier hora.",
@@ -869,7 +864,10 @@
     "homeSpot": "Punto de casa",
     "homePlaceholder": "Tu ciudad, dirección o un hotspot",
     "proof": "Solo cuando haya pruebas",
-    "proofHint": "Las alertas de aves raras esperan a que el reporte tenga una foto, el visto bueno de un revisor de eBird o un segundo observador. Las alertas de tu lista de seguimiento no cambian."
+    "proofHint": "Las alertas de aves raras esperan a que el reporte tenga una foto, el visto bueno de un revisor de eBird o un segundo observador. Las alertas de tu lista de seguimiento no cambian.",
+    "skipSeen": "Omitir aves que ya están en mi lista de vida",
+    "skipSeenHint": "¿Ya la viste? No te llegará alerta de ave rara por ella, a menos que esté en tu lista de seguimiento.",
+    "skipSeenNeedsLifeList": "<page>Primero importa tu lista de vida</page>"
   },
   "reset": {
     "done": "¡Tu contraseña se restableció! Inicia sesión.",

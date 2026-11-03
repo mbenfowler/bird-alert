@@ -100,11 +100,6 @@
     "timingLegend": "How quickly to send notable sightings",
     "rightAway": "Right away",
     "batch": "Batch every 6 hours",
-    "skipSeen": {
-      "label": "Skip birds already on my life list",
-      "hint": "Already seen it? You won’t get a rare-bird alert for it, unless it’s starred.",
-      "needsLifeList": "<page>Import your life list first</page>"
-    },
     "quiet": "Quiet hours",
     "quietOn": "No pushes between {{from}} and {{to}}; they arrive after.",
     "quietOff": "Pushes can arrive at any hour.",
@@ -808,7 +803,10 @@
     "homeSpot": "Home spot",
     "homePlaceholder": "Your town, address or a hotspot",
     "proof": "Only once there’s proof",
-    "proofHint": "Rare-bird alerts wait until a report has a photo, an eBird reviewer’s OK, or a second birder. Watch-list alerts aren’t affected."
+    "proofHint": "Rare-bird alerts wait until a report has a photo, an eBird reviewer’s OK, or a second birder. Watch-list alerts aren’t affected.",
+    "skipSeen": "Skip birds already on my life list",
+    "skipSeenHint": "Already seen it? You won’t get a rare‑bird alert for it, unless it’s starred.",
+    "skipSeenNeedsLifeList": "<page>Import your life list first</page>"
   },
   "reset": {
     "done": "Password has been reset! Please log in.",
