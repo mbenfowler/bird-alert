@@ -548,6 +548,7 @@ a.event-scouting__bird:hover {
 /* The scouting route: a headline, the start, the stops in drive order with the drive between them. */
 .event-scouting__plan {
   align-self: flex-start;
+  scroll-margin: 80px;
 }
 
 .event-route {

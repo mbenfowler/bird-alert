@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useLocation } from 'react-router'
 import { Trans } from 'react-i18next'
 import SightingsMap, { type MapPoint } from '../SightingsMap/SightingsMap'
 import { LoadingState } from '../Loading/Loading'
@@ -170,7 +170,13 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
   // The route is only asked for when someone presses Plan a route. The server's plan is the
   // suggestion; the group's own route (and its meeting point) is kept on the event, so every member
   // sees and edits the same one.
-  const [routeOpen, setRouteOpen] = useState(false)
+  // An email's route button links to /events/<id>#route: the route opens at once (the group's own
+  // if it has one, else the suggestion) and comes into view once the scouting has loaded.
+  const { hash } = useLocation()
+  const wantsRoute = hash === '#route'
+  const [routeOpen, setRouteOpen] = useState(wantsRoute)
+  const routeAnchor = useRef<HTMLButtonElement>(null)
+  const shownRoute = useRef(false)
   const [editing, setEditing] = useState(false)
   const [confirmReset, setConfirmReset] = useState(false)
   const group = useGroupRoute(event.id, routeOpen, editing)
@@ -274,6 +280,12 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
     typeof data?.days_to_go === 'number' && data.days_to_go > 0 ? t('scoutingView.daysToGo', { count: data.days_to_go }) : null
   ].filter(Boolean).join(' · ')
   const shown = showAll ? places : places.slice(0, PLACES_SHOWN)
+  const hasPlaces = places.length > 0
+  useEffect(() => {
+    if (!wantsRoute || !routeOpen || !hasPlaces || shownRoute.current || !routeAnchor.current) return
+    shownRoute.current = true
+    routeAnchor.current.scrollIntoView({ block: 'start', behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
+  }, [wantsRoute, routeOpen, hasPlaces])
 
   return (
     <div className='event-page__section event-scouting' data-testid='event-scouting'>
@@ -302,7 +314,7 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
           )}
           {data.checked_at && <p className='event-scouting__updated'>{t('scoutingView.updated', { time: clockTime(new Date(data.checked_at)) })}</p>}
           {places.length > 0 && (
-            <button type='button' className='pill-button pill-button--small event-scouting__plan' aria-expanded={routeOpen} onClick={() => { setRouteOpen(open => !open); setEditing(false); setConfirmReset(false); setPickedExtra(null) }}>
+            <button type='button' ref={routeAnchor} id='route' className='pill-button pill-button--small event-scouting__plan' aria-expanded={routeOpen} onClick={() => { setRouteOpen(open => !open); setEditing(false); setConfirmReset(false); setPickedExtra(null) }}>
               {routeOpen ? t('eventRoute.hide') : t('eventRoute.plan')}
             </button>
           )}
