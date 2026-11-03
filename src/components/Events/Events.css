@@ -620,6 +620,23 @@ a.event-scouting__bird:hover {
 }
 
 /* A personal spot, and the personal spots folded into a hotspot: quiet notes beside the name. */
+.event-route__stay {
+  margin: 2px 0 0 34px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.event-route__totals {
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.event-route__totals strong {
+  color: var(--ink);
+}
+
 .event-route__tag {
   display: inline-block;
   padding: 0 6px;
@@ -736,6 +753,40 @@ a.event-scouting__bird:hover {
   overflow-wrap: anywhere;
 }
 
-.event-route__save {
-  margin: 0;
+/* One line, always in the layout at the same height: empty, it is only faded out. */
+.event-route__status {
+  box-sizing: border-box;
+  height: 28px;
+  margin: 0 0 4px;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 0.85rem;
+  color: var(--muted);
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+.event-route__status.is-empty {
+  opacity: 0;
+}
+
+.event-route__save,
+.event-route__changed {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.event-route__status .link-button {
+  padding: 0;
+  line-height: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .event-route__status {
+    transition: none;
+  }
 }

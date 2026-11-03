@@ -4,6 +4,8 @@ import { ChevronIcon, CloseIcon, DragIcon, LocateIcon } from '../Icons/Icons'
 import { shortDistance, useDistanceUnit, type DistanceUnit } from '../../distance'
 import { MAX_ROUTE_STOPS, move, roadKm, samePlace, shortestOrder, type PlanPoint } from '../../routePlan'
 import { t } from '../../i18n'
+import { duration } from '../../duration'
+import StayStepper, { type Stay } from './StayStepper'
 import '../WhereToGo/WhereToGo.css'
 
 export type Leg = { minutes: number; miles: number } | null
@@ -37,6 +39,10 @@ export interface RouteEditorProps {
   /** What the start is called, and what it says when there is none, when the page says it differently. */
   startLabel?: string
   startEmpty?: string
+  /** Time at each stop, changed with a stepper while editing. Optional: /go has none. */
+  stays?: { of: (i: number) => Stay; onChange: (i: number, minutes: number | null) => void }
+  /** How a drive between stops reads, when the page says it differently. */
+  legLabel?: (leg: NonNullable<Leg>) => string
 }
 
 const legText = (leg: Leg, unit: DistanceUnit) => leg ? t('route.leg', { minutes: leg.minutes, distance: shortDistance(leg.miles, unit) }) : t('route.legUnknown')
@@ -47,7 +53,7 @@ const legText = (leg: Leg, unit: DistanceUnit) => leg ? t('route.leg', { minutes
  * the shortest order, set where the day starts, and go back to the suggestion. Shared by the
  * morning route on Where to go and an event's route.
  */
-const RouteEditor = ({ state, stops, start, arriving, editing, describe, suggestions, suggestionsLabel, preview = null, between, custom, onStops, onStart, onReset, onDone, onStopClick, resetLabel, startLabel, startEmpty }: RouteEditorProps) => {
+const RouteEditor = ({ state, stops, start, arriving, editing, describe, suggestions, suggestionsLabel, preview = null, between, custom, onStops, onStart, onReset, onDone, onStopClick, resetLabel, startLabel, startEmpty, stays, legLabel }: RouteEditorProps) => {
   const unit = useDistanceUnit()
   const [settingStart, setSettingStart] = useState(false)
   const [locating, setLocating] = useState<'idle' | 'busy' | 'failed'>('idle')
@@ -135,7 +141,10 @@ const RouteEditor = ({ state, stops, start, arriving, editing, describe, suggest
       {stops.length > 0 ? (
         <ol className='go__stops' ref={listRef}>
           {stops.map((stop, i) => {
-            const leg = i > 0 || start ? <span className='go__leg'>{legText(arriving[i] ?? null, unit)}</span> : null
+            const arrive = arriving[i] ?? null
+            const leg = i > 0 || start ? <span className='go__leg'>{arrive && legLabel ? legLabel(arrive) : legText(arrive, unit)}</span> : null
+            const stay = stays?.of(i)
+            const stayMinutes = stay ? stay.minutes ?? stay.suggested : null
             const text = <><span className='go__stop-n'>{i + 1}</span><span className='go__stop-text'><strong>{stop.name}</strong>{describe(stop, i)}</span></>
             return (
               <li key={stop.locId ?? `${stop.lat},${stop.lng}`} className={`go__stop ${dragging === i ? 'is-dragging' : ''}`}>
@@ -155,6 +164,14 @@ const RouteEditor = ({ state, stops, start, arriving, editing, describe, suggest
                     </span>
                   )}
                 </div>
+                {stay && (editing
+                  ? <StayStepper name={stop.name} stay={stay} onChange={(minutes) => stays!.onChange(i, minutes)} />
+                  : stayMinutes !== null && (
+                    <p className='go__stay'>
+                      {t('routeTimes.stay', { time: duration(stayMinutes) })}
+                      {stay.minutes === null && <> <span className='go__stay-tag'>{t('routeTimes.suggested')}</span></>}
+                    </p>
+                  ))}
               </li>
             )
           })}
