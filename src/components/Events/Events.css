@@ -534,3 +534,176 @@ a.event-scouting__bird:hover {
   margin-top: 6px;
 }
 
+
+/* The scouting route: a headline, the start, the stops in drive order with the drive between them. */
+.event-scouting__plan {
+  align-self: flex-start;
+}
+
+.event-route {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.event-route__summary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.event-route__headline,
+.event-route__covers {
+  margin: 0;
+}
+
+.event-route__note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.event-route__start {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.event-route__start .event-route__note[role='status'] {
+  flex-basis: 100%;
+}
+
+.event-route__stops {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.event-route__stop {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.event-route__leg {
+  margin: 0 0 0 18px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.event-route__directions {
+  flex: none;
+  margin-left: auto;
+  color: var(--link);
+  font-size: 0.85rem;
+}
+
+.event-route__maps {
+  text-decoration: none;
+}
+
+/* A personal spot, and the personal spots folded into a hotspot: quiet notes beside the name. */
+.event-route__tag {
+  display: inline-block;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.event-route__merged {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+/* Optional stops: lighter than the route's own cards, no numbers. */
+.event-route__extras {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.event-route__extra-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.event-route__extra {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  background: var(--surface-muted);
+  scroll-margin: 80px;
+  min-width: 0;
+}
+
+.event-route__extra.is-active {
+  border-style: solid;
+  border-color: var(--ink);
+}
+
+.event-route__extra .event-scouting__place-name {
+  font-weight: 600;
+}
+
+.event-route__extra-cost {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.event-route__more-extras {
+  align-self: flex-start;
+}
+
+/* Under the stops: Maps, Edit route, Back to the suggested route. The last route stays up, dimmed, until a new one comes. */
+.event-route__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.event-route__editor {
+  min-width: 0;
+}
+
+.event-route.is-updating .event-route__stops,
+.event-route.is-updating .event-route__extras {
+  opacity: 0.6;
+}
+
+.event-route__start-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.event-route__start--choosing {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.event-route__start-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}

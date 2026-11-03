@@ -3,7 +3,12 @@ import { Link } from 'react-router'
 import { Trans } from 'react-i18next'
 import SightingsMap, { type MapPoint } from '../SightingsMap/SightingsMap'
 import { LoadingState } from '../Loading/Loading'
-import { useEventScoutingQuery } from '../../hooks/queries'
+import EventRoute, { type RouteBird } from './EventRoute'
+import RouteEditor from '../RouteEditor/RouteEditor'
+import { readChoices, round2, saveChoices, type RouteChoices } from './routeChoices'
+import { customRoute, speciesByPlace } from './customRoute'
+import { useDriveQuery, useEventRouteQuery, useEventScoutingQuery } from '../../hooks/queries'
+import type { PlanPoint } from '../../routePlan'
 import { clockTime, daysUntil, t } from '../../i18n'
 import { prefersReducedMotion } from '../../routeDraw'
 import type { EventScouting as Scouting, GroupEvent } from '../../types'
@@ -115,6 +120,79 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
   useEffect(() => {
     if (scrollTo) document.getElementById(cardId(scrollTo.n))?.scrollIntoView({ block: 'center', behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
   }, [scrollTo])
+  // The route is only asked for when someone presses Plan a route. The server's plan is the
+  // suggestion; the viewer can make it their own (the shared route editor), and their stops and start
+  // are remembered in this browser, per event.
+  const [routeOpen, setRouteOpen] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [choices, setChoicesState] = useState<RouteChoices>(() => readChoices(event.id))
+  const setChoices = (next: RouteChoices) => { setChoicesState(next); saveChoices(event.id, next); setPickedExtra(null) }
+  const from = choices.start ? `${round2(choices.start.lat)},${round2(choices.start.lng)}` : null
+  const routeQuery = useEventRouteQuery(event.id, from, routeOpen)
+  const suggested = routeOpen ? routeQuery.data : undefined
+  const reports = useMemo(() => data?.reported ?? [], [data?.reported])
+  const toPoint = (s: { locId: string; locName: string; lat: number; lng: number }): PlanPoint => ({ locId: s.locId || null, name: s.locName, lat: s.lat, lng: s.lng })
+  const customStops = choices.stops
+  const drivePoints = useMemo(() => [...(choices.start ? [choices.start] : []), ...(customStops ?? [])].map(p => ({ lat: p.lat, lng: p.lng })), [choices.start, customStops])
+  const drive = useDriveQuery(drivePoints, routeOpen && customStops !== null)
+  const route = !routeOpen ? undefined : customStops !== null
+    ? customRoute({ suggested, reported: reports, stops: customStops, start: choices.start, drive: drive.data, driveFailed: drive.isError })
+    : suggested
+  const shownStops = customStops ?? (suggested?.stops ?? []).map(toPoint)
+  const editStops = (stops: PlanPoint[]) => setChoices({ ...choices, stops })
+  const editStart = (start: PlanPoint | null) => setChoices({ ...choices, start: start ? { name: start.name, lat: round2(start.lat), lng: round2(start.lng), ...(start.locId === null && start.name === t('route.myLocation') ? { mine: true } : {}) } : null })
+  const backToSuggested = () => setChoices({ ...choices, stops: null })
+
+  // In the editor: each stop's new birds in visit order; to add, the suggestion's extras and every
+  // other place in the scouting list, each with what it would add now.
+  const speciesAt = useMemo(() => speciesByPlace(suggested, reports), [suggested, reports])
+  const newAt = (() => {
+    const covered = new Set<string>()
+    return shownStops.map(stop => {
+      const fresh = speciesAt(stop.locId).filter(code => !covered.has(code))
+      fresh.forEach(code => covered.add(code))
+      return fresh.length
+    })
+  })()
+  const coveredNow = new Set(shownStops.flatMap(stop => speciesAt(stop.locId)))
+  const candidates = [
+    ...(suggested?.extras ?? []).map(toPoint),
+    ...(suggested?.stops ?? []).map(toPoint),
+    ...places.filter(p => p.lat !== null && p.lng !== null && p.key).map(p => ({ locId: p.key, name: p.name, lat: p.lat as number, lng: p.lng as number }))
+  ].filter((p, i, all) => all.findIndex(q => q.locId === p.locId) === i)
+  const suggestions = candidates
+    .map(point => ({ point, adds: speciesAt(point.locId).filter(code => !coveredNow.has(code)).length }))
+    .filter(({ adds }) => adds > 0)
+    .sort((a, b) => b.adds - a.adds)
+    .map(({ point, adds }) => ({ point, detail: t('eventRoute.extraBirds', { count: adds }) }))
+
+  // A route bird's chip is its place card's chip, so it links to the same report.
+  const routeBird = (bird: RouteBird, stop: { locId: string }) => {
+    const known = places.find(p => p.key === stop.locId)?.birds.find(b => b.code === bird.code)
+      ?? places.flatMap(p => p.birds).find(b => b.code === bird.code)
+    return known
+      ? <BirdChip bird={known} />
+      : <span className='event-scouting__bird'>{bird.comName ?? bird.code}</span>
+  }
+  const startLabel = choices.start ? (choices.start.mine ? t('route.myLocation') : choices.start.name) : t('eventRoute.meetingPoint')
+  const routeOnMap = route && route.stops.length > 0
+    ? {
+        path: route.geometry,
+        stops: route.stops.map((s, i) => ({ lat: s.lat, lng: s.lng, label: `${i + 1}. ${s.locName}` })),
+        start: route.from ? { ...route.from, label: startLabel } : null
+      }
+    : null
+  // The suggestion's optional stops ride along as small grey pins; tapping one brings its row into view.
+  const [pickedExtra, setPickedExtra] = useState<{ i: number } | null>(null)
+  const extraPoints: MapPoint[] = (route?.extras ?? []).map((x, i) => ({
+    id: `extra-${i}`, lat: x.lat, lng: x.lng, muted: true, title: x.locName,
+    subtitle: t('eventRoute.extraBirds', { count: x.new_birds.length })
+  }))
+  const onPin = (pts: MapPoint[]) => {
+    const id = pts[0]?.id
+    if (!id) return
+    if (routeOpen) { if (id.startsWith('extra-')) setPickedExtra({ i: Number(id.slice(6)) }) } else pick(id)
+  }
 
   const points: MapPoint[] = places
     .map((place, i) => ({ place, n: i + 1 }))
@@ -158,12 +236,37 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
             </div>
           )}
           {data.checked_at && <p className='event-scouting__updated'>{t('scoutingView.updated', { time: clockTime(new Date(data.checked_at)) })}</p>}
+          {places.length > 0 && (
+            <button type='button' className='pill-button pill-button--small event-scouting__plan' aria-expanded={routeOpen} onClick={() => { setRouteOpen(open => !open); setEditing(false); setPickedExtra(null) }}>
+              {routeOpen ? t('eventRoute.hide') : t('eventRoute.plan')}
+            </button>
+          )}
           {points.length > 0 && (
             <div className='event-scouting__map'>
-              <SightingsMap points={points} height={240} ariaLabel={t('scoutingView.map', { name: event.name })} onPinClick={pts => pts[0] && pick(pts[0].id)} />
+              <SightingsMap points={routeOpen ? extraPoints : points} route={routeOnMap} height={240} ariaLabel={t('scoutingView.map', { name: event.name })} onPinClick={onPin} />
             </div>
           )}
-          {places.length
+          {routeOpen && (
+            editing
+              ? <div className='go__route is-editing event-route__editor' data-testid='route-editor'>
+                  <RouteEditor state={event.state} stops={shownStops} start={choices.start ? { locId: null, ...choices.start } : null} editing
+                    arriving={route ? route.stops.map(s => (typeof s.leg_min === 'number' && typeof s.leg_mi === 'number' ? { minutes: s.leg_min, miles: s.leg_mi } : null)) : []}
+                    describe={(_stop, i) => <span>{newAt[i] ? t('eventRoute.newBirds', { count: newAt[i] }) : t('eventRoute.noNewBirds')}</span>}
+                    suggestions={suggestions} suggestionsLabel={t('eventRoute.addFromList')} custom={customStops !== null}
+                    between={route && <p className='go__covers'>{t(lifers ? 'eventRoute.coversLifers' : 'eventRoute.covers', { got: route.covered, count: route.reported })}</p>}
+                    onStops={editStops} onStart={editStart} onReset={backToSuggested} onDone={() => setEditing(false)} resetLabel={t('eventRoute.backSuggested')} />
+                </div>
+              : <EventRoute route={route} pending={customStops === null && routeQuery.isPending} updating={customStops === null ? routeQuery.isPlaceholderData : drive.isPlaceholderData}
+                  failed={customStops === null && routeQuery.isError} custom={customStops !== null}
+                  state={event.state} start={choices.start} onStart={start => setChoices({ ...choices, start })} lifers={lifers} picked={pickedExtra} renderBird={routeBird}
+                  actions={(
+                    <>
+                      <button type='button' className='pill-button pill-button--small event-route__edit' onClick={() => setEditing(true)}>{t('eventRoute.edit')}</button>
+                      {customStops !== null && <button type='button' className='link-button link-text event-route__reset' onClick={backToSuggested}>{t('eventRoute.backSuggested')}</button>}
+                    </>
+                  )} />
+          )}
+          {routeOpen ? null : places.length
             ? <ol className='event-scouting__places'>
                 {shown.map((place, i) => (
                   <PlaceCard key={place.key} place={place} n={i + 1} lifers={lifers} active={place.key === active} open={opened.has(place.key)}
@@ -171,7 +274,7 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
                 ))}
               </ol>
             : <p className='notification__hint'>{t(lifers ? 'scoutingView.noneLifers' : 'scoutingView.none')}</p>}
-          {places.length > shown.length && (
+          {!routeOpen && places.length > shown.length && (
             <button type='button' className='pill-button pill-button--small event-scouting__more-places' onClick={() => setShowAll(true)}>
               {t('scoutingView.morePlaces', { count: places.length - shown.length })}
             </button>

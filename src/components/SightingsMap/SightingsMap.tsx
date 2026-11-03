@@ -18,6 +18,8 @@ export interface MapPoint {
   highlight?: boolean
   /** A list number to show on the pin (a ranked list); a pin shared by several points shows how many instead. */
   n?: number
+  /** A hollow grey pin with no number: a place the page mentions in passing (a route's optional stops). */
+  muted?: boolean
 }
 
 /** A public place reachable from a focused pin, with the road to it when known. */
@@ -53,8 +55,8 @@ interface SightingsMapProps {
 // Pins are drawn with CSS so no image assets have to be resolved by the bundler. Several sightings
 // at one spot (one checklist, several species) share a pin that shows how many; a ranked list's
 // pin shows its number.
-const pinIcon = (highlight: boolean, label?: number) => L.divIcon({
-  className: `map-pin ${highlight ? 'map-pin--highlight' : ''}`,
+const pinIcon = (highlight: boolean, label?: number, muted = false) => L.divIcon({
+  className: `map-pin ${highlight ? 'map-pin--highlight' : ''} ${muted ? 'map-pin--muted' : ''}`,
   html: `<span class="map-pin__head">${label !== undefined ? `<span class="map-pin__count">${label}</span>` : ''}</span><span class="map-pin__tail"></span>`,
   iconSize: [26, 36],
   iconAnchor: [13, 36],
@@ -414,7 +416,7 @@ const SightingsMap = ({ points, focus = null, route = null, center = [39.8, -98.
         })}
         {openHighlighted && <OpenHighlighted id={highlightedId} markers={markers} />}
         {groups.map(group => (
-          <Marker key={group.id} position={[group.lat, group.lng]} icon={pinIcon(group.highlight, group.points.length > 1 ? group.points.length : group.points[0].n)} zIndexOffset={group.highlight ? 1000 : 0}
+          <Marker key={group.id} position={[group.lat, group.lng]} icon={group.points.every(p => p.muted) ? pinIcon(group.highlight, undefined, true) : pinIcon(group.highlight, group.points.length > 1 ? group.points.length : group.points[0].n)} zIndexOffset={group.highlight ? 1000 : 0}
             ref={(marker) => { if (marker) markers.current.set(group.id, marker); else markers.current.delete(group.id) }}
             eventHandlers={onPinClick ? { click: () => onPinClick(group.points) } : undefined}
             title={group.points.map(p => (p.subtitle ? `${p.title}, ${p.subtitle}` : p.title)).join('; ')} alt={group.points.map(p => p.title).join(', ')}>

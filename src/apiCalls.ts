@@ -1,4 +1,4 @@
-import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, Place, Province, Area,SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, BestHotspots, SpeciesHotspots, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share, Passkey, Chase, PersistenceClass, Id, SavedPlace, PlaceInput, PlaceSuggestion, LifersScope, GroupEvent, EventInput, EventPreview, EventView, EventScouting } from './types'
+import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, Place, Province, Area,SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, BestHotspots, SpeciesHotspots, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share, Passkey, Chase, PersistenceClass, Id, SavedPlace, PlaceInput, PlaceSuggestion, LifersScope, GroupEvent, EventInput, EventPreview, EventView, EventScouting, EventRoute } from './types'
 import { arrival } from './arrival'
 import { isStandalone } from './install'
 import { nameLocale, signupLocale } from './i18n'
@@ -141,6 +141,11 @@ export const getEventPreview = (token: string) => api<EventPreview>('/saved', { 
 export const getEventScouting = (id: Id) => {
     const locale = nameLocale()
     return api<EventScouting>('/saved', { params: { kind: 'event-scouting', id: String(id), ...(locale ? { locale } : {}) } })
+}
+/** The scouting route, as the server suggests it; `from` is a rounded "lat,lng" start (else the meeting point or the first stop). */
+export const getEventRoute = (id: Id, from: string | null) => {
+    const locale = nameLocale()
+    return api<EventRoute>('/saved', { params: { kind: 'event-route', id: String(id), ...(from ? { from } : {}), ...(locale ? { locale } : {}) } })
 }
 export const getEventView = (token: string) => api<EventView>('/saved', { params: { kind: 'event-view', token } })
 export const getSavedRoute = (region: string) => api<SavedRoute>('/saved', { params: { kind: 'route', region } })

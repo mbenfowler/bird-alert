@@ -92,6 +92,21 @@
     filter: grayscale(1);
 }
 
+/* A place mentioned in passing: hollow and grey, smaller than the numbered pins. */
+.map-pin--muted .map-pin__head {
+    left: 6px;
+    top: 4px;
+    width: 12px;
+    height: 12px;
+    background: #fff;
+    border: 3px solid #6b7280;
+}
+
+.map-pin--muted .map-pin__tail {
+    top: 20px;
+    border-top: 10px solid #6b7280;
+}
+
 .map-pin--public .map-pin__head {
     background: #0f7b3a;
 }

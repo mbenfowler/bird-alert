@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions, getCountries, getProvinces,
-  getSavedBirds, getPlaces, getPlaceSeen, getPlaceSuggestions, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase, getNameLocales, getEvents, getEventPreview, getEventView, getEventScouting, getEventSuggestions } from '../apiCalls'
+  getSavedBirds, getPlaces, getPlaceSeen, getPlaceSuggestions, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase, getNameLocales, getEvents, getEventPreview, getEventView, getEventScouting, getEventRoute, getEventSuggestions } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
 import { nameLocale } from '../i18n'
 import type { Id, LifersScope, PersistenceClass, User } from '../types'
@@ -438,6 +438,17 @@ export const useEventScoutingQuery = (id: Id | null) =>
     enabled: id !== null,
     staleTime: 30 * 60 * 1000,
     select: (answer) => ({ ...answer, reported: Array.isArray(answer?.reported) ? answer.reported : [], unreported: Array.isArray(answer?.unreported) ? answer.unreported : [] })
+  })
+
+/** The suggested scouting route, fetched only once asked for; `from` is a rounded "lat,lng" start. A new start keeps the last route showing until the new one comes. */
+export const useEventRouteQuery = (id: Id, from: string | null, enabled: boolean) =>
+  useQuery({
+    queryKey: ['event-route', id, from, nameLocale()] as const,
+    queryFn: () => getEventRoute(id, from),
+    enabled,
+    placeholderData: keepPreviousData,
+    staleTime: 30 * 60 * 1000,
+    select: (answer) => ({ ...answer, stops: Array.isArray(answer?.stops) ? answer.stops : [], extras: Array.isArray(answer?.extras) ? answer.extras : [], geometry: Array.isArray(answer?.geometry) ? answer.geometry : [] })
   })
 
 /** What an invite link is for, before joining (no sign-in needed). */

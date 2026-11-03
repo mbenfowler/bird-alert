@@ -1,12 +1,9 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import PlaceSearch, { type Suggestion } from '../PlaceSearch/PlaceSearch'
-import { ChevronIcon, CloseIcon, DragIcon, LocateIcon } from '../Icons/Icons'
-import { longDistance, shortDistance, useDistanceUnit, type DistanceUnit } from '../../distance'
-import { MAX_ROUTE_STOPS, move, roadKm, samePlace, shortestOrder, type PlanPoint } from '../../routePlan'
+import RouteEditor, { type Leg } from '../RouteEditor/RouteEditor'
+import { type Suggestion } from '../PlaceSearch/PlaceSearch'
+import { longDistance, useDistanceUnit } from '../../distance'
+import type { PlanPoint } from '../../routePlan'
 import type { GoPlace } from '../../types'
 import { number, t } from '../../i18n'
-
-type Leg = { minutes: number; miles: number } | null
 
 interface RouteCardProps {
   state: string
@@ -39,78 +36,30 @@ interface RouteCardProps {
 }
 
 const birdsWord = (n: number) => t('route.birds', { count: n, n: number(n, { maximumFractionDigits: 1 }) })
-const legText = (leg: Leg, unit: DistanceUnit) => leg ? t('route.leg', { minutes: leg.minutes, distance: shortDistance(leg.miles, unit) }) : t('route.legUnknown')
 const expectedText = (place: GoPlace) => place.bestTime ? t('route.expectedBest', { birds: birdsWord(place.expected), best: place.bestTime }) : t('route.expected', { birds: birdsWord(place.expected) })
 
 /**
- * The morning route: suggested from the watch list, or the person's own. Editing adds stops from
- * the list or from any hotspot or address by name, removes them, reorders them (drag the handle,
- * or the arrows), and sets where the day starts.
+ * The morning route: suggested from the watch list, or the person's own. Editing (the shared
+ * RouteEditor) adds stops from the list or from any hotspot or address by name, removes them,
+ * reorders them (drag the handle, or the arrows), and sets where the day starts.
  */
 const RouteCard = (props: RouteCardProps) => {
   const { state, places, speciesCount, lifers = false, stops, start, preview = null, arriving, drive, covers, url, custom, saveFailed = false, editing, showRoute } = props
   const { onEditing, onStops, onStart, onReset, onStopClick, onToggleRoute, onShare } = props
   const unit = useDistanceUnit()
   const byId = new Map(places.map(p => [p.locId, p]))
-  const [settingStart, setSettingStart] = useState(false)
-  const [locating, setLocating] = useState<'idle' | 'busy' | 'failed'>('idle')
-
-  // Dragging by the handle: the row follows the pointer past its neighbours' midpoints. Listeners
-  // sit on the window, since the row itself moves in the DOM while it is dragged.
-  const listRef = useRef<HTMLOListElement>(null)
-  const [dragging, setDragging] = useState<number | null>(null)
-  const dragRef = useRef<{ index: number; stops: PlanPoint[] } | null>(null)
-  const stopsRef = useRef(stops)
-  useEffect(() => { stopsRef.current = stops }, [stops])
-  const startDrag = (index: number) => (e: ReactPointerEvent) => {
-    if (e.button !== 0) return
-    e.preventDefault()
-    dragRef.current = { index, stops: stopsRef.current }
-    setDragging(index)
-    const onMove = (ev: PointerEvent) => {
-      const drag = dragRef.current
-      const rows = listRef.current ? [...listRef.current.querySelectorAll<HTMLElement>(':scope > .go__stop')] : []
-      if (!drag || !rows.length) return
-      let target = drag.index
-      rows.forEach((row, j) => {
-        const r = row.getBoundingClientRect()
-        const mid = r.top + r.height / 2
-        if (j < drag.index && ev.clientY < mid) target = Math.min(target, j)
-        if (j > drag.index && ev.clientY > mid) target = Math.max(target, j)
-      })
-      if (target !== drag.index) {
-        drag.stops = move(drag.stops, drag.index, target)
-        drag.index = target
-        setDragging(target)
-        onStops(drag.stops)
-      }
-    }
-    const onUp = () => {
-      dragRef.current = null
-      setDragging(null)
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', onUp)
-      window.removeEventListener('pointercancel', onUp)
-    }
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp)
-    window.addEventListener('pointercancel', onUp)
-  }
-
-  const full = stops.length >= MAX_ROUTE_STOPS
-  const addStop = (point: PlanPoint) => { if (!full && !stops.some(s => samePlace(s, point))) onStops([...stops, point]) }
   const suggestions: Suggestion[] = places
-    .filter(p => p.isHotspot !== false && p.lat !== null && p.lng !== null && !stops.some(s => s.locId === p.locId))
-    .slice(0, 5)
+    .filter(p => p.isHotspot !== false && p.lat !== null && p.lng !== null)
     .map(p => ({ point: { locId: p.locId, name: p.locName ?? p.locId, lat: p.lat!, lng: p.lng! }, detail: expectedText(p) }))
-
-  const locate = () => {
-    if (!('geolocation' in navigator)) { setLocating('failed'); return }
-    setLocating('busy')
-    navigator.geolocation.getCurrentPosition(
-      (pos) => { setLocating('idle'); setSettingStart(false); onStart({ locId: null, name: t('route.myLocation'), lat: Math.round(pos.coords.latitude * 1e4) / 1e4, lng: Math.round(pos.coords.longitude * 1e4) / 1e4 }) },
-      () => setLocating('failed'),
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 }
+  const describe = (stop: PlanPoint) => {
+    const place = stop.locId ? byId.get(stop.locId) : undefined
+    return (
+      <>
+        {place
+          ? <span>{expectedText(place)}</span>
+          : <span>{stop.note || t('route.addedByYou')}</span>}
+        {place && place.birds.length > 0 && !editing && <span className='go__stop-birds'>{place.birds.slice(0, 4).map(b => `${b.comName} ${b.chance}%`).join(' · ')}{place.birds.length > 4 ? ` · +${place.birds.length - 4}` : ''}</span>}
+      </>
     )
   }
 
@@ -120,103 +69,25 @@ const RouteCard = (props: RouteCardProps) => {
   return (
     <div className={`go__route ${editing ? 'is-editing' : ''}`}>
       <h2 className='fredericka go__route-head'>{custom ? t('route.yours') : t('route.suggested')}</h2>
-
-      {(start || editing) && (
-        <div className='go__start'>
-          <span className='go__start-dot' aria-hidden='true' />
-          <span className='go__start-text'>
-            <span className='go__start-label'>{t('route.start')}</span>
-            <strong>{start ? start.name : t('route.startAnywhere')}</strong>
-          </span>
-          {editing && !settingStart && <button type='button' className='go__link-button' onClick={() => setSettingStart(true)}>{start ? t('common.change') : t('route.set')}</button>}
-          {editing && start && !settingStart && <button type='button' className='go__icon-button' aria-label={t('route.clearStart')} onClick={() => onStart(null)}><CloseIcon /></button>}
-        </div>
-      )}
-      {editing && settingStart && (
-        <div className='go__start-picker'>
-          <PlaceSearch state={state} label={t('route.startingPoint')} placeholder={t('route.startPlaceholder')} autoFocus onPick={(p) => { onStart(p); setSettingStart(false) }} />
-          <div className='go__start-actions'>
-            <button type='button' className='pill-button' onClick={locate} disabled={locating === 'busy'}><LocateIcon className='go__btn-icon' />{locating === 'busy' ? t('route.finding') : t('route.useLocation')}</button>
-            <button type='button' className='go__link-button' onClick={() => setSettingStart(false)}>{t('common.cancel')}</button>
-          </div>
-          {locating === 'failed' && <p className='go__hint'>{t('route.locateFailed')}</p>}
-        </div>
-      )}
-
-      {stops.length > 0 ? (
-        <ol className='go__stops' ref={listRef}>
-          {stops.map((stop, i) => {
-            const place = stop.locId ? byId.get(stop.locId) : undefined
-            const leg = i > 0 || start ? <span className='go__leg'>{legText(arriving[i] ?? null, unit)}</span> : null
-            return (
-              <li key={stop.locId ?? `${stop.lat},${stop.lng}`} className={`go__stop ${dragging === i ? 'is-dragging' : ''}`}>
-                {leg}
-                <div className='go__stop-row'>
-                  {editing && (
-                    <span className='go__drag' role='presentation' title={t('route.drag')} onPointerDown={startDrag(i)}><DragIcon /></span>
-                  )}
-                  <button type='button' className='go__stop-main' onClick={() => onStopClick(stop)}>
-                    <span className='go__stop-n'>{i + 1}</span>
-                    <span className='go__stop-text'>
-                      <strong>{stop.name}</strong>
-                      {place
-                        ? <span>{expectedText(place)}</span>
-                        : <span>{stop.note || t('route.addedByYou')}</span>}
-                      {place && place.birds.length > 0 && !editing && <span className='go__stop-birds'>{place.birds.slice(0, 4).map(b => `${b.comName} ${b.chance}%`).join(' · ')}{place.birds.length > 4 ? ` · +${place.birds.length - 4}` : ''}</span>}
-                    </span>
-                  </button>
-                  {editing && (
-                    <span className='go__stop-tools'>
-                      <button type='button' className='go__icon-button' aria-label={t('route.moveUp', { name: stop.name })} disabled={i === 0} onClick={() => onStops(move(stops, i, i - 1))}><ChevronIcon className='is-up' /></button>
-                      <button type='button' className='go__icon-button' aria-label={t('route.moveDown', { name: stop.name })} disabled={i === stops.length - 1} onClick={() => onStops(move(stops, i, i + 1))}><ChevronIcon /></button>
-                      <button type='button' className='go__icon-button' aria-label={t('route.remove', { name: stop.name })} onClick={() => onStops(stops.filter((_, j) => j !== i))}><CloseIcon /></button>
-                    </span>
-                  )}
-                </div>
-              </li>
-            )
-          })}
-          {preview && (
-            <li className='go__stop is-preview' aria-live='polite'>
-              {(stops.length > 0 || start) && <span className='go__leg'>{t('route.legAbout', { distance: shortDistance(Math.round(roadKm(stops[stops.length - 1] ?? start!, preview) / 1.609344 * 10) / 10, unit) })}</span>}
-              <div className='go__stop-row'>
-                <span className='go__stop-main'>
-                  <span className='go__stop-n'>{stops.length + 1}</span>
-                  <span className='go__stop-text'><strong>{preview.name}</strong><span>{t('route.preview', { note: preview.note || t('route.notOnRoute') })}</span></span>
-                </span>
-              </div>
-            </li>
-          )}
-        </ol>
-      ) : <p className='go__hint'>{t('route.noStops')}</p>}
-
-      {stops.length > 0 && (
-        <p className='go__covers'>
-          {[
-            lifers ? t('route.coversLifers', { covers: number(covers, { maximumFractionDigits: 1 }), count: speciesCount }) : t('route.coversBirds', { birds: birdsWord(covers), count: speciesCount }),
-            drive ? t('route.driving', { minutes: drive.minutes, distance: longDistance(drive.miles, unit) }) : null,
-            firstBest ? t('route.startAt', { name: stops[0].name, best: firstBest }) : null,
-            unscored ? t('route.unscored') : null
-          ].filter(Boolean).join(' ')}
-        </p>
-      )}
-
-      {saveFailed && <p className='go__hint'>{t('route.saveFailed')}</p>}
-      {editing ? (
-        <>
-          <div className='go__add'>
-            {full
-              ? <p className='go__hint'>{t('route.full', { count: MAX_ROUTE_STOPS })}</p>
-              : <PlaceSearch state={state} label={t('route.addStop')} placeholder={t('route.addPlaceholder')} onPick={addStop}
-                  suggestions={suggestions} suggestionsLabel={t('route.goodPlaces')} />}
-          </div>
-          <div className='go__route-actions'>
-            {stops.length > 2 && <button type='button' className='pill-button' onClick={() => onStops(shortestOrder(stops, start))}>{t('route.shortest')}</button>}
-            {custom && <button type='button' className='pill-button' onClick={onReset}>{t('route.backSuggested')}</button>}
-            <button type='button' className='pill-button pill-button--primary' onClick={() => { setSettingStart(false); onEditing(false) }}>{t('route.done')}</button>
-          </div>
-        </>
-      ) : (
+      <RouteEditor state={state} stops={stops} start={start} arriving={arriving} editing={editing} describe={describe}
+        suggestions={suggestions} suggestionsLabel={t('route.goodPlaces')} preview={preview} custom={custom}
+        onStops={onStops} onStart={onStart} onReset={onReset} onDone={() => onEditing(false)} onStopClick={onStopClick}
+        between={(
+          <>
+            {stops.length > 0 && (
+              <p className='go__covers'>
+                {[
+                  lifers ? t('route.coversLifers', { covers: number(covers, { maximumFractionDigits: 1 }), count: speciesCount }) : t('route.coversBirds', { birds: birdsWord(covers), count: speciesCount }),
+                  drive ? t('route.driving', { minutes: drive.minutes, distance: longDistance(drive.miles, unit) }) : null,
+                  firstBest ? t('route.startAt', { name: stops[0].name, best: firstBest }) : null,
+                  unscored ? t('route.unscored') : null
+                ].filter(Boolean).join(' ')}
+              </p>
+            )}
+            {saveFailed && <p className='go__hint'>{t('route.saveFailed')}</p>}
+          </>
+        )} />
+      {!editing && (
         <div className='go__route-actions'>
           {stops.length > 0 && <button type='button' className={`pill-button ${showRoute ? 'pill-button--primary' : ''}`} aria-pressed={showRoute} onClick={onToggleRoute}>{showRoute ? t('route.hide') : t('route.show')}</button>}
           {url && <a className='pill-button' href={url} target='_blank' rel='noreferrer'>{t('route.openMaps')}</a>}

@@ -571,3 +571,52 @@ export interface EventScouting {
   unreported: { code: string; speciesCode?: string; comName?: string }[]
 }
 
+/** A drive through the fewest places that cover the most reported targets, in drive order. */
+export interface EventRoute {
+  from: { lat: number; lng: number } | null
+  stops: {
+    n: number
+    locId: string
+    locName: string
+    lat: number
+    lng: number
+    /** Targets first reached at this stop. */
+    new_birds: { code: string; speciesCode?: string; comName?: string }[]
+    /** From the stop before (or the start); null when drive times aren't available. */
+    leg_min: number | null
+    leg_mi: number | null
+    /** A personal spot (not an eBird hotspot). */
+    private?: boolean
+    /** Personal spots nearby whose reports were folded into this place. */
+    merged?: { locId: string; locName: string }[]
+    /** Every target reported here, for working out what a route of the viewer's own covers. */
+    species?: string[]
+  }[]
+  /** Optional stops that add birds but cost a lot of driving, best value first. */
+  extras?: {
+    locId: string
+    locName: string
+    lat: number
+    lng: number
+    new_birds: { code: string; speciesCode?: string; comName?: string }[]
+    /** Extra driving it adds; null when drive times aren't available. */
+    add_min: number | null
+    add_mi: number | null
+    private?: boolean
+    merged?: { locId: string; locName: string }[]
+    species?: string[]
+  }[]
+  covered_with_extras?: number
+  /** Target names by code, for the birds of a route of the viewer's own. */
+  names?: Record<string, string>
+  total_min: number | null
+  total_mi: number | null
+  covered: number
+  reported: number
+  /** Places with reports whose birds the stops already cover. */
+  skipped: number
+  /** Along the roads when routed, straight lines otherwise. */
+  geometry: [number, number][]
+  routed: boolean
+}
+
