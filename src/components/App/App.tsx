@@ -27,6 +27,7 @@ import { LoadingState } from '../Loading/Loading'
 import { useTranslation } from 'react-i18next'
 import { applyLocale, noteLocale, t } from '../../i18n'
 import { forgetJoin, pendingJoin } from '../Events/pendingJoin'
+import { forgetNext, loginTo, storedNext } from '../../returnTo'
 
 // Everything off the main path loads on demand, keeping the first visit light.
 const Saved = lazy(() => import('../Saved/Saved'))
@@ -65,7 +66,7 @@ const App = () => {
   useEffect(() => { void applyLocale(locale) }, [locale])
 
   const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const { pathname, search, hash } = useLocation()
   // useNavigate hands out a new function on every route change; the hand-off effect must not restart with it.
   const navigateRef = useRef(navigate)
   useEffect(() => { navigateRef.current = navigate }, [navigate])
@@ -94,8 +95,9 @@ const App = () => {
     el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'ease-out' })
   }, [section])
   useEffect(() => {
-    if (user === null && !isPublicPath) navigate('/login', { replace: true })
-  }, [user, isPublicPath, navigate])
+    // Logged out on a page that needs an account: log in, then come back here (?next=, and this tab).
+    if (user === null && !isPublicPath) navigate(loginTo(`${pathname}${search}${hash}`), { replace: true })
+  }, [user, isPublicPath, navigate, pathname, search, hash])
   // This browser's notifications go to whoever is signed in now, not to whoever turned them on.
   const signedInId = user?.id
   useEffect(() => {
@@ -107,6 +109,12 @@ const App = () => {
   useEffect(() => {
     if (needsSetup && pathname !== '/welcome' && !pathname.startsWith('/share/') && !pathname.startsWith('/confirm/') && !pathname.startsWith('/unsubscribe/') && !pathname.startsWith('/events/join/') && !pathname.startsWith('/events/view/')) navigate('/welcome', { replace: true })
   }, [needsSetup, pathname, navigate])
+  // Signed in and arrived where the login was taking them (a new account, after its setup): done with it.
+  useEffect(() => {
+    if (!user || needsSetup) return
+    const next = storedNext()
+    if (next && next.split('#')[0] === `${pathname}${search}`) forgetNext()
+  }, [user, needsSetup, pathname, search])
   // An invite opened before signing in: once signed in (logged in, signed up, by passkey), back to it to join.
   const signedIn = Boolean(user)
   useEffect(() => {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ChangeEvent } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { toast } from 'react-toastify'
 import { getUserExists, login, signup, requestPasswordReset, errorMessage } from '../../apiCalls'
 import { useRegionsQuery, useSessionQuery } from '../../hooks/queries'
@@ -8,6 +8,7 @@ import { addPasskey, cancelPasskeyAutofill, isDeviceLock, passkeysSupported, sig
 import { countyName as fullCountyName, countyWord, stateName as fullStateName, stateOfRegion } from '../../usStates'
 import AreaPicker from '../AreaPicker/AreaPicker'
 import type { User } from '../../types'
+import { nextAfterLogin, rememberNext } from '../../returnTo'
 import './Login.css'
 import { t } from '../../i18n'
 import { Trans } from 'react-i18next'
@@ -31,6 +32,17 @@ const Login = () => {
   const { data: user } = useSessionQuery()
   const setSession = useSetSession()
   const navigate = useNavigate()
+  // Where they were going before being asked to log in (?next=, or this tab's memory); home otherwise.
+  // Kept in this tab as well, so a new account's setup ends there too.
+  const { search } = useLocation()
+  const goOn = useRef(() => {})
+  useEffect(() => {
+    goOn.current = () => {
+      const next = nextAfterLogin(search)
+      if (next !== '/') rememberNext(next)
+      navigate(next, { replace: true })
+    }
+  })
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -53,12 +65,12 @@ const Login = () => {
   const stateName = fullStateName(countyState)
 
   // Already logged in (and not mid-offer)? Nothing to do here.
-  useEffect(() => { if (user && !offer) navigate('/', { replace: true }) }, [user, offer, navigate])
+  useEffect(() => { if (user && !offer) goOn.current() }, [user, offer])
 
   // A passkey on this device appears among the email field's suggestions; picking it signs in.
   // Started once per visit to this page (the handlers are read through refs, so re-renders don't restart it).
   const onPasskey = useRef<(signedIn: User) => void>(() => {})
-  useEffect(() => { onPasskey.current = (signedIn) => { setSession(signedIn); navigate('/') } })
+  useEffect(() => { onPasskey.current = (signedIn) => { setSession(signedIn); goOn.current() } })
   useEffect(() => {
     if (!supported) return
     let live = true
@@ -71,13 +83,13 @@ const Login = () => {
     // A device that could use a passkey, an account without one, and no earlier "not now": ask once.
     if (supported && !signedIn.hasPasskey && !offerDismissed()) { setOffer(signedIn); setSession(signedIn); return }
     setSession(signedIn)
-    navigate('/')
+    goOn.current()
   }
 
   const passkeyButton = async () => {
     setError(null)
     cancelPasskeyAutofill()
-    try { const signedIn = await signInWithPasskey(false); if (signedIn) { setSession(signedIn); navigate('/') } } catch (err) { if (!wasCancelled(err)) setError(errorMessage(err)) }
+    try { const signedIn = await signInWithPasskey(false); if (signedIn) { setSession(signedIn); goOn.current() } } catch (err) { if (!wasCancelled(err)) setError(errorMessage(err)) }
   }
 
   const handleEmailChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -126,7 +138,7 @@ const Login = () => {
     const name = unlockName()
     const turnOn = async () => {
       setError(null)
-      try { await addPasskey(); toast.success(t('login.offerDone', { name }), { position: 'bottom-center' }); navigate('/') } catch (err) { if (!wasCancelled(err)) setError(errorMessage(err)) }
+      try { await addPasskey(); toast.success(t('login.offerDone', { name }), { position: 'bottom-center' }); goOn.current() } catch (err) { if (!wasCancelled(err)) setError(errorMessage(err)) }
     }
     return (
       <main className='login'>
@@ -135,7 +147,7 @@ const Login = () => {
           <h1 className='fredericka login-title'>{t('login.offerTitle', { name })}</h1>
           <p className='login-lede'>{t('login.offerLede', { device: name === 'Face ID' || name === 'Touch ID' ? name : t('login.device') })}</p>
           <button type='button' className='pill-button pill-button--primary login-submit' onClick={() => { void turnOn() }}>{t('login.use', { name })}</button>
-          <button type='button' className='login-link' onClick={() => { try { localStorage.setItem(OFFER_DISMISSED_KEY, '1') } catch { /* asked again next time */ } navigate('/') }}>{t('pushAsk.notNow')}</button>
+          <button type='button' className='login-link' onClick={() => { try { localStorage.setItem(OFFER_DISMISSED_KEY, '1') } catch { /* asked again next time */ } goOn.current() }}>{t('pushAsk.notNow')}</button>
           {error && <p className='login-error' role='alert'>{error}</p>}
         </section>
       </main>

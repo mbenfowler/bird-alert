@@ -1,5 +1,6 @@
 import { useMemo, type CSSProperties } from 'react'
 import { Link, useParams } from 'react-router'
+import { useLoginHere } from '../../returnTo'
 import SightingsMap from '../SightingsMap/SightingsMap'
 import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
@@ -19,11 +20,12 @@ import { ShareIcon } from '../Icons/Icons'
 /** The invitation under a shared page, for someone who doesn't have the app yet. */
 const Invite = ({ what }: { what: string }) => {
   const session = useSessionQuery()
+  const loginHere = useLoginHere()
   if (session.data) return <p className='shared__back'><Link to='/'>{t('shared.back')}</Link></p>
   return (
     <aside className='shared__invite'>
       <p><Trans i18nKey='shared.invite' values={{ what }} components={{ b: <strong /> }} /></p>
-      <Link className='pill-button pill-button--primary' to='/login'>{t('landing.start')}</Link>
+      <Link className='pill-button pill-button--primary' to={loginHere}>{t('landing.start')}</Link>
     </aside>
   )
 }
@@ -72,6 +74,7 @@ const isRestricted = (place: string) => /restricted access|\(private/i.test(plac
 
 const SightingView = ({ share }: { share: SharedSighting }) => {
   const session = useSessionQuery()
+  const loginHere = useLoginHere()
   const points = useMemo(() => [{ id: 'here', lat: share.lat, lng: share.lng, title: share.locName, highlight: true }], [share])
   const maps = `https://www.google.com/maps/search/?api=1&query=${share.lat}%2C${share.lng}`
   // The page passes itself along: the same link, so whoever opens it sees what you saw.
@@ -109,7 +112,7 @@ const SightingView = ({ share }: { share: SharedSighting }) => {
       {session.isSuccess && !session.data && (
         <aside className='shared__pitch'>
           <p>{t('shared.pitch')}</p>
-          <Link className='pill-button pill-button--primary' to='/login'>{t('shared.pitchButton')}</Link>
+          <Link className='pill-button pill-button--primary' to={loginHere}>{t('shared.pitchButton')}</Link>
         </aside>
       )}
       {share.locId && <StillThere locId={share.locId} code={share.speciesCode} to={share} />}

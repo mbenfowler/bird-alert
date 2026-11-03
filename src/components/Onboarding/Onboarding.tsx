@@ -13,6 +13,7 @@ import InstallSteps from '../InstallSteps/InstallSteps'
 import { popStar } from '../Pop/pop'
 import './Onboarding.css'
 import { t } from '../../i18n'
+import { storedNext } from '../../returnTo'
 
 const TILES = 12
 type Step = 'county' | 'birds' | 'alerts' | 'lifelist'
@@ -32,7 +33,8 @@ const Onboarding = () => {
   const [step, setStep] = useState<Step>(user.location ? 'birds' : 'county')
   const steps: Step[] = user.location || step !== 'county' ? ['birds', 'alerts', 'lifelist'] : ['county', 'birds', 'alerts', 'lifelist']
 
-  const finish = (to: string) => patch.mutate({ onboarded: true }, { onSettled: () => navigate(to, { replace: true }) })
+  // A new account that was on its way somewhere (a shared event, a bird) goes there instead.
+  const finish = (to: string) => patch.mutate({ onboarded: true }, { onSettled: () => navigate(storedNext() ?? to, { replace: true }) })
 
   // Step 0, only for someone who arrived without a county: by location, by name, or by browsing.
   const [picked, setPicked] = useState<PickedArea | null>(null)

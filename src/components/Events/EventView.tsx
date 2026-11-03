@@ -1,4 +1,5 @@
 import { Link, useParams } from 'react-router'
+import { useLoginHere } from '../../returnTo'
 import { LoadingState } from '../Loading/Loading'
 import SightingsMap from '../SightingsMap/SightingsMap'
 import { useEventViewQuery, useSessionQuery } from '../../hooks/queries'
@@ -14,6 +15,7 @@ import './Events.css'
  */
 const EventView = () => {
   const { token = '' } = useParams()
+  const loginHere = useLoginHere()
   const view = useEventViewQuery(token)
   const session = useSessionQuery()
   const signedIn = Boolean(session.data)
@@ -33,7 +35,7 @@ const EventView = () => {
       {!signedIn && (
         <aside className='shared__pitch event-page__pitch'>
           <p>{t('events.viewPrompt')}</p>
-          <Link className='pill-button pill-button--primary' to='/login'>{t('events.viewPromptButton')}</Link>
+          <Link className='pill-button pill-button--primary' to={loginHere}>{t('events.viewPromptButton')}</Link>
         </aside>
       )}
       <section className='event-page__section' aria-labelledby='viewTally'>
