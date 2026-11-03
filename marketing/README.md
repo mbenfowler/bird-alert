@@ -8,13 +8,13 @@ The finished PNGs are committed in [`out/`](out/):
 
 | File | Pill | Headline | What it shows |
 | --- | --- | --- | --- |
-| `01-cover.png` | Free · made by a birder | Know where the birds are this morning. | The home screen: watch-list sightings and the county's birds. "Swipe →". |
-| `02-alerts.png` | Alerts that matter | Rare birds, soon after they're reported. | Notable cards at ABA Codes 5, 4, 3 and 2 (the card heat), and two push notifications in the server's own wording. |
+| `01-cover.png` | Free · made by a birder | Know where the birds are this morning. | The home screen: watch-list sightings and the county's birds. A Carolina Parakeet print. "Swipe →". |
+| `02-alerts.png` | Alerts that matter | Rare birds, soon after they're reported. | Notable cards in Cochise County, AZ (labelled so) at ABA Codes 5, 4, 3 and 2 (the card heat), and two push notifications in the server's own wording. |
 | `03-evidence.png` | Is it real? | Check the evidence before you drive. | A confirmed report and an unreviewed one, as the sighting page labels them, and the "Only once there's proof" switch. |
 | `04-where-to-go.png` | Where to go | A short route for the birds you want. | Where to go with the morning route, and Best hotspots for one bird (most reliable, last seen). |
-| `05-big-day.png` | Big Day scouting | Scout your Big Day all week. | An event's Scouting section: summary bar, numbered map, place cards. |
-| `06-group.png` | Plan it with your group | One route for the whole group. | The group's route (drive legs, the totals line, who edited it) and the invite and view-only links. |
-| `07-free.png` | Add it to your Home Screen | Free. No ads. No app store. | The iPhone install steps, the URL and the eBird credit. |
+| `05-big-day.png` | Big Day scouting | Scout your Big Day all week. | An event's Scouting section: summary bar, numbered map, place cards. A Roseate Spoonbill print. |
+| `06-group.png` | Plan it with your group | One route for the whole group. | The group's route: time at each stop (set and suggested), drive legs, the "Driving · At stops · Total" line, the stay stepper in the editor, and the invite link. |
+| `07-free.png` | Add it to your Home Screen | Free. No ads. No app store. | The iPhone install steps, the URL and the app's eBird credit line. Snowy Owl and Ivory-billed Woodpecker prints. |
 | `story.png` | Free · made by a birder | Know where the birds are this morning. | The cover on one screen, with the URL. |
 
 Wording rule: alerts arrive *soon after* a report reaches eBird, never "the moment". The app
@@ -30,13 +30,28 @@ npm run slides -- --only=route  # one screen (by its name in render.mjs), then t
 
 `render.mjs` starts Vite on a free port, opens each screen in WebKit at 390 px wide and 3×, with
 every `/api` call answered from `fixtures.mjs`, the clock started at Saturday 25 April 2026,
-7:12 am Eastern, and motion off. Then it opens each `slides/*.html` at slide size and saves
-`out/<name>.png`.
+7:12 am Eastern, and motion off. The clock runs while the page loads (Leaflet needs it to place
+the map), then stops at 7:12:55 before anything is captured, so relative times such as "14 minutes
+ago" never change. Each screen gets a fresh browser context. Then it opens each `slides/*.html` at
+slide size and saves `out/<name>.png`. Two renders in a row give byte-identical PNGs; if a change
+breaks that, look for hover, focus or a timer the page still has running.
 
 The first run needs the network: Google Fonts, bird photos (each species' Wikipedia lead image,
-the same source the app's server uses), OpenStreetMap tiles and drive routes from OSRM's public
-router (which the app's server also uses). Photos, tiles and routes are cached in
-`marketing/.cache` (not committed), so later runs come out the same.
+the same source the app's server uses), Audubon plates, OpenStreetMap tiles and drive routes from
+OSRM's public router (which the app's server also uses). Photos, plates, tiles and routes are
+cached in `marketing/.cache` (not committed), so later runs come out the same.
+
+## Credits
+
+- **Bird photos** are used only if Wikimedia Commons lists them as CC BY, CC BY-SA, CC0 or public
+  domain. If a species' lead image isn't, the script takes the article's next photo that is.
+  A slide whose phone shows photos has a `<p class="credit" data-photos="<screen>">`; the script
+  fills it in with only the photos that are actually visible on that slide.
+- **Audubon plates** (*The Birds of America*, Havell edition) are public domain. The script refuses
+  a plate that Commons doesn't list that way. They are drawn as old prints by the `.print` styles
+  in `slides.css` (torn edge, tape, shadow, tilt), with the caption "<Bird>, after Audubon".
+- Every render rewrites [`CREDITS.md`](CREDITS.md) and `out/caption-credits.txt`, a block to
+  paste into the post caption.
 
 Editing a slide: change its HTML or `slides/slides.css`, then `npm run slides -- --slides`. Fonts
 and colours are the app's (Bungee, Fredericka the Great, the grey canvas and gold accent).
