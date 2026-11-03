@@ -661,23 +661,29 @@
     background: rgba(0, 0, 0, 0.1);
 }
 
-/* Time at a stop (the event route): −/+ in 5-minute steps, the time tappable to type it. */
+/* Time at a stop (the event route): −/+ in 5-minute steps, the time tappable to type it. The time
+   sits in a box as wide as the widest it can be, and the note beside it keeps room for either of its
+   words, so the buttons never move while you adjust. */
 .go__stay {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 4px;
+    gap: 4px 6px;
     margin: 4px 0 0 36px;
     color: var(--muted);
     font-family: system-ui, sans-serif;
     font-size: 0.85rem;
 }
 
-.go__stay-label {
-    margin-right: 2px;
+.go__stay-controls {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 4px;
 }
 
 .go__stay-step {
+    flex: none;
     width: 32px;
     height: 32px;
     display: grid;
@@ -698,28 +704,73 @@
     cursor: default;
 }
 
-.go__stay-value {
-    min-width: 64px;
+/* Every possible label stacked invisibly in one cell sets the width; the value or input fills it. */
+.go__stay-box {
+    display: inline-grid;
+    flex: none;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.go__stay-box > * {
+    grid-area: 1 / 1;
+}
+
+.go__stay-sizer {
+    visibility: hidden;
+    padding: 0 8px;
+    white-space: nowrap;
+    height: 0;
+    overflow: hidden;
+}
+
+.go__stay-value,
+.go__stay-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
     min-height: 32px;
-    padding: 2px 6px;
+    padding: 2px 4px;
+    color: var(--ink);
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.go__stay-value {
     border: none;
     border-bottom: 1px dashed var(--line);
     background: none;
-    color: var(--ink);
-    font: inherit;
-    font-weight: 600;
     cursor: text;
 }
 
 .go__stay-input {
-    width: 72px;
-    min-height: 32px;
-    padding: 2px 6px;
     border: 1px solid var(--line);
     border-radius: 6px;
     background: var(--surface);
-    color: var(--ink);
-    font: inherit;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.go__stay-input::-webkit-inner-spin-button,
+.go__stay-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.go__stay-note {
+    display: inline-grid;
+    justify-items: start;
+    align-items: center;
+}
+
+.go__stay-note > * {
+    grid-area: 1 / 1;
+}
+
+.go__stay-note .is-hidden {
+    visibility: hidden;
 }
 
 .go__stay-tag {
@@ -732,4 +783,5 @@
 
 .go__stay-reset {
     font-size: 0.8rem;
+    white-space: nowrap;
 }

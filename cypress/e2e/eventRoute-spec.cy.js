@@ -513,7 +513,7 @@ describe('Event route', () => {
         cy.get('[aria-label="More time at Cave Creek Canyon"]').click()
         // On screen before the save goes.
         stepper(1).find('.go__stay-value').should('have.text', '45 min')
-        stepper(1).find('.go__stay-tag').should('not.exist')
+        stepper(1).find('.go__stay-tag').should('not.be.visible')
         cy.get('[data-testid="route-editor"] [data-testid="route-totals"]').should('have.text', 'Driving 10 min · At stops 1 h 10 min · Total 1 h 20 min')
         cy.get('@savePlan.all').should('have.length', 0)
         cy.wait('@savePlan').its('request.body').should('deep.equal', {
@@ -553,6 +553,53 @@ describe('Event route', () => {
         cy.contains('[data-testid="route-editor"] button', 'Done').click()
         texts('[data-testid="route-stop"] .event-route__stay').should('deep.equal', ['Stay 8 h', 'Stay 40 min suggested'])
         cy.get('[data-testid="route-totals"]').should('have.text', 'Driving 10 min · At stops 8 h 40 min · Total 8 h 50 min')
+      })
+
+      // − and + stay put whatever the time reads, and while typing it.
+      const buttonsStayPut = () => {
+        const less = '[aria-label="Less time at Southwestern Research Station"]'
+        const more = '[aria-label="More time at Southwestern Research Station"]'
+        const xs = () => cy.get(less).then(l => cy.get(more).then(m => [l[0].getBoundingClientRect().x, m[0].getBoundingClientRect().x]))
+        const same = (start) => xs().should(([l, m]) => {
+          expect(Math.abs(l - start[0]), '− moved').to.be.at.most(0.5)
+          expect(Math.abs(m - start[1]), '+ moved').to.be.at.most(0.5)
+        })
+        const typeIn = (minutes) => {
+          stepper(0).find('.go__stay-value').click()
+          cy.get('[aria-label="Minutes at Southwestern Research Station"]').clear()
+          cy.get('[aria-label="Minutes at Southwestern Research Station"]').type(`${minutes}{enter}`)
+        }
+        open({ route: timed(), plan: savedPlan([0, null]), setup: stubDrive })
+        cy.contains('button', 'Plan a route').click()
+        cy.contains('button', 'Edit route').click()
+        stepper(0).find('.go__stay-value').should('have.text', '0 min')
+        xs().then((start) => {
+          cy.get(more).click()
+          stepper(0).find('.go__stay-value').should('have.text', '5 min')
+          same(start)
+          ;[[45, '45 min'], [60, '1 h'], [95, '1 h 35 min'], [480, '8 h'], [475, '7 h 55 min']].forEach(([minutes, text]) => {
+            typeIn(minutes)
+            stepper(0).find('.go__stay-value').should('have.text', text)
+            same(start)
+          })
+          // Into typing, with the widest time in the box.
+          stepper(0).find('.go__stay-value').click()
+          cy.get('[aria-label="Minutes at Southwestern Research Station"]').should('be.focused')
+          same(start)
+          cy.get('[aria-label="Minutes at Southwestern Research Station"]').type('{esc}')
+          // Back to the suggestion: the tag takes the link's place.
+          stepper(0).contains('button', 'use suggested').click()
+          stepper(0).find('.go__stay-value').should('have.text', '25 min')
+          same(start)
+        })
+      }
+
+      it('− and + never move as the time changes or while typing it', buttonsStayPut)
+
+      it('− and + never move on a phone either', () => {
+        cy.viewport(375, 740)
+        buttonsStayPut()
+        cy.document().then(doc => expect(doc.documentElement.scrollWidth).to.be.at.most(375))
       })
 
       it('the stepper fits a phone without scrolling sideways', () => {
