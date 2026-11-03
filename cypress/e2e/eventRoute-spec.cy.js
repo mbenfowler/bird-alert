@@ -44,7 +44,7 @@ const routed = (over = {}) => ({
 
 const STORE_KEY = 'bird-alert:event-route:5'
 
-const open = ({ route, user = TEST_USER, geo = null, stored = null } = {}) => {
+const open = ({ route, user = TEST_USER, geo = null, stored = null, setup = null } = {}) => {
   stubAuth({ loggedIn: true, user })
   cy.intercept('GET', '**/api/ebird/regions*', { statusCode: 200, body: [{ code: COCHISE, name: 'Cochise' }] })
   cy.intercept('GET', '**/api/birds*', { statusCode: 200, body: [] })
@@ -64,6 +64,7 @@ const open = ({ route, user = TEST_USER, geo = null, stored = null } = {}) => {
       addresses: params.get('addresses') ? [{ name: 'Portal, Arizona, United States', lat: 31.9137, lng: -109.1412 }] : []
     } })
   }).as('placeSearch')
+  if (setup) setup()
   cy.visit('http://localhost:3000/events/5', { onBeforeLoad: (win) => {
     if (stored) win.localStorage.setItem(STORE_KEY, JSON.stringify(stored))
     if (geo) cy.stub(win.navigator.geolocation, 'getCurrentPosition').callsFake(geo)
@@ -254,7 +255,7 @@ describe('Event route', () => {
       cy.contains('.place-search__results button', 'Portal, Arizona, United States').click()
       cy.wait('@route').its('request.url').should('include', 'from=31.91%2C-109.14')
       cy.contains('.event-route__start', 'Starting from Portal, Arizona, United States.')
-      cy.window().then(win => expect(stored(win)).to.deep.equal({ start: { name: 'Portal, Arizona, United States', lat: 31.91, lng: -109.14 }, add: [], drop: [] }))
+      cy.window().then(win => expect(stored(win)).to.deep.equal({ start: { name: 'Portal, Arizona, United States', lat: 31.91, lng: -109.14 }, stops: null }))
       cy.contains('.event-route__start button', 'Change').click()
       cy.get('.event-route__start input[type="search"]').should('be.visible')
       cy.contains('.event-route__start button', 'Cancel').click()
@@ -277,92 +278,117 @@ describe('Event route', () => {
     })
 
     it('a remembered start is used straight away', () => {
-      open({ route: fromRoute, stored: { start: { name: 'Portal', lat: 31.91, lng: -109.14 }, add: [], drop: [] } })
+      open({ route: fromRoute, stored: { start: { name: 'Portal', lat: 31.91, lng: -109.14 }, stops: null } })
       cy.contains('button', 'Plan a route').click()
       cy.wait('@route').its('request.url').should('include', 'from=31.91%2C-109.14')
       cy.contains('.event-route__start', 'Starting from Portal.')
     })
   })
 
-  describe('editing the stops', () => {
-    const paradise = { locId: 'L500', locName: 'Paradise', lat: 31.93, lng: -109.22, new_birds: [{ code: 'zz', comName: 'Zone-tailed Hawk' }], add_min: 69, add_mi: 38 }
-    const farAway = { locId: 'L61', locName: 'Far Place', lat: 31.2, lng: -109.8, new_birds: [{ code: 'f1', comName: 'Far Bird' }], add_min: 200, add_mi: 120 }
-    // A fake planner: adds become picked stops, drops come back as dropped extras; Far Place is one too many.
-    const planner = (_from, params) => {
-      // Like the server: repeats collapse and unknown ids go, in what it echoes back.
-      const known = ['L200', 'L123', 'L400', 'L500', 'L61']
-      const add = [...new Set((params.get('add') ?? '').split(',').filter(id => known.includes(id)))]
-      const drop = [...new Set((params.get('drop') ?? '').split(',').filter(id => known.includes(id)))]
-      if (add.includes('L61')) return { statusCode: 400, body: { error: 'A route has up to 8 stops: add fewer places' } }
-      const base = routed()
-      const stops = base.stops.filter(s => !drop.includes(s.locId))
-      if (add.includes('L500')) stops.push({ n: 0, ...paradise, new_birds: [], leg_min: 30, leg_mi: 12, picked: true })
-      const extras = [
-        ...(add.includes('L500') ? [] : [paradise]),
-        farAway,
-        ...base.stops.filter(s => drop.includes(s.locId)).map(s => ({ ...s, add_min: 10, add_mi: 4, dropped: true }))
-      ]
-      return { ...base, stops, extras, add, drop }
-    }
+  describe('a route of your own', () => {
+    // The suggestion, with every place's targets (`species`) and their names, for coverage worked out here.
+    const suggestion = () => routed({
+      stops: routed().stops.map((s, i) => ({ ...s, species: [['mexchi', 'b1', 'b2'], ['eletro', 'mexchi'], ['zz']][i] })),
+      extras: [{ locId: 'L500', locName: 'Paradise', lat: 31.93, lng: -109.22, new_birds: [{ code: 'pa', comName: 'Painted Redstart' }], add_min: 69, add_mi: 38, species: ['pa', 'zz'] }],
+      names: { mexchi: 'Mexican Chickadee', b1: 'Bird b1', b2: 'Bird b2', eletro: 'Elegant Trogon', zz: 'Zone-tailed Hawk', pa: 'Painted Redstart' },
+      covered: 5, reported: 7, skipped: 0
+    })
+    // The drive between the stops in the order given: 10 min and 5 mi a leg.
+    const stubDrive = () => cy.intercept('GET', '**/api/ebird/drive*', (req) => {
+      const points = new URL(req.url).searchParams.get('points').split(';').map(p => p.split(',').map(Number))
+      const legs = points.slice(1).map(() => ({ minutes: 10, miles: 5 }))
+      req.reply({ statusCode: 200, body: { minutes: legs.length * 10, miles: legs.length * 5, geometry: points, legs } })
+    }).as('drive')
+    const names = (sel) => cy.get(sel).then(els => [...els].map(e => e.textContent))
+    const editorStops = () => names('[data-testid="route-editor"] .go__stop-text strong')
     const stored = (win) => JSON.parse(win.localStorage.getItem(STORE_KEY) ?? 'null')
 
-    it('adds an extra, takes it back out, removes a core stop and puts it back, remembering each choice', () => {
-      open({ route: planner })
+    it('edits the suggestion in the shared route editor: reorder, remove, add from the list or by search, remove all', () => {
+      open({ route: suggestion(), setup: stubDrive })
       cy.contains('button', 'Plan a route').click()
       cy.wait('@route')
-      cy.get('[data-testid="route-stop"]').should('have.length', 3)
-      cy.contains('[data-testid="route-extra"]', 'Paradise').contains('button', 'Add to route').click()
-      cy.wait('@route').its('request.url').should('include', 'add=L500').and('not.include', 'drop=')
-      cy.get('[data-testid="route-stop"]').should('have.length', 4).last().should('contain', 'Paradise')
-        .find('.event-route__note').should('have.text', 'No new birds on this route')
-      cy.get('.event-scouting__map .map-stop:not(.map-stop--start)').should('have.length', 4)
-      cy.window().then(win => expect(stored(win)).to.deep.equal({ start: null, add: ['L500'], drop: [] }))
+      cy.get('a.event-route__maps').should('exist')
+      cy.contains('button', 'Put back').should('not.exist')
+      cy.contains('button', 'Edit route').click()
+      cy.get('[data-testid="route-editor"]').should('be.visible')
+      editorStops().should('deep.equal', ['Rustler Park', 'Cave Creek Canyon', 'Southwestern Research Station'])
+      cy.get('[data-testid="route-editor"] .go__stop-text span').first().should('have.text', '+3 new')
+      // Opening the editor changes nothing until something is changed.
+      cy.window().then(win => expect(stored(win)).to.equal(null))
 
-      // A stop the viewer added comes back out of the add list.
-      cy.get('[data-testid="route-stop"]').last().contains('button', 'Remove').click()
-      cy.get('[data-testid="route-stop"]').should('have.length', 3)
+      // Reorder: the new birds follow the visit order, and the route is remembered.
+      cy.get('[aria-label="Move Rustler Park down"]').click()
+      editorStops().should('deep.equal', ['Cave Creek Canyon', 'Rustler Park', 'Southwestern Research Station'])
+      names('[data-testid="route-editor"] .go__stop-text span').should('deep.equal', ['+2 new', '+2 new', '+1 new'])
+      cy.get('[data-testid="route-editor"] .go__covers').should('have.text', 'Covers 5 of 7 targets reported this week')
+      cy.window().then(win => expect(stored(win).stops.map(s => s.locId)).to.deep.equal(['L123', 'L200', 'L400']))
+      // The map follows the new order.
+      cy.get('.event-scouting__map .map-stop:not(.map-stop--start)').should('have.length', 3)
 
-      // Any other stop is dropped, and comes back as a removed extra that can be put back.
-      cy.contains('[data-testid="route-stop"]', 'Cave Creek Canyon').contains('button', 'Remove').click()
-      cy.wait('@route').its('request.url').should('include', 'drop=L123')
-      cy.get('[data-testid="route-stop"]').should('have.length', 2)
-      cy.contains('[data-testid="route-extra"]', 'Cave Creek Canyon').within(() => {
-        cy.get('.event-route__tag').should('have.text', 'removed')
-        cy.contains('button', 'Put back').click()
+      // Remove, then add from the list: the suggestion's extras and the scouting places, with what each adds.
+      cy.get('[aria-label="Remove Southwestern Research Station"]').click()
+      editorStops().should('have.length', 2)
+      cy.get('[data-testid="route-editor"] input[type="search"]').should('exist')
+      cy.contains('[data-testid="route-editor"] .place-search__results button', 'Paradise').should('contain', '+2 birds').click()
+      editorStops().should('deep.equal', ['Cave Creek Canyon', 'Rustler Park', 'Paradise'])
+      cy.get('[data-testid="route-editor"] .go__covers').should('have.text', 'Covers 6 of 7 targets reported this week')
+
+      // Add by search: a place with none of the targets adds no birds.
+      cy.get('[data-testid="route-editor"] .go__add input[type="search"]').type('Portal')
+      cy.contains('[data-testid="route-editor"] .place-search__results button', 'Portal Peak Lodge').click()
+      editorStops().should('have.length', 4).its(3).should('equal', 'Portal Peak Lodge')
+      cy.get('[data-testid="route-editor"] .go__stop-text span').last().should('have.text', 'No new birds on this route')
+
+      // Done: the panel reads like the suggestion, with the drive between the stops from /ebird/drive.
+      cy.contains('[data-testid="route-editor"] button', 'Done').click()
+      cy.get('[data-testid="event-route"]').within(() => {
+        cy.contains('.event-route__note', 'Your own route.')
+        cy.get('.event-route__headline').should('have.text', '4 stops · about 30 min of driving · 15 mi')
+        cy.get('.event-route__covers').should('have.text', 'Covers 6 of 7 targets reported this week')
+        names('[data-testid="route-stop"] .event-scouting__place-name').should('deep.equal', ['Cave Creek Canyon', 'Rustler Park', 'Paradise', 'Portal Peak Lodge'])
+        cy.get('[data-testid="route-stop"]').eq(1).find('.event-route__leg').should('have.text', '↓ 10 min · 5 mi')
+        cy.get('[data-testid="route-extras"]').should('not.exist')
       })
-      cy.get('[data-testid="route-stop"]').should('have.length', 3)
-      cy.window().then(win => expect(stored(win)).to.equal(null))
+      cy.get('.event-scouting__map .map-stop:not(.map-stop--start)').should('have.length', 4)
+
+      // Remove every stop: an empty route, and the editor's add box is still there.
+      cy.contains('button', 'Edit route').click()
+      cy.get('[data-testid="route-editor"] [aria-label^="Remove "]').should('have.length', 4)
+      for (let i = 0; i < 4; i++) cy.get('[data-testid="route-editor"] [aria-label^="Remove "]').first().click()
+      cy.contains('[data-testid="route-editor"]', 'No stops yet. Add one below.')
+      cy.get('[data-testid="route-editor"] .go__add input[type="search"]').should('be.visible')
+      cy.window().then(win => expect(stored(win)).to.deep.equal({ start: null, stops: [] }))
+      cy.contains('[data-testid="route-editor"] button', 'Done').click()
+      cy.contains('[data-testid="event-route"]', 'No reported places to plan a route through yet.')
+      cy.contains('[data-testid="event-route"] button', 'Edit route')
     })
 
-    it('one too many: says why and takes the add back', () => {
-      open({ route: planner })
+    it('a reload keeps the route of your own; back to the suggestion forgets it', () => {
+      const mine = { start: null, stops: [{ locId: 'L400', name: 'Southwestern Research Station', lat: 31.87, lng: -109.2 }, { locId: 'L123', name: 'Cave Creek Canyon', lat: 31.88, lng: -109.17 }] }
+      open({ route: suggestion(), stored: mine, setup: stubDrive })
       cy.contains('button', 'Plan a route').click()
-      cy.wait('@route')
-      cy.contains('[data-testid="route-extra"]', 'Far Place').contains('button', 'Add to route').click()
-      cy.wait('@route').its('request.url').should('include', 'add=L61')
-      cy.contains('[data-testid="event-route"] [role="status"]', 'A route has up to 8 stops: add fewer places')
-      cy.get('[data-testid="route-stop"]').should('have.length', 3)
-      cy.contains('[data-testid="route-extra"]', 'Far Place').contains('button', 'Add to route')
-      cy.contains('Couldn’t plan a route right now').should('not.exist')
+      cy.wait('@route').its('request.url').should('not.include', 'add=').and('not.include', 'drop=')
+      cy.wait('@drive')
+      names('[data-testid="route-stop"] .event-scouting__place-name').should('deep.equal', ['Southwestern Research Station', 'Cave Creek Canyon'])
+      cy.get('.event-route__covers').should('have.text', 'Covers 3 of 7 targets reported this week')
+      cy.reload()
+      cy.contains('button', 'Plan a route').click()
+      names('[data-testid="route-stop"] .event-scouting__place-name').should('deep.equal', ['Southwestern Research Station', 'Cave Creek Canyon'])
+      cy.contains('button', 'Back to the suggested route').click()
+      names('[data-testid="route-stop"] .event-scouting__place-name').should('deep.equal', ['Rustler Park', 'Cave Creek Canyon', 'Southwestern Research Station'])
+      cy.contains('.event-route__note', 'Your own route.').should('not.exist')
+      cy.contains('button', 'Back to the suggested route').should('not.exist')
       cy.window().then(win => expect(stored(win)).to.equal(null))
+      cy.get('[data-testid="route-extras"]').should('exist')
     })
 
-    it('remembered choices are sent straight away, then kept as the server applied them', () => {
-      open({ route: planner, stored: { start: null, add: ['L500', 'L500'], drop: ['L123', 'L999'] } })
+    it('the editor fits a phone without scrolling sideways', () => {
+      cy.viewport(375, 740)
+      open({ route: suggestion(), setup: stubDrive })
       cy.contains('button', 'Plan a route').click()
-      cy.wait('@route').its('request.url').should('include', 'add=L500%2CL500').and('include', 'drop=L123%2CL999')
-      cy.get('[data-testid="route-stop"]').should('have.length', 3)
-      cy.window().its('localStorage').invoke('getItem', STORE_KEY).should('equal', JSON.stringify({ start: null, add: ['L500'], drop: ['L123'] }))
-    })
-
-    it('a remembered list the server refuses is let go, with its reason', () => {
-      open({ route: planner, stored: { start: null, add: ['L61'], drop: [] } })
-      cy.contains('button', 'Plan a route').click()
-      cy.contains('[data-testid="event-route"] [role="status"]', 'A route has up to 8 stops: add fewer places')
-      cy.wait('@route').its('request.url').should('include', 'add=L61')
-      cy.wait('@route').its('request.url').should('not.include', 'add=')
-      cy.get('[data-testid="route-stop"]').should('have.length', 3)
-      cy.window().then(win => expect(stored(win)).to.equal(null))
+      cy.contains('button', 'Edit route').click()
+      cy.get('[data-testid="route-editor"] .go__stop').should('have.length', 3)
+      cy.document().then(doc => expect(doc.documentElement.scrollWidth).to.be.at.most(375))
     })
   })
 

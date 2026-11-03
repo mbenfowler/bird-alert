@@ -53,12 +53,11 @@ const Chips = ({ place, renderBird }: { place: Place; renderBird: RenderBird }) 
   )
 }
 
-/** The name, with "personal spot" (and "removed", for a place taken out) beside it. */
-const Name = ({ place, removed = false }: { place: Place; removed?: boolean }) => (
+/** The name, with "personal spot" beside it when it is one. */
+const Name = ({ place }: { place: Place }) => (
   <strong className='event-scouting__place-name'>
     {place.locName}
     {place.private && <> <span className='event-route__tag'>{t('eventRoute.personal')}</span></>}
-    {removed && <> <span className='event-route__tag'>{t('eventRoute.removed')}</span></>}
   </strong>
 )
 
@@ -72,7 +71,7 @@ const Directions = ({ place }: { place: Place }) => (
     aria-label={t('eventRoute.directionsTo', { place: place.locName })}>{t('eventRoute.directions')}</a>
 )
 
-const RouteStop = ({ stop, n, unit, busy, onRemove, renderBird }: { stop: Stop; n: number; unit: DistanceUnit; busy: boolean; onRemove: () => void; renderBird: RenderBird }) => (
+const RouteStop = ({ stop, n, unit, renderBird }: { stop: Stop; n: number; unit: DistanceUnit; renderBird: RenderBird }) => (
   <li className='event-route__stop' data-testid='route-stop'>
     {typeof stop.leg_min === 'number' && typeof stop.leg_mi === 'number' && (
       <p className='event-route__leg'>{t('eventRoute.leg', { time: driveTime(stop.leg_min), distance: shortDistance(stop.leg_mi, unit) })}</p>
@@ -90,16 +89,12 @@ const RouteStop = ({ stop, n, unit, busy, onRemove, renderBird }: { stop: Stop; 
             <Chips place={stop} renderBird={renderBird} />
           </>
         : <p className='event-route__note'>{t('eventRoute.noNewBirds')}</p>}
-      <button type='button' className='link-button link-text event-route__remove' disabled={busy} onClick={onRemove}
-        aria-label={t('eventRoute.removeLabel', { place: stop.locName })}>{t('eventRoute.remove')}</button>
     </div>
   </li>
 )
 
 /** An optional stop: lighter than the route's own, with what it adds and what it costs. */
-const ExtraRow = ({ extra, i, active, unit, busy, onAdd, onPutBack, renderBird }: {
-  extra: Extra; i: number; active: boolean; unit: DistanceUnit; busy: boolean; onAdd: () => void; onPutBack: () => void; renderBird: RenderBird
-}) => {
+const ExtraRow = ({ extra, i, active, unit, renderBird }: { extra: Extra; i: number; active: boolean; unit: DistanceUnit; renderBird: RenderBird }) => {
   const cost = [
     t('eventRoute.extraBirds', { count: extra.new_birds.length }),
     typeof extra.add_min === 'number' ? t('eventRoute.extraTime', { time: driveTime(extra.add_min) }) : null,
@@ -108,16 +103,12 @@ const ExtraRow = ({ extra, i, active, unit, busy, onAdd, onPutBack, renderBird }
   return (
     <li id={extraRowId(i)} className={`event-route__extra ${active ? 'is-active' : ''}`} data-testid='route-extra'>
       <p className='event-scouting__place-head'>
-        <Name place={extra} removed={Boolean(extra.dropped)} />
+        <Name place={extra} />
         <Directions place={extra} />
       </p>
       <p className='event-route__extra-cost'>{cost}</p>
       <Merged place={extra} />
       {extra.new_birds.length > 0 && <Chips place={extra} renderBird={renderBird} />}
-      <button type='button' className='pill-button pill-button--small event-route__add' disabled={busy} onClick={extra.dropped ? onPutBack : onAdd}
-        aria-label={t(extra.dropped ? 'eventRoute.putBackLabel' : 'eventRoute.addLabel', { place: extra.locName })}>
-        {t(extra.dropped ? 'eventRoute.putBack' : 'eventRoute.add')}
-      </button>
     </li>
   )
 }
@@ -170,14 +161,14 @@ const StartControl = ({ state, start, meetingPoint, onStart }: { state: string; 
  * the drive between them and links into Google Maps, then the optional stops worth it with time to
  * spare. Stops can be taken out and optional ones put in; the route is planned again each time.
  */
-const EventRoute = ({ route, pending, updating, failed, note, state, start, onStart, lifers, picked, renderBird, onAdd, onPutBack, onRemove }: {
+const EventRoute = ({ route, pending, updating, failed, custom = false, state, start, onStart, lifers, picked, renderBird, actions }: {
   route: Route | undefined
   pending: boolean
   /** An edit is on its way; the last route stays up meanwhile. */
   updating: boolean
   failed: boolean
-  /** Why the last change was undone (the server's words). */
-  note: string | null
+  /** The viewer's own route rather than the suggestion. */
+  custom?: boolean
   /** The event's state or province, for the start search. */
   state: string
   start: RouteStart | null
@@ -186,9 +177,8 @@ const EventRoute = ({ route, pending, updating, failed, note, state, start, onSt
   /** An optional stop whose pin was tapped; each tap is a new object. */
   picked: { i: number } | null
   renderBird: RenderBird
-  onAdd: (locId: string) => void
-  onPutBack: (locId: string) => void
-  onRemove: (stop: Stop) => void
+  /** Edit route, Back to the suggested route: under the stops. */
+  actions?: ReactNode
 }) => {
   const unit = useDistanceUnit()
   const [allExtras, setAllExtras] = useState(false)
@@ -208,13 +198,14 @@ const EventRoute = ({ route, pending, updating, failed, note, state, start, onSt
     <div className={`event-route ${updating ? 'is-updating' : ''}`} data-testid='event-route' aria-busy={updating || pending}>
       {pending && <LoadingState variant='inline' label={t('eventRoute.loading')} />}
       {failed && <p className='notification__hint'>{t('eventRoute.failed')}</p>}
-      {note && <p className='notification__hint event-route__undone' role='status'>{note}</p>}
       {failed && start && startControl}
+      {failed && actions}
       {route && !pending && (
         route.stops.length === 0
           ? <>
               <p className='notification__hint'>{t('eventRoute.none')}</p>
               {startControl}
+              {actions}
             </>
           : <>
               <div className='event-route__summary'>
@@ -229,22 +220,25 @@ const EventRoute = ({ route, pending, updating, failed, note, state, start, onSt
                     ? t(`${coversKey}Extras`, { got: route.covered, count: route.reported, extras: withExtras })
                     : t(coversKey, { got: route.covered, count: route.reported })}
                 </p>
-                {!route.routed && <p className='event-route__note'>{t('eventRoute.unrouted')}</p>}
+                {custom && <p className='event-route__note'>{t('eventRoute.yours')}</p>}
+                {!route.routed && <p className='event-route__note'>{t(custom ? 'eventRoute.unroutedCustom' : 'eventRoute.unrouted')}</p>}
                 {updating && <p className='event-route__note' role='status'>{t('eventRoute.updating')}</p>}
               </div>
               {startControl}
               <ol className='event-route__stops'>
-                {route.stops.map((stop, i) => <RouteStop key={`${stop.locId}-${i}`} stop={stop} n={i + 1} unit={unit} busy={updating} onRemove={() => onRemove(stop)} renderBird={renderBird} />)}
+                {route.stops.map((stop, i) => <RouteStop key={`${stop.locId}-${i}`} stop={stop} n={i + 1} unit={unit} renderBird={renderBird} />)}
               </ol>
-              {whole && <a className='pill-button pill-button--small event-route__maps' href={whole} target='_blank' rel='noreferrer'>{t('eventRoute.openMaps')}</a>}
+              <div className='event-route__actions'>
+                {whole && <a className='pill-button pill-button--small event-route__maps' href={whole} target='_blank' rel='noreferrer'>{t('eventRoute.openMaps')}</a>}
+                {actions}
+              </div>
               {route.skipped > 0 && <p className='event-route__note'>{t('eventRoute.skipped', { count: route.skipped })}</p>}
               {extras.length > 0 && (
                 <div className='event-route__extras' data-testid='route-extras'>
                   <p className='place__subheading'>{t('eventRoute.extras')}</p>
                   <ul className='event-route__extra-list'>
                     {extrasShown.map((extra, i) => (
-                      <ExtraRow key={`${extra.locId}-${i}`} extra={extra} i={i} active={picked?.i === i} unit={unit} busy={updating}
-                        onAdd={() => onAdd(extra.locId)} onPutBack={() => onPutBack(extra.locId)} renderBird={renderBird} />
+                      <ExtraRow key={`${extra.locId}-${i}`} extra={extra} i={i} active={picked?.i === i} unit={unit} renderBird={renderBird} />
                     ))}
                   </ul>
                   {extrasShown.length < extras.length && (

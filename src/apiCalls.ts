@@ -142,13 +142,10 @@ export const getEventScouting = (id: Id) => {
     const locale = nameLocale()
     return api<EventScouting>('/saved', { params: { kind: 'event-scouting', id: String(id), ...(locale ? { locale } : {}) } })
 }
-/**
- * The scouting route. `from` is a rounded "lat,lng" start (else the meeting point or the first stop);
- * `add` forces places into the route and `drop` keeps them out. Too many added is a 400 with a message.
- */
-export const getEventRoute = (id: Id, { from, add, drop }: { from: string | null; add: string[]; drop: string[] }) => {
+/** The scouting route, as the server suggests it; `from` is a rounded "lat,lng" start (else the meeting point or the first stop). */
+export const getEventRoute = (id: Id, from: string | null) => {
     const locale = nameLocale()
-    return api<EventRoute>('/saved', { params: { kind: 'event-route', id: String(id), ...(from ? { from } : {}), ...(add.length ? { add: add.join(',') } : {}), ...(drop.length ? { drop: drop.join(',') } : {}), ...(locale ? { locale } : {}) } })
+    return api<EventRoute>('/saved', { params: { kind: 'event-route', id: String(id), ...(from ? { from } : {}), ...(locale ? { locale } : {}) } })
 }
 export const getEventView = (token: string) => api<EventView>('/saved', { params: { kind: 'event-view', token } })
 export const getSavedRoute = (region: string) => api<SavedRoute>('/saved', { params: { kind: 'route', region } })

@@ -605,7 +605,6 @@ a.event-scouting__bird:hover {
 }
 
 .event-route__maps {
-  align-self: flex-start;
   text-decoration: none;
 }
 
@@ -675,14 +674,16 @@ a.event-scouting__bird:hover {
   align-self: flex-start;
 }
 
-/* Editing the route: take a stop out, put an optional one in. The last route stays up, dimmed, until the new one comes. */
-.event-route__remove,
-.event-route__add {
-  align-self: flex-start;
+/* Under the stops: Maps, Edit route, Back to the suggested route. The last route stays up, dimmed, until a new one comes. */
+.event-route__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
 }
 
-.event-route__remove {
-  font-size: 0.85rem;
+.event-route__editor {
+  min-width: 0;
 }
 
 .event-route.is-updating .event-route__stops,
