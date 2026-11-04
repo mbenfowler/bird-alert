@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions, getCountries, getProvinces,
-  getSavedBirds, getPlaces, getPlaceSeen, getPlaceSuggestions, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase, getNameLocales, getEvents, getEventPreview, getEventView, getEventScouting, getEventRoute, getEventRoutePlan, getEventSuggestions } from '../apiCalls'
+  getSavedBirds, getPlaces, getPlaceSeen, getPlaceSuggestions, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase, getNameLocales, getEvents, getEventPreview, getEventView, getEventScouting, getEventRoute, getEventRoutePlan, getEventSuggestions, getEventLog } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
 import { nameLocale } from '../i18n'
 import { isNetworkError } from '../offline'
@@ -481,6 +481,20 @@ export const useEventRoutePlanQuery = (id: Id, enabled: boolean, quiet: boolean)
     meta: { persist: true, offline: true },
     refetchOnWindowFocus: !quiet,
     refetchInterval: enabled && !quiet ? 60 * 1000 : false
+  })
+
+/** The group log: every bird put on the tally, removed ones too, in the order seen; refreshed with the tally on the day (`live`). */
+export const useEventLogQuery = (id: Id, enabled = true, live = false) =>
+  useQuery({
+    queryKey: ['event-log', id, nameLocale()] as const,
+    queryFn: () => getEventLog(id),
+    enabled,
+    staleTime: live ? 0 : MINUTE,
+    refetchInterval: live ? 30 * 1000 : false,
+    refetchOnWindowFocus: live,
+    gcTime: WEEK,
+    meta: { persist: true, offline: true },
+    select: (log) => (Array.isArray(log) ? log : [])
   })
 
 /** What an invite link is for, before joining (no sign-in needed). */

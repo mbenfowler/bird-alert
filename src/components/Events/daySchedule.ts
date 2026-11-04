@@ -150,6 +150,13 @@ export const writeProgress = (id: Id, progress: DayProgress) => {
   try { localStorage.setItem(progressKey(id), JSON.stringify(progress)) } catch { /* private mode: it lasts the visit */ }
 }
 
+/** Signing out forgets every event's progress (and the get-ready record) on this phone. */
+export const clearDayProgress = () => {
+  try {
+    for (const key of Object.keys(localStorage)) if (key.startsWith('bird-alert:event-day:') || key.startsWith('bird-alert:event-ready:')) localStorage.removeItem(key)
+  } catch { /* nothing kept */ }
+}
+
 /** The day's clock starts at the meeting time when one is set, else when "Start the day" was tapped. */
 export const scheduleStart = (progress: DayProgress, day: string, timeZone: string | undefined) => {
   if (progress.meetAt && /^\d{2}:\d{2}$/.test(progress.meetAt)) return zonedInstant(day, progress.meetAt, timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone)

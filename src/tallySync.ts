@@ -1,6 +1,6 @@
 import { type Mutation, type QueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
-import { deleteEventTally, errorMessage, postEventTally, postSeenBird } from './apiCalls'
+import { deleteEventTally, deleteEventTallyMark, errorMessage, postEventTally, postEventTallyMark, postEventTallyUndo, postSeenBird } from './apiCalls'
 import { isNetworkError, isTransient } from './offline'
 import { queryKeys } from './hooks/queries'
 import type { EventTallyEntry, GroupEvent, Id } from './types'
@@ -22,11 +22,22 @@ export interface TallyChange {
   id: Id
   code: string
   remove?: boolean
+  /**
+   * Besides an add (none) or a removal (`remove`): `undo` puts a removed bird back as it was (its
+   * finder and time); `mark` and `unmark` tick or untick one bird (`tallyId`) as on one's own eBird checklist.
+   */
+  op?: 'undo' | 'mark' | 'unmark'
+  tallyId?: Id
   /** Names this one change, for the server (adds) and for taking it back before it's sent. */
   clientId: string
   /** When it was made, and by whom: what the pending entry shows. */
   at: string
   by?: string | null
+  /** Where the phone was when the bird was added (3 decimals), if the person allowed it. */
+  lat?: number | null
+  lng?: number | null
+  /** A removal: the entry as it was, so an undo before the server answers can show it again. */
+  entry?: EventTallyEntry | null
 }
 
 export interface ShownTallyEntry extends EventTallyEntry {
@@ -46,10 +57,23 @@ export const newClientId = (): string => {
 /** The tally as it will be once everything waiting is sent: the server's, with pending removals gone and pending adds on top. */
 export const withPending = (tally: EventTallyEntry[], pending: TallyChange[]): ShownTallyEntry[] => {
   let shown: ShownTallyEntry[] = [...tally]
+  // Removals waiting to be sent, by bird: what an undo brings back while it's still waiting.
+  const removed = new Map<string, EventTallyEntry>()
   for (const change of pending) {
-    if (change.remove) shown = shown.filter(entry => entry.code !== change.code)
-    else if (!shown.some(entry => entry.code === change.code)) {
-      shown = [{ code: change.code, added_by_you: true, added_by_name: change.by ?? null, added_at: change.at, pending: true, clientId: change.clientId }, ...shown]
+    if (change.op === 'mark' || change.op === 'unmark') {
+      shown = shown.map(entry => (entry.id !== undefined && String(entry.id) === String(change.tallyId) ? { ...entry, marked_by_me: change.op === 'mark' } : entry))
+    } else if (change.op === 'undo') {
+      const back = removed.get(change.code) ?? change.entry
+      if (back && !shown.some(entry => entry.code === change.code)) shown = [{ ...back }, ...shown]
+    } else if (change.remove) {
+      const entry = shown.find(e => e.code === change.code) ?? change.entry
+      if (entry) removed.set(change.code, entry)
+      shown = shown.filter(e => e.code !== change.code)
+    } else if (!shown.some(entry => entry.code === change.code)) {
+      shown = [{
+        code: change.code, added_by_you: true, added_by_name: change.by ?? null, added_at: change.at, observed_at: change.at,
+        lat: change.lat ?? null, lng: change.lng ?? null, pending: true, clientId: change.clientId
+      }, ...shown]
     }
   }
   return shown
@@ -85,14 +109,27 @@ const isTallyChange = (mutation: Mutation<unknown, Error, unknown, unknown>) =>
 const pendingMutation = (queryClient: QueryClient, clientId: string) =>
   queryClient.getMutationCache().getAll().find(m => isTallyChange(m) && (m.state.variables as TallyChange | undefined)?.clientId === clientId)
 
-/** Puts the change into the events cache once the server has it, so the entry doesn't blink out before the refetch. */
-const applyToCache = (queryClient: QueryClient, change: TallyChange) => {
+const isEvent = (value: unknown): value is GroupEvent => Boolean(value) && typeof value === 'object' && Array.isArray((value as GroupEvent).tally) && 'id' in (value as GroupEvent)
+
+/**
+ * Puts the change into the events cache once the server has it, so the entry doesn't blink out
+ * before the refetch: the server's own copy of the event when it sent one back, else the change.
+ */
+const applyToCache = (queryClient: QueryClient, change: TallyChange, answer?: unknown) => {
   queryClient.setQueryData<GroupEvent[]>(queryKeys.events, (events) => events?.map(event => {
     if (String(event.id) !== String(change.id)) return event
+    if (isEvent(answer) && String(answer.id) === String(event.id)) {
+      const { entry: _entry, ...fresh } = answer as GroupEvent & { entry?: unknown }
+      return { ...event, ...fresh }
+    }
+    if (change.op === 'mark' || change.op === 'unmark') {
+      return { ...event, tally: (event.tally ?? []).map(entry => (String(entry.id) === String(change.tallyId) ? { ...entry, marked_by_me: change.op === 'mark' } : entry)) }
+    }
     const tally = (event.tally ?? []).filter(entry => entry.code !== change.code)
     if (change.remove) return { ...event, tally }
     const existing = (event.tally ?? []).find(entry => entry.code === change.code)
-    return { ...event, tally: [existing ?? { code: change.code, added_by_name: change.by ?? null, added_by_you: true, added_at: change.at }, ...tally] }
+    if (change.op === 'undo') return { ...event, tally: existing || !change.entry ? event.tally : [change.entry, ...tally] }
+    return { ...event, tally: [existing ?? { code: change.code, added_by_name: change.by ?? null, added_by_you: true, added_at: change.at, observed_at: change.at }, ...tally] }
   }))
 }
 
@@ -103,28 +140,34 @@ export const setupTallySync = (queryClient: QueryClient) => {
       if (cancelled.has(change.clientId)) return { sent: false }
       inFlight.add(change.clientId)
       try {
-        if (change.remove) await deleteEventTally(change.id, change.code)
-        else await postEventTally(change.id, change.code, { clientId: change.clientId, observedAt: change.at })
+        const answer = change.op === 'mark' ? await postEventTallyMark(change.id, change.tallyId!)
+          : change.op === 'unmark' ? await deleteEventTallyMark(change.id, change.tallyId!)
+            : change.op === 'undo' ? await postEventTallyUndo(change.id, change.code)
+              : change.remove ? await deleteEventTally(change.id, change.code)
+                : await postEventTally(change.id, change.code, { clientId: change.clientId, observedAt: change.at, lat: change.lat, lng: change.lng })
+        return { sent: true, answer }
       } finally {
         inFlight.delete(change.clientId)
       }
-      return { sent: true }
     },
     scope: SCOPE,
     // A dropped connection is tried again for as long as it takes; a server that's briefly down, a few times.
     retry: (failures, error) => isNetworkError(error) || (isTransient(error) && failures < 5),
     retryDelay: (attempt) => Math.min(2000 * 2 ** attempt, 60_000),
-    onSuccess: (result: { sent: boolean }, change: TallyChange) => {
+    onSuccess: (result: { sent: boolean; answer?: unknown }, change: TallyChange) => {
       if (!result.sent || cancelled.has(change.clientId)) return
-      applyToCache(queryClient, change)
-      const lifer = change.remove ? null : takeLifer(change.clientId)
+      applyToCache(queryClient, change, result.answer)
+      const lifer = change.remove || change.op ? null : takeLifer(change.clientId)
       if (lifer) void addSeen(queryClient, lifer)
     },
     onError: (error: unknown, change: TallyChange) => {
       dropLifer(change.clientId)
       toast.error(errorMessage(error), { position: 'bottom-center' })
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.events })
+    onSettled: () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.events }),
+      queryClient.invalidateQueries({ queryKey: ['event-log'] })
+    ])
   })
 }
 
@@ -152,15 +195,35 @@ export const queueTallyChange = (queryClient: QueryClient, change: Omit<TallyCha
  * Takes back an add that hasn't been sent. Waiting or between retries: it's simply dropped. Already
  * on its way: a removal follows it, so it ends up off the tally either way.
  */
-export const cancelPendingAdd = (queryClient: QueryClient, clientId: string) => {
+export const cancelPendingAdd = (queryClient: QueryClient, clientId: string) => cancelPendingChange(queryClient, clientId)
+
+/**
+ * Takes back any change that hasn't been sent (an add, a removal, a tick). Already on its way: the
+ * opposite change follows it. Says whether there was one to take back.
+ */
+export const cancelPendingChange = (queryClient: QueryClient, clientId: string) => {
   const mutation = pendingMutation(queryClient, clientId)
-  if (!mutation) return
+  if (!mutation) return false
   const change = mutation.state.variables as TallyChange
   cancelled.add(clientId)
   dropLifer(clientId)
   const onItsWay = inFlight.has(clientId)
   queryClient.getMutationCache().remove(mutation)
-  if (onItsWay) queueTallyChange(queryClient, { id: change.id, code: change.code, remove: true, by: change.by })
+  if (onItsWay) {
+    const base = { id: change.id, code: change.code, by: change.by }
+    if (change.op === 'mark') queueTallyChange(queryClient, { ...base, op: 'unmark', tallyId: change.tallyId })
+    else if (change.op === 'unmark') queueTallyChange(queryClient, { ...base, op: 'mark', tallyId: change.tallyId })
+    else if (change.op === 'undo') queueTallyChange(queryClient, { ...base, remove: true })
+    else if (change.remove) queueTallyChange(queryClient, { ...base, op: 'undo', entry: change.entry })
+    else queueTallyChange(queryClient, { ...base, remove: true })
+  }
+  return true
+}
+
+/** "Undo" after removing a bird: the waiting removal is dropped, or once sent, the bird is put back as it was. */
+export const undoRemoval = (queryClient: QueryClient, removal: TallyChange) => {
+  if (cancelPendingChange(queryClient, removal.clientId)) return
+  queueTallyChange(queryClient, { id: removal.id, code: removal.code, op: 'undo', by: removal.by, entry: removal.entry })
 }
 
 /** What "Add to life list" does for a bird on the tally: now if the server has the add, else once it does. */
