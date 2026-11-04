@@ -1024,6 +1024,17 @@
     "emailTooMany_other": "Ya pediste varios. Intenta de nuevo en {{count}} minutos.",
     "emailBusy": "El correo está saturado en este momento. Intenta más tarde."
   },
+  "scoutingToday": {
+    "title": "Exploración de hoy",
+    "newSince": "Nuevo desde ayer",
+    "noneNew": "Ningún reporte nuevo de tus objetivos desde ayer",
+    "birdOfDay": "Ave del día",
+    "progress_one": "<b>{{got}} de {{count}} objetivo</b> por la zona esta semana",
+    "progress_many": "<b>{{got}} de {{count}} objetivos</b> por la zona esta semana",
+    "progress_other": "<b>{{got}} de {{count}} objetivos</b> por la zona esta semana",
+    "seeWhere": "Ver dónde →",
+    "thisMorning": "esta mañana"
+  },
   "eventRoute": {
     "plan": "Planear una ruta",
     "hide": "Ocultar ruta",
@@ -1533,11 +1544,26 @@
     "removed": "{{name}} ya no está en el conteo.",
     "undo": "Deshacer",
     "alreadyOn": "Ya está en el conteo ({{by}})",
-    "removeSure": "¿Quitarla para todo el grupo?",
+    "removeSure": "¿Quitar?",
     "removeYes": "Quitar",
     "locationAsk": "¿Anotar dónde se agrega cada ave, para que el registro del grupo muestre dónde se vio?",
     "locationAllow": "Permitir",
-    "locationNo": "No, gracias"
+    "locationNo": "No, gracias",
+    "filterLabel": "Qué objetivos",
+    "filterAll": "Todas ({{count}})",
+    "filterAround": "Por la zona ({{count}})",
+    "filterMissing": "Faltan ({{count}})",
+    "filterNone": "Ninguna por ahora.",
+    "searchTargets": "Buscar un objetivo",
+    "searchNone": "Ningún objetivo coincide con “{{query}}”.",
+    "targetsShowAll": "Ver las {{count}}",
+    "targetsShowFewer": "Ver menos",
+    "reportedAt": "Reportada el {{date}} en {{place}}",
+    "reportedOn": "Reportada el {{date}}",
+    "statusMissing": "sin reportes recientes",
+    "liferMark": "lifer",
+    "onTally": "Ya en el conteo",
+    "removeTargetYes": "Sí, quitar {{name}}"
   },
   "eventDay": {
     "heading": "Hoy",

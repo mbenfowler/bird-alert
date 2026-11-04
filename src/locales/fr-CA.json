@@ -1041,6 +1041,17 @@
     "emailTooMany_other": "Tu en as déjà demandé quelques-uns. Réessaie dans {{count}} minutes.",
     "emailBusy": "L’envoi de courriels est surchargé en ce moment. Réessaie plus tard."
   },
+  "scoutingToday": {
+    "title": "Repérage du jour",
+    "newSince": "Nouveau depuis hier",
+    "noneNew": "Aucune nouvelle mention de cible depuis hier",
+    "birdOfDay": "Oiseau du jour",
+    "progress_one": "<b>{{got}} sur {{count}}</b> cible dans le coin cette semaine",
+    "progress_many": "<b>{{got}} sur {{count}}</b> cibles dans le coin cette semaine",
+    "progress_other": "<b>{{got}} sur {{count}}</b> cibles dans le coin cette semaine",
+    "seeWhere": "Voir où →",
+    "thisMorning": "ce matin"
+  },
   "eventRoute": {
     "plan": "Planifier un itinéraire",
     "hide": "Masquer l’itinéraire",
@@ -1550,11 +1561,26 @@
     "removed": "{{name}} n’est plus au décompte.",
     "undo": "Annuler",
     "alreadyOn": "Déjà au décompte ({{by}})",
-    "removeSure": "La retirer pour tout le groupe?",
+    "removeSure": "Retirer?",
     "removeYes": "Retirer",
     "locationAsk": "Noter où chaque oiseau est ajouté, pour que le journal du groupe montre où il a été vu?",
     "locationAllow": "Autoriser",
-    "locationNo": "Non merci"
+    "locationNo": "Non merci",
+    "filterLabel": "Quelles cibles",
+    "filterAll": "Toutes ({{count}})",
+    "filterAround": "Dans le coin ({{count}})",
+    "filterMissing": "Introuvables ({{count}})",
+    "filterNone": "Aucune pour l’instant.",
+    "searchTargets": "Trouver une cible",
+    "searchNone": "Aucune cible ne correspond à « {{query}} ».",
+    "targetsShowAll": "Voir les {{count}}",
+    "targetsShowFewer": "Voir moins",
+    "reportedAt": "Signalée le {{date}} à {{place}}",
+    "reportedOn": "Signalée le {{date}}",
+    "statusMissing": "pas signalée récemment",
+    "liferMark": "nouvelle",
+    "onTally": "Déjà au décompte",
+    "removeTargetYes": "Oui, retirer {{name}}"
   },
   "eventDay": {
     "heading": "Aujourd’hui",

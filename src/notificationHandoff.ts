@@ -12,12 +12,12 @@ export const CHANNEL = 'bird-alert-notifications'
 const OPEN_MAX_AGE_MS = 10 * 60_000
 const PUSH_MAX_AGE_MS = 60_000
 
-/** A same-origin path for a URL, or null when it points elsewhere. */
+/** A same-origin path for a URL (with its #hash, such as an event's #scouting), or null when it points elsewhere. */
 export const samePath = (url: unknown): string | null => {
   if (typeof url !== 'string') return null
   try {
     const target = new URL(url, window.location.origin)
-    return target.origin === window.location.origin ? target.pathname + target.search : null
+    return target.origin === window.location.origin ? target.pathname + target.search + target.hash : null
   } catch {
     return null
   }

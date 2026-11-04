@@ -79,10 +79,11 @@ const App = () => {
   // The front door is public too: someone without an account sees the splash page there.
   const isPublicPath = pathname === '/' || PUBLIC_PATH_PREFIXES.some(prefix => pathname.startsWith(prefix))
   // A new page starts at the top. Back/forward (POP) and in-place swaps (REPLACE, used when a pin
-  // on a sighting's map picks another report) keep the reader where they were.
+  // on a sighting's map picks another report) keep the reader where they were. A link to a part of
+  // a page (an event's #scouting) leaves the scrolling to that page.
   const navigationType = useNavigationType()
   useEffect(() => {
-    if (navigationType === 'PUSH') window.scrollTo(0, 0)
+    if (navigationType === 'PUSH' && !window.location.hash) window.scrollTo(0, 0)
   }, [pathname, navigationType])
 
   // Moving to another page fades the new one in (a sighting swapping for another stays put). An
@@ -143,7 +144,7 @@ const App = () => {
     // A target is followed once, and never offered as a toast when the app is already there or on its way.
     let lastOpened: string | null = null
     let lastAlarmed: string | null = null
-    const here = () => window.location.pathname + window.location.search
+    const here = () => window.location.pathname + window.location.search + window.location.hash
     const go = (path: string | null, via: string) => {
       if (!path || cancelled || path === lastOpened) return
       lastOpened = path

@@ -945,6 +945,16 @@
     "emailTooMany_other": "You’ve asked for a few already. Try again in {{count}} minutes.",
     "emailBusy": "Email is busy right now. Try again later."
   },
+  "scoutingToday": {
+    "title": "Today’s scouting",
+    "newSince": "New since yesterday",
+    "noneNew": "No new target reports since yesterday",
+    "birdOfDay": "Bird of the day",
+    "progress_one": "<b>{{got}} of {{count}} target</b> around this week",
+    "progress_other": "<b>{{got}} of {{count}} targets</b> around this week",
+    "seeWhere": "See where →",
+    "thisMorning": "this morning"
+  },
   "eventRoute": {
     "plan": "Plan a route",
     "hide": "Hide route",
@@ -1416,11 +1426,26 @@
     "removed": "{{name}} is off the tally.",
     "undo": "Undo",
     "alreadyOn": "Already on the tally ({{by}})",
-    "removeSure": "Take it off for everyone?",
+    "removeSure": "Remove?",
     "removeYes": "Take off",
     "locationAsk": "Note where each bird is added, so the group log shows where each bird was seen?",
     "locationAllow": "Allow",
-    "locationNo": "No thanks"
+    "locationNo": "No thanks",
+    "filterLabel": "Which targets",
+    "filterAll": "All ({{count}})",
+    "filterAround": "Around this week ({{count}})",
+    "filterMissing": "Missing ({{count}})",
+    "filterNone": "None right now.",
+    "searchTargets": "Find a target",
+    "searchNone": "No targets match “{{query}}”.",
+    "targetsShowAll": "Show all {{count}}",
+    "targetsShowFewer": "Show fewer",
+    "reportedAt": "Reported {{date}} at {{place}}",
+    "reportedOn": "Reported {{date}}",
+    "statusMissing": "not reported lately",
+    "liferMark": "lifer",
+    "onTally": "On the tally",
+    "removeTargetYes": "Yes, remove {{name}}"
   },
   "eventDay": {
     "heading": "Today",

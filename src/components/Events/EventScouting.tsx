@@ -190,7 +190,7 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
   const shown = showAll ? places : places.slice(0, PLACES_SHOWN)
 
   return (
-    <div className='event-page__section event-scouting' data-testid='event-scouting'>
+    <div id='scouting-details' tabIndex={-1} className='event-page__section event-scouting' data-testid='event-scouting'>
       <p className='place__heading'>{head}</p>
       {!emailOver && (
         <p className='place__actions event-scouting__email'>
