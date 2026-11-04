@@ -172,6 +172,8 @@ const EventRoutePanel = ({ event, onDay }: { event: GroupEvent; onDay: boolean }
         </div>
       )}
       {failed && <p className='notification__hint'>{isNetworkError(routeQuery.error) ? t('offline.noSignalNothingSaved') : t('eventRoute.failed')}</p>}
+      {route && !custom && route.incomplete && <p className='event-route__note'>{t('eventRoute.incomplete')}</p>}
+      {route && route.stops.length > 0 && !route.routed && <p className='event-route__note' data-testid='route-unrouted'>{t(custom ? 'eventRoute.unroutedCustom' : 'eventRoute.unrouted')}</p>}
       {routeOnMap && (
         <div className='event-route-panel__map'>
           <SightingsMap points={[]} route={routeOnMap} height={big ? MAP_LARGE : MAP_SMALL} ariaLabel={t('scoutingView.map', { name: event.name })} />

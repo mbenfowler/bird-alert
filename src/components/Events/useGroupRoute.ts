@@ -115,7 +115,7 @@ export const useGroupRoute = (eventId: Id, open: boolean, live = false) => {
 
   const pendingPlan: RoutePlan | null = pendingSave ? { start: pendingSave.start, stops: pendingSave.stops as EventRoutePlan['stops'] } : null
   const current: RoutePlan | null = draft ?? pendingPlan ?? (saved && (saved.stops !== null || saved.start) ? { start: saved.start, stops: saved.stops } : null)
-  const status: SaveStatus = failed ? 'failed' : draft ? 'idle' : pendingSave ? (online ? 'saving' : 'waiting') : justSaved ? 'saved' : 'idle'
+  const status: SaveStatus = failed ? 'failed' : draft ? 'idle' : pendingSave ? (online ? 'saving' : 'waiting') : justSaved && !note ? 'saved' : 'idle'
   return {
     query, saved, current, status, note,
     /** An edit hasn't reached the server yet, so the saved record's drive times are for other stops. */

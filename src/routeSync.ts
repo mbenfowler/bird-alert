@@ -111,7 +111,8 @@ export const setupRouteSync = (queryClient: QueryClient) => {
       }
     },
     scope: SCOPE,
-    retry,
+    // An edit is never given up on for a dropped connection or a server that's briefly down: it stays on screen, saving.
+    retry: (_failures: number, error: unknown) => isTransient(error),
     retryDelay,
     onError: (error: unknown) => { toast.error(errorMessage(error), { position: 'bottom-center' }) },
     // The suggestion starts at the saved meeting point.
