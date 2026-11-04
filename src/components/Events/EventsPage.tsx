@@ -9,6 +9,7 @@ import { useAreaName } from '../../shownArea'
 import { dateRange, t } from '../../i18n'
 import type { GroupEvent } from '../../types'
 import { eventPath, isGroup, isPast, isScouting, membersText, recapText } from './events'
+import { isEventDay } from './useEventDay'
 import '../AlertCenter/Places.css'
 import './Events.css'
 
@@ -21,7 +22,7 @@ const EventRow = ({ event }: { event: GroupEvent }) => {
       <Link className='events-list__link' to={eventPath(event.id)}>
         <span className='events-list__name'>
           <strong>{event.name}</strong>
-          {event.active && <span className='place__badge'>{t('events.today')}</span>}
+          {isEventDay(event) && <span className='place__badge'>{t('events.today')}</span>}
           {!past && isScouting(event) && <span className='place__badge place__badge--scouting'>{t('events.scouting')}</span>}
           {event.kind === 'bigday' && <span className='place__badge place__badge--quiet'>{t('events.bigDay')}</span>}
         </span>
@@ -44,10 +45,12 @@ const EventsPage = () => {
   const tripsMoved = Boolean((useLocation().state as { tripsMoved?: boolean } | null)?.tripsMoved)
   const [showArchived, setShowArchived] = useState(false)
   const all = events.data ?? []
-  const upcoming = all.filter(e => !e.archived && !isPast(e))
-    .sort((a, b) => Number(b.active) - Number(a.active) || a.starts_on.localeCompare(b.starts_on))
-  const past = all.filter(e => !e.archived && isPast(e)).sort((a, b) => b.ends_on.localeCompare(a.ends_on))
-  const archived = all.filter(e => e.archived).sort((a, b) => b.starts_on.localeCompare(a.starts_on))
+  // An event archived on its own day stays in Upcoming until the day is over (archiving is for afterwards).
+  const shown = (e: GroupEvent) => !e.archived || isEventDay(e)
+  const upcoming = all.filter(e => shown(e) && !isPast(e))
+    .sort((a, b) => Number(isEventDay(b)) - Number(isEventDay(a)) || a.starts_on.localeCompare(b.starts_on))
+  const past = all.filter(e => shown(e) && isPast(e)).sort((a, b) => b.ends_on.localeCompare(a.ends_on))
+  const archived = all.filter(e => !shown(e)).sort((a, b) => b.starts_on.localeCompare(a.starts_on))
   return (
     <section className='event-page events-page'>
       <div className='events-page__head'>

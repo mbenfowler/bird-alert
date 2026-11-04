@@ -139,7 +139,7 @@ export const useBirdsQuery = (codes: string[]) =>
   useQuery({ ...birdsQueryOptions(codes), placeholderData: keepPreviousData })
 
 /** The server looks up at most this many birds at once. */
-const BIRDS_PER_REQUEST = 50
+export const BIRDS_PER_REQUEST = 50
 
 /**
  * Every bird on a region's list, names and all, fetched once in pages the server accepts and kept
@@ -482,6 +482,25 @@ export const useEventRoutePlanQuery = (id: Id, enabled: boolean, quiet: boolean)
     refetchOnWindowFocus: !quiet,
     refetchInterval: enabled && !quiet ? 60 * 1000 : false
   })
+
+/**
+ * Everything the day needs, as "Get ready for offline" fetches it: the same keys and the same
+ * keep-it-on-the-phone settings as the hooks above, so what it fetches is what the pages read.
+ */
+export const eventDayQueries = (id: Id) => {
+  const offline = { gcTime: WEEK, meta: { persist: true, offline: true }, staleTime: 0 } as const
+  return [
+    { queryKey: queryKeys.events, queryFn: getEvents, ...offline },
+    { queryKey: ['event-route-plan', id] as const, queryFn: () => getEventRoutePlan(id), ...offline },
+    { queryKey: ['event-route', id, nameLocale()] as const, queryFn: () => getEventRoute(id), ...offline },
+    { queryKey: ['event-scouting', id, nameLocale()] as const, queryFn: () => getEventScouting(id), ...offline },
+    { queryKey: ['event-log', id, nameLocale()] as const, queryFn: () => getEventLog(id), ...offline }
+  ]
+}
+
+/** The county's species list as the bird picker keeps it. */
+export const speciesListOptions = (region: string) =>
+  queryOptions({ queryKey: queryKeys.speciesList(region), queryFn: () => getSpeciesList(region), staleTime: DAY, gcTime: WEEK, meta: { persist: true } })
 
 /** The group log: every bird put on the tally, removed ones too, in the order seen; refreshed with the tally on the day (`live`). */
 export const useEventLogQuery = (id: Id, enabled = true, live = false) =>

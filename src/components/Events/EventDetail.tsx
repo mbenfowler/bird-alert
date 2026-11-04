@@ -14,7 +14,11 @@ import { dateRange, monthDay, t } from '../../i18n'
 import type { GroupEvent } from '../../types'
 import EventPlan from './EventPlan'
 import EventScouting from './EventScouting'
-import { MAX_TARGETS, eventPath, isGroup, isPast, isScouting, membersText, recapText, scoutFrom } from './events'
+import DayView, { DayStops, SunLine } from './DayView'
+import GetReady from './GetReady'
+import { isEventDay, useEventDay } from './useEventDay'
+import { safeZone, zonedDay } from './daySchedule'
+import { MAX_TARGETS, daysBefore, eventPath, isGroup, isPast, isScouting, membersText, recapText, scoutFrom, today } from './events'
 import '../AlertCenter/Places.css'
 import './Events.css'
 
@@ -155,7 +159,7 @@ const People = ({ event }: { event: GroupEvent }) => {
 }
 
 /** Archive or unarchive (just for you), leave (members), or delete for everyone (the organizer). */
-const Actions = ({ event }: { event: GroupEvent }) => {
+const Actions = ({ event, onDay }: { event: GroupEvent; onDay: boolean }) => {
   const navigate = useNavigate()
   const member = useEventMemberMutation()
   const leave = useLeaveEventMutation()
@@ -170,7 +174,8 @@ const Actions = ({ event }: { event: GroupEvent }) => {
   return (
     <div className='event-page__section event-detail__actions'>
       <p className='place__actions'>
-        <button type='button' className='link-button link-text' disabled={member.isPending} onClick={() => archive(!event.archived)}>{event.archived ? t('events.unarchive') : t('events.archive')}</button>
+        {/* Not put away on the day itself: it would vanish from Events mid-day. */}
+        {(!onDay || event.archived) && <button type='button' className='link-button link-text' disabled={member.isPending} onClick={() => archive(!event.archived)}>{event.archived ? t('events.unarchive') : t('events.archive')}</button>}
         {!organizer && <button type='button' className='link-button link-text' disabled={leave.isPending} onClick={() => leave.mutate(event.id, { onSuccess: gone(t('events.left')), onError: fail })}>{t('events.leave')}</button>}
         {organizer && !confirming && <button type='button' className='link-button link-text event__delete' onClick={() => setConfirming(true)}>{t('events.delete')}</button>}
       </p>
@@ -185,58 +190,79 @@ const Actions = ({ event }: { event: GroupEvent }) => {
   )
 }
 
+/** Within this many days of the start, "Get ready for offline" sits at the top. */
+const READY_DAYS = 3
+
 /**
- * One event (/events/:id, where scouting reports and event emails link): the plan, its target
- * birds, who's in, the tally (up front on the day), and archiving, leaving or deleting it.
+ * One event (/events/:id, where scouting reports and event emails link). On the day it leads with
+ * the day itself (the route's current and next stop, the tally, the group log), then the stops with
+ * their planned times; in the days before, "Get ready for offline" comes first. Then the plan, its
+ * target birds, scouting, who's in, and archiving, leaving or deleting it.
  */
 const EventDetail = () => {
   const { id = '' } = useParams()
   const events = useEventsQuery()
   const event = events.data?.find(e => String(e.id) === id)
-  const areaName = useAreaName(event?.state ?? '', event?.location ?? '')
-  const [editing, setEditing] = useState(false)
   if (events.isPending) return <LoadingState />
   if (!event) return <section className='event-page'><LoadProblem error={events.error} missing={t('events.tallyMissing')} /><Link to='/events'>{t('events.backToEvents')}</Link></section>
+  return <EventBody event={event} updatedAt={events.dataUpdatedAt} error={events.error} />
+}
 
+const EventBody = ({ event, updatedAt, error }: { event: GroupEvent; updatedAt: number; error: unknown }) => {
+  const areaName = useAreaName(event.state, event.location)
+  const [editing, setEditing] = useState(false)
   const past = isPast(event)
+  const onDay = isEventDay(event)
+  const zone = safeZone(event.timezone)
+  const todayThere = zone ? zonedDay(new Date(), zone) : today()
+  const soon = !past && !onDay && event.starts_on >= todayThere && daysBefore(event.starts_on, READY_DAYS) <= todayThere
+  const showDay = onDay || soon
+  const day = useEventDay(event, showDay)
+  const nameCodes = [...new Set([...event.tally.map(e => e.code), ...event.targets.map(target => target.code)])].sort()
+  const names = useBirdsQuery(showDay ? nameCodes : [])
+  const nameOf = (code: string) => names.data?.find(b => b.speciesCode === code)?.comName ?? code
   const from = scoutFrom(event)
   const tally = `${eventPath(event.id)}/tally`
+  const oneDay = event.kind === 'bigday' || event.starts_on === event.ends_on
   return (
     <section className='event-page event-detail' data-event={String(event.id)}>
       <p className='event-detail__back'><Link to='/events'>{t('events.allEvents')}</Link></p>
       <h1 className='fredericka event-page__title'>{event.name}</h1>
-      <OfflineNote updatedAt={events.dataUpdatedAt} error={events.error} />
+      <OfflineNote updatedAt={updatedAt} error={error} />
       <p className='event-page__what'>
         {areaName} · {dateRange(event.starts_on, event.ends_on)}
-        {event.active && <span className='place__badge'>{t('events.today')}</span>}
+        {onDay && <span className='place__badge'>{t('events.today')}</span>}
         {!past && isScouting(event) && <span className='place__badge place__badge--scouting'>{t('events.scouting')}</span>}
         {event.kind === 'bigday' && <span className='place__badge place__badge--quiet'>{t('events.bigDay')}</span>}
         {event.archived && <span className='place__badge place__badge--quiet'>{t('events.archivedBadge')}</span>}
       </p>
-      {event.active
-        ? <p className='event-detail__tally event-detail__tally--now'><Link className='pill-button pill-button--primary' to={tally}>{t('events.openTally')}</Link></p>
-        : past && <p className='events-list__recap' data-testid='event-recap'>{recapText(event)}</p>}
+      {onDay && <DayView event={event} day={day} nameOf={nameOf} />}
+      {!onDay && past && <p className='events-list__recap' data-testid='event-recap'>{recapText(event)}</p>}
+      {showDay && <GetReady event={event} areaName={areaName} />}
+      {showDay && <DayStops day={day} onDay={onDay} />}
       <div className='event-page__section event-detail__plan'>
         <h2 className='place__heading'>{t('events.plan')}</h2>
         {editing
           ? <EventPlan event={event} onDone={() => setEditing(false)} onCancel={() => setEditing(false)} />
           : <>
               <p>{event.kind === 'bigday' ? t('events.planBigDay', { date: monthDay(event.starts_on) }) : t('events.planDates', { dates: dateRange(event.starts_on, event.ends_on) })}</p>
+              {showDay && oneDay && <SunLine sun={day.sun} timeZone={day.timeZone} />}
               <p className='notification__hint'>{from ? t('events.planScouting', { date: monthDay(from) }) : t('events.planNoScouting')}</p>
               <button type='button' className='link-button link-text' onClick={() => setEditing(true)}>{t('events.changePlan')}</button>
             </>}
       </div>
-      <Targets event={event} areaName={areaName} />
+      {!onDay && <Targets event={event} areaName={areaName} />}
       {!past && <EventScouting event={event} />}
+      {onDay && <Targets event={event} areaName={areaName} />}
       <People event={event} />
-      {!event.active && (
+      {!onDay && (
         <div className='event-page__section'>
           <h2 className='place__heading'>{t('events.tally')}</h2>
           <p className='notification__hint'>{past ? recapText(event) : t('events.tallyLater')}</p>
           <Link className='link-button link-text' to={tally}>{t('events.openTally')}</Link>
         </div>
       )}
-      <Actions event={event} />
+      <Actions event={event} onDay={onDay} />
     </section>
   )
 }

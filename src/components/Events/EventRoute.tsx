@@ -1,7 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Trans } from 'react-i18next'
 import { LoadingState } from '../Loading/Loading'
-import { mapsUrl } from '../../routePlan'
+import { routeLinks } from '../../routePlan'
+import { RouteLinks } from './DayView'
 import { shortDistance, useDistanceUnit, type DistanceUnit } from '../../distance'
 import { t } from '../../i18n'
 import { duration } from '../../duration'
@@ -23,12 +24,15 @@ const driveTime = duration
 /** Google Maps directions to one place, from wherever the phone is. */
 const directionsTo = (place: Place) => `https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}`
 
-/** Google Maps directions through every stop: from the start (or the first stop) to the last. */
+/**
+ * Google Maps directions through every stop, from the start (or the first stop) to the last: in
+ * parts of at most three stops in between, since Google Maps in a phone's browser drops the rest.
+ */
 const wholeRoute = (route: Route) => {
   const point = (s: Stop) => ({ locId: s.locId, name: s.locName, lat: s.lat, lng: s.lng })
-  const origin = route.from ? { locId: null, name: t('route.myLocation'), ...route.from } : route.stops[0] ? point(route.stops[0]) : null
-  return origin ? mapsUrl((route.from ? route.stops : route.stops.slice(1)).map(point), origin) : null
+  return routeLinks(route.stops.map(point), route.from ? { locId: null, name: t('route.myLocation'), ...route.from } : null)
 }
+const partLabel = (from: number | null, to: number) => (from === null ? t('eventDay.partFromMeet', { to }) : t('eventDay.partStops', { from, to }))
 
 /** The row for an optional stop, so a tapped grey pin can bring it into view. */
 const extraRowId = (i: number) => `route-extra-${i}`
@@ -159,7 +163,7 @@ const EventRoute = ({ route, pending, updating, failed, failedText, heading = nu
   useEffect(() => {
     if (picked) document.getElementById(extraRowId(picked.i))?.scrollIntoView({ block: 'center', behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
   }, [picked])
-  const whole = route ? wholeRoute(route) : null
+  const whole = route ? wholeRoute(route) : []
   const totals = route?.routed && typeof route.total_min === 'number' && typeof route.total_mi === 'number'
   const extras = route?.extras ?? []
   // A tapped pin behind "Show more" reveals the rest.
@@ -210,8 +214,8 @@ const EventRoute = ({ route, pending, updating, failed, failedText, heading = nu
                 {route.stops.map((stop, i) => <RouteStop key={`${stop.locId}-${i}`} stop={stop} n={i + 1} unit={unit} renderBird={renderBird} />)}
               </ol>
               {hasStays && <RouteTotals drive={route.routed ? route.total_min : null} stay={routeStay(route)} />}
+              <RouteLinks links={whole} partLabel={partLabel} />
               <div className='event-route__actions'>
-                {whole && <a className='pill-button pill-button--small event-route__maps' href={whole} target='_blank' rel='noreferrer'>{t('eventRoute.openMaps')}</a>}
                 {actions}
               </div>
               {route.skipped > 0 && <p className='event-route__note'>{t('eventRoute.skipped', { count: route.skipped })}</p>}

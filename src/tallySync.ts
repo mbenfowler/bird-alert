@@ -1,4 +1,4 @@
-import { type Mutation, type QueryClient } from '@tanstack/react-query'
+import { useMutationState, type Mutation, type QueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import { deleteEventTally, deleteEventTallyMark, errorMessage, postEventTally, postEventTallyMark, postEventTallyUndo, postSeenBird } from './apiCalls'
 import { isNetworkError, isTransient } from './offline'
@@ -45,6 +45,11 @@ export interface ShownTallyEntry extends EventTallyEntry {
   pending?: boolean
   clientId?: string
 }
+
+/** This event's changes made here that haven't reached the server (no signal, or still being retried), oldest first. */
+export const usePendingTally = (id: Id | undefined) =>
+  useMutationState({ filters: { mutationKey: TALLY_KEY, status: 'pending' }, select: (m) => m.state.variables as TallyChange })
+    .filter(change => change && id !== undefined && String(change.id) === String(id))
 
 export const newClientId = (): string => {
   try {
@@ -119,7 +124,8 @@ const applyToCache = (queryClient: QueryClient, change: TallyChange, answer?: un
   queryClient.setQueryData<GroupEvent[]>(queryKeys.events, (events) => events?.map(event => {
     if (String(event.id) !== String(change.id)) return event
     if (isEvent(answer) && String(answer.id) === String(event.id)) {
-      const { entry: _entry, ...fresh } = answer as GroupEvent & { entry?: unknown }
+      const fresh: GroupEvent & { entry?: unknown } = { ...answer }
+      delete fresh.entry
       return { ...event, ...fresh }
     }
     if (change.op === 'mark' || change.op === 'unmark') {

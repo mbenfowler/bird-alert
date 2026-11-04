@@ -140,6 +140,15 @@ export const daysUntil = (day: string) => {
 /** "8:10 AM" */
 export const clockTime = (date: Date) => date.toLocaleTimeString(formatLocale(), { hour: 'numeric', minute: '2-digit' })
 
+/** "8:10 AM" in a given time zone (an event's own), else the phone's. */
+export const clockTimeIn = (date: Date, timeZone?: string) => {
+  try {
+    return date.toLocaleTimeString(formatLocale(), { hour: 'numeric', minute: '2-digit', ...(timeZone ? { timeZone } : {}) })
+  } catch {
+    return clockTime(date)
+  }
+}
+
 /** "10 PM" for 22 */
 export const hourLabel = (hour: number) => new Date(2000, 0, 1, hour).toLocaleTimeString(formatLocale(), { hour: 'numeric' })
 
