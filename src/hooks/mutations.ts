@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { releaseThisDevice } from './usePushNotifications'
-import { deleteAccount, deleteEvent, deleteEventTally, joinEvent, leaveEvent, patchEvent, patchEventMember, postEvent, postEventTally, putEventTargets, postEventScoutingEmail, rotateEventInvite, startEventInvite, deletePlace, patchPlace, postPlace, putPlaceSeen, putPlaceTargets, deleteSavedBird, deleteSeenBird, importLifeList, logout, patchUser, postSavedBird, postSeenBird, putSavedRoute } from '../apiCalls'
+import { deleteAccount, deleteEvent, joinEvent, leaveEvent, patchEvent, patchEventMember, postEvent, putEventTargets, postEventScoutingEmail, rotateEventInvite, startEventInvite, deletePlace, patchPlace, postPlace, putPlaceSeen, putPlaceTargets, deleteSavedBird, deleteSeenBird, importLifeList, logout, patchUser, postSavedBird, postSeenBird, putSavedRoute } from '../apiCalls'
 import { clearLocalRoutes } from '../routePlan'
 import { queryKeys } from './queries'
-import type { Bird, EventInput, GroupEvent, Id, PlaceInput, SeenBird, User } from '../types'
+import type { Bird, EventInput, Id, PlaceInput, SeenBird, User } from '../types'
 
 /** Put a freshly logged-in user into the cache so every view updates at once. */
 export const useSetSession = () => {
@@ -17,6 +17,10 @@ const forgetAccount = (queryClient: ReturnType<typeof useQueryClient>) => {
   queryClient.removeQueries({ queryKey: queryKeys.saved })
   queryClient.removeQueries({ queryKey: ['saved-route'] })
   queryClient.removeQueries({ queryKey: queryKeys.seen })
+  // Events (kept on the device for offline use) and any tally changes still waiting go too.
+  queryClient.removeQueries({ queryKey: queryKeys.events })
+  for (const key of ['event-scouting', 'event-route', 'event-route-plan']) queryClient.removeQueries({ queryKey: [key] })
+  queryClient.getMutationCache().findAll({ mutationKey: ['event-tally'] }).forEach(mutation => queryClient.getMutationCache().remove(mutation))
   // The next person on this browser starts from their own account's route.
   clearLocalRoutes()
 }
@@ -168,29 +172,6 @@ export const useLeaveEventMutation = () => useEventChange((id: Id) => leaveEvent
 export const useRotateInviteMutation = () => useEventChange((id: Id) => rotateEventInvite(id))
 export const useEventTargetsMutation = () => useEventChange(({ id, codes }: { id: Id; codes: string[] }) => putEventTargets(id, codes))
 export const useJoinEventMutation = () => useEventChange(({ token, displayName }: { token: string; displayName: string }) => joinEvent(token, displayName))
-
-/**
- * Adds a bird to the day's tally, or takes it off, at once on screen (the group's other adds arrive
- * with the next refresh); a failure puts the tally back.
- */
-export const useEventTallyMutation = () => {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, code, remove }: { id: Id; code: string; remove?: boolean }) => (remove ? deleteEventTally(id, code) : postEventTally(id, code)),
-    onMutate: async ({ id, code, remove }) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.events })
-      const previous = queryClient.getQueryData<GroupEvent[]>(queryKeys.events)
-      queryClient.setQueryData<GroupEvent[]>(queryKeys.events, (events) => (events ?? []).map(event => {
-        if (String(event.id) !== String(id)) return event
-        const tally = (event.tally ?? []).filter(entry => entry.code !== code)
-        return { ...event, tally: remove ? tally : [{ code, added_by_name: event.display_name ?? null, added_by_you: true, added_at: new Date().toISOString() }, ...tally] }
-      }))
-      return { previous }
-    },
-    onError: (_error, _vars, context) => { if (context) queryClient.setQueryData(queryKeys.events, context.previous) },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.events })
-  })
-}
 
 /** Emails the event's scouting report to me now. Nothing cached changes, so nothing is refetched. */
 export const useEventScoutingEmailMutation = () => useMutation({ mutationFn: (id: Id) => postEventScoutingEmail(id) })

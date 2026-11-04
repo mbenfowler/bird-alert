@@ -160,6 +160,28 @@
   height: 16px;
 }
 
+/* Added here, not yet on the server: muted, with a clock, until it's sent. */
+.event-tally__entry--pending {
+  border-style: dashed !important;
+  background: var(--surface-muted) !important;
+}
+
+.event-tally__entry--pending .event-tally__bird,
+.event-tally__entry--pending .event-tally__who {
+  color: var(--muted);
+}
+
+.event-tally__waiting {
+  display: inline-grid;
+  place-items: center;
+  color: var(--muted);
+}
+
+.event-tally__waiting svg {
+  width: 16px;
+  height: 16px;
+}
+
 .event-banner a {
   color: inherit;
 }

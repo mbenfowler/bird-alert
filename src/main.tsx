@@ -7,13 +7,20 @@ import { queryClient, persistOptions } from './queryClient'
 import { Analytics } from '@vercel/analytics/react'
 import { redactPageView } from './analytics'
 import { noteArrival } from './arrival'
+import { resumeTallyChanges, setupTallySync } from './tallySync'
 
 // Where this visitor came from, noted once, sent only if they sign up.
 noteArrival()
 
+// How a tally change is sent, known before the saved cache comes back, so one saved offline can be sent after a reload.
+setupTallySync(queryClient)
+// Once the saved cache is back: tally changes that were waiting go out (or wait for signal), and
+// everything else is checked against the server.
+const restored = () => resumeTallyChanges(queryClient).then(() => queryClient.resumePausedMutations())
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
+    <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions} onSuccess={restored}>
       <BrowserRouter>
         <App />
       </BrowserRouter>
@@ -51,7 +58,10 @@ if (typeof document !== 'undefined' && 'fonts' in document) {
     .catch(() => undefined)
 }
 
-// The service worker only handles push notifications; it never intercepts fetches.
+// The service worker shows push notifications and, in the production build, keeps the app's own
+// files for offline use (never the API; data offline comes from the saved query cache). A new
+// worker takes over in the background; the open page is never reloaded for it, and the new build
+// shows on the next launch.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     // Ask for a fresh worker on every launch; iOS Home Screen apps otherwise hold an old one for days.
