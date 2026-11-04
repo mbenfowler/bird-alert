@@ -254,8 +254,30 @@ test('toggling a lock moves nothing: the up, down and remove buttons keep their 
   const places = () => row.locator('.go__stop-tools button').evaluateAll(els => els.map(el => { const r = el.getBoundingClientRect(); return [Math.round(r.x + window.scrollX), Math.round(r.y + window.scrollY)] }))
   const before = await places()
   expect(before).toHaveLength(4)
-  await row.getByTestId('lock').click()
+  // Every control in the cluster is a 44 px target, the lock a ringed button.
+  const sizes = await row.locator('.go__stop-tools button').evaluateAll(els => els.map(el => { const r = el.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)] }))
+  for (const [w, h] of sizes) { expect(w).toBeGreaterThanOrEqual(44); expect(h).toBeGreaterThanOrEqual(44) }
+  const lock = row.getByTestId('lock')
+  const contrast = () => lock.evaluate((el) => {
+    const rgb = (c: string) => (c.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number)
+    const lum = (c: string) => { const [r, g, b] = rgb(c).map(v => { const x = v / 255; return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4 }); return 0.2126 * r! + 0.7152 * g! + 0.0722 * b! }
+    const ratio = (a: string, b: string) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x! + 0.05) / (y! + 0.05) }
+    // The colour behind the button: the first ancestor with a background of its own.
+    let back = el.parentElement
+    while (back && getComputedStyle(back).backgroundColor === 'rgba(0, 0, 0, 0)') back = back.parentElement
+    const style = getComputedStyle(el)
+    return {
+      icon: ratio(getComputedStyle(el.querySelector('svg')!).color, style.backgroundColor),
+      border: ratio(style.borderTopColor, back ? getComputedStyle(back).backgroundColor : 'rgb(255, 255, 255)'),
+      page: ratio(style.borderTopColor, getComputedStyle(document.body).backgroundColor)
+    }
+  })
+  // WCAG AA: the icon at 4.5:1 on its button (more than the 3:1 a graphic needs), the ring at 3:1 on the row and on the page.
+  for (const c of [await contrast()]) { expect(c.icon).toBeGreaterThanOrEqual(4.5); expect(c.border).toBeGreaterThanOrEqual(3); expect(c.page).toBeGreaterThanOrEqual(3) }
+  await lock.click()
   await expect(row).toHaveAttribute('data-locked', 'true')
+  await expect(lock).toHaveCSS('background-color', 'rgb(255, 215, 0)')
+  for (const c of [await contrast()]) { expect(c.icon).toBeGreaterThanOrEqual(4.5); expect(c.border).toBeGreaterThanOrEqual(3); expect(c.page).toBeGreaterThanOrEqual(3) }
   expect(await places()).toEqual(before)
   await expect(page.getByTestId('route-status')).toHaveText('Saved', { timeout: 10_000 })
   expect(await places()).toEqual(before)
