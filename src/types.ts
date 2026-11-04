@@ -780,6 +780,36 @@ export interface RecapLifer extends RecapBird {
   number: number | null
 }
 
+/** A found bird the scouting emails had named: the day it first came up, and how often. */
+export interface RecapScoutBird extends RecapBird {
+  /** Where it was found; null on the public view at a personal spot. */
+  place: string | null
+  /** 'YYYY-MM-DD': the first scouting email that named it. */
+  firstScouted: string
+  timesScouted: number
+  lifer: boolean
+  aba: number | null
+}
+
+/** The scouted bird that mattered most: a lifer, a rarity (ABA 2 or higher) or a bird of the day. */
+export interface RecapScoutStar extends Omit<RecapScoutBird, 'lifer'> {
+  why: 'lifer' | 'rarity' | 'bird_of_the_day'
+  /** Members only; null on the public view. */
+  liferFor: string[] | null
+  /** Where the scouting placed it; null on the public view at a personal spot. */
+  scoutedAt: string | null
+  birdOfTheDay: boolean
+}
+
+/** What the scouting emails called and the day found: the star, the rest (up to 12), and how many in all. */
+export interface RecapScouting {
+  /** How many scouting emails there were. */
+  reports: number
+  star: RecapScoutStar | null
+  others: RecapScoutBird[]
+  othersTotal: number
+}
+
 export interface RecapStop {
   index: number
   name: string
@@ -820,7 +850,7 @@ export interface Recap {
   lifers: RecapLifer[]
   highlights: {
     rarest: (RecapBird & { aba: number; place: string | null }) | null
-    scoutingCalled: (RecapBird & { emailedOn: string; place: string | null }) | null
+    scoutingCalled: RecapScouting | null
   }
   targets: { total: number; found: number; missed: string[] }
   stops: RecapStop[]

@@ -79,7 +79,7 @@ const TIMELINE: RecapTimelineRow[] = [
   { n: 72, speciesCode: 'ameavo', comName: 'American Avocet', at: '2026-11-10T20:36:00Z', stopIndex: 3, place: 'Willcox Twin Lakes', lifer: false, liferFor: null },
   { n: 73, speciesCode: 'eargre', comName: 'Eared Grebe', at: '2026-11-10T20:42:00Z', stopIndex: 3, place: 'Willcox Twin Lakes', lifer: false, liferFor: null },
   { n: 74, speciesCode: 'rudduc', comName: 'Ruddy Duck', at: '2026-11-10T20:48:00Z', stopIndex: 3, place: 'Willcox Twin Lakes', lifer: false, liferFor: null },
-  { n: 75, speciesCode: 'lewwoo', comName: "Lewis's Woodpecker", at: '2026-11-10T20:52:00Z', stopIndex: 3, place: 'Willcox Twin Lakes', lifer: false, liferFor: null },
+  { n: 75, speciesCode: 'lewwoo', comName: "Lewis's Woodpecker", at: '2026-11-10T20:52:00Z', stopIndex: 3, place: 'Willcox Twin Lakes', lifer: true, liferFor: ['Matt'] },
   { n: 76, speciesCode: 'buffle', comName: 'Bufflehead', at: '2026-11-10T21:00:00Z', stopIndex: 3, place: 'Willcox Twin Lakes', lifer: false, liferFor: null },
   { n: 77, speciesCode: 'amecoo', comName: 'American Coot', at: '2026-11-10T21:15:00Z', stopIndex: 3, place: 'Willcox Twin Lakes', lifer: false, liferFor: null },
   { n: 78, speciesCode: 'chirav', comName: 'Chihuahuan Raven', at: '2026-11-10T21:30:00Z', stopIndex: 3, place: 'Willcox Twin Lakes', lifer: false, liferFor: null },
@@ -113,6 +113,40 @@ const lifer = (code: string, who: string, number: number) => {
   return { speciesCode: code, comName: row.comName, at: row.at, place: row.place, who, number }
 }
 
+/** A found bird the scouting emails named: first on `firstScouted`, `times` emails in all. */
+const scouted = (code: string, firstScouted: string, timesScouted: number, aba: number | null = null) => {
+  const row = TIMELINE.find(r => r.speciesCode === code)!
+  return { speciesCode: code, comName: row.comName, at: row.at, place: row.place, firstScouted, timesScouted, lifer: row.lifer, aba }
+}
+
+/**
+ * Six scouting emails (Nov 4 to 9). The star is Lewis's Woodpecker: bird of the day three times
+ * from Nov 7, reported at Willcox Twin Lakes, found there, and Matt's lifer. The Rufous-backed
+ * Robin, the rarest, can't be the star (it has its own card) but leads the others: 12 of 23, most significant first.
+ */
+const SCOUTING: NonNullable<Recap['highlights']['scoutingCalled']> = {
+  reports: 6,
+  star: {
+    speciesCode: 'lewwoo', comName: "Lewis's Woodpecker", at: '2026-11-10T20:52:00Z', place: 'Willcox Twin Lakes',
+    why: 'lifer', aba: null, liferFor: ['Matt'], firstScouted: '2026-11-07', timesScouted: 3, scoutedAt: 'Willcox Twin Lakes', birdOfTheDay: true
+  },
+  others: [
+    scouted('rubrob', '2026-11-06', 4, 3),
+    scouted('whsowl1', '2026-11-05', 4, 2),
+    scouted('arizwoo', '2026-11-04', 5, 2),
+    scouted('sprpip', '2026-11-06', 3),
+    scouted('britit', '2026-11-04', 2),
+    scouted('blugem', '2026-11-05', 4, 2),
+    scouted('yeljun', '2026-11-04', 3, 2),
+    scouted('benthr', '2026-11-06', 3),
+    scouted('ferhaw', '2026-11-04', 6),
+    scouted('chelon', '2026-11-07', 3),
+    scouted('rosgoo', '2026-11-05', 3),
+    scouted('verfly', '2026-11-04', 2)
+  ],
+  othersTotal: 23
+}
+
 export const membersRecap = (over: Partial<Recap> = {}): Recap => ({
   audience: 'members',
   status: 'open',
@@ -130,11 +164,11 @@ export const membersRecap = (over: Partial<Recap> = {}): Recap => ({
   timeline: TIMELINE,
   lifers: [
     lifer('arizwoo', 'Kirin', 208), lifer('britit', 'Kirin', 209), lifer('rubrob', 'Kirin', 210), lifer('rubrob', 'Matt', 431),
-    lifer('sprpip', 'Kirin', 211), lifer('sprpip', 'Matt', 432), lifer('whsowl1', 'Kirin', 212)
+    lifer('sprpip', 'Kirin', 211), lifer('sprpip', 'Matt', 432), lifer('lewwoo', 'Matt', 433), lifer('whsowl1', 'Kirin', 212)
   ],
   highlights: {
     rarest: { speciesCode: 'rubrob', comName: 'Rufous-backed Robin', aba: 3, at: '2026-11-10T15:47:00Z', place: 'San Pedro House' },
-    scoutingCalled: { speciesCode: 'lewwoo', comName: "Lewis's Woodpecker", emailedOn: '2026-11-09', at: '2026-11-10T20:52:00Z', place: 'Willcox Twin Lakes' }
+    scoutingCalled: SCOUTING
   },
   targets: { total: 20, found: 14, missed: ['Montezuma Quail', "Baird's Sparrow", 'Elegant Trogon', 'Short-eared Owl', 'Crissal Thrasher', 'Rufous-winged Sparrow'] },
   stops: STOPS,
@@ -166,6 +200,14 @@ export const publicRecap = (): Recap => {
     together: undefined,
     candidates: undefined,
     timeline: members.timeline.map(row => ({ ...row, place: place(row.place), liferFor: null })),
-    lifers: members.lifers.map(l => ({ ...l, place: place(l.place), who: null }))
+    lifers: members.lifers.map(l => ({ ...l, place: place(l.place), who: null })),
+    highlights: {
+      ...members.highlights,
+      scoutingCalled: {
+        ...SCOUTING,
+        star: { ...SCOUTING.star!, liferFor: null, place: place(SCOUTING.star!.place), scoutedAt: place(SCOUTING.star!.scoutedAt) },
+        others: SCOUTING.others.map(o => ({ ...o, place: place(o.place) }))
+      }
+    }
   }
 }

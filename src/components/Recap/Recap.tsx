@@ -2,18 +2,19 @@ import { useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import AbaCode from '../AbaCode/AbaCode'
+import Carousel from '../Carousel/Carousel'
 import SightingsMap from '../SightingsMap/SightingsMap'
 import { getSharedRecap } from '../../apiCalls'
 import { useBirdsQuery, useSharedRecapQuery } from '../../hooks/queries'
 import { duration } from '../../duration'
 import { inUnit, longDistance, useDistanceUnit } from '../../distance'
-import { hourLabel, monthDay, nameLocale, number, t } from '../../i18n'
+import { hourLabel, nameLocale, number, t } from '../../i18n'
 import { shareUrl } from '../../share'
-import type { GroupEvent, Recap as RecapData } from '../../types'
+import type { GroupEvent, Recap as RecapData, RecapScouting } from '../../types'
 import FillRecap from './FillRecap'
 import RecapCurve from './RecapCurve'
 import { cardSafe, saveShareCard } from './shareCard'
-import { crewLine, dayStrip, fixesDay, isBigDay, liferTally, liferWho, longDay, nameList, normalizeRecap, redactForPublic, timeIn, zoneOf } from './recapData'
+import { crewLine, dayStrip, fixesDay, isBigDay, liferCardWho, liferTally, longDay, mergeLifers, nameList, normalizeRecap, redactForPublic, scoutChips, scoutLine, scoutMore, timeIn, zoneOf } from './recapData'
 import './Recap.css'
 
 // Soft colours behind a lifer with no photo yet, in turn.
@@ -131,41 +132,82 @@ const mostCommonPlace = (recap: RecapData, zone: string, start: string) => {
 }
 const timeHour = (at: string, zone: string) => new Intl.DateTimeFormat('en-US', { hour: 'numeric', hourCycle: 'h23', timeZone: zone }).format(new Date(at))
 
-/** The lifers, one card each, in a single row that scrolls sideways and snaps; the bird's photo where there is one. */
+/** The lifers, one card per species (whose lifer it was on it), moving along on their own; the bird's photo where there is one. */
 const Lifers = ({ recap, zone }: { recap: RecapData; zone: string }) => {
-  const codes = useMemo(() => [...new Set(recap.lifers.map(l => l.speciesCode))].sort(), [recap.lifers])
+  const cards = useMemo(() => mergeLifers(recap.lifers), [recap.lifers])
+  const codes = useMemo(() => cards.map(c => c.speciesCode).sort(), [cards])
   const birds = useBirdsQuery(codes)
-  if (!recap.lifers.length) return null
+  if (!cards.length) return null
   const tally = liferTally(recap)
   const photo = (code: string) => {
     const img = birds.data?.find(b => b.speciesCode === code)?.birdImg
     return img && img !== 'undefined' ? img : null
   }
+  const slides = cards.map((c, i) => {
+    const img = photo(c.speciesCode)
+    return {
+      key: c.speciesCode,
+      node: (
+        <article className='recap-lifer'>
+          <div className='recap-lifer__picture' style={{ background: TINTS[i % TINTS.length] }}>
+            {img ? <img src={img} alt={t('card.photoAlt', { name: c.comName })} loading='lazy' width='320' height='140' draggable={false} /> : <Silhouette />}
+            <span className='recap-lifer__chip'>{t('recap.liferChip')}</span>
+          </div>
+          <div className='recap-lifer__text'>
+            <span className='recap-lifer__bird'>{c.comName}</span>
+            <span className='recap-lifer__who'>{liferCardWho(c, recap.audience)}</span>
+            <span className='recap-lifer__where'>{c.place ? t('recap.liferWhere', { place: c.place, time: timeIn(c.at, zone) }) : timeIn(c.at, zone)}</span>
+          </div>
+        </article>
+      )
+    }
+  })
   return (
     <section className='recap-lifers' aria-labelledby='recapLifers'>
       <div className='recap__head'>
         <h2 id='recapLifers' className='recap__h2'>{t('recap.lifers', { count: recap.lifers.length })}</h2>
         <span className='recap__aside'>{tally ? t('recap.liferNoteMembers', { tally }) : t('recap.liferNote')}</span>
       </div>
-      <div className='recap-lifers__row' role='region' aria-label={t('recap.carouselLabel')} tabIndex={0} data-testid='recap-lifers'>
-        {recap.lifers.map((l, i) => {
-          const img = photo(l.speciesCode)
-          return (
-            <article key={`${l.speciesCode}-${l.who ?? i}`} className='recap-lifer'>
-              <div className='recap-lifer__picture' style={{ background: TINTS[i % TINTS.length] }}>
-                {img ? <img src={img} alt={t('card.photoAlt', { name: l.comName })} loading='lazy' width='224' height='120' /> : <Silhouette />}
-                <span className='recap-lifer__chip'>{t('recap.liferChip')}</span>
-              </div>
-              <div className='recap-lifer__text'>
-                <span className='recap-lifer__bird'>{l.comName}</span>
-                <span className='recap-lifer__who'>{liferWho(l, recap.audience)}</span>
-                <span className='recap-lifer__where'>{l.place ? t('recap.liferWhere', { place: l.place, time: timeIn(l.at, zone) }) : timeIn(l.at, zone)}</span>
-              </div>
-            </article>
-          )
-        })}
-      </div>
+      <Carousel slides={slides} label={t('recap.liferCarousel')} testId='recap-lifers' />
     </section>
+  )
+}
+
+/** "The scouting called it": the star, big, with why it matters and its story; then the rest it called, as chips. */
+const Scouting = ({ scouting, audience, zone }: { scouting: RecapScouting; audience: RecapData['audience']; zone: string }) => {
+  const { star, others } = scouting
+  const more = scoutMore(scouting)
+  return (
+    <article className='recap-card recap-highlight recap-scout' data-testid='recap-scouting'>
+      <div className='recap-scout__eyebrow'>
+        <span className='recap__eyebrow'>{t('recap.scouting')}</span>
+        {scouting.reports > 0 && <span className='recap-scout__reports'>{t('recap.scoutReports', { count: scouting.reports })}</span>}
+      </div>
+      {star && <>
+        <span className='recap-highlight__name recap-scout__star' data-testid='recap-scout-star'>{star.comName}</span>
+        <div className='recap-scout__why'>
+          {scoutChips(star, audience).map(chip => chip.kind === 'aba'
+            ? (chip.code >= 3 ? <AbaCode key='aba' code={chip.code} /> : <span key='aba' className='recap-scout__chip'>{t('aba.short', { code: chip.code })}</span>)
+            : <span key={chip.kind} className={`recap-scout__chip${chip.kind === 'lifer' ? ' recap-scout__chip--lifer' : ''}`}>{chip.text}</span>)}
+        </div>
+        <p className='recap-scout__line'>{scoutLine(star, zone)}</p>
+      </>}
+      {others.length > 0 && (
+        <div className='recap-scout__others'>
+          <span className='recap-scout__also'>{star ? t('recap.scoutAlso') : t('recap.scoutFound')}</span>
+          <ul className='recap-scout__chips' data-testid='recap-scout-others'>
+            {others.map(o => (
+              <li key={o.speciesCode} className='recap-scout__bird'>
+                {o.lifer && <><span className='recap-scout__dot' aria-hidden='true' /><span className='visually-hidden'>{t('recap.scoutLiferDot')}</span></>}
+                <span>{o.comName}</span>
+                {o.aba && o.aba >= 2 ? <span className='recap-scout__aba'>{t('aba.short', { code: o.aba })}</span> : null}
+              </li>
+            ))}
+            {more && <li className='recap-scout__bird recap-scout__bird--more' data-testid='recap-scout-more'>{more}</li>}
+          </ul>
+        </div>
+      )}
+    </article>
   )
 }
 
@@ -193,15 +235,7 @@ const Highlights = ({ recap, zone }: { recap: RecapData; zone: string }) => {
           </p>
         </article>
       )}
-      {scoutingCalled && (
-        <article className='recap-card recap-highlight' data-testid='recap-scouting'>
-          <span className='recap__eyebrow'>{t('recap.scouting')}</span>
-          <span className='recap-highlight__name'>{scoutingCalled.comName}</span>
-          <p>{scoutingCalled.place
-            ? t('recap.scoutingText', { date: monthDay(scoutingCalled.emailedOn), place: scoutingCalled.place, time: timeIn(scoutingCalled.at, zone) })
-            : t('recap.scoutingTextNoPlace', { date: monthDay(scoutingCalled.emailedOn), time: timeIn(scoutingCalled.at, zone) })}</p>
-        </article>
-      )}
+      {scoutingCalled && <Scouting scouting={scoutingCalled} audience={recap.audience} zone={zone} />}
       {targets.total > 0 && (
         <article className='recap-card recap-highlight recap-targets' data-testid='recap-targets'>
           <svg width='120' height='120' viewBox='0 0 120 120' role='img' aria-label={t('recap.targetsRing', { found: targets.found, total: targets.total })}>

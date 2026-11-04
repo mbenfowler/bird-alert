@@ -1,5 +1,5 @@
-import type { Recap, RecapLifer, RecapTimelineRow } from '../../types'
-import { clockTimeIn, formatLocale, t } from '../../i18n'
+import type { Recap, RecapLifer, RecapScoutStar, RecapScouting, RecapTimelineRow } from '../../types'
+import { clockTimeIn, formatLocale, monthDay, t } from '../../i18n'
 import { sunTimes } from '../../solar'
 import { safeZone, zoneOffsetMin, zonedDay, zonedHhmm, zonedInstant } from '../Events/daySchedule'
 
@@ -14,6 +14,16 @@ import { safeZone, zoneOffsetMin, zonedDay, zonedHhmm, zonedInstant } from '../E
 const list = <T,>(value: unknown): T[] => (Array.isArray(value) ? value as T[] : [])
 const num = (value: unknown, fallback = 0) => (typeof value === 'number' && Number.isFinite(value) ? value : fallback)
 const orNull = <T,>(value: T | null | undefined): T | null => (value && typeof value === 'object' ? value : null)
+
+/** The scouting highlight in its current shape, or null (also for the older single-bird shape). */
+const scoutingOf = (raw: unknown): RecapScouting | null => {
+  const s = orNull(raw as RecapScouting | null)
+  if (!s) return null
+  const star = orNull(s.star) && s.star!.speciesCode ? s.star! : null
+  const others = list<RecapScouting['others'][number]>(s.others).filter(o => o && o.speciesCode)
+  if (!star && !others.length) return null
+  return { reports: num(s.reports), star: star && { ...star, liferFor: Array.isArray(star.liferFor) ? star.liferFor : null }, others, othersTotal: Math.max(num(s.othersTotal), others.length) }
+}
 
 /** Every list a list and every count a number, whatever the server left out. */
 export const normalizeRecap = (raw: Recap): Recap => {
@@ -38,7 +48,7 @@ export const normalizeRecap = (raw: Recap): Recap => {
     // Numbered in the order found, whatever the server sent.
     timeline: timeline.map((row, i) => ({ ...row, n: i + 1, liferFor: Array.isArray(row.liferFor) ? row.liferFor : null })),
     lifers: list<RecapLifer>(raw.lifers),
-    highlights: { rarest: orNull(raw.highlights?.rarest), scoutingCalled: orNull(raw.highlights?.scoutingCalled) },
+    highlights: { rarest: orNull(raw.highlights?.rarest), scoutingCalled: scoutingOf(raw.highlights?.scoutingCalled) },
     targets: { total: num(raw.targets?.total), found: num(raw.targets?.found), missed: list<string>(raw.targets?.missed) },
     stops: list<Recap['stops'][number]>(raw.stops).filter(s => Number.isFinite(s?.lat) && Number.isFinite(s?.lng)),
     route: { miles: typeof raw.route?.miles === 'number' ? raw.route.miles : null, line: Array.isArray(raw.route?.line) && raw.route.line.length > 1 ? raw.route.line : null },
@@ -235,10 +245,67 @@ export const liferLine = (row: Pick<RecapTimelineRow, 'lifer' | 'liferFor'>, aud
   return audience === 'members' && row.liferFor?.length ? t('recap.liferFor', { names: nameList(row.liferFor) }) : t('recap.liferGroup')
 }
 
-/** Under a lifer card: "Kirin’s lifer #210"; to the public, just one of the group's. */
-export const liferWho = (lifer: Pick<RecapLifer, 'who' | 'number'>, audience: Recap['audience']) => {
-  if (audience === 'public' || !lifer.who) return t('recap.liferSomeone')
-  return lifer.number ? t('recap.liferNumber', { name: lifer.who, number: lifer.number }) : t('recap.liferOf', { name: lifer.who })
+/** One card's worth: a species that was a lifer for one or more of the group, where and when it was first seen. */
+export interface LiferCard {
+  speciesCode: string
+  comName: string
+  at: string
+  place: string | null
+  /** Each person it was a lifer for (a null name on the public view). */
+  who: { name: string | null; number: number | null }[]
+}
+
+/** The server sends one row per person; the page shows one card per species, in the order first seen. */
+export const mergeLifers = (lifers: RecapLifer[]): LiferCard[] => {
+  const cards = new Map<string, LiferCard>()
+  for (const l of lifers) {
+    const card = cards.get(l.speciesCode)
+    if (!card) { cards.set(l.speciesCode, { speciesCode: l.speciesCode, comName: l.comName, at: l.at, place: l.place, who: [{ name: l.who, number: l.number }] }); continue }
+    if (Date.parse(l.at) < Date.parse(card.at)) Object.assign(card, { at: l.at, place: l.place ?? card.place })
+    if (!card.who.some(w => w.name !== null && w.name === l.who)) card.who.push({ name: l.who, number: l.number })
+  }
+  return [...cards.values()].sort((a, b) => Date.parse(a.at) - Date.parse(b.at))
+}
+
+/** "One of us", "two of us", "7 of us", in the reader's language. */
+const ofUs = (count: number) => (count >= 1 && count <= 5 ? t(`recap.ofUs${count}`) : t('recap.ofUsMany', { count }))
+
+/** Under a lifer card: "Lifer for Kirin (#210) and Matt (#431)"; to the public, "A lifer for two of us". */
+export const liferCardWho = (card: Pick<LiferCard, 'who'>, audience: Recap['audience']) => {
+  const named = card.who.filter((w): w is { name: string; number: number | null } => Boolean(w.name))
+  if (audience === 'public' || !named.length) return t('recap.liferUs', { who: ofUs(Math.max(card.who.length, 1)) })
+  return t('recap.liferFor', { names: nameList(named.map(w => (w.number ? t('recap.liferNth', { name: w.name, number: w.number }) : w.name))) })
+}
+
+/** Why the scouting's star matters, as chips: whose lifer, its ABA code, bird of the day. */
+export const scoutChips = (star: RecapScoutStar, audience: Recap['audience']) => {
+  const chips: ({ kind: 'lifer'; text: string } | { kind: 'aba'; code: number } | { kind: 'day'; text: string })[] = []
+  if (star.why === 'lifer') {
+    chips.push({ kind: 'lifer', text: audience === 'members' && star.liferFor?.length ? t('recap.liferFor', { names: nameList(star.liferFor) }) : t('recap.liferGroup') })
+  }
+  if (star.aba && star.aba >= 2 && (star.why === 'rarity' || star.why === 'lifer')) chips.push({ kind: 'aba', code: star.aba })
+  if (star.birdOfTheDay || star.why === 'bird_of_the_day') chips.push({ kind: 'day', text: t('recap.scoutBirdOfDay') })
+  return chips
+}
+
+/** "In the scouting 3 times from Nov 7 · reported at Willcox Twin Lakes · found there at 1:52 PM". */
+export const scoutLine = (star: Pick<RecapScoutStar, 'timesScouted' | 'firstScouted' | 'scoutedAt' | 'place' | 'at'>, zone: string) => {
+  const times = Math.max(1, star.timesScouted || 1)
+  const time = timeIn(star.at, zone)
+  const found = star.place && star.place === star.scoutedAt ? t('recap.scoutFoundThere', { time })
+    : star.place ? t('recap.scoutFoundAt', { place: star.place, time })
+    : t('recap.scoutFoundTime', { time })
+  return [
+    star.firstScouted ? t('recap.scoutTimes', { count: times, date: monthDay(star.firstScouted) }) : null,
+    star.scoutedAt ? t('recap.scoutReported', { place: star.scoutedAt }) : null,
+    found
+  ].filter(Boolean).join(' · ')
+}
+
+/** "+11 more" after the chips, when the server sent fewer than it found. */
+export const scoutMore = (scouting: Pick<RecapScouting, 'others' | 'othersTotal'>) => {
+  const more = scouting.othersTotal - scouting.others.length
+  return more > 0 ? t('recap.scoutMore', { count: more }) : null
 }
 
 /** Who went: "Matt (organizer) · Kirin", or for the public, no names. */
@@ -271,7 +338,14 @@ export const redactForPublic = (recap: Recap): Recap => ({
   together: null,
   candidates: [],
   timeline: recap.timeline.map(row => ({ ...row, liferFor: null })),
-  lifers: recap.lifers.map(l => ({ ...l, who: null }))
+  lifers: recap.lifers.map(l => ({ ...l, who: null })),
+  highlights: {
+    ...recap.highlights,
+    scoutingCalled: recap.highlights.scoutingCalled && {
+      ...recap.highlights.scoutingCalled,
+      star: recap.highlights.scoutingCalled.star && { ...recap.highlights.scoutingCalled.star, liferFor: null }
+    }
+  }
 })
 
 /** "5:41 AM", in the event's zone. */

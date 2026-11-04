@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Recap } from '../../types'
 import { membersRecap, publicRecap } from './recapFixture'
-import { clockMin, crewLine, curveFrame, curvePoints, dayStrip, gridLines, liferLine, liferTally, liferWho, nearestIndex, normalizeRecap, redactForPublic, stopBands, timeTicks, tipPlacement, VIEW } from './recapData'
+import { clockMin, crewLine, curveFrame, curvePoints, dayStrip, gridLines, liferCardWho, liferLine, liferTally, mergeLifers, nearestIndex, normalizeRecap, redactForPublic, scoutChips, scoutLine, scoutMore, stopBands, timeTicks, tipPlacement, VIEW } from './recapData'
 import { cardLines, cardSafe } from './shareCard'
 
 const ZONE = 'America/Phoenix'
@@ -130,15 +130,12 @@ describe('names: members see them, the link never does', () => {
     expect(liferLine(robin, 'members')).toBe('Lifer for Kirin and Matt')
     expect(liferLine(shared.timeline.find(r => r.comName === 'Rufous-backed Robin')!, 'public')).toBe('A lifer for the group')
     expect(liferLine(members.timeline[0]!, 'members')).toBeNull()
-    expect(liferWho(members.lifers[2]!, 'members')).toBe('Kirin’s lifer #210')
-    expect(liferWho({ who: 'Kirin', number: null }, 'members')).toBe('Kirin’s lifer')
-    expect(liferWho(shared.lifers[2]!, 'public')).toBe('A lifer for one of the group')
   })
 
   it('names the crew and the lifer counts for members only', () => {
     expect(crewLine(members)).toBe('Matt (organizer) · Kirin')
     expect(crewLine(shared)).toBe('A group of birders, with Bird Alert')
-    expect(liferTally(members)).toBe('Kirin 5 · Matt 2')
+    expect(liferTally(members)).toBe('Kirin 5 · Matt 3')
     expect(liferTally(shared)).toBeNull()
   })
 
@@ -162,5 +159,85 @@ describe('names: members see them, the link never does', () => {
       { text: 'Whiskered Screech-Owl to close it out' }
     ])
     expect(cardLines(cardSafe(members))[0]).toEqual({ text: 'Rufous-backed Robin', aba: 3 })
+  })
+})
+
+describe('lifer cards: one per species', () => {
+  const cards = mergeLifers(members.lifers)
+  const robin = cards.find(c => c.speciesCode === 'rubrob')!
+
+  it('merges a species that was a lifer for several, keeping the order first seen', () => {
+    expect(members.lifers).toHaveLength(8)
+    expect(cards.map(c => c.speciesCode)).toEqual(['arizwoo', 'britit', 'rubrob', 'sprpip', 'lewwoo', 'whsowl1'])
+    expect(robin.who).toEqual([{ name: 'Kirin', number: 210 }, { name: 'Matt', number: 431 }])
+    expect(robin.place).toBe('San Pedro House')
+  })
+
+  it('takes the earliest sighting, and counts each person once', () => {
+    const merged = mergeLifers([
+      { speciesCode: 'x', comName: 'X', at: '2026-11-10T15:00:00Z', place: 'Late', who: 'Kirin', number: 1 },
+      { speciesCode: 'x', comName: 'X', at: '2026-11-10T14:00:00Z', place: 'Early', who: 'Matt', number: 2 },
+      { speciesCode: 'x', comName: 'X', at: '2026-11-10T14:00:00Z', place: 'Early', who: 'Matt', number: 2 }
+    ])
+    expect(merged).toHaveLength(1)
+    expect(merged[0]).toMatchObject({ at: '2026-11-10T14:00:00Z', place: 'Early' })
+    expect(merged[0]!.who).toHaveLength(2)
+  })
+
+  it('says who, with their numbers, to members', () => {
+    expect(liferCardWho(robin, 'members')).toBe('Lifer for Kirin (#210) and Matt (#431)')
+    expect(liferCardWho(cards[0]!, 'members')).toBe('Lifer for Kirin (#208)')
+    expect(liferCardWho({ who: [{ name: 'Kirin', number: null }] }, 'members')).toBe('Lifer for Kirin')
+  })
+
+  it('counts, with no names, to the public', () => {
+    const open = mergeLifers(shared.lifers)
+    expect(liferCardWho(open.find(c => c.speciesCode === 'rubrob')!, 'public')).toBe('A lifer for two of us')
+    expect(liferCardWho(open[0]!, 'public')).toBe('A lifer for one of us')
+    expect(liferCardWho({ who: Array.from({ length: 7 }, () => ({ name: null, number: null })) }, 'public')).toBe('A lifer for 7 of us')
+    expect(liferCardWho(robin, 'public')).toBe('A lifer for two of us')
+  })
+})
+
+describe('the scouting card', () => {
+  const scouting = members.highlights.scoutingCalled!
+  const star = scouting.star!
+
+  it('stars a bird that isn’t the rarest', () => {
+    expect(star.comName).toBe("Lewis's Woodpecker")
+    expect(star.speciesCode).not.toBe(members.highlights.rarest!.speciesCode)
+  })
+
+  it('tells the scouting’s story in one line', () => {
+    expect(scoutLine(star, ZONE)).toBe('In the scouting 3 times from Nov 7 · reported at Willcox Twin Lakes · found there at 1:52 PM')
+    expect(scoutLine({ ...star, timesScouted: 1 }, ZONE)).toBe('In the scouting on Nov 7 · reported at Willcox Twin Lakes · found there at 1:52 PM')
+    expect(scoutLine({ ...star, place: 'Cochise Lakes' }, ZONE)).toBe('In the scouting 3 times from Nov 7 · reported at Willcox Twin Lakes · found at Cochise Lakes at 1:52 PM')
+    expect(scoutLine({ ...star, place: null, scoutedAt: null }, ZONE)).toBe('In the scouting 3 times from Nov 7 · found at 1:52 PM')
+  })
+
+  it('says why it matters: whose lifer to members, the group’s to the public', () => {
+    expect(scoutChips(star, 'members')).toEqual([{ kind: 'lifer', text: 'Lifer for Matt' }, { kind: 'day', text: 'Bird of the day' }])
+    expect(scoutChips(shared.highlights.scoutingCalled!.star!, 'public')[0]).toEqual({ kind: 'lifer', text: 'A lifer for the group' })
+    expect(scoutChips({ ...star, why: 'rarity', aba: 3, liferFor: null, birdOfTheDay: false }, 'members')).toEqual([{ kind: 'aba', code: 3 }])
+  })
+
+  it('counts the rest past the chips', () => {
+    expect(scouting.others).toHaveLength(12)
+    expect(scoutMore(scouting)).toBe('+11 more')
+    expect(scoutMore({ others: scouting.others, othersTotal: 12 })).toBeNull()
+  })
+
+  it('has no names in the public view or the link preview', () => {
+    expect(shared.highlights.scoutingCalled!.star!.liferFor).toBeNull()
+    expect(redactForPublic(members).highlights.scoutingCalled!.star!.liferFor).toBeNull()
+  })
+
+  it('drops an old single-bird shape or an empty one', () => {
+    const old = { speciesCode: 'lewwoo', comName: "Lewis's Woodpecker", emailedOn: '2026-11-09', at: '2026-11-10T20:52:00Z', place: null }
+    const highlights = (scoutingCalled: unknown) => ({ ...membersRecap().highlights, scoutingCalled }) as Recap['highlights']
+    expect(normalizeRecap(membersRecap({ highlights: highlights(old) })).highlights.scoutingCalled).toBeNull()
+    expect(normalizeRecap(membersRecap({ highlights: highlights({ reports: 2, star: null, others: [], othersTotal: 0 }) })).highlights.scoutingCalled).toBeNull()
+    const starless = normalizeRecap(membersRecap({ highlights: highlights({ reports: 2, star: null, others: scouting.others.slice(0, 2) }) })).highlights.scoutingCalled!
+    expect(starless.othersTotal).toBe(2)
   })
 })

@@ -43,16 +43,21 @@ export const cardSafe = (recap: Recap): Recap => recap.audience === 'public' ? r
   audience: 'public',
   highlights: {
     rarest: recap.highlights.rarest ? { ...recap.highlights.rarest, place: null } : null,
-    scoutingCalled: recap.highlights.scoutingCalled ? { ...recap.highlights.scoutingCalled, place: null } : null
+    scoutingCalled: recap.highlights.scoutingCalled ? {
+      ...recap.highlights.scoutingCalled,
+      star: recap.highlights.scoutingCalled.star && { ...recap.highlights.scoutingCalled.star, place: null, scoutedAt: null, liferFor: null },
+      others: recap.highlights.scoutingCalled.others.map(o => ({ ...o, place: null }))
+    } : null
   }
 }
 
 /** Up to three lines of the day's best moments, the rarest first (with its ABA code). */
 export const cardLines = (recap: Recap) => {
   const lines: { text: string; aba?: number }[] = []
-  const { rarest, scoutingCalled } = recap.highlights
+  const { rarest } = recap.highlights
+  const scoutStar = recap.highlights.scoutingCalled?.star
   if (rarest) lines.push({ text: rarest.place ? t('recap.cardRarest', { name: rarest.comName, place: rarest.place }) : rarest.comName, aba: rarest.aba >= 3 ? rarest.aba : undefined })
-  if (scoutingCalled && scoutingCalled.speciesCode !== rarest?.speciesCode) lines.push({ text: t('recap.cardScouting', { name: scoutingCalled.comName }) })
+  if (scoutStar && scoutStar.speciesCode !== rarest?.speciesCode) lines.push({ text: t('recap.cardScouting', { name: scoutStar.comName }) })
   const last = recap.totals.lastBird
   if (last && !lines.some(l => l.text.startsWith(last.comName))) lines.push({ text: t('recap.cardClose', { name: last.comName }) })
   return lines.slice(0, 3)
