@@ -1,17 +1,8 @@
 import { expect, test, type Page } from '@playwright/test'
-import { fakeApi, goOffline, goOnline } from './fakeApi'
+import { appSaved, fakeApi, goOffline, goOnline } from './fakeApi'
 
 const CACHE_KEY = 'bird-alert-query-cache'
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
-
-/** The worker controls the page and has finished saving the whole app. */
-const appSaved = (page: Page) => page.waitForFunction(async () => {
-  if (!navigator.serviceWorker.controller) return false
-  for (const name of await caches.keys()) {
-    if (name.startsWith('bird-alert-shell-') && await (await caches.open(name)).match('/__installed')) return true
-  }
-  return false
-}, undefined, { timeout: 20_000 })
 
 /** The saved query cache (localStorage) holds this text. */
 const persisted = (page: Page, text: string) => page.waitForFunction(([key, needle]) => (localStorage.getItem(key) ?? '').includes(needle), [CACHE_KEY, text] as const)

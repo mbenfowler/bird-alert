@@ -1,4 +1,4 @@
-import type { BrowserContext, Route } from '@playwright/test'
+import { expect, type BrowserContext, type Page, type Route } from '@playwright/test'
 
 const COCHISE = 'US-AZ-003'
 export const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Phoenix' }).format(new Date())
@@ -221,3 +221,16 @@ export const goOnline = async (context: BrowserContext) => {
   await context.unroute(THIRD_PARTIES)
   await context.setOffline(false)
 }
+
+/**
+ * The worker controls the page and has finished saving the whole app. Polled from the test side:
+ * page.waitForFunction does not await an async predicate (the Promise it returns is truthy), so
+ * it returned at once and tests went offline mid-install whenever saving the app was slow.
+ */
+export const appSaved = (page: Page) => expect.poll(() => page.evaluate(async () => {
+  if (!navigator.serviceWorker.controller) return false
+  for (const name of await caches.keys()) {
+    if (name.startsWith('bird-alert-shell-') && await (await caches.open(name)).match('/__installed')) return true
+  }
+  return false
+}), { timeout: 20_000 }).toBe(true)
