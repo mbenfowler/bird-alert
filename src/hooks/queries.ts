@@ -64,8 +64,8 @@ export const useSessionQuery = () =>
     // out (above); a dropped connection is tried again and the last known account stays meanwhile.
     gcTime: WEEK,
     meta: { persist: true, offline: true },
-    retry: (failures, error) => isNetworkError(error) && failures < 3,
-    retryDelay: (attempt) => Math.min(2000 * 2 ** attempt, 20_000)
+    retry: (failures, error) => isNetworkError(error) && failures < 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10_000)
   })
 
 

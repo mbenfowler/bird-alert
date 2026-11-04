@@ -12,6 +12,7 @@ import { useBirdsQuery, useEventsQuery, useSeenCodes } from '../../hooks/queries
 import { useToggleSeenMutation } from '../../hooks/mutations'
 import { useAreaName } from '../../shownArea'
 import { clockTime, t } from '../../i18n'
+import type { Bird } from '../../types'
 import { TALLY_KEY, addLiferAfterSync, cancelPendingAdd, queueTallyChange, withPending, type TallyChange } from '../../tallySync'
 import '../AlertCenter/Places.css'
 import './Events.css'
@@ -35,8 +36,12 @@ const EventTally = () => {
   const areaName = useAreaName(event?.state ?? '', event?.location ?? '')
   const codes = [...new Set(shown.map(entry => entry.code))]
   const targetCodes = event?.targets.map(target => target.code) ?? []
-  const names = useBirdsQuery([...new Set([...codes, ...targetCodes])])
-  const nameOf = (code: string) => names.data?.find(b => b.speciesCode === code)?.comName ?? code
+  // Sorted, so a bird added offline (often a target already named) asks for the same saved list.
+  const names = useBirdsQuery([...new Set([...codes, ...targetCodes])].sort())
+  // With no signal a new bird's name may only be in another saved list (the picker's, an earlier page's).
+  const nameOf = (code: string) => names.data?.find(b => b.speciesCode === code)?.comName
+    ?? queryClient.getQueriesData<Bird[]>({ queryKey: ['birds'] }).flatMap(([, birds]) => (Array.isArray(birds) ? birds : [])).find(b => b.speciesCode === code)?.comName
+    ?? code
   if (events.isPending) return <LoadingState />
   if (!event) return <section className='event-page'><LoadProblem error={events.error} missing={t('events.tallyMissing')} /><Link to='/events'>{t('events.backToEvents')}</Link></section>
 

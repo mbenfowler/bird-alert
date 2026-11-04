@@ -104,7 +104,7 @@ export const setupTallySync = (queryClient: QueryClient) => {
       inFlight.add(change.clientId)
       try {
         if (change.remove) await deleteEventTally(change.id, change.code)
-        else await postEventTally(change.id, change.code, change.clientId)
+        else await postEventTally(change.id, change.code, { clientId: change.clientId, observedAt: change.at })
       } finally {
         inFlight.delete(change.clientId)
       }

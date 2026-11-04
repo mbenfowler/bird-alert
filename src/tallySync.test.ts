@@ -3,7 +3,7 @@ import { QueryClient, dehydrate, hydrate, onlineManager } from '@tanstack/react-
 import { ApiError, NetworkError } from './apiCalls'
 import { isGone, isNetworkError } from './offline'
 import { persistOptions } from './queryClient'
-import { TALLY_KEY, cancelPendingAdd, queueTallyChange, resumeTallyChanges, setupTallySync, withPending, type TallyChange } from './tallySync'
+import { TALLY_KEY, addLiferAfterSync, cancelPendingAdd, queueTallyChange, resumeTallyChanges, setupTallySync, withPending, type TallyChange } from './tallySync'
 
 const ok = (body: unknown = {}) => new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } })
 const newClient = () => {
@@ -47,7 +47,7 @@ describe('tally sync', () => {
     const fetchMock = vi.fn().mockResolvedValue(ok())
     vi.stubGlobal('fetch', fetchMock)
     const before = newClient()
-    const { clientId } = queueTallyChange(before, { id: 2, code: 'heptan', by: 'Matt' })
+    const { clientId, at } = queueTallyChange(before, { id: 2, code: 'heptan', by: 'Matt' })
     await settle()
     expect(pending(before)).toHaveLength(1)
     expect(fetchMock).not.toHaveBeenCalled()
@@ -69,7 +69,9 @@ describe('tally sync', () => {
     const [url, init] = fetchMock.mock.calls[0]!
     expect(url).toContain('kind=event-tally')
     expect(init.method).toBe('POST')
-    expect(JSON.parse(init.body)).toEqual({ species_code: 'heptan', client_id: clientId })
+    const body = JSON.parse(init.body)
+    // observed_at is when it was tapped, not when it got through.
+    expect(body).toEqual({ species_code: 'heptan', client_id: clientId, observed_at: at })
     after.unmount()
   })
 
@@ -97,5 +99,30 @@ describe('tally sync', () => {
     await settle()
     expect(fetchMock).not.toHaveBeenCalled()
     client.unmount()
+  })
+
+  it('"Add to life list" for an add the server refuses never reaches the life list', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: 'Event is over' }), { status: 400, headers: { 'Content-Type': 'application/json' } }))
+    vi.stubGlobal('fetch', fetchMock)
+    const client = newClient()
+    const addNow = vi.fn()
+    const { clientId } = queueTallyChange(client, { id: 2, code: 'heptan' })
+    expect(addLiferAfterSync(client, clientId, 'heptan', addNow)).toBe(true)
+    await vi.waitFor(() => expect(pending(client)).toHaveLength(0))
+    await settle()
+    expect(addNow).not.toHaveBeenCalled()
+    // Only the tally POST: no life-list write followed it.
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(addLiferAfterSync(client, clientId, 'heptan', addNow)).toBe(false)
+  })
+
+  it('"Add to life list" waits for the add, then adds the bird once it is on the tally', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(ok())
+    vi.stubGlobal('fetch', fetchMock)
+    const client = newClient()
+    const { clientId } = queueTallyChange(client, { id: 2, code: 'heptan' })
+    addLiferAfterSync(client, clientId, 'heptan', () => undefined)
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2))
+    expect(fetchMock.mock.calls[1]![0]).toContain('kind=seen')
   })
 })

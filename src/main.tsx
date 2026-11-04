@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
+import { onlineManager } from '@tanstack/react-query'
 import App from './components/App/App'
 import { queryClient, persistOptions } from './queryClient'
 import { Analytics } from '@vercel/analytics/react'
@@ -12,11 +13,18 @@ import { resumeTallyChanges, setupTallySync } from './tallySync'
 // Where this visitor came from, noted once, sent only if they sign up.
 noteArrival()
 
+// TanStack starts out assuming a network. Opened from the Home Screen with no signal, it starts
+// offline instead, so the saved data shows as saved and tally changes wait rather than fail;
+// the browser's online and offline events take it from there.
+if (typeof navigator !== 'undefined' && navigator.onLine === false) onlineManager.setOnline(false)
+
 // How a tally change is sent, known before the saved cache comes back, so one saved offline can be sent after a reload.
 setupTallySync(queryClient)
 // Once the saved cache is back: tally changes that were waiting go out (or wait for signal), and
 // everything else is checked against the server.
-const restored = () => resumeTallyChanges(queryClient).then(() => queryClient.resumePausedMutations())
+// Not awaited: the provider waits on onSuccess before showing the app, and a change waiting for
+// signal doesn't settle until it's sent.
+const restored = () => { void resumeTallyChanges(queryClient); void queryClient.resumePausedMutations() }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

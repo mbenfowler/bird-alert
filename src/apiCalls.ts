@@ -156,9 +156,12 @@ export const deleteEvent = (id: Id) => api<null>('/saved', { method: 'DELETE', p
 export const leaveEvent = (id: Id) => api<null>('/saved', { method: 'POST', params: { kind: 'event-leave', id: String(id) }, body: {} })
 export const rotateEventInvite = (id: Id) => api<GroupEvent>('/saved', { method: 'POST', params: { kind: 'event-invite-rotate', id: String(id) }, body: {} })
 export const putEventTargets = (id: Id, codes: string[]) => api<GroupEvent>('/saved', { method: 'PUT', params: { kind: 'event-targets', id: String(id) }, body: { codes } })
-/** `client_id` names this one add, so a retry after a lost answer is recognised as the same bird (the server dedupes on it). */
-export const postEventTally = (id: Id, code: string, clientId?: string) =>
-  api<GroupEvent>('/saved', { method: 'POST', params: { kind: 'event-tally', id: String(id) }, body: { species_code: code, ...(clientId ? { client_id: clientId } : {}) }, timeoutMs: 20_000 })
+/**
+ * `client_id` names this one add, so a retry after a lost answer is the same bird (a repeat is a
+ * no-op on the server); `observed_at` is when it was tapped, not when it finally got through.
+ */
+export const postEventTally = (id: Id, code: string, add: { clientId?: string; observedAt?: string } = {}) =>
+  api<GroupEvent>('/saved', { method: 'POST', params: { kind: 'event-tally', id: String(id) }, body: { species_code: code, ...(add.clientId ? { client_id: add.clientId } : {}), ...(add.observedAt ? { observed_at: add.observedAt } : {}) }, timeoutMs: 20_000 })
 export const deleteEventTally = (id: Id, code: string) => api<null>('/saved', { method: 'DELETE', params: { kind: 'event-tally', id: String(id), code }, timeoutMs: 20_000 })
 export const joinEvent = (token: string, displayName: string) => api<GroupEvent>('/saved', { method: 'POST', params: { kind: 'event-join' }, body: { token, display_name: displayName } })
 export const getEventPreview = (token: string) => api<EventPreview>('/saved', { params: { kind: 'event-preview', token } })
