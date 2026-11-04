@@ -23,3 +23,7 @@
 //
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
+// Specs visit http://localhost:3000; a run against another port (`--config baseUrl=...`, so
+// parallel checkouts each use their own server) goes to that server instead.
+Cypress.Commands.overwrite('visit', (originalFn, url, options) =>
+  originalFn(typeof url === 'string' ? url.replace(/^http:\/\/localhost:3000(?=\/|$)/, Cypress.config('baseUrl')) : url, options))

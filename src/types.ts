@@ -648,6 +648,50 @@ export interface EventScouting {
     subId?: string | null
   }[]
   unreported: { code: string; speciesCode?: string; comName?: string }[]
+  /** Target reports new since yesterday, rarest first (the morning push's news). */
+  fresh?: ScoutingFresh[]
+  /** The one report the morning push led with, or null on a quiet day. */
+  bird_of_day?: ScoutingBirdOfDay | null
+  /** The same line the morning push used. */
+  headline?: string | null
+  /** Each target's standing this week: reported (around), reported before but not lately (quiet), or not at all (missing). */
+  targets?: ScoutingTarget[]
+}
+
+export interface ScoutingFresh {
+  code: string
+  speciesCode?: string
+  comName?: string
+  locName?: string | null
+  locId?: string | null
+  obsDt: string
+  aba?: number | null
+  /** Flagged by eBird for review. */
+  flagged?: boolean | null
+}
+
+export interface ScoutingBirdOfDay {
+  code: string
+  speciesCode?: string
+  comName?: string
+  locName?: string | null
+  obsDt: string
+  aba?: number | null
+  /** The reviewer line the email shows (a flagged report only); older shapes may send the evidence itself. */
+  evidence?: string | Evidence | null
+  /** A photo URL (or the photo with its credit). */
+  photo?: string | { url: string; credit?: string | null } | null
+}
+
+export interface ScoutingTarget {
+  code: string
+  speciesCode?: string
+  comName?: string
+  status: 'around' | 'missing' | 'quiet'
+  last_obs_dt?: string | null
+  last_loc_name?: string | null
+  aba?: number | null
+  lifer?: boolean
 }
 
 /** A drive through the fewest places that cover the most reported targets, in drive order. */

@@ -110,7 +110,7 @@ describe('Back where you were going after logging in', () => {
       stubAuth()
       cy.visit(`http://localhost:3000/login?next=${encodeURIComponent(evil)}`, noOffer)
       logIn()
-      cy.location('href').should('eq', 'http://localhost:3000/')
+      cy.location('href').should('eq', `${Cypress.config('baseUrl')}/`)
     })
   }
 
@@ -125,6 +125,6 @@ describe('Back where you were going after logging in', () => {
   it('already logged in with an evil next goes home', () => {
     stubAuth({ loggedIn: true })
     cy.visit('http://localhost:3000/login?next=%2F%2Fevil.com')
-    cy.location('href').should('eq', 'http://localhost:3000/')
+    cy.location('href').should('eq', `${Cypress.config('baseUrl')}/`)
   })
 })

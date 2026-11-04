@@ -1,85 +1,33 @@
-import { useState, type FormEvent } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { toast } from 'react-toastify'
-import BirdPicker from '../WhereToGo/BirdPicker'
-import { CloseIcon } from '../Icons/Icons'
 import { LoadingState } from '../Loading/Loading'
 import { LoadProblem, OfflineNote } from '../Offline/Offline'
 import { errorMessage } from '../../apiCalls'
-import { queryKeys, useBirdsQuery, useEventSuggestionsQuery, useEventsQuery } from '../../hooks/queries'
+import { queryKeys, useBirdsQuery, useEventScoutingQuery, useEventsQuery } from '../../hooks/queries'
 import { useQueryClient } from '@tanstack/react-query'
-import { useEndEventMutation, useEventMemberMutation, useEventTargetsMutation, useLeaveEventMutation, useRotateInviteMutation, useStartInviteMutation } from '../../hooks/mutations'
+import { useEndEventMutation, useEventMemberMutation, useLeaveEventMutation, useRotateInviteMutation, useStartInviteMutation } from '../../hooks/mutations'
 import { useAreaName } from '../../shownArea'
 import { shareUrl } from '../../share'
 import { dateRange, monthDay, t } from '../../i18n'
 import type { GroupEvent } from '../../types'
 import EventPlan from './EventPlan'
 import EventScouting from './EventScouting'
+import EventTargets from './EventTargets'
+import ScoutingToday from './ScoutingToday'
+import { showScoutingCard } from './scoutingRows'
+import { prefersReducedMotion } from '../../routeDraw'
 import EventRoutePanel from './EventRoutePanel'
 import DayView, { DayStops, SunLine } from './DayView'
 import GetReady from './GetReady'
 import { isEventDay, useEventDay } from './useEventDay'
 import { safeZone, zonedDay } from './daySchedule'
-import { MAX_TARGETS, daysBefore, eventPath, isGroup, isPast, isScouting, membersText, recapText, scoutFrom, today } from './events'
+import { daysBefore, eventPath, isGroup, isPast, isScouting, membersText, recapText, scoutFrom, today } from './events'
 import '../AlertCenter/Places.css'
 import './Events.css'
 
 const absolute = (url: string) => (/^https?:/.test(url) ? url : `${window.location.origin}${url.startsWith('/') ? '' : '/'}${url}`)
 const fail = (error: unknown) => toast.error(errorMessage(error), { position: 'bottom-center' })
-
-/**
- * The event's target birds: chips (with whose lifer each would be, once there's a group), a search
- * over the area's birds, suggestions of likely lifers for its dates, and one tap for all of them.
- */
-const Targets = ({ event, areaName }: { event: GroupEvent; areaName: string }) => {
-  const save = useEventTargetsMutation()
-  const [adding, setAdding] = useState(false)
-  const codes = event.targets.map(target => target.code)
-  // Likely lifers for the area and dates, most likely first: the first few as chips, all of them
-  // (as many as the 50 targets have room for) behind one button.
-  const lifers = useEventSuggestionsQuery(isPast(event) ? null : event.id, MAX_TARGETS)
-  const fresh = (lifers.data ?? []).filter(code => !codes.includes(code))
-  const neverSeen = fresh.slice(0, Math.max(0, MAX_TARGETS - codes.length))
-  const suggested = fresh.slice(0, 8)
-  const names = useBirdsQuery([...codes, ...suggested])
-  const nameOf = (code: string) => names.data?.find(b => b.speciesCode === code)?.comName ?? code
-  const setCodes = (next: string[], done?: () => void) => save.mutate({ id: event.id, codes: next }, { onSuccess: done, onError: fail })
-  const group = isGroup(event)
-  // Whose lifer each would be: you first (as "you"), then the others the group knows by name.
-  const liferFor = (target: GroupEvent['targets'][number]) => [...(target.lifer_for_you ? [t('events.youLower')] : []), ...(target.lifer_for ?? []).filter(n => !target.lifer_for_you || n !== event.display_name)]
-  return (
-    <div className='event-page__section event-detail__targets' id='event-targets'>
-      <h2 className='place__heading'>{t('events.targets')}</h2>
-      {event.targets.length
-        ? <ul className='place__chips'>{event.targets.map(target => (
-            <li key={target.code} className='place__chip event__target'>
-              <span>{nameOf(target.code)}{group && liferFor(target).length ? <span className='event__lifer'> · {t('events.liferFor', { names: liferFor(target).join(', ') })}</span> : null}</span>
-              <button type='button' aria-label={t('events.removeTarget', { name: nameOf(target.code) })} disabled={save.isPending} onClick={() => setCodes(codes.filter(c => c !== target.code))}><CloseIcon /></button>
-            </li>))}</ul>
-        : <p className='notification__hint'>{event.scout ? t('events.targetsNoneScout') : t('events.targetsNone')}</p>}
-      {adding
-        ? <div className='place__add-target'>
-            <BirdPicker region={event.location} regionName={areaName} onPick={(code) => { if (!codes.includes(code)) setCodes([...codes, code]); setAdding(false) }} />
-            <button type='button' className='link-button link-text' onClick={() => setAdding(false)}>{t('common.cancel')}</button>
-          </div>
-        : <button type='button' className='link-button link-text' onClick={() => setAdding(true)}>{t('events.addTarget')}</button>}
-      {suggested.length > 0 && (
-        <>
-          <p className='place__subheading'>{t('events.suggested')}</p>
-          <ul className='place__chips'>{suggested.map(code => (
-            <li key={code}><button type='button' className='place__chip place__chip--add' aria-label={t('places.addSuggestion', { name: nameOf(code) })} disabled={save.isPending} onClick={() => setCodes([...codes, code])}>+ {nameOf(code)}</button></li>
-          ))}</ul>
-        </>
-      )}
-      {neverSeen.length > 0 && (
-        <button type='button' className='pill-button pill-button--small event__add-never-seen' disabled={save.isPending}
-          onClick={() => setCodes([...codes, ...neverSeen], () => toast.success(t('events.addedNeverSeen', { count: neverSeen.length }), { position: 'bottom-center' }))}>
-          {t('events.addNeverSeen', { count: neverSeen.length })}
-        </button>
-      )}
-    </div>
-  )
-}
 
 /**
  * Who's in: just you until you invite anyone. Inviting asks once for the name your group will know
@@ -192,6 +140,28 @@ const Actions = ({ event, onDay }: { event: GroupEvent; onDay: boolean }) => {
   )
 }
 
+/**
+ * The morning scouting push and email open /events/<id>#scouting: once the card (or, with no card,
+ * the scouting details) is on the page, scroll to it (smoothly, unless motion is reduced) and light
+ * it up for a moment. Each arrival at the hash counts once, so later renders leave the page alone.
+ */
+const FLASH_MS = 2400
+const useScoutingLink = (id: string, ready: boolean) => {
+  const { hash, key } = useLocation()
+  const done = useRef<string | null>(null)
+  useEffect(() => {
+    if (hash !== '#scouting' || !ready || done.current === key) return
+    const el = document.getElementById(id)
+    if (!el) return
+    done.current = key
+    el.scrollIntoView({ block: 'start', behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
+    el.focus({ preventScroll: true })
+    // A data attribute React doesn't manage, so the page's own renders never cut the light short.
+    el.setAttribute('data-flash', '')
+    window.setTimeout(() => el.removeAttribute('data-flash'), FLASH_MS)
+  }, [hash, key, ready, id])
+}
+
 /** Within this many days of the start, "Get ready for offline" sits at the top. */
 const READY_DAYS = 3
 
@@ -228,6 +198,10 @@ const EventBody = ({ event, updatedAt, error }: { event: GroupEvent; updatedAt: 
   const from = scoutFrom(event)
   const tally = `${eventPath(event.id)}/tally`
   const oneDay = event.kind === 'bigday' || event.starts_on === event.ends_on
+  const scouting = useEventScoutingQuery(past ? null : event.id)
+  const showCard = showScoutingCard(scouting.data, { past, onDay, scouting: isScouting(event) })
+  useScoutingLink(showCard ? 'scouting' : 'scouting-details', !scouting.isPending || !showCard)
+  const seeWhere = () => document.getElementById('scouting-details')?.scrollIntoView({ block: 'start', behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
   return (
     <section className='event-page event-detail' data-event={String(event.id)}>
       <p className='event-detail__back'><Link to='/events'>{t('events.allEvents')}</Link></p>
@@ -242,6 +216,7 @@ const EventBody = ({ event, updatedAt, error }: { event: GroupEvent; updatedAt: 
       </p>
       {onDay && <DayView event={event} day={day} nameOf={nameOf} />}
       {!onDay && past && <p className='events-list__recap' data-testid='event-recap'>{recapText(event)}</p>}
+      {showCard && <ScoutingToday event={event} onSeeWhere={seeWhere} />}
       {showDay && <GetReady event={event} areaName={areaName} />}
       <div className='event-page__section event-detail__plan'>
         <h2 className='place__heading'>{t('events.plan')}</h2>
@@ -257,9 +232,8 @@ const EventBody = ({ event, updatedAt, error }: { event: GroupEvent; updatedAt: 
       {/* The route, open from the start and edited in place (the group's, or the suggestion until anyone changes it). */}
       {!past && <EventRoutePanel event={event} onDay={onDay} />}
       {showDay && <DayStops day={day} onDay={onDay} />}
-      {!onDay && <Targets event={event} areaName={areaName} />}
+      <EventTargets event={event} areaName={areaName} />
       {!past && <EventScouting event={event} />}
-      {onDay && <Targets event={event} areaName={areaName} />}
       <People event={event} />
       {!onDay && (
         <div className='event-page__section'>

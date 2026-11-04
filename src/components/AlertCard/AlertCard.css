@@ -12,18 +12,21 @@
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18), 0 0 var(--heat-blur, 0) var(--heat-spread, 0) var(--heat-glow, transparent);
 }
 
-.alert-card[data-aba='2'] {
+.alert-card[data-aba='2'],
+.aba-heat[data-aba='2'] {
     --heat-border: #a87a2c;
 }
 
-.alert-card[data-aba='3'] {
+.alert-card[data-aba='3'],
+.aba-heat[data-aba='3'] {
     --heat-border: #d99a00;
     --heat-glow: rgba(255, 170, 0, 0.35);
     --heat-blur: 10px;
     --heat-spread: 1px;
 }
 
-.alert-card[data-aba='4'] {
+.alert-card[data-aba='4'],
+.aba-heat[data-aba='4'] {
     --heat-border: #e0561b;
     --heat-glow: rgba(240, 90, 25, 0.5);
     --heat-blur: 14px;
@@ -36,6 +39,14 @@
     --heat-blur: 16px;
     --heat-spread: 3px;
     animation: aba-pulse 2.4s ease-in-out infinite;
+}
+
+/* The same heat on a compact row (today's scouting): 5's colours without the pulse. */
+.aba-heat[data-aba='5'] {
+    --heat-border: #d11313;
+    --heat-glow: rgba(225, 20, 20, 0.6);
+    --heat-blur: 8px;
+    --heat-spread: 1px;
 }
 
 /* Believed extinct: dark, with an ember that flickers rather than pulses. */

@@ -451,7 +451,16 @@ export const useEventScoutingQuery = (id: Id | null) =>
     staleTime: 30 * 60 * 1000,
     gcTime: WEEK,
     meta: { persist: true, offline: true },
-    select: (answer) => ({ ...answer, reported: Array.isArray(answer?.reported) ? answer.reported : [], unreported: Array.isArray(answer?.unreported) ? answer.unreported : [] })
+    select: (answer) => ({
+      ...answer,
+      reported: Array.isArray(answer?.reported) ? answer.reported : [],
+      unreported: Array.isArray(answer?.unreported) ? answer.unreported : [],
+      fresh: Array.isArray(answer?.fresh) ? answer.fresh : [],
+      bird_of_day: answer?.bird_of_day && typeof answer.bird_of_day === 'object' ? answer.bird_of_day : null,
+      headline: typeof answer?.headline === 'string' && answer.headline.trim() ? answer.headline : null,
+      // Absent until the server sends it: the page then works the statuses out from reported and unreported.
+      targets: Array.isArray(answer?.targets) ? answer.targets : undefined
+    })
   })
 
 /** The suggested scouting route, fetched only once asked for. */

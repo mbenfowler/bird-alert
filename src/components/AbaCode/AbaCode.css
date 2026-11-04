@@ -18,6 +18,16 @@
     vertical-align: middle;
 }
 
+.aba-code--short {
+    min-height: 0;
+    padding: 0 6px;
+    border-width: 1.5px;
+    border-radius: 8px;
+    background: var(--surface);
+    font-size: 0.7rem;
+    white-space: nowrap;
+}
+
 .aba-code__code {
     white-space: nowrap;
 }

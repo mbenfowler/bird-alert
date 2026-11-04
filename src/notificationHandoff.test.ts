@@ -21,6 +21,8 @@ describe('notification hand-off', () => {
   it('keeps same-origin paths and drops other origins', () => {
     expect(samePath(`${window.location.origin}/sightings?s=cangoo:S1`)).toBe('/sightings?s=cangoo:S1')
     expect(samePath('/map')).toBe('/map')
+    // The scouting push lands on the card: the hash rides along.
+    expect(samePath(`${window.location.origin}/events/5#scouting`)).toBe('/events/5#scouting')
     expect(samePath('https://ebird.org/checklist/S1')).toBeNull()
     expect(samePath(42)).toBeNull()
   })
