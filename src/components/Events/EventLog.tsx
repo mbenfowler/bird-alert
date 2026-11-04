@@ -54,7 +54,7 @@ const EventLog = () => {
         <button type='button' role='tab' aria-selected={tab === 'log'} className={`pill-button pill-button--small ${tab === 'log' ? 'pill-button--primary' : ''}`} onClick={() => setTab('log')}>{t('eventLog.logTab')}</button>
         <button type='button' role='tab' aria-selected={tab === 'checklist'} className={`pill-button pill-button--small ${tab === 'checklist' ? 'pill-button--primary' : ''}`} onClick={() => setTab('checklist')} data-testid='checklist-tab'>
           {t('eventLog.checklistTab')}
-          {toDo.length > 0 && <span className='place__badge'>{toDo.length}</span>}
+          {toDo.length > 0 && <span className={`place__badge ${tab === 'checklist' ? 'place__badge--quiet' : ''}`}>{toDo.length}</span>}
         </button>
       </p>
       {tab === 'log'

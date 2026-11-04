@@ -13,6 +13,8 @@ const PORT = Number(process.env.OFFLINE_PORT) || 4317
 export default defineConfig({
   testDir: './offline',
   timeout: 60_000,
+  // One at a time: the service worker's timings (a 3.5 s navigation fallback) get flaky under parallel load.
+  workers: 1,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? 'line' : 'list',
   use: {

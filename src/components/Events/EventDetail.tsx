@@ -6,7 +6,8 @@ import { CloseIcon } from '../Icons/Icons'
 import { LoadingState } from '../Loading/Loading'
 import { LoadProblem, OfflineNote } from '../Offline/Offline'
 import { errorMessage } from '../../apiCalls'
-import { useBirdsQuery, useEventSuggestionsQuery, useEventsQuery } from '../../hooks/queries'
+import { queryKeys, useBirdsQuery, useEventSuggestionsQuery, useEventsQuery } from '../../hooks/queries'
+import { useQueryClient } from '@tanstack/react-query'
 import { useEndEventMutation, useEventMemberMutation, useEventTargetsMutation, useLeaveEventMutation, useRotateInviteMutation, useStartInviteMutation } from '../../hooks/mutations'
 import { useAreaName } from '../../shownArea'
 import { shareUrl } from '../../share'
@@ -201,7 +202,9 @@ const READY_DAYS = 3
  */
 const EventDetail = () => {
   const { id = '' } = useParams()
-  const events = useEventsQuery()
+  // On the day the page follows the tally like the tally page does: every 30 s, and at once when the phone wakes.
+  const saved = useQueryClient().getQueryData<GroupEvent[]>(queryKeys.events)?.find(e => String(e.id) === id)
+  const events = useEventsQuery(Boolean(saved && isEventDay(saved)))
   const event = events.data?.find(e => String(e.id) === id)
   if (events.isPending) return <LoadingState />
   if (!event) return <section className='event-page'><LoadProblem error={events.error} missing={t('events.tallyMissing')} /><Link to='/events'>{t('events.backToEvents')}</Link></section>
