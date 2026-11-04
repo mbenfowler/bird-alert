@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, type RefObject } from 'react'
 import { MapContainer, Marker, Polyline, Popup, TileLayer, Tooltip, useMap } from 'react-leaflet'
 import L from 'leaflet'
+import { FLAG_PATH } from '../Icons/Icons'
 import { Link } from 'react-router'
 import 'leaflet/dist/leaflet.css'
 import { prefersReducedMotion, stopFractions } from '../../routeDraw'
@@ -209,7 +210,8 @@ const stopIcon = (n: number, active = false) => {
   if (!stopIcons.has(key)) stopIcons.set(key, L.divIcon({ className: `map-stop ${active ? 'map-stop--active' : ''}`, html: `<span>${n}</span>`, iconSize: [26, 26], iconAnchor: [13, 13] }))
   return stopIcons.get(key)!
 }
-const START_ICON = L.divIcon({ className: 'map-stop map-stop--start', html: '<span></span>', iconSize: [22, 22], iconAnchor: [11, 11] })
+// The start: the same flag as the route list's meeting point, in an ink disc.
+const START_ICON = L.divIcon({ className: 'map-stop map-stop--start', html: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="${FLAG_PATH}"/></svg>`, iconSize: [26, 26], iconAnchor: [13, 13] })
 
 const FIRST_MS = 1500
 const RETRACE_MS = 900

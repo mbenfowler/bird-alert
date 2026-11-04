@@ -857,9 +857,10 @@
     cursor: default;
 }
 
-.go__stop-n--start {
-    background: #0f7b3a;
-    color: #fff;
+/* The start's badge: the stop numbers' ink disc with a flag in it. */
+.go__stop-n--start svg {
+    width: 15px;
+    height: 15px;
 }
 
 .go__start-empty {

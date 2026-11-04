@@ -16,6 +16,14 @@ export const AlertIcon = (props: SVGProps<SVGSVGElement>) => (
   </svg>
 )
 
+/** A flag on a pole: where a route starts (the meeting point), in the list and on the map. */
+export const FLAG_PATH = 'M14.4 6 14 4H5v17h2v-7h5.6l.4 2h7V6z'
+export const FlagIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <path d={FLAG_PATH} />
+  </svg>
+)
+
 /** Chevron pointing down; add the `is-up` class to flip it. */
 export const ChevronIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg {...base} {...props}>

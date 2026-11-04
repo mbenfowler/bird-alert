@@ -272,6 +272,10 @@ test('the meeting point is stop "0": a card with Set meeting point, then Change 
   const card = page.getByTestId('start-card')
   await expect(card).toContainText('Meeting point')
   await expect(card).toContainText('Where does the day start?')
+  // A flag in the stops' ink badge (no letter to translate), named for screen readers.
+  await expect(card.getByTestId('start-badge').locator('svg path')).toHaveCount(1)
+  await expect(card.getByTestId('start-badge')).toHaveAttribute('aria-label', 'Meeting point')
+  await expect(card.getByTestId('start-badge')).toHaveText('')
   await expect(card.getByRole('button', { name: 'Add time' })).toHaveCount(0)
   await card.getByRole('button', { name: 'Set meeting point' }).click()
   // The search and "Use my location" open right under the card.

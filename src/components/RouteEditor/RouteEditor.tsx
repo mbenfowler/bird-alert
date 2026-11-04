@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import PlaceSearch, { type Suggestion } from '../PlaceSearch/PlaceSearch'
-import { ChevronIcon, CloseIcon, DragIcon, LocateIcon } from '../Icons/Icons'
+import { ChevronIcon, CloseIcon, DragIcon, FlagIcon, LocateIcon } from '../Icons/Icons'
 import { shortDistance, useDistanceUnit, type DistanceUnit } from '../../distance'
 import { MAX_ROUTE_STOPS, move, roadKm, samePlace, shortestOrder, type PlanPoint } from '../../routePlan'
 import { clockTime, t } from '../../i18n'
@@ -141,7 +141,7 @@ const RouteEditor = ({ state, stops, start, arriving, editing, describe, suggest
         <div className={`go__start-card ${settingStart ? 'is-open' : ''}`} data-testid='start-card'>
           <div className='go__stop-row'>
             <span className='go__stop-main'>
-              <span className='go__stop-n go__stop-n--start' aria-hidden='true'>{t('route.startBadge')}</span>
+              <span className='go__stop-n go__stop-n--start' role='img' aria-label={startLabel ?? t('route.start')} data-testid='start-badge'><FlagIcon /></span>
               <span className='go__stop-text'>
                 <strong>{startLabel ?? t('route.start')}</strong>
                 {start
