@@ -6,6 +6,7 @@ import { inviteLinkQuery, shareInvite } from '../../share'
 import { finishNudge, mayNudge, nudgeDone, onInviteNudge, type InviteMoment } from '../../invite'
 import { ShareIcon } from '../Icons/Icons'
 import '../PushAsk/PushAsk.css'
+import './InviteFriend.css'
 import { t } from '../../i18n'
 
 /** Settings → Account: always there, for whenever someone thinks of a friend. */
@@ -16,11 +17,11 @@ export const InviteRow = () => {
     <section className='life-list invite-friend'>
       <div className='notification life-list__card'>
         <div className='notification__text'>
-          <p className='life-list__count'>{t('invite.row')}</p>
+          <p className='invite-friend__title'>{t('invite.row')}</p>
           <p className='notification__hint'>{t('invite.rowHint')}</p>
         </div>
         <button type='button' className='pill-button life-list__view' id='inviteFriend' onClick={() => void shareInvite()}>
-          <ShareIcon /> {t('invite.button')}
+          <ShareIcon className='pill-button__icon' />{t('invite.button')}
         </button>
       </div>
     </section>
@@ -78,7 +79,7 @@ const Sheet = ({ onClose }: { onClose: () => void }) => {
     <aside className='push-ask invite-nudge' role='dialog' aria-modal='false' aria-labelledby='invite-nudge-question' tabIndex={-1} ref={sheet}>
       <p className='push-ask__question' id='invite-nudge-question'>{t('invite.nudge')}</p>
       <div className='push-ask__actions'>
-        <button type='button' className='pill-button pill-button--primary' onClick={invite}><ShareIcon /> {t('invite.button')}</button>
+        <button type='button' className='pill-button pill-button--primary' onClick={invite}><ShareIcon className='pill-button__icon' />{t('invite.button')}</button>
         <button type='button' className='push-ask__later' onClick={notNow}>{t('invite.notNow')}</button>
       </div>
     </aside>

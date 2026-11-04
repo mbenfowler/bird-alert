@@ -1,0 +1,11 @@
+/* The Settings row sits in the life list's card; its title reads like the cards above it. */
+.invite-friend__title {
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+/* The feedback heading below expects a section's worth of room. */
+.life-list.invite-friend {
+    margin-bottom: 16px;
+}
+
