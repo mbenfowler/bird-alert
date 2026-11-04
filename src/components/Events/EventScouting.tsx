@@ -203,7 +203,9 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
   const hasStays = shownStops.some(s => typeof (s.stay_min ?? s.suggested_stay_min) === 'number')
   const unit = useDistanceUnit()
   // The meeting point alone can be saved: the suggestion then starts there.
-  const editStart = (next: PlanPoint | null) => group.edit({ start: next ? { name: next.name, lat: next.lat, lng: next.lng } : null, stops: customStops })
+  const editStart = (next: PlanPoint | null) => group.edit({ start: next ? { name: next.name, lat: next.lat, lng: next.lng, time: start?.time ?? null } : null, stops: customStops })
+  // The meeting time rides with the meeting point, saved like any other edit.
+  const editTime = (time: string | null) => { if (start) group.edit({ start: { ...start, time }, stops: customStops }) }
   const saved = group.saved
   const heading = customStops !== null
     ? [
@@ -366,7 +368,8 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
                       stays={{ of: (i) => ({ minutes: shownStops[i]?.stay_min ?? null, suggested: shownStops[i]?.suggested_stay_min ?? null }), onChange: editStay }}
                       legLabel={(leg) => t('eventRoute.leg', { time: duration(leg.minutes), distance: shortDistance(leg.miles, unit) })}
                       onStops={editStops} onStart={editStart} onReset={() => setConfirmReset(true)} onDone={() => setEditing(false)}
-                      resetLabel={t('eventRoute.backSuggested')} startLabel={t('eventRoute.meetingPoint')} startEmpty={t('eventRoute.noMeetingPoint')} />
+                      resetLabel={t('eventRoute.backSuggested')} startLabel={t('eventRoute.meetingPoint')} startEmpty={t('eventRoute.noMeetingPoint')}
+                      startTime={{ value: start?.time ?? null, onChange: editTime, label: t('eventDay.meetingTime') }} />
                   </div>
                 : <EventRoute route={route} pending={customStops === null && routeQuery.isPending} updating={customStops === null ? routeQuery.isPlaceholderData : drive.isPlaceholderData}
                     failed={customStops === null && routeQuery.isError && !routeQuery.data} failedText={isNetworkError(routeQuery.error) ? t('offline.noSignalNothingSaved') : undefined} heading={heading}

@@ -38,7 +38,7 @@ export interface TallyRow {
 
 /** The group's saved route for the day: a meeting point in Sierra Vista and five canyon stops. */
 export const DAY_PLAN = {
-  start: { name: 'Sierra Vista Walmart', lat: 31.55, lng: -110.3 },
+  start: { name: 'Sierra Vista Walmart', lat: 31.55, lng: -110.3, time: '05:30' as string | null },
   stops: [
     { locId: 'L100', name: 'Ramsey Canyon Preserve', lat: 31.4466, lng: -110.3066, stay_min: 45, suggested_stay_min: 40 },
     { locId: 'L200', name: 'Carr Canyon', lat: 31.4325, lng: -110.2671, stay_min: null, suggested_stay_min: 30 },
@@ -80,6 +80,11 @@ export const fakeApi = async (context: BrowserContext) => {
     /** The group's saved route and the suggestion; none until a test sets them. */
     plan: { start: null, stops: null, version: 0 } as unknown,
     route: { from: null, stops: [], extras: [], total_min: null, total_mi: null, covered: 0, reported: 0, skipped: 0, geometry: [], routed: false } as unknown,
+    /** Where the group is on its route (event-route-plan's position): the latest tap wins. */
+    position: null as null | { stop: number; at: string; by_name: string; by_you: boolean },
+    /** Every position tap that reached the server, and every route PUT. */
+    positionPosts: [] as Array<{ stop: number | null; at: string }>,
+    planPuts: [] as Array<Record<string, unknown>>,
     /** Return 'fail' to drop a request (as one bar of signal does), or nothing to answer it. */
     interfere: null as null | ((route: Route) => 'fail' | void),
     meFails: false,
@@ -147,7 +152,26 @@ export const fakeApi = async (context: BrowserContext) => {
       }
       if (kind === 'event-log') return route.fulfill(json(log()))
       if (kind === 'event-scouting') return route.fulfill(json({ using: 'targets', reported: [], unreported: [] }))
-      if (kind === 'event-route-plan') return route.fulfill(json(state.plan))
+      if (kind === 'event-route-plan' && method === 'PUT') {
+        const body = request.postDataJSON() as Record<string, unknown> & { version: number }
+        state.planPuts.push(body)
+        const current = (state.plan as { version?: number }).version ?? 0
+        if (body.version !== current) return route.fulfill(json({ error: 'Changed', current: { ...(state.plan as object), position: state.position } }, 409))
+        state.plan = { ...(state.plan as object), start: body.start, stops: body.stops, version: current + 1, updated_by_name: 'Matt', updated_by_you: true, updated_at: new Date().toISOString() }
+        return route.fulfill(json({ ...(state.plan as object), position: state.position }))
+      }
+      if (kind === 'event-route-plan' && method === 'DELETE') {
+        state.plan = { start: null, stops: null, version: 0 }
+        return route.fulfill(json({ ...(state.plan as object), position: state.position }))
+      }
+      if (kind === 'event-route-plan') return route.fulfill(json({ ...(state.plan as object), position: state.position }))
+      if (kind === 'event-route-position' && method === 'POST') {
+        const body = request.postDataJSON() as { stop: number | null; at: string }
+        state.positionPosts.push(body)
+        // The server keeps whichever tap is latest by its own time, not by arrival.
+        if (!state.position || body.at >= state.position.at) state.position = body.stop === null ? null : { stop: body.stop, at: body.at, by_name: 'Matt', by_you: true }
+        return route.fulfill(json({ ...(state.plan as object), position: state.position }))
+      }
       if (kind === 'event-route') return route.fulfill(json(state.route))
       if (kind === 'event-view') return route.fulfill(json({ name: 'Cochise Big Day', kind: 'bigday', starts_on: today(), ends_on: today(), area: 'Cochise', targets: [], tally: [] }))
       if (kind === 'seen' || kind === 'places') return route.fulfill(json([]))

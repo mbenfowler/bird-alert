@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useEventRoutePlanQuery, useEventRouteQuery, useEventScoutingQuery } from '../../hooks/queries'
 import { sunTimes } from '../../solar'
-import { usePendingTally, withPending } from '../../tallySync'
+import { queuePosition, usePendingPosition, usePendingTally, withPending } from '../../tallySync'
 import type { GroupEvent } from '../../types'
 import { speciesByPlace } from './customRoute'
-import { dayRoute, dayState, plannedTimes, readProgress, safeZone, scheduleStart, writeProgress, zoneOffsetMin, zonedInstant, type DayProgress } from './daySchedule'
+import { dayRoute, dayState, plannedTimes, progressFrom, safeZone, scheduleStart, zoneOffsetMin, zonedInstant } from './daySchedule'
 
 /** The time now, ticking every 15 seconds (enough for "38 of 45 min"). */
 export const useNow = (everyMs = 15_000) => {
@@ -27,7 +28,7 @@ export const isEventDay = (event: Pick<GroupEvent, 'active' | 'tally_open'>) => 
  * planned times, where the day stands now, and the sun.
  */
 export const useEventDay = (event: GroupEvent, enabled: boolean) => {
-  const plan = useEventRoutePlanQuery(event.id, enabled, false)
+  const plan = useEventRoutePlanQuery(event.id, enabled, false, enabled && isEventDay(event))
   const suggestedQuery = useEventRouteQuery(event.id, enabled)
   const scouting = useEventScoutingQuery(enabled ? event.id : null)
   const pending = usePendingTally(event.id)
@@ -36,8 +37,15 @@ export const useEventDay = (event: GroupEvent, enabled: boolean) => {
   const targets = event.targets.map(target => target.code)
   const timeZone = safeZone(event.timezone)
   const day = event.starts_on
-  const [progress, setProgressState] = useState<DayProgress>(() => readProgress(event.id))
-  const setProgress = (next: DayProgress) => { writeProgress(event.id, next); setProgressState(next) }
+  // Where the group is: the group's shared position, or this phone's own tap while it waits to be sent.
+  const queryClient = useQueryClient()
+  const waiting = usePendingPosition(event.id)
+  const position = waiting
+    ? { stop: waiting.stop, at: waiting.at, by_you: true, by_name: event.display_name ?? null, pending: true }
+    : plan.data?.position ? { ...plan.data.position, pending: false } : null
+  const progress = progressFrom(position)
+  /** "We're here" at a stop (-1: the meeting point; null: start over), for the whole group. */
+  const setPosition = (stop: number | null) => { queuePosition(queryClient, { id: event.id, stop }) }
   const now = useNow()
 
   const route = useMemo(() => {
@@ -48,7 +56,8 @@ export const useEventDay = (event: GroupEvent, enabled: boolean) => {
   }, [plan.data, suggestedQuery.data, scouting.data?.reported])
 
   const stops = route?.stops ?? []
-  const startAt = scheduleStart(progress, day, timeZone)
+  const meetAt = plan.data?.start?.time ?? null
+  const startAt = scheduleStart(meetAt, day, timeZone)
   const planned = plannedTimes(stops, startAt)
   const state = dayState(stops, planned, progress, now, Boolean(route?.start))
 
@@ -62,7 +71,7 @@ export const useEventDay = (event: GroupEvent, enabled: boolean) => {
   }, [where?.lat, where?.lng, day, timeZone]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
-    route, stops, planned, state, progress, setProgress, now, sun, timeZone, tally, tallyCodes, targets,
+    route, stops, planned, state, progress, position, setPosition, meetAt, startAt, now, sun, timeZone, tally, tallyCodes, targets,
     loading: enabled && (plan.isPending || suggestedQuery.isPending) && !route,
     failed: enabled && !route && (plan.isError || suggestedQuery.isError),
     error: plan.error ?? suggestedQuery.error

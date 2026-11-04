@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { appleDirections, dayRoute, dayState, googleDirections, groupLog, notOnMyChecklist, plannedTimes, readProgress, scheduleStart, stillNeededAt, trimSuggestion, writeProgress, zonedDay, zonedHhmm, zonedInstant, zoneOffsetMin, type DayStop } from './daySchedule'
+import { appleDirections, dayRoute, dayState, googleDirections, groupLog, notOnMyChecklist, plannedTimes, progressFrom, scheduleStart, stillNeededAt, trimSuggestion, zonedDay, zonedHhmm, zonedInstant, zoneOffsetMin, type DayStop } from './daySchedule'
 import type { EventLogEntry, EventRoutePlan, EventTallyEntry } from '../../types'
 
 const AZ = 'America/Phoenix'
@@ -35,20 +35,27 @@ describe('the schedule', () => {
     expect(plannedTimes([stop(0, 'A', null, 30)], start).map(p => zonedHhmm(p.arrive, AZ))).toEqual(['05:30'])
   })
 
-  it('starts the clock at the meeting time, else when the day was started', () => {
-    expect(scheduleStart({ meetAt: '05:30' }, '2026-11-10', AZ)?.toISOString()).toBe('2026-11-10T12:30:00.000Z')
-    expect(scheduleStart({ startedAt: '2026-11-10T13:00:00.000Z' }, '2026-11-10', AZ)?.toISOString()).toBe('2026-11-10T13:00:00.000Z')
-    expect(scheduleStart({}, '2026-11-10', AZ)).toBeNull()
+  it('starts the clock at the group’s meeting time, in the event’s zone; none without one', () => {
+    expect(scheduleStart('05:30', '2026-11-10', AZ)?.toISOString()).toBe('2026-11-10T12:30:00.000Z')
+    expect(scheduleStart(null, '2026-11-10', AZ)).toBeNull()
+    expect(scheduleStart('5.30', '2026-11-10', AZ)).toBeNull()
+  })
+
+  it('reads the shared position: the meeting point, a stop since its tap, or not started', () => {
+    expect(progressFrom({ stop: -1, at: '2026-11-10T12:30:00Z' })).toEqual({ startedAt: '2026-11-10T12:30:00Z', at: null, arrivedAt: null })
+    expect(progressFrom({ stop: 2, at: '2026-11-10T14:00:00Z' })).toEqual({ startedAt: '2026-11-10T14:00:00Z', at: 2, arrivedAt: '2026-11-10T14:00:00Z' })
+    expect(progressFrom(null)).toEqual({})
+    expect(progressFrom({ stop: null, at: '2026-11-10T14:00:00Z' })).toEqual({})
   })
 
   it('times the stay at a stop: 38 of 45 minutes, on schedule', () => {
-    const progress = { meetAt: '05:30', startedAt: '2026-11-10T12:30:00Z', at: 0, arrivedAt: '2026-11-10T13:00:00Z' }
+    const progress = { startedAt: '2026-11-10T12:30:00Z', at: 0, arrivedAt: '2026-11-10T13:00:00Z' }
     const state = dayState(stops, planned, progress, at('2026-11-10T13:38:00Z'), true)
     expect(state).toMatchObject({ phase: 'at', at: 0, next: 1, minutesHere: 38, stayMin: 45, over: false, behindMin: 0 })
   })
 
   it('says when the stay is over and how far behind that puts the day', () => {
-    const progress = { meetAt: '05:30', at: 0, arrivedAt: '2026-11-10T13:10:00Z' }
+    const progress = { at: 0, arrivedAt: '2026-11-10T13:10:00Z' }
     // Arrived 10 minutes late, and still there 5 minutes after the stay ran out.
     const state = dayState(stops, planned, progress, at('2026-11-10T14:00:00Z'), true)
     expect(state.over).toBe(true)
@@ -56,20 +63,20 @@ describe('the schedule', () => {
   })
 
   it('counts ahead as negative', () => {
-    const progress = { meetAt: '05:30', at: 1, arrivedAt: '2026-11-10T13:50:00Z' }
+    const progress = { at: 1, arrivedAt: '2026-11-10T13:50:00Z' }
     expect(dayState(stops, planned, progress, at('2026-11-10T13:55:00Z'), true).behindMin).toBe(-15)
   })
 
   it('is behind on the way to the first stop once the drive runs past its time', () => {
-    const progress = { meetAt: '05:30', startedAt: '2026-11-10T12:45:00Z' }
+    const progress = { startedAt: '2026-11-10T12:45:00Z' }
     const state = dayState(stops, planned, progress, at('2026-11-10T13:05:00Z'), true)
     expect(state).toMatchObject({ phase: 'driving', next: 0 })
     expect(state.behindMin).toBe(15)
   })
 
   it('is behind before starting once the meeting time has passed', () => {
-    expect(dayState(stops, planned, { meetAt: '05:30' }, at('2026-11-10T12:50:00Z'), true)).toMatchObject({ phase: 'before', behindMin: 20 })
-    expect(dayState(stops, planned, { meetAt: '05:30' }, at('2026-11-10T12:00:00Z'), true).behindMin).toBeNull()
+    expect(dayState(stops, planned, {}, at('2026-11-10T12:50:00Z'), true)).toMatchObject({ phase: 'before', behindMin: 20 })
+    expect(dayState(stops, planned, {}, at('2026-11-10T12:00:00Z'), true).behindMin).toBeNull()
   })
 
   it('offers to trim the later stop with the fewest birds still needed', () => {
@@ -112,16 +119,6 @@ describe('the route of the day', () => {
   it('links directions in Google and Apple Maps', () => {
     expect(googleDirections({ lat: 31.4, lng: -110.3 })).toBe('https://www.google.com/maps/dir/?api=1&destination=31.4,-110.3&travelmode=driving')
     expect(appleDirections({ lat: 31.4, lng: -110.3 })).toBe('https://maps.apple.com/?daddr=31.4,-110.3&dirflg=d')
-  })
-})
-
-describe('progress on this phone', () => {
-  it('is kept per event, and survives junk', () => {
-    writeProgress(2, { at: 1, arrivedAt: '2026-11-10T14:00:00Z' })
-    expect(readProgress(2)).toEqual({ at: 1, arrivedAt: '2026-11-10T14:00:00Z' })
-    expect(readProgress(3)).toEqual({})
-    localStorage.setItem('bird-alert:event-day:2', '{nope')
-    expect(readProgress(2)).toEqual({})
   })
 })
 

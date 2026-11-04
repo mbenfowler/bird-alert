@@ -176,6 +176,9 @@ export const postEventTallyUndo = (id: Id, code: string) => api<GroupEvent>('/sa
 /** "On my eBird checklist" for one bird on the tally, and taking it back: the caller's own. */
 export const postEventTallyMark = (id: Id, tallyId: Id) => api<GroupEvent>('/saved', { method: 'POST', params: { kind: 'event-tally-mark', id: String(id) }, body: { tally_id: tallyId }, timeoutMs: 20_000 })
 export const deleteEventTallyMark = (id: Id, tallyId: Id) => api<GroupEvent>('/saved', { method: 'DELETE', params: { kind: 'event-tally-mark', id: String(id), tally_id: String(tallyId) }, timeoutMs: 20_000 })
+/** "We're here": where the group is on its route (stop -1: the meeting point; null: not started), as tapped at `at`. The latest tap wins on the server. */
+export const postEventRoutePosition = (id: Id, position: { stop: number | null; at: string }) =>
+  api<unknown>('/saved', { method: 'POST', params: { kind: 'event-route-position', id: String(id) }, body: position, timeoutMs: 20_000 })
 /** Every bird put on the tally, removed ones too, in the order seen. */
 export const getEventLog = (id: Id) => {
     const locale = nameLocale()

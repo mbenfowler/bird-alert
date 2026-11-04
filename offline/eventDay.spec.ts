@@ -104,8 +104,7 @@ test('stop mode: the timer against the stay, time to go, and how far behind the 
   await dayApi(context)
   await setClock(page, at('12:30')) // 5:30 AM
   await page.goto('/events/2')
-  await page.getByTestId('meeting-time').fill('05:30')
-  // Planned from 5:30: Ramsey 5:50–6:35 (before civil dawn: owling), Carr 6:50–7:20 …
+  // Planned from the group's meeting time (5:30, saved with the meeting point): Ramsey 5:50–6:35 (before civil dawn: owling), Carr 6:50–7:20 …
   const rows = page.getByTestId('day-stops').getByTestId('day-stop')
   await expect(rows.nth(0).getByTestId('planned-time')).toHaveText('5:50 AM–6:35 AM')
   await expect(rows.nth(0).getByTestId('owl')).toHaveText('🦉 before dawn')
@@ -117,6 +116,7 @@ test('stop mode: the timer against the stay, time to go, and how far behind the 
   await setClock(page, at('12:52'))
   await page.getByTestId('were-here').click()
   await expect(page.getByTestId('stop-now')).toContainText('Ramsey Canyon Preserve')
+  await expect(page.getByTestId('group-position')).toHaveText('Now at Ramsey Canyon Preserve · you, 5:52 AM')
   await setClock(page, at('13:30')) // 6:30 AM
   await expect(page.getByTestId('stop-timer')).toHaveText('38 of 45 min')
   await expect(page.getByTestId('time-to-go')).toHaveCount(0)
@@ -125,9 +125,9 @@ test('stop mode: the timer against the stay, time to go, and how far behind the 
   await expect(page.getByTestId('time-to-go')).toHaveText('Time to head to Carr Canyon')
   await expect(page.getByTestId('schedule-status')).toHaveText('17 min behind · trim Carr Canyon?')
 
-  // Kept on this phone: a reload (offline) keeps the stop and the timer.
+  // Shared through the group's route and saved with it: a reload with no signal keeps the stop and the timer.
   await appSaved(page)
-  await persisted(page, '"event-route-plan"')
+  await persisted(page, '"position":{"stop":0')
   await goOffline(context)
   await page.reload()
   await setClock(page, at('13:52'))
@@ -273,4 +273,59 @@ test('with location allowed, an add carries where it was seen, to 3 decimals', a
   await expect.poll(() => api.posts.length, { timeout: 10_000 }).toBe(1)
   expect(api.posts[0]).toMatchObject({ species_code: 'heptan', lat: 31.447, lng: -110.307 })
   expect(api.posts[0]!.observed_at).toMatch(/^\d{4}-\d{2}-\d{2}T/)
+})
+
+test('the shared position shows another member\'s tap, and follows it on refresh', async ({ page, context }) => {
+  const api = await dayApi(context)
+  api.position = { stop: 1, at: at('13:05').toISOString(), by_name: 'Sam', by_you: false }
+  await setClock(page, at('13:20'))
+  await page.goto('/events/2')
+  await expect(page.getByTestId('group-position')).toHaveText('Now at Carr Canyon · Sam, 6:05 AM')
+  await expect(page.getByTestId('stop-now')).toContainText('Carr Canyon')
+  await expect(page.getByTestId('stop-timer')).toHaveText('15 of 30 min')
+  // Sam moves on; waking the phone picks it up.
+  api.position = { stop: 2, at: at('13:25').toISOString(), by_name: 'Sam', by_you: false }
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')))
+  await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')))
+  await expect(page.getByTestId('group-position')).toHaveText('Now at Miller Canyon · Sam, 6:25 AM', { timeout: 35_000 })
+})
+
+test('a tap with no signal waits, survives a reload, and is sent once with its tap time', async ({ page, context }) => {
+  const api = await dayApi(context)
+  await setClock(page, at('13:00'))
+  await page.goto('/events/2')
+  await expect(page.getByTestId('start-day')).toBeVisible()
+  await appSaved(page)
+  await persisted(page, '"event-route-plan"')
+  await goOffline(context)
+  await page.getByTestId('start-day').click()
+  await expect(page.getByTestId('group-position')).toContainText('Now at Sierra Vista Walmart · you, 6:00 AM')
+  await expect(page.getByTestId('position-waiting')).toHaveText('Waiting for signal to send')
+  await persisted(page, '"event-position"')
+  await page.reload()
+  await expect(page.getByTestId('position-waiting')).toBeVisible()
+  expect(api.positionPosts).toHaveLength(0)
+  await goOnline(context)
+  await expect(page.getByTestId('position-waiting')).toHaveCount(0, { timeout: 20_000 })
+  expect(api.positionPosts).toEqual([{ stop: -1, at: at('13:00').toISOString() }])
+  await expect(page.getByTestId('group-position')).toHaveText('Now at Sierra Vista Walmart · you, 6:00 AM')
+})
+
+test('an older offline tap does not override a newer one: the server decides, and the page shows its answer', async ({ page, context }) => {
+  const api = await dayApi(context)
+  await setClock(page, at('13:30'))
+  await page.goto('/events/2')
+  await expect(page.getByTestId('start-day')).toBeVisible()
+  await appSaved(page)
+  await persisted(page, '"event-route-plan"')
+  await goOffline(context)
+  // Matt taps "Start the day" at 6:30 with no signal …
+  await page.getByTestId('start-day').click()
+  await expect(page.getByTestId('position-waiting')).toBeVisible()
+  // … while Sam, with signal, marked Miller Canyon at 6:40.
+  api.position = { stop: 2, at: at('13:40').toISOString(), by_name: 'Sam', by_you: false }
+  await goOnline(context)
+  await expect(page.getByTestId('position-waiting')).toHaveCount(0, { timeout: 20_000 })
+  expect(api.positionPosts).toHaveLength(1)
+  await expect(page.getByTestId('group-position')).toHaveText('Now at Miller Canyon · Sam, 6:40 AM')
 })

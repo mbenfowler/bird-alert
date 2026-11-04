@@ -3,7 +3,7 @@ import { QueryClient, dehydrate, hydrate, onlineManager } from '@tanstack/react-
 import { ApiError, NetworkError } from './apiCalls'
 import { isGone, isNetworkError } from './offline'
 import { persistOptions } from './queryClient'
-import { TALLY_KEY, addLiferAfterSync, cancelPendingAdd, queueTallyChange, resumeTallyChanges, setupTallySync, undoRemoval, withPending, type TallyChange } from './tallySync'
+import { TALLY_KEY, addLiferAfterSync, cancelPendingAdd, queuePosition, queueTallyChange, resumeTallyChanges, setupTallySync, undoRemoval, withPending, type TallyChange } from './tallySync'
 
 const ok = (body: unknown = {}) => new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } })
 const newClient = () => {
@@ -44,6 +44,36 @@ describe('withPending', () => {
     expect(back.map(e => [e.code, e.added_by_name])).toEqual([['eletro', 'Sam']])
     // Sent already: the server's tally lacks it, and the undo carries the entry.
     expect(withPending([], [change({ code: 'eletro', op: 'undo', entry: tally[0] })]).map(e => e.added_by_name)).toEqual(['Sam'])
+  })
+})
+
+describe('the group position', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    onlineManager.setOnline(true)
+  })
+
+  it('a tap made offline survives a reload and is sent once with the time it was tapped', async () => {
+    onlineManager.setOnline(false)
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(ok()))
+    vi.stubGlobal('fetch', fetchMock)
+    const before = newClient()
+    const tap = queuePosition(before, { id: 2, stop: 1 })
+    await settle()
+    const saved = JSON.parse(JSON.stringify(dehydrate(before, persistOptions.dehydrateOptions)))
+    expect(saved.mutations).toHaveLength(1)
+    const after = newClient()
+    after.mount()
+    hydrate(after, saved)
+    void resumeTallyChanges(after)
+    await settle()
+    expect(fetchMock).not.toHaveBeenCalled()
+    onlineManager.setOnline(true)
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+    const [url, init] = fetchMock.mock.calls[0]!
+    expect(url).toContain('kind=event-route-position')
+    expect(JSON.parse(init.body)).toEqual({ stop: 1, at: tap.at })
+    after.unmount()
   })
 })
 

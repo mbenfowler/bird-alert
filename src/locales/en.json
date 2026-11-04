@@ -1442,12 +1442,10 @@
     "weAreHere": "We’re here",
     "weAreHereAt": "We’re at {{name}}",
     "groupLast": "Last bird: {{bird}} near {{place}} ({{name}}, {{time}})",
-    "perDevice": "Where you are on the route is kept on this phone only.",
     "startOver": "Start over",
     "stopsHeading": "Stops and times",
     "meetingTime": "Meeting time",
-    "meetingHint": "Kept on this phone. Planned times count from it, in the event’s time zone.",
-    "meetingNone": "Set a meeting time (or tap Start the day) to see planned times.",
+    "meetingNone": "Set a meeting time next to the meeting point (Edit route) to see planned times.",
     "meetRow": "Meet: {{name}}",
     "plannedRange": "{{from}}–{{to}}",
     "owling": "🦉 before dawn",
@@ -1456,7 +1454,8 @@
     "part": "Part {{n}}: {{stops}}",
     "partFromMeet": "meeting point to stop {{to}}",
     "partStops": "stops {{from}} to {{to}}",
-    "partsWhy": "Google Maps on a phone takes at most 3 stops in between, so the route opens in parts."
+    "partsWhy": "Google Maps on a phone takes at most 3 stops in between, so the route opens in parts.",
+    "positionAt": "Now at {{place}} · {{name}}, {{time}}"
   },
   "getReady": {
     "heading": "Get ready for offline",

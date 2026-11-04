@@ -1,4 +1,4 @@
-import type { EventLogEntry, EventRoute, EventRoutePlan, EventTallyEntry, Id } from '../../types'
+import type { EventLogEntry, EventRoute, EventRoutePlan, EventTallyEntry } from '../../types'
 
 /**
  * The day itself, worked out on the phone so it all holds with no signal: the route the group is
@@ -125,43 +125,37 @@ export const plannedTimes = (stops: Pick<DayStop, 'legMin' | 'stayMin'>[], start
   })
 }
 
-// ---- where the group is (kept on this phone) ----
+// ---- where the group is (shared through the group's route) ----
 
+/** Where the day stands, as dayState reads it. */
 export interface DayProgress {
-  /** The meeting time on the day, '05:30' in the event's zone, as set on this phone. */
-  meetAt?: string | null
-  /** "Start the day" was tapped. */
+  /** "Start the day" was tapped (or the first "We're here"). */
   startedAt?: string | null
   /** The stop the group is at (0-based), once "We're here" was tapped there. */
   at?: number | null
   arrivedAt?: string | null
 }
 
-const progressKey = (id: Id) => `bird-alert:event-day:${id}`
-
-export const readProgress = (id: Id): DayProgress => {
-  try {
-    const value = JSON.parse(localStorage.getItem(progressKey(id)) ?? 'null') as unknown
-    return value && typeof value === 'object' ? value as DayProgress : {}
-  } catch { return {} }
+/**
+ * The group's shared position as progress: stop -1 is the meeting point (the day has started, the
+ * group is on its way to stop 1), a stop is "we're here" since `at`, and none is not started.
+ */
+export const progressFrom = (position: { stop: number | null; at: string } | null | undefined): DayProgress => {
+  if (!position || position.stop === null || !Number.isFinite(position.stop)) return {}
+  if (position.stop < 0) return { startedAt: position.at, at: null, arrivedAt: null }
+  return { startedAt: position.at, at: position.stop, arrivedAt: position.at }
 }
 
-export const writeProgress = (id: Id, progress: DayProgress) => {
-  try { localStorage.setItem(progressKey(id), JSON.stringify(progress)) } catch { /* private mode: it lasts the visit */ }
-}
-
-/** Signing out forgets every event's progress (and the get-ready record) on this phone. */
+/** Signing out forgets what this phone kept for events: the get-ready record (and progress from before positions were shared). */
 export const clearDayProgress = () => {
   try {
     for (const key of Object.keys(localStorage)) if (key.startsWith('bird-alert:event-day:') || key.startsWith('bird-alert:event-ready:')) localStorage.removeItem(key)
   } catch { /* nothing kept */ }
 }
 
-/** The day's clock starts at the meeting time when one is set, else when "Start the day" was tapped. */
-export const scheduleStart = (progress: DayProgress, day: string, timeZone: string | undefined) => {
-  if (progress.meetAt && /^\d{2}:\d{2}$/.test(progress.meetAt)) return zonedInstant(day, progress.meetAt, timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone)
-  return progress.startedAt ? new Date(progress.startedAt) : null
-}
+/** The day's clock starts at the group's meeting time ('05:30' on the event's day, in its zone); none without one. */
+export const scheduleStart = (meetAt: string | null | undefined, day: string, timeZone: string | undefined) =>
+  meetAt && /^\d{2}:\d{2}$/.test(meetAt) ? zonedInstant(day, meetAt, timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone) : null
 
 export interface DayState {
   /** Not started; started and on the way to `next`; or at stop `at`. */

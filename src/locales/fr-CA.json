@@ -1579,12 +1579,10 @@
     "weAreHere": "On est arrivés",
     "weAreHereAt": "On est à {{name}}",
     "groupLast": "Dernier oiseau : {{bird}} près de {{place}} ({{name}}, {{time}})",
-    "perDevice": "L’endroit où vous êtes sur le trajet reste sur ce téléphone seulement.",
     "startOver": "Recommencer",
     "stopsHeading": "Arrêts et horaires",
     "meetingTime": "Heure du rendez-vous",
-    "meetingHint": "Gardée sur ce téléphone. Les heures prévues partent d’elle, dans le fuseau horaire de l’événement.",
-    "meetingNone": "Indique l’heure du rendez-vous (ou touche Commencer la journée) pour voir les heures prévues.",
+    "meetingNone": "Indique l’heure du rendez-vous à côté du point de rendez-vous (Modifier le trajet) pour voir les heures prévues.",
     "meetRow": "Rendez-vous : {{name}}",
     "plannedRange": "{{from}}–{{to}}",
     "owling": "🦉 avant l’aube",
@@ -1593,7 +1591,8 @@
     "part": "Partie {{n}} : {{stops}}",
     "partFromMeet": "du rendez-vous à l’arrêt {{to}}",
     "partStops": "arrêts {{from}} à {{to}}",
-    "partsWhy": "Google Maps sur un téléphone accepte au plus 3 arrêts intermédiaires, alors le trajet s’ouvre en parties."
+    "partsWhy": "Google Maps sur un téléphone accepte au plus 3 arrêts intermédiaires, alors le trajet s’ouvre en parties.",
+    "positionAt": "Maintenant à {{place}} · {{name}}, {{time}}"
   },
   "getReady": {
     "heading": "Se préparer pour le hors-ligne",

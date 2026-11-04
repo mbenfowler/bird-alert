@@ -43,6 +43,8 @@ export interface RouteEditorProps {
   stays?: { of: (i: number) => Stay; onChange: (i: number, minutes: number | null) => void }
   /** How a drive between stops reads, when the page says it differently. */
   legLabel?: (leg: NonNullable<Leg>) => string
+  /** When the day starts at the start ('05:30', the page's own clock), set under it while editing. Optional: /go has none. */
+  startTime?: { value: string | null; onChange: (time: string | null) => void; label: string }
 }
 
 const legText = (leg: Leg, unit: DistanceUnit) => leg ? t('route.leg', { minutes: leg.minutes, distance: shortDistance(leg.miles, unit) }) : t('route.legUnknown')
@@ -53,7 +55,7 @@ const legText = (leg: Leg, unit: DistanceUnit) => leg ? t('route.leg', { minutes
  * the shortest order, set where the day starts, and go back to the suggestion. Shared by the
  * morning route on Where to go and an event's route.
  */
-const RouteEditor = ({ state, stops, start, arriving, editing, describe, suggestions, suggestionsLabel, preview = null, between, custom, onStops, onStart, onReset, onDone, onStopClick, resetLabel, startLabel, startEmpty, stays, legLabel }: RouteEditorProps) => {
+const RouteEditor = ({ state, stops, start, arriving, editing, describe, suggestions, suggestionsLabel, preview = null, between, custom, onStops, onStart, onReset, onDone, onStopClick, resetLabel, startLabel, startEmpty, stays, legLabel, startTime }: RouteEditorProps) => {
   const unit = useDistanceUnit()
   const [settingStart, setSettingStart] = useState(false)
   const [locating, setLocating] = useState<'idle' | 'busy' | 'failed'>('idle')
@@ -126,6 +128,12 @@ const RouteEditor = ({ state, stops, start, arriving, editing, describe, suggest
           {editing && !settingStart && <button type='button' className='go__link-button' onClick={() => setSettingStart(true)}>{start ? t('common.change') : t('route.set')}</button>}
           {editing && start && !settingStart && <button type='button' className='go__icon-button' aria-label={t('route.clearStart')} onClick={() => onStart(null)}><CloseIcon /></button>}
         </div>
+      )}
+      {editing && start && startTime && !settingStart && (
+        <label className='go__start-time'>
+          <span className='go__start-label'>{startTime.label}</span>
+          <input type='time' value={startTime.value ?? ''} data-testid='meeting-time' onChange={(e) => startTime.onChange(e.target.value || null)} />
+        </label>
       )}
       {editing && settingStart && (
         <div className='go__start-picker'>

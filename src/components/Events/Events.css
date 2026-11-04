@@ -975,3 +975,26 @@ a.event-scouting__bird:hover {
   flex-wrap: wrap;
   font-size: 0.85rem;
 }
+
+.event-day__position {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 0;
+  font-weight: 700;
+}
+
+.event-day__waiting {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.event-day__waiting svg {
+  width: 14px;
+  height: 14px;
+}

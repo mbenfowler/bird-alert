@@ -471,7 +471,7 @@ export const useEventRouteQuery = (id: Id, enabled: boolean) =>
  * The group's saved route, while the route panel is open: fresh on focus and each minute, so
  * everyone sees the same one, except while this viewer is mid-edit (`quiet`).
  */
-export const useEventRoutePlanQuery = (id: Id, enabled: boolean, quiet: boolean) =>
+export const useEventRoutePlanQuery = (id: Id, enabled: boolean, quiet: boolean, live = false) =>
   useQuery({
     queryKey: ['event-route-plan', id] as const,
     queryFn: () => getEventRoutePlan(id),
@@ -480,7 +480,8 @@ export const useEventRoutePlanQuery = (id: Id, enabled: boolean, quiet: boolean)
     gcTime: WEEK,
     meta: { persist: true, offline: true },
     refetchOnWindowFocus: !quiet,
-    refetchInterval: enabled && !quiet ? 60 * 1000 : false
+    // On the day it carries where the group is, so it follows as closely as the tally.
+    refetchInterval: enabled && !quiet ? (live ? 30 * 1000 : 60 * 1000) : false
   })
 
 /**

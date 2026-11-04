@@ -584,8 +584,8 @@ export interface EventView {
 
 /** The group's own route for an event, kept on the event so every member sees and edits the same one. */
 export interface EventRoutePlan {
-  /** The meeting point. */
-  start: { name: string; lat: number; lng: number } | null
+  /** The meeting point, and when the group meets there ('05:30', 24 h, the event's local time). */
+  start: { name: string; lat: number; lng: number; time?: string | null } | null
   /** null follows the suggestion. */
   stops: RoutePlanStop[] | null
   version: number
@@ -598,6 +598,18 @@ export interface EventRoutePlan {
   totals?: { drive_min: number | null; stay_min: number; total_min: number }
   /** Drive times came from the road router. */
   routed?: boolean
+  /** Where the group is: the last "We're here" anyone tapped (stop -1: the meeting point), the latest tap winning. */
+  position?: RoutePosition | null
+}
+
+/** The group's place on its route, shared: whoever tapped last, and when. */
+export interface RoutePosition {
+  /** 0-based in the saved stops; -1 is the meeting point. */
+  stop: number
+  /** When it was tapped. */
+  at: string
+  by_name?: string | null
+  by_you?: boolean
 }
 
 /** A stop on the group's route. */

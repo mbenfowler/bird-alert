@@ -1,6 +1,6 @@
 import { useMutationState, type Mutation, type QueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
-import { deleteEventTally, deleteEventTallyMark, errorMessage, postEventTally, postEventTallyMark, postEventTallyUndo, postSeenBird } from './apiCalls'
+import { deleteEventTally, deleteEventTallyMark, errorMessage, postEventRoutePosition, postEventTally, postEventTallyMark, postEventTallyUndo, postSeenBird } from './apiCalls'
 import { isNetworkError, isTransient } from './offline'
 import { queryKeys } from './hooks/queries'
 import type { EventTallyEntry, GroupEvent, Id } from './types'
@@ -110,6 +110,9 @@ const dropLifer = (clientId: string) => { void takeLifer(clientId) }
 
 const isTallyChange = (mutation: Mutation<unknown, Error, unknown, unknown>) =>
   mutation.options.mutationKey?.[0] === TALLY_KEY[0] && mutation.state.status === 'pending'
+/** A tally change or a position tap still to be sent. */
+const isQueued = (mutation: Mutation<unknown, Error, unknown, unknown>) =>
+  (mutation.options.mutationKey?.[0] === TALLY_KEY[0] || mutation.options.mutationKey?.[0] === POSITION_KEY[0]) && mutation.state.status === 'pending'
 
 const pendingMutation = (queryClient: QueryClient, clientId: string) =>
   queryClient.getMutationCache().getAll().find(m => isTallyChange(m) && (m.state.variables as TallyChange | undefined)?.clientId === clientId)
@@ -141,6 +144,7 @@ const applyToCache = (queryClient: QueryClient, change: TallyChange, answer?: un
 
 /** Teaches the client how to send a tally change, so one restored after a reload can be sent too. Called once, at start-up. */
 export const setupTallySync = (queryClient: QueryClient) => {
+  setupPositionSync(queryClient)
   queryClient.setMutationDefaults(TALLY_KEY, {
     mutationFn: async (change: TallyChange) => {
       if (cancelled.has(change.clientId)) return { sent: false }
@@ -250,5 +254,47 @@ export const addLiferAfterSync = (queryClient: QueryClient, clientId: string, co
  * wait for the network). Called once the persisted cache is back.
  */
 export const resumeTallyChanges = (queryClient: QueryClient) => Promise.all(
-  queryClient.getMutationCache().getAll().filter(isTallyChange).map(m => m.continue().catch(() => undefined))
+  queryClient.getMutationCache().getAll().filter(isQueued).map(m => m.continue().catch(() => undefined))
 )
+
+/**
+ * "We're here", "Start the day" and "Start over": where the group is on its route, shared through
+ * the group's route (event-route-plan's `position`). Each tap is queued like a tally change: kept
+ * through a reload, tried again until it gets through, and sent with the time it was tapped, so the
+ * server keeps whichever tap was latest, not whichever arrived last.
+ */
+export const POSITION_KEY = ['event-position'] as const
+
+export interface PositionChange {
+  id: Id
+  /** 0-based stop; -1 the meeting point; null not started (Start over). */
+  stop: number | null
+  at: string
+  clientId: string
+}
+
+const setupPositionSync = (queryClient: QueryClient) => {
+  queryClient.setMutationDefaults(POSITION_KEY, {
+    mutationFn: (change: PositionChange) => postEventRoutePosition(change.id, { stop: change.stop, at: change.at }),
+    scope: { id: 'event-position' },
+    retry: (failures, error) => isNetworkError(error) || (isTransient(error) && failures < 5),
+    retryDelay: (attempt) => Math.min(2000 * 2 ** attempt, 60_000),
+    onError: (error: unknown) => { toast.error(errorMessage(error), { position: 'bottom-center' }) },
+    // The server decides (the latest tap wins): read its answer back.
+    onSettled: (_data: unknown, _error: unknown, change: PositionChange) => queryClient.invalidateQueries({ queryKey: ['event-route-plan', change.id] })
+  })
+}
+
+/** Queues a position tap for the group; sent as soon as it can be. */
+export const queuePosition = (queryClient: QueryClient, change: Omit<PositionChange, 'clientId' | 'at'> & Partial<Pick<PositionChange, 'at'>>) => {
+  const full: PositionChange = { clientId: newClientId(), at: new Date().toISOString(), ...change }
+  void queryClient.getMutationCache().build(queryClient, { mutationKey: POSITION_KEY }).execute(full).catch(() => undefined)
+  return full
+}
+
+/** This phone's latest position tap for the event that hasn't reached the server yet, if any. */
+export const usePendingPosition = (id: Id | undefined): PositionChange | null => {
+  const pending = useMutationState({ filters: { mutationKey: POSITION_KEY, status: 'pending' }, select: (m) => m.state.variables as PositionChange })
+    .filter(change => change && id !== undefined && String(change.id) === String(id))
+  return pending.length ? pending[pending.length - 1]! : null
+}

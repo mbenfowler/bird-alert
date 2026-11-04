@@ -1562,12 +1562,10 @@
     "weAreHere": "Ya llegamos",
     "weAreHereAt": "Estamos en {{name}}",
     "groupLast": "Última ave: {{bird}} cerca de {{place}} ({{name}}, {{time}})",
-    "perDevice": "Dónde van en la ruta se guarda solo en este teléfono.",
     "startOver": "Empezar de nuevo",
     "stopsHeading": "Paradas y horarios",
     "meetingTime": "Hora de encuentro",
-    "meetingHint": "Se guarda en este teléfono. Los horarios previstos cuentan desde ella, en la zona horaria del evento.",
-    "meetingNone": "Pon una hora de encuentro (o toca Empezar el día) para ver los horarios previstos.",
+    "meetingNone": "Pon una hora de encuentro junto al punto de encuentro (Editar ruta) para ver los horarios previstos.",
     "meetRow": "Encuentro: {{name}}",
     "plannedRange": "{{from}}–{{to}}",
     "owling": "🦉 antes del alba",
@@ -1576,7 +1574,8 @@
     "part": "Parte {{n}}: {{stops}}",
     "partFromMeet": "del punto de encuentro a la parada {{to}}",
     "partStops": "paradas {{from}} a {{to}}",
-    "partsWhy": "Google Maps en el teléfono acepta como máximo 3 paradas intermedias, así que la ruta se abre por partes."
+    "partsWhy": "Google Maps en el teléfono acepta como máximo 3 paradas intermedias, así que la ruta se abre por partes.",
+    "positionAt": "Ahora en {{place}} · {{name}}, {{time}}"
   },
   "getReady": {
     "heading": "Prepárate para estar sin señal",

@@ -785,3 +785,19 @@
     font-size: 0.8rem;
     white-space: nowrap;
 }
+
+/* The meeting time, under the meeting point while editing an event's route. */
+.go__start-time {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 10px 6px 46px;
+}
+
+.go__start-time input {
+    min-height: 36px;
+    padding: 0 8px;
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    font: inherit;
+}

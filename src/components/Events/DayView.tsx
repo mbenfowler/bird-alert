@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import { LoadingState } from '../Loading/Loading'
+import { ClockIcon } from '../Icons/Icons'
 import { clockTimeIn, t } from '../../i18n'
 import { duration } from '../../duration'
 import { shortDistance, useDistanceUnit } from '../../distance'
@@ -85,11 +86,13 @@ const Directions = ({ to }: { to: { name: string; lat: number; lng: number } }) 
  */
 const DayView = ({ event, day, nameOf }: { event: GroupEvent; day: EventDay; nameOf: NameOf }) => {
   const unit = useDistanceUnit()
-  const { stops, state, progress, setProgress, planned, timeZone } = day
-  const now = () => new Date().toISOString()
-  const arrive = (index: number) => setProgress({ ...progress, startedAt: progress.startedAt ?? now(), at: index, arrivedAt: now() })
-  const start = () => (day.route?.start ? setProgress({ ...progress, startedAt: now(), at: null, arrivedAt: null }) : arrive(0))
-  const reset = () => setProgress({ meetAt: progress.meetAt ?? null })
+  const { stops, state, planned, timeZone, position } = day
+  const arrive = (index: number) => day.setPosition(index)
+  const start = () => day.setPosition(day.route?.start ? -1 : 0)
+  const reset = () => day.setPosition(null)
+  const where = position && position.stop !== null
+    ? position.stop < 0 ? day.route?.start?.name ?? null : stops[position.stop]?.name ?? null
+    : null
   const neededAt = (stop: DayStop) => stillNeededAt(stop, day.targets, day.tallyCodes).length
   const current = state.at !== null ? stops[state.at] : null
   const next = state.next !== null ? stops[state.next] : null
@@ -119,6 +122,12 @@ const DayView = ({ event, day, nameOf }: { event: GroupEvent; day: EventDay; nam
       {day.route && !stops.length && <p className='notification__hint'>{t('eventDay.noRoute')}</p>}
       {stops.length > 0 && (
         <>
+          {position && where && (
+            <p className='event-day__position' data-testid='group-position'>
+              {t('eventDay.positionAt', { place: where, name: position.by_you ? t('events.youLower') : position.by_name || t('eventLog.someone'), time: clockTimeIn(new Date(position.at), timeZone) })}
+              {position.pending && <span className='event-day__waiting' data-testid='position-waiting'><ClockIcon />{t('offline.waitingOne')}</span>}
+            </p>
+          )}
           <ScheduleLine day={day} neededAt={neededAt} />
           {current && (
             <div className='event-day__stop event-day__stop--now' data-testid='stop-now'>
@@ -162,8 +171,7 @@ const DayView = ({ event, day, nameOf }: { event: GroupEvent; day: EventDay; nam
             </p>
           )}
           <p className='notification__hint event-day__device'>
-            {t('eventDay.perDevice')}
-            {state.phase !== 'before' && <> <button type='button' className='link-button link-text' onClick={reset}>{t('eventDay.startOver')}</button></>}
+            {state.phase !== 'before' && <button type='button' className='link-button link-text' onClick={reset} data-testid='start-over'>{t('eventDay.startOver')}</button>}
           </p>
         </>
       )}
@@ -174,7 +182,7 @@ const DayView = ({ event, day, nameOf }: { event: GroupEvent; day: EventDay; nam
 /** "Meeting point · 5:30 AM" then each stop with its drive, its planned times, a 🦉 before civil dawn, and Directions. */
 export const DayStops = ({ day, onDay }: { day: EventDay; onDay: boolean }) => {
   const unit = useDistanceUnit()
-  const { stops, planned, progress, setProgress, timeZone, state } = day
+  const { stops, planned, timeZone, state } = day
   if (!day.route || !stops.length) return null
   const start = day.route.start
   const dawn = day.sun?.civilDawn ?? null
@@ -184,17 +192,13 @@ export const DayStops = ({ day, onDay }: { day: EventDay; onDay: boolean }) => {
   return (
     <div className='event-page__section event-day__plan' data-testid='day-stops'>
       <h2 className='place__heading'>{t('eventDay.stopsHeading')}</h2>
-      <label className='event-day__meet'>
-        <span className='place-form__label'>{t('eventDay.meetingTime')}</span>
-        <input type='time' value={progress.meetAt ?? ''} data-testid='meeting-time' onChange={(e) => setProgress({ ...progress, meetAt: e.target.value || null })} />
-      </label>
-      <p className='notification__hint'>{startAt ? t('eventDay.meetingHint') : t('eventDay.meetingNone')}</p>
+      {!startAt && <p className='notification__hint'>{t('eventDay.meetingNone')}</p>}
       <ol className='event-route__stops event-day__stops'>
         {start && (
           <li className='event-route__stop event-day__row'>
             <p className='event-scouting__place-head'>
               <strong className='event-scouting__place-name'>{t('eventDay.meetRow', { name: start.name })}</strong>
-              {startAt && <span className='event-day__meta'>{clockTimeIn(startAt, timeZone)}</span>}
+              {startAt && <span className='event-day__meta' data-testid='meet-time'>{clockTimeIn(startAt, timeZone)}</span>}
             </p>
           </li>
         )}
@@ -221,7 +225,7 @@ export const DayStops = ({ day, onDay }: { day: EventDay; onDay: boolean }) => {
                 {isNext && <span className='place__badge place__badge--quiet'>{t('eventDay.next')}</span>}
               </p>
               {onDay && !isNow && (
-                <button type='button' className='link-button link-text event-day__here-link' onClick={() => setProgress({ ...progress, startedAt: progress.startedAt ?? new Date().toISOString(), at: stop.index, arrivedAt: new Date().toISOString() })}>
+                <button type='button' className='link-button link-text event-day__here-link' onClick={() => day.setPosition(stop.index)}>
                   {t('eventDay.weAreHereAt', { name: stop.name })}
                 </button>
               )}
