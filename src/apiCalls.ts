@@ -1,7 +1,7 @@
 import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, Place, Province, Area,SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, BestHotspots, SpeciesHotspots, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share, Passkey, Chase, PersistenceClass, Id, SavedPlace, PlaceInput, PlaceSuggestion, LifersScope, GroupEvent, EventInput, EventPreview, EventView, EventScouting, EventRoute, EventRoutePlan } from './types'
 import { arrival } from './arrival'
 import { isStandalone } from './install'
-import { nameLocale, signupLocale } from './i18n'
+import { nameLocale, signupLocale, t } from './i18n'
 
 // Every request goes to the same-origin `/api` prefix. In development Vite proxies it to the
 // backend (vite.config.ts); in production Vercel rewrites it (vercel.json). The backend holds
@@ -20,8 +20,20 @@ export class ApiError extends Error {
     }
 }
 
+/**
+ * The request never got an answer: no signal, one bar that drops it, or no answer in time. The
+ * browser's own words for this ("Load failed", "Failed to fetch") are never shown; see src/offline.ts.
+ */
+export class NetworkError extends Error {
+    constructor(cause?: unknown) {
+        super(cause instanceof Error ? cause.message : 'Network request failed')
+        this.name = 'NetworkError'
+    }
+}
+
+/** What to tell the person: the server's message, or for a dropped connection that there's no signal. */
 export const errorMessage = (error: unknown): string =>
-    error instanceof Error ? error.message : String(error)
+    error instanceof NetworkError ? t('offline.noSignal') : error instanceof Error ? error.message : String(error)
 
 const parseResponse = async <T,>(res: Response): Promise<T> => {
     if (res.status === 204) return null as T
@@ -42,6 +54,8 @@ interface RequestOptions {
     body?: unknown
     params?: Record<string, string>
     headers?: Record<string, string>
+    /** Give up after this long and count it as no signal (writes that are retried, so they never hang). */
+    timeoutMs?: number
 }
 
 // Bird names come back in the person's language. The eBird and bird lists are cached by address,
@@ -50,7 +64,12 @@ interface RequestOptions {
 const CACHED_BY_URL = /^\/(ebird|birds)(\/|$)/
 const APP_HEADER = 'X-Bird-Alert'
 
-const api = <T,>(path: string, { method = 'GET', body, params, headers }: RequestOptions = {}): Promise<T> => {
+const timeoutSignal = (ms?: number) => {
+    if (!ms || typeof AbortSignal === 'undefined' || typeof AbortSignal.timeout !== 'function') return undefined
+    return AbortSignal.timeout(ms)
+}
+
+const api = <T,>(path: string, { method = 'GET', body, params, headers, timeoutMs }: RequestOptions = {}): Promise<T> => {
     const locale = nameLocale()
     const byUrl = Boolean(locale) && CACHED_BY_URL.test(path)
     const allParams = byUrl ? { ...params, locale: locale! } : params
@@ -62,8 +81,9 @@ const api = <T,>(path: string, { method = 'GET', body, params, headers }: Reques
         // X-Bird-Alert marks the request as the app's: the server hands eBird's data only to the app,
         // as eBird's terms ask, and a page on another site can't send this header.
         headers: { [APP_HEADER]: '1', ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}), ...allHeaders },
-        body: body !== undefined ? JSON.stringify(body) : undefined
-    }).then(res => parseResponse<T>(res))
+        body: body !== undefined ? JSON.stringify(body) : undefined,
+        signal: timeoutSignal(timeoutMs)
+    }).then(res => parseResponse<T>(res), (error: unknown) => { throw new NetworkError(error) })
 }
 
 // ---- auth ----
@@ -71,7 +91,7 @@ const api = <T,>(path: string, { method = 'GET', body, params, headers }: Reques
 // on how many people install it (the step iPhones need for push alerts).
 /** The languages bird names come in: [{ locale, name }]. */
 export const getNameLocales = () => api<{ locale: string; name: string }[]>('/ebird/name-locales')
-export const getCurrentUser = () => api<User>('/auth/me', { headers: { 'X-App-Mode': isStandalone() ? 'app' : 'browser' } })
+export const getCurrentUser = () => api<User>('/auth/me', { headers: { 'X-App-Mode': isStandalone() ? 'app' : 'browser' }, timeoutMs: 15_000 })
 export const getUserExists = (email: string) => api<{ userExists: boolean }>('/auth/exists', { params: { email } })
 export const login = (email: string, password: string) => api<User>('/auth/login', { method: 'POST', body: { email, password } })
 export const signup = (email: string, password: string, place?: { state: string; location: string } | null) =>
@@ -136,8 +156,13 @@ export const deleteEvent = (id: Id) => api<null>('/saved', { method: 'DELETE', p
 export const leaveEvent = (id: Id) => api<null>('/saved', { method: 'POST', params: { kind: 'event-leave', id: String(id) }, body: {} })
 export const rotateEventInvite = (id: Id) => api<GroupEvent>('/saved', { method: 'POST', params: { kind: 'event-invite-rotate', id: String(id) }, body: {} })
 export const putEventTargets = (id: Id, codes: string[]) => api<GroupEvent>('/saved', { method: 'PUT', params: { kind: 'event-targets', id: String(id) }, body: { codes } })
-export const postEventTally = (id: Id, code: string) => api<GroupEvent>('/saved', { method: 'POST', params: { kind: 'event-tally', id: String(id) }, body: { species_code: code } })
-export const deleteEventTally = (id: Id, code: string) => api<null>('/saved', { method: 'DELETE', params: { kind: 'event-tally', id: String(id), code } })
+/**
+ * `client_id` names this one add, so a retry after a lost answer is the same bird (a repeat is a
+ * no-op on the server); `observed_at` is when it was tapped, not when it finally got through.
+ */
+export const postEventTally = (id: Id, code: string, add: { clientId?: string; observedAt?: string } = {}) =>
+  api<GroupEvent>('/saved', { method: 'POST', params: { kind: 'event-tally', id: String(id) }, body: { species_code: code, ...(add.clientId ? { client_id: add.clientId } : {}), ...(add.observedAt ? { observed_at: add.observedAt } : {}) }, timeoutMs: 20_000 })
+export const deleteEventTally = (id: Id, code: string) => api<null>('/saved', { method: 'DELETE', params: { kind: 'event-tally', id: String(id), code }, timeoutMs: 20_000 })
 export const joinEvent = (token: string, displayName: string) => api<GroupEvent>('/saved', { method: 'POST', params: { kind: 'event-join' }, body: { token, display_name: displayName } })
 export const getEventPreview = (token: string) => api<EventPreview>('/saved', { params: { kind: 'event-preview', token } })
 // Bird names here follow ?locale= (the header alone isn't read for this one).

@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router'
 import { toast } from 'react-toastify'
 import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
+import { isNetworkError } from '../../offline'
 import { useEventPreviewQuery, useSessionQuery } from '../../hooks/queries'
 import { useJoinEventMutation } from '../../hooks/mutations'
 import { dateRange, t } from '../../i18n'
@@ -19,7 +20,8 @@ const JoinEvent = () => {
   const { token = '' } = useParams()
   const navigate = useNavigate()
   const session = useSessionQuery()
-  const user = session.isError ? null : session.data
+  // Only a 401 (null) is logged out; no signal keeps the last known account.
+  const user = session.data
   const preview = useEventPreviewQuery(token)
   const join = useJoinEventMutation()
   const loginHere = useLoginHere()
@@ -42,9 +44,9 @@ const JoinEvent = () => {
     })
   }
 
-  if (preview.isPending || user === undefined) return <LoadingState />
+  if (preview.isPending || (user === undefined && !session.isError)) return <LoadingState />
   if (preview.isError || !preview.data) {
-    return <section className='event-page'><p className='event-page__missing'>{t('events.joinMissing')}</p></section>
+    return <section className='event-page'><p className='event-page__missing'>{isNetworkError(preview.error) ? t('offline.noSignalNothingSaved') : t('events.joinMissing')}</p></section>
   }
   const p = preview.data
   const members = typeof p.members === 'number' ? p.members : Array.isArray(p.members) ? p.members.length : null

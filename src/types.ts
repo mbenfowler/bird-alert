@@ -503,6 +503,10 @@ export interface GroupEvent {
   members: EventMember[]
   targets: EventTarget[]
   tally: EventTallyEntry[]
+  /** The event area's time zone (IANA), for anything that asks whether it's the day. */
+  timezone?: string | null
+  /** The tally takes adds until 3 AM local the morning after the last day. */
+  tally_open?: boolean
   invite_url?: string | null
   view_url?: string | null
 }

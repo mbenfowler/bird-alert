@@ -296,7 +296,11 @@ describe('Events', () => {
     cy.url().should('include', '/events/5/tally')
     cy.get('[data-testid="tally-count"]').should('contain', '0 species').and('contain', '0 of 2 targets')
     cy.contains('.event-page__section button', 'Elegant Trogon').click()
-    cy.wait('@add').its('request.body').should('deep.equal', { species_code: 'eletro' })
+    // Each add names itself (client_id), so a retry after a lost answer isn't a second bird.
+    cy.wait('@add').its('request.body').should((body) => {
+      expect(body.species_code).to.equal('eletro')
+      expect(body.client_id).to.match(/^[0-9a-f-]{36}$/)
+    })
     cy.get('[data-testid="tally-count"]').should('contain', '1 species').and('contain', '1 of 2 targets')
     cy.get('.event-tally__list li').first().should('contain', 'Elegant Trogon').and('contain', 'Matt')
     cy.get('button[aria-label="Take Elegant Trogon off the tally"]').click()

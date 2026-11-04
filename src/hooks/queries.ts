@@ -5,6 +5,7 @@ import {
   getSavedBirds, getPlaces, getPlaceSeen, getPlaceSuggestions, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase, getNameLocales, getEvents, getEventPreview, getEventView, getEventScouting, getEventRoute, getEventRoutePlan, getEventSuggestions } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
 import { nameLocale } from '../i18n'
+import { isNetworkError } from '../offline'
 import type { Id, LifersScope, PersistenceClass, User } from '../types'
 
 /** Short stable fingerprint of a code list, so a changed species list gets its own cache entry. */
@@ -59,8 +60,14 @@ export const useSessionQuery = () =>
     // open for days picks up a location or alert change made on another device (#53).
     staleTime: 15 * MINUTE,
     refetchOnWindowFocus: true,
-    retry: false
+    // Kept on this device, so the app opens signed in with no signal. Only an answer of 401 signs
+    // out (above); a dropped connection is tried again and the last known account stays meanwhile.
+    gcTime: WEEK,
+    meta: { persist: true, offline: true },
+    retry: (failures, error) => isNetworkError(error) && failures < 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10_000)
   })
+
 
 /** For views that only render behind the login gate, where a user is guaranteed. */
 export const useCurrentUser = (): User => {
@@ -412,6 +419,11 @@ export const useEventsQuery = (live = false) =>
     queryFn: getEvents,
     staleTime: live ? 0 : 60 * 1000,
     refetchInterval: live ? 30 * 1000 : false,
+    // On the day, waking the phone catches up with the group at once rather than at the next poll.
+    refetchOnWindowFocus: live,
+    // The last copy is kept on the device for the day with no signal (shown with when it was saved).
+    gcTime: WEEK,
+    meta: { persist: true, offline: true },
     select: (events) => (Array.isArray(events) ? events : [])
       .filter(event => event && typeof event.location === 'string')
       .map(event => ({ ...event, members: event.members ?? [], targets: event.targets ?? [], tally: event.tally ?? [] }))
@@ -437,6 +449,8 @@ export const useEventScoutingQuery = (id: Id | null) =>
     queryFn: () => getEventScouting(id!),
     enabled: id !== null,
     staleTime: 30 * 60 * 1000,
+    gcTime: WEEK,
+    meta: { persist: true, offline: true },
     select: (answer) => ({ ...answer, reported: Array.isArray(answer?.reported) ? answer.reported : [], unreported: Array.isArray(answer?.unreported) ? answer.unreported : [] })
   })
 
@@ -448,6 +462,8 @@ export const useEventRouteQuery = (id: Id, enabled: boolean) =>
     enabled,
     placeholderData: keepPreviousData,
     staleTime: 30 * 60 * 1000,
+    gcTime: WEEK,
+    meta: { persist: true, offline: true },
     select: (answer) => ({ ...answer, stops: Array.isArray(answer?.stops) ? answer.stops : [], extras: Array.isArray(answer?.extras) ? answer.extras : [], geometry: Array.isArray(answer?.geometry) ? answer.geometry : [] })
   })
 
@@ -461,6 +477,8 @@ export const useEventRoutePlanQuery = (id: Id, enabled: boolean, quiet: boolean)
     queryFn: () => getEventRoutePlan(id),
     enabled,
     staleTime: 0,
+    gcTime: WEEK,
+    meta: { persist: true, offline: true },
     refetchOnWindowFocus: !quiet,
     refetchInterval: enabled && !quiet ? 60 * 1000 : false
   })

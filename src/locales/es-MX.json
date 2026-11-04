@@ -934,6 +934,17 @@
     "edit": "Editar ruta",
     "share": "Compartir"
   },
+  "offline": {
+    "noSignal": "Sin señal. Mostrando lo que está guardado.",
+    "noSignalNothingSaved": "Sin señal, y esto todavía no está guardado en este teléfono. Se cargará cuando vuelvas a tener conexión.",
+    "savedAt": "Sin conexión · mostrando lo guardado a las {{time}}",
+    "waiting_one": "{{count}} por sincronizar",
+    "waiting_many": "{{count}} por sincronizar",
+    "waiting_other": "{{count}} por sincronizar",
+    "waitingOne": "Esperando señal para enviar",
+    "signInUnknown": "Sin señal. Bird Alert revisará tu sesión cuando vuelvas a tener conexión.",
+    "tryAgain": "Intentar de nuevo"
+  },
   "routeError": {
     "title": "No se pudo cargar esta página",
     "why": "Casi siempre es una falla de conexión o una actualización que acaba de salir.",

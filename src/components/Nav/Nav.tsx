@@ -12,7 +12,8 @@ const Nav = () => {
     const session = useSessionQuery()
     const user = session.data
     // Only once we know there's no session, so a logged-in person never sees "Log in" flash past.
-    const loggedOut = session.isError || session.data === null
+    // Only a 401 (null) is logged out; a check that failed for want of signal keeps the last account.
+    const loggedOut = session.data === null
     const { pathname } = useLocation()
     const loginHere = useLoginHere()
     const logoutMutation = useLogoutMutation()

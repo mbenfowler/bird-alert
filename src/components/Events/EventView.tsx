@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router'
 import { useLoginHere } from '../../returnTo'
 import { LoadingState } from '../Loading/Loading'
+import { LoadProblem, OfflineNote } from '../Offline/Offline'
 import SightingsMap from '../SightingsMap/SightingsMap'
 import { useEventViewQuery, useSessionQuery } from '../../hooks/queries'
 import { dateRange, t } from '../../i18n'
@@ -20,7 +21,8 @@ const EventView = () => {
   const session = useSessionQuery()
   const signedIn = Boolean(session.data)
   if (view.isPending) return <LoadingState />
-  if (view.isError || !view.data) return <section className='event-page'><p className='event-page__missing'>{t('events.viewMissing')}</p></section>
+  if (view.isError && !view.data) return <section className='event-page'><LoadProblem error={view.error} missing={t('events.viewMissing')} /></section>
+  if (!view.data) return <section className='event-page'><p className='event-page__missing'>{t('events.viewMissing')}</p></section>
   const v = view.data
   const tally = [...(v.tally ?? [])].sort((a, b) => b.added_at.localeCompare(a.added_at))
   // The group's route, read-only: no start (the meeting point stays with the group).
@@ -28,6 +30,7 @@ const EventView = () => {
   return (
     <article className='event-page'>
       <h1 className='fredericka event-page__title'>{v.name}</h1>
+      <OfflineNote updatedAt={view.dataUpdatedAt} error={view.error} />
       <p className='event-page__what'>
         {v.kind === 'bigday' && <span className='place__badge'>{t('events.bigDay')}</span>}
         {' '}{dateRange(v.starts_on, v.ends_on)}{v.area ? ` · ${v.area}` : ''}
