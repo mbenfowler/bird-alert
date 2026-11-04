@@ -24,7 +24,13 @@ setupTallySync(queryClient)
 // everything else is checked against the server.
 // Not awaited: the provider waits on onSuccess before showing the app, and a change waiting for
 // signal doesn't settle until it's sent.
-const restored = () => { void resumeTallyChanges(queryClient); void queryClient.resumePausedMutations() }
+// The saved account is shown at once, and checked with the server on every launch (it waits for
+// signal if there's none), as it was before it was saved.
+const restored = () => {
+  void resumeTallyChanges(queryClient)
+  void queryClient.resumePausedMutations()
+  void queryClient.invalidateQueries({ queryKey: ['session'] })
+}
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
