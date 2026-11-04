@@ -15,6 +15,28 @@ describe('arrivalFor', () => {
   })
 })
 
+describe('invites', () => {
+  it('keeps a friend\'s invite whole (?ref=invite-<code>), and ignores any other ref', () => {
+    expect(arrivalFor('https://bird-alert.vercel.app/?ref=invite-abc123', '', 1)).toEqual({ landing: 'home', invite: 'invite-abc123', at: 1 })
+    expect(arrivalFor('https://bird-alert.vercel.app/?ref=newsletter', '', 1)).toEqual({ landing: 'home', at: 1 })
+  })
+  it('an invite replaces an earlier visit kept within the 30 days; a plain later visit does not', async () => {
+    const { noteArrival, arrival } = await import('./arrival')
+    try {
+      localStorage.setItem('arrivedFrom', JSON.stringify({ landing: 'home', utm: 'fb', at: Date.now() - 86_400_000 }))
+      window.history.replaceState(null, '', '/?utm_source=x')
+      noteArrival()
+      expect(arrival()).toEqual({ landing: 'home', utm: 'fb' })
+      window.history.replaceState(null, '', '/login?ref=invite-xyz789')
+      noteArrival()
+      expect(arrival()).toEqual({ landing: 'login', invite: 'invite-xyz789' })
+    } finally {
+      localStorage.removeItem('arrivedFrom')
+      window.history.replaceState(null, '', '/')
+    }
+  })
+})
+
 describe('arrival', () => {
   it('still has this visit\'s note when the browser keeps nothing in storage (Facebook\'s in-app browser)', async () => {
     const { noteArrival, arrival } = await import('./arrival')

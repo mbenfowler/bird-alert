@@ -10,6 +10,7 @@ import type { PendingPush } from '../../types'
 const APP_BUILD = '2026-10-22.9'
 import { toast, ToastContainer } from 'react-toastify'
 import InstallNudge from '../InstallNudge/InstallNudge'
+import { InviteNudge } from '../InviteFriend/InviteFriend'
 import ConfirmNudge from '../ConfirmNudge/ConfirmNudge'
 import PushAsk from '../PushAsk/PushAsk'
 import EbirdCredit from '../EbirdCredit/EbirdCredit'
@@ -149,7 +150,8 @@ const App = () => {
       if (!path || cancelled || path === lastOpened) return
       lastOpened = path
       note('app-open', { via, target: path })
-      navigateRef.current(path)
+      // Marked as an alert's landing, so a rare bird opened from one can count as a happy moment.
+      navigateRef.current(path, { state: { fromPush: true } })
     }
     const offer = (push: LatestPush | null, via: string) => {
       if (!push || cancelled || document.visibilityState !== 'visible') return
@@ -158,7 +160,7 @@ const App = () => {
       // Once per alert, however many times it is offered.
       if (push.path !== lastAlarmed) { lastAlarmed = push.path; soundTheAlarm(push.title) }
       // On iPhone the system banner is a dead end while the app is open, so this toast is the way in; give it time.
-      toast(t('app.pushToast', { title: push.title }), { toastId: push.path, position: 'top-center', autoClose: 20000, closeOnClick: true, onClick: () => navigateRef.current(push.path) })
+      toast(t('app.pushToast', { title: push.title }), { toastId: push.path, position: 'top-center', autoClose: 20000, closeOnClick: true, onClick: () => navigateRef.current(push.path, { state: { fromPush: true } }) })
     }
     // The worker's own records and messages are instant where they work (desktop); the toast itself
     // comes only from the server, so it can never race a navigation to the same page.
@@ -272,6 +274,8 @@ const App = () => {
         {user && <InstallNudge />}
         {/* After saving a bird, on a device without alerts: a one-time ask to turn them on. */}
         {user && <PushAsk />}
+        {/* After a lifer or a rare-bird alert: a one-time, skippable "invite a birding friend". */}
+        {user && <InviteNudge />}
       </main>
     </>
   )

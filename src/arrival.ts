@@ -1,10 +1,11 @@
 /**
  * What brought a visitor in, noted on their first visit so a signup can say where it came from:
  * the referring site's name (never the full address), a ?utm_source= tag, the share link they
- * landed on, and the kind of page. Kept in this browser for 30 days, first visit wins, and sent
- * only with a signup. Storage can be unavailable (private mode); then nothing is kept.
+ * landed on, a friend's invite (?ref=invite-<code>, kept whole), and the kind of page. Kept in this
+ * browser for 30 days, first visit wins, except that a friend's invite always replaces what was kept
+ * (the friend gets the credit), and sent only with a signup. Storage can be unavailable (private mode); then nothing is kept.
  */
-export interface Arrival { ref?: string; utm?: string; share?: string; landing: 'home' | 'share-sighting' | 'share-route' | 'login' | 'other'; at: number }
+export interface Arrival { ref?: string; utm?: string; share?: string; invite?: string; landing: 'home' | 'share-sighting' | 'share-route' | 'login' | 'other'; at: number }
 
 const KEY = 'arrivedFrom'
 const KEEP_MS = 30 * 24 * 60 * 60 * 1000
@@ -22,6 +23,8 @@ export const arrivalFor = (href: string, referrer: string, now = Date.now()): Ar
   const utm = (url.searchParams.get('utm_source') || '').toLowerCase()
   if (/^[a-z0-9_-]{1,40}$/.test(utm)) out.utm = utm
   if (share) out.share = share[2]
+  const invite = url.searchParams.get('ref') || ''
+  if (/^invite-[A-Za-z0-9_-]{1,60}$/.test(invite)) out.invite = invite
   return out
 }
 
@@ -29,12 +32,12 @@ export const arrivalFor = (href: string, referrer: string, now = Date.now()): Ar
 // storage between landing and signing up, but the page itself lives on, so this still remembers.
 let thisVisit: Arrival | null = null
 
-/** Notes this visit, unless an earlier one in the last 30 days already is. */
+/** Notes this visit, unless an earlier one in the last 30 days already is; a friend's invite always is. */
 export const noteArrival = () => {
   thisVisit = arrivalFor(window.location.href, document.referrer)
   try {
     const kept = JSON.parse(localStorage.getItem(KEY) || 'null') as Arrival | null
-    if (kept && Date.now() - kept.at < KEEP_MS) return
+    if (kept && Date.now() - kept.at < KEEP_MS && !thisVisit.invite) return
     localStorage.setItem(KEY, JSON.stringify(thisVisit))
   } catch { /* storage unavailable: the in-memory note stands in */ }
 }
@@ -49,3 +52,4 @@ export const arrival = (): Omit<Arrival, 'at'> | null => {
   delete rest.at
   return rest
 }
+

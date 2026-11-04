@@ -5,6 +5,7 @@ import { useLogoutMutation } from '../../hooks/mutations'
 import './Nav.css'
 import { t } from '../../i18n'
 import { useLoginHere } from '../../returnTo'
+import { shareInvite } from '../../share'
 
 const canHover = typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches
 
@@ -61,6 +62,7 @@ const Nav = () => {
                         {canHover &&
                             <div id="settingsActions">
                                 <Link to='/settings'><p id='settingsText'>{t('nav.settings')}</p></Link>
+                                <button type='button' className='link-button' id='shareApp' onClick={() => void shareInvite()}><p>{t('nav.share')}</p></button>
                                 <button type='button' className='link-button' onClick={handleLogout} disabled={logoutMutation.isPending}><p>{t('nav.logout')}</p></button>
                             </div>}
                         <Link to='/settings' className='nav-icon nav-icon--settings' aria-label={t('nav.settings')} draggable={false}>

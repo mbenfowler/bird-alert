@@ -6,6 +6,7 @@ import Places from '../AlertCenter/Places'
 import PasskeySettings from '../PasskeySettings/PasskeySettings'
 import Feedback from '../Feedback/Feedback'
 import DeleteAccount from '../DeleteAccount/DeleteAccount'
+import { InviteRow } from '../InviteFriend/InviteFriend'
 import { useLogoutMutation } from '../../hooks/mutations'
 import { oldTripId, settingsTabFor, SETTINGS_TABS, type SettingsTab } from './settingsTab'
 import './Settings.css'
@@ -40,6 +41,7 @@ const Settings = () => {
                 <Form />
                 <LifeList />
                 <PasskeySettings />
+                <InviteRow />
             </>}
             {tab === 'alerts' && <AlertCenter />}
             {tab === 'places' && (
