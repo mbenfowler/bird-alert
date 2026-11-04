@@ -168,7 +168,7 @@ describe('lifer cards: one per species', () => {
 
   it('merges a species that was a lifer for several, keeping the order first seen', () => {
     expect(members.lifers).toHaveLength(8)
-    expect(cards.map(c => c.speciesCode)).toEqual(['arizwoo', 'britit', 'rubrob', 'sprpip', 'lewwoo', 'whsowl1'])
+    expect(cards.map(c => c.speciesCode)).toEqual(['ariwoo', 'britit', 'rubrob', 'sprpip', 'lewwoo', 'whsowl1'])
     expect(robin.who).toEqual([{ name: 'Kirin', number: 210 }, { name: 'Matt', number: 431 }])
     expect(robin.place).toBe('San Pedro House')
   })

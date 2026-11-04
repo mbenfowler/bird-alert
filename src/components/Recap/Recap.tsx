@@ -150,7 +150,14 @@ const Lifers = ({ recap, zone }: { recap: RecapData; zone: string }) => {
       node: (
         <article className='recap-lifer'>
           <div className='recap-lifer__picture' style={{ background: TINTS[i % TINTS.length] }}>
-            {img ? <img src={img} alt={t('card.photoAlt', { name: c.comName })} loading='lazy' width='320' height='240' draggable={false} /> : <Silhouette />}
+            {img
+              ? (
+                <>
+                  <img className='recap-lifer__backdrop' src={img} alt='' aria-hidden='true' loading='lazy' draggable={false} />
+                  <img className='recap-lifer__photo' src={img} alt={t('card.photoAlt', { name: c.comName })} loading='lazy' width='320' height='240' draggable={false} />
+                </>
+                )
+              : <Silhouette />}
             <span className='recap-lifer__chip'>{t('recap.liferChip')}</span>
           </div>
           <div className='recap-lifer__text'>

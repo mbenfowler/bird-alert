@@ -374,9 +374,18 @@
     display: block;
     width: 100%;
     height: 100%;
+}
+
+/* The whole photo, never cropped (a crop that suits one bird takes another's head off), over a
+   soft, blurred copy of itself that fills the rest of the frame. */
+.recap-lifer__picture .recap-lifer__photo {
+    object-fit: contain;
+}
+
+.recap-lifer__picture .recap-lifer__backdrop {
     object-fit: cover;
-    /* Any crop that's left comes off the bottom, since a bird's head is nearly always in the upper half. */
-    object-position: center 30%;
+    transform: scale(1.15);
+    filter: blur(14px) saturate(1.1) brightness(0.92);
 }
 
 .recap-lifer__chip {
