@@ -153,8 +153,8 @@ const Lifers = ({ recap, zone }: { recap: RecapData; zone: string }) => {
             {img
               ? (
                 <>
-                  <img className='recap-lifer__backdrop' src={img} alt='' aria-hidden='true' loading='lazy' draggable={false} />
-                  <img className='recap-lifer__photo' src={img} alt={t('card.photoAlt', { name: c.comName })} loading='lazy' width='320' height='240' draggable={false} />
+                  <img className='recap-lifer__backdrop' src={img} alt='' aria-hidden='true' draggable={false} />
+                  <img className='recap-lifer__photo' src={img} alt={t('card.photoAlt', { name: c.comName })} width='320' height='240' draggable={false} />
                 </>
                 )
               : <Silhouette />}
