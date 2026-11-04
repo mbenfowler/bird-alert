@@ -1543,7 +1543,7 @@
     "removed": "{{name}} ya no está en el conteo.",
     "undo": "Deshacer",
     "alreadyOn": "Ya está en el conteo ({{by}})",
-    "removeSure": "¿Quitar?",
+    "removeSure": "¿Quitarla para todo el grupo?",
     "removeYes": "Quitar",
     "locationAsk": "¿Anotar dónde se agrega cada ave, para que el registro del grupo muestre dónde se vio?",
     "locationAllow": "Permitir",
@@ -1562,7 +1562,8 @@
     "statusMissing": "sin reportes recientes",
     "liferMark": "lifer",
     "onTally": "Ya en el conteo",
-    "removeTargetYes": "Sí, quitar {{name}}"
+    "removeTargetYes": "Sí, quitar {{name}}",
+    "removeTargetSure": "¿Quitar?"
   },
   "eventDay": {
     "heading": "Hoy",

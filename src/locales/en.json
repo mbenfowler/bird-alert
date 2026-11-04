@@ -1425,7 +1425,7 @@
     "removed": "{{name}} is off the tally.",
     "undo": "Undo",
     "alreadyOn": "Already on the tally ({{by}})",
-    "removeSure": "Remove?",
+    "removeSure": "Take it off for everyone?",
     "removeYes": "Take off",
     "locationAsk": "Note where each bird is added, so the group log shows where each bird was seen?",
     "locationAllow": "Allow",
@@ -1444,7 +1444,8 @@
     "statusMissing": "not reported lately",
     "liferMark": "lifer",
     "onTally": "On the tally",
-    "removeTargetYes": "Yes, remove {{name}}"
+    "removeTargetYes": "Yes, remove {{name}}",
+    "removeTargetSure": "Remove?"
   },
   "eventDay": {
     "heading": "Today",

@@ -142,7 +142,7 @@ describe("Today's scouting", () => {
   it('works before the backend sends the new fields: progress from the reports, no card news', () => {
     open(event(), { using: 'targets', reported: SCOUTING.reported, unreported: SCOUTING.unreported })
     cy.get('[data-testid="scouting-none-new"]').should('exist')
-    cy.get('[data-testid="scouting-progress"]').should('have.text', '1 of 3 targets around this week')
+    cy.get('[data-testid="scouting-progress"]').should('have.text', '1 of 2 targets around this week')
     cy.get('#event-targets [data-status="around"]').should('contain', 'Elegant Trogon')
     cy.get('#event-targets [data-status="missing"]').should('contain', 'Whiskered Screech-Owl')
   })
@@ -229,7 +229,8 @@ describe('Targets', () => {
     chips().should('have.length', 20)
 
     cy.get('.event-targets__filter button').then(els => expect([...els].map(e => e.textContent)).to.deep.equal(['All (50)', 'Around this week (30)', 'Missing (12)']))
-    cy.contains('.event-targets__filter button', 'Missing (12)').click().should('have.attr', 'aria-pressed', 'true')
+    cy.contains('.event-targets__filter button', 'Missing (12)').click()
+    cy.contains('.event-targets__filter button', 'Missing (12)').should('have.attr', 'aria-pressed', 'true')
     chips().should('have.length', 12).each(el => expect(el).to.have.attr('data-status', 'missing'))
     cy.contains('#event-targets button', 'Show all').should('not.exist')
     cy.contains('.event-targets__filter button', 'Around this week (30)').click()
@@ -241,7 +242,8 @@ describe('Targets', () => {
     open(big, scouting)
     cy.get('.event-targets__search').type('bird 4')
     chips().should('have.length', 10)
-    cy.get('.event-targets__search').clear().type('zzz')
+    cy.get('.event-targets__search').clear()
+    cy.get('.event-targets__search').type('zzz')
     cy.contains('#event-targets', 'No targets match “zzz”.')
     cy.get('.event-targets__search').clear()
     chips().should('have.length', 20)

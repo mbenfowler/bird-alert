@@ -1560,7 +1560,7 @@
     "removed": "{{name}} n’est plus au décompte.",
     "undo": "Annuler",
     "alreadyOn": "Déjà au décompte ({{by}})",
-    "removeSure": "Retirer?",
+    "removeSure": "La retirer pour tout le groupe?",
     "removeYes": "Retirer",
     "locationAsk": "Noter où chaque oiseau est ajouté, pour que le journal du groupe montre où il a été vu?",
     "locationAllow": "Autoriser",
@@ -1579,7 +1579,8 @@
     "statusMissing": "pas signalée récemment",
     "liferMark": "nouvelle",
     "onTally": "Déjà au décompte",
-    "removeTargetYes": "Oui, retirer {{name}}"
+    "removeTargetYes": "Oui, retirer {{name}}",
+    "removeTargetSure": "Retirer?"
   },
   "eventDay": {
     "heading": "Aujourd’hui",
