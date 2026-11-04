@@ -46,10 +46,15 @@ describe('Invite a birding friend: always findable', () => {
     cy.get('@copy').should('have.been.calledOnceWith', LOCAL_URL)
   })
 
-  it('fits a 375px phone', () => {
+  it('fits a 375px phone, with the same room below it as between the other sections', () => {
     cy.viewport(375, 740)
     cy.contains('.invite-friend', 'Invite a birding friend').should('be.visible')
     noSidewaysScroll()
+    cy.get('.life-list').first().then(([lifeList]) => cy.get('.passkeys').then(([passkeys]) => cy.get('.invite-friend').then(([invite]) => cy.get('.feedback').then(([feedback]) => {
+      const between = passkeys.getBoundingClientRect().top - lifeList.getBoundingClientRect().bottom
+      expect(between, 'life list to passkeys').to.be.closeTo(28, 1)
+      expect(feedback.getBoundingClientRect().top - invite.getBoundingClientRect().bottom, 'invite row to feedback').to.be.closeTo(between, 1)
+    }))))
   })
 })
 
@@ -125,8 +130,10 @@ describe('Invite a birding friend: the one-time nudge', () => {
 })
 
 describe('Invite a birding friend: signing up from an invite', () => {
-  it('the invite rides along with the signup, in source', () => {
+  it('the invite rides along with the signup, in source, even after an earlier visit from elsewhere', () => {
     stubAuth({ userExists: false })
+    cy.visit('http://localhost:3000/?utm_source=fb')
+    cy.window().then((win) => expect(JSON.parse(win.localStorage.getItem('arrivedFrom'))).to.include({ utm: 'fb' }))
     cy.visit('http://localhost:3000/login?ref=invite-abc123')
     cy.get('.input.email').type('friend@example.com{enter}')
     cy.wait('@userExists')

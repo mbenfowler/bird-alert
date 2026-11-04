@@ -4,8 +4,8 @@
     font-weight: 600;
 }
 
-/* The feedback heading below expects a section's worth of room. */
+/* The feedback heading below gets the same room as between the other Settings sections (.life-list's 28px). */
 .life-list.invite-friend {
-    margin-bottom: 16px;
+    margin-bottom: 28px;
 }
 
