@@ -98,7 +98,7 @@ export const dayRoute = (plan: EventRoutePlan | undefined, suggested: EventRoute
       })
     }
   }
-  if (!suggested) return plan ? { start, stops: [], custom: false } : null
+  if (!suggested || !Array.isArray(suggested.stops)) return plan ? { start, stops: [], custom: false } : null
   return {
     start,
     custom: false,

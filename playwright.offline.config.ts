@@ -8,7 +8,7 @@ import { defineConfig, devices } from '@playwright/test'
  * Chromium only: it is the engine whose offline switch also covers the service worker's own
  * requests, and it can deliver a test push to the worker. WebKit layout stays in the webkit suite.
  */
-const PORT = 4317
+const PORT = Number(process.env.OFFLINE_PORT) || 4317
 
 export default defineConfig({
   testDir: './offline',
