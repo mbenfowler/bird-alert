@@ -461,10 +461,35 @@ export interface EventTarget {
 
 /** A bird on the day's shared tally, and who got it. */
 export interface EventTallyEntry {
+  /** The server's row id (absent on a bird still waiting to be sent). */
+  id?: Id
   code: string
+  client_id?: string | null
   added_by_name?: string | null
   added_by_you?: boolean
+  /** When it reached the server. */
   added_at: string
+  /** When it was seen (the phone's clock at the tap); added_at for older rows. */
+  observed_at?: string | null
+  lat?: number | null
+  lng?: number | null
+  /** 0-based in the group's saved route: the stop within 2 km of where it was added. */
+  stop_index?: number | null
+  stop_name?: string | null
+  /** You ticked it as on your own eBird checklist. */
+  marked_by_me?: boolean
+}
+
+/** One bird in the group log: every bird put on the tally, removed ones too, in the order seen. */
+export interface EventLogEntry {
+  id: Id
+  speciesCode: string
+  comName?: string | null
+  by_name?: string | null
+  observed_at: string
+  stop_index?: number | null
+  stop_name?: string | null
+  removed?: boolean
 }
 
 /** How an event went: species on the tally, and how many of its targets. */

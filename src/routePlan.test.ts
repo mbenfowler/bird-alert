@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from 'vitest'
-import { coverage, loadPlan, mapsUrl, move, savePlan, shortestOrder, samePlace, type PlanPoint } from './routePlan'
+import { MAX_WAYPOINTS, coverage, loadPlan, mapsUrl, move, routeLinks, savePlan, shortestOrder, samePlace, type PlanPoint } from './routePlan'
 import type { GoPlace } from './types'
 
 const pt = (name: string, lat: number, lng = -83.8, locId: string | null = name): PlanPoint => ({ locId, name, lat, lng })
@@ -35,6 +35,27 @@ describe('route plans', () => {
     expect(url.searchParams.get('waypoints')).toBe('34.1,-83.8')
     expect(url.searchParams.get('destination')).toBe('34.2,-83.8')
     expect(mapsUrl([])).toBeNull()
+  })
+
+  it('splits a long route into Google Maps links of at most three stops in between', () => {
+    const stops = [1, 2, 3, 4, 5, 6].map(n => pt(`s${n}`, 34 + n / 10))
+    const links = routeLinks(stops, pt('meet', 34))
+    expect(links.map(l => [l.from, l.to])).toEqual([[null, 4], [4, 6]])
+    for (const link of links) {
+      const url = new URL(link.url)
+      expect((url.searchParams.get('waypoints') ?? '').split('|').filter(Boolean).length).toBeLessThanOrEqual(MAX_WAYPOINTS)
+    }
+    // Each part starts where the last one ended.
+    expect(new URL(links[1]!.url).searchParams.get('origin')).toBe(new URL(links[0]!.url).searchParams.get('destination'))
+    expect(new URL(links[1]!.url).searchParams.get('destination')).toBe('34.6,-83.8')
+  })
+
+  it('keeps a short route as one link, and starts at stop 1 without a meeting point', () => {
+    const stops = [1, 2, 3, 4, 5].map(n => pt(`s${n}`, 34 + n / 10))
+    expect(routeLinks(stops).map(l => [l.from, l.to])).toEqual([[1, 5]])
+    expect(new URL(routeLinks(stops)[0]!.url).searchParams.get('waypoints')!.split('|')).toHaveLength(3)
+    expect(routeLinks(stops.slice(0, 1))).toHaveLength(1)
+    expect(routeLinks([])).toEqual([])
   })
 
   it('keeps a plan per county and ignores junk', () => {

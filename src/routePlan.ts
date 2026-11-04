@@ -72,6 +72,27 @@ export const mapsUrl = (stops: PlanPoint[], start: PlanPoint | null = null) => {
   return url.toString()
 }
 
+/** Google Maps takes at most this many stops in between in a phone's browser (its Maps URLs documentation). */
+export const MAX_WAYPOINTS = 3
+
+/**
+ * The whole route as Google Maps links a phone can open without dropping stops: one link while
+ * there are at most three stops in between, else in parts, each starting where the last one ended.
+ * `from` is the stop number the part starts at (null: the meeting point) and `to` the one it ends at.
+ */
+export const routeLinks = (stops: PlanPoint[], start: PlanPoint | null = null): { url: string; from: number | null; to: number }[] => {
+  const points = start ? [start, ...stops] : stops
+  if (stops.length === 1 && !start) return [{ url: mapsUrl(stops)!, from: null, to: 1 }]
+  const number = (i: number) => (start ? i : i + 1)
+  const links: { url: string; from: number | null; to: number }[] = []
+  const per = MAX_WAYPOINTS + 1
+  for (let i = 0; i < points.length - 1; i += per) {
+    const last = Math.min(i + per, points.length - 1)
+    links.push({ url: mapsUrl(points.slice(i + 1, last + 1), points[i])!, from: start && i === 0 ? null : number(i), to: number(last) })
+  }
+  return links
+}
+
 /** The list with one item moved from `from` to `to`. */
 export const move = <T,>(list: T[], from: number, to: number) => {
   if (from === to || from < 0 || to < 0 || from >= list.length || to >= list.length) return list
