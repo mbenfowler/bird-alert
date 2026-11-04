@@ -356,7 +356,8 @@
 
 .recap-lifer__picture {
     position: relative;
-    height: 140px;
+    /* The photos are 4:3, like the app's other bird cards; a wider box cropped the heads off. */
+    aspect-ratio: 4 / 3;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -367,6 +368,8 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    /* Any crop that's left comes off the bottom, since a bird's head is nearly always in the upper half. */
+    object-position: center 30%;
 }
 
 .recap-lifer__chip {
