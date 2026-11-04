@@ -10,7 +10,8 @@
     "means5": "recorded five or fewer times ever in the ABA Area",
     "title": "ABA Checklist Code {{code}}: {{means}}",
     "note": "<b>ABA Code {{code}}:</b> {{means}}.",
-    "credit": "From the ABA Checklist, used with permission of the American Birding Association."
+    "credit": "From the ABA Checklist, used with permission of the American Birding Association.",
+    "short": "ABA {{code}}"
   },
   "account": {
     "sendingConfirm": "Sending confirmation email...",

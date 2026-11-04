@@ -262,7 +262,7 @@ describe('Targets', () => {
     open(big, scouting)
     cy.get('[data-code="t20"]').within(() => {
       cy.get('.event__dot').should('have.css', 'background-color', 'rgb(31, 157, 85)')
-      cy.get('.aba-code').should('contain', 'ABA Code 4')
+      cy.get('.aba-code').should('have.text', 'ABA 4').and('have.attr', 'title').and('include', 'Code 4')
     })
     const t20 = targets[20]
     cy.get('[data-code="t20"]').invoke('attr', 'title').should('match', new RegExp(`^Reported [A-Z][a-z]{2} \\d{1,2} at Ramsey Canyon$`))
@@ -274,7 +274,7 @@ describe('Targets', () => {
     cy.get('[data-code="t40"]').should('have.class', 'event__target--missing').and('contain', 'not reported lately')
       .and('have.css', 'color').and('not.eq', 'rgb(0, 0, 0)')
     cy.get('[data-code="t40"] .event__dot').should('not.exist')
-    cy.get('[data-code="t45"] .aba-code').should('contain', 'ABA Code 3')
+    cy.get('[data-code="t45"] .aba-code').should('have.text', 'ABA 3')
   })
 
   it('on the day, a ✓ on targets already on the tally', () => {

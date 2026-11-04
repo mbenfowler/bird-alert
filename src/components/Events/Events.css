@@ -1297,10 +1297,6 @@ a.event-scouting__bird:hover {
   font-weight: 700;
 }
 
-.event__target .aba-code {
-  font-size: 0.72rem;
-}
-
 /* The second tap: the × becomes a small "Remove?" in the same place. */
 .place__chip .event__remove-yes {
   width: auto;

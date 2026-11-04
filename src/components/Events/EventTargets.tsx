@@ -36,7 +36,7 @@ const Chip = ({ row, group, youName, confirming, busy, onArm, onRemove }: {
         {groupLifer ? <span className='event__lifer'> · {t('events.liferFor', { names: liferFor.join(', ') })}</span> : null}
       </span>
       {!groupLifer && row.lifer && <span className='event__lifer-mark'>{t('events.liferMark')}</span>}
-      {(row.aba ?? 0) >= 3 && <AbaCode code={row.aba} />}
+      {(row.aba ?? 0) >= 3 && <AbaCode code={row.aba} short />}
       {confirming
         ? <button type='button' className='event__remove-yes' aria-label={t('events.removeTargetYes', { name: row.name })} disabled={busy} onClick={onRemove}>{t('events.removeTargetSure')}</button>
         : <button type='button' aria-label={t('events.removeTarget', { name: row.name })} disabled={busy} onClick={onArm}><CloseIcon /></button>}

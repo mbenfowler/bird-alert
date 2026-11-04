@@ -10,7 +10,8 @@
     "means5": "signalé cinq fois ou moins dans la zone ABA, depuis toujours",
     "title": "Code {{code}} de la liste ABA : {{means}}",
     "note": "<b>Code ABA {{code}} :</b> {{means}}.",
-    "credit": "Tiré de la liste ABA (ABA Checklist), utilisé avec la permission de l’American Birding Association."
+    "credit": "Tiré de la liste ABA (ABA Checklist), utilisé avec la permission de l’American Birding Association.",
+    "short": "ABA {{code}}"
   },
   "account": {
     "sendingConfirm": "Envoi du courriel de confirmation…",

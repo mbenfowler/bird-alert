@@ -10,7 +10,8 @@
     "means5": "registrada cinco veces o menos en toda la historia del Área ABA",
     "title": "Código {{code}} de la Lista ABA: {{means}}",
     "note": "<b>Código ABA {{code}}:</b> {{means}}.",
-    "credit": "De la Lista ABA, con permiso de la American Birding Association."
+    "credit": "De la Lista ABA, con permiso de la American Birding Association.",
+    "short": "ABA {{code}}"
   },
   "account": {
     "sendingConfirm": "Enviando el correo de confirmación...",
