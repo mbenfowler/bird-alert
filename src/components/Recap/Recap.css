@@ -358,6 +358,9 @@
     position: relative;
     /* The photos are 4:3, like the app's other bird cards; a wider box cropped the heads off. */
     aspect-ratio: 4 / 3;
+    flex: 0 0 auto;
+    width: 100%;
+    overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -365,6 +368,10 @@
 }
 
 .recap-lifer__picture img {
+    /* Laid over the frame, so a photo's own size never changes the card's. */
+    position: absolute;
+    inset: 0;
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
