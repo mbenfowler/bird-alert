@@ -949,7 +949,38 @@ a.event-scouting__bird:hover {
 }
 
 .get-ready__maps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   margin: 0;
+  min-width: 0;
+}
+
+.get-ready__maps p {
+  margin: 0;
+}
+
+/* The few taps in the maps app, under its button. */
+.get-ready__steps {
+  margin: 0;
+  padding-left: 1.4em;
+  overflow-wrap: anywhere;
+}
+
+.get-ready__downloaded {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  align-self: flex-start;
+  cursor: pointer;
+}
+
+.get-ready__downloaded input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: #15803d;
 }
 
 /* The group log and the checklist keeper. */

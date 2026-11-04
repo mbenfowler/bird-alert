@@ -217,7 +217,7 @@ const EventBody = ({ event, updatedAt, error }: { event: GroupEvent; updatedAt: 
       {onDay && <DayView event={event} day={day} nameOf={nameOf} />}
       {!onDay && past && <p className='events-list__recap' data-testid='event-recap'>{recapText(event)}</p>}
       {showCard && <ScoutingToday event={event} onSeeWhere={seeWhere} />}
-      {showDay && <GetReady event={event} areaName={areaName} />}
+      {showDay && <GetReady event={event} areaName={areaName} route={day.route} />}
       <div className='event-page__section event-detail__plan'>
         <h2 className='place__heading'>{t('events.plan')}</h2>
         {editing

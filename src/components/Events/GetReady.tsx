@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { clockTime, formatLocale, t } from '../../i18n'
 import { useOnline } from '../../offline'
 import type { GroupEvent } from '../../types'
+import type { DayRoute } from './daySchedule'
 import { checkReady, getReady, type ReadyPart, type ReadyStatus } from './offlineReady'
-
-const GOOGLE_OFFLINE_HELP = 'https://support.google.com/maps/answer/6291838'
-const APPLE_OFFLINE_HELP = 'https://support.apple.com/en-us/105084'
+import { mapArea, mapDownloaded, setMapDownloaded } from './offlineMaps'
+import OfflineMapButton from './OfflineMapButton'
 
 const savedAt = (at: number) => {
   const date = new Date(at)
@@ -16,9 +16,9 @@ const savedAt = (at: number) => {
 /**
  * "Get ready for offline", on the event page in the days before and on the day: one button that
  * fetches what the day needs while there's signal, then a line saying it's all on the phone (or
- * what isn't), and a reminder to download the area in a maps app.
+ * what isn't), and a button that opens the maps app on the day's area to download it there.
  */
-const GetReady = ({ event, areaName, compact = false }: { event: GroupEvent; areaName: string; compact?: boolean }) => {
+const GetReady = ({ event, areaName, route = null, compact = false }: { event: GroupEvent; areaName: string; route?: DayRoute | null; compact?: boolean }) => {
   const queryClient = useQueryClient()
   const online = useOnline()
   const [status, setStatus] = useState<ReadyStatus | null>(null)
@@ -37,6 +37,14 @@ const GetReady = ({ event, areaName, compact = false }: { event: GroupEvent; are
   const dataMissing = status?.missing.filter(part => part !== 'app') ?? []
   const ready = Boolean(status && status.at && dataMissing.length === 0)
   const partName = (part: ReadyPart) => t(`getReady.part.${part}`)
+  // The day's area for the maps app: the route and the meeting point, else the event's centre.
+  const area = useMemo(
+    () => mapArea({ start: route?.start, stops: route?.stops ?? [], home: { lat: event.home_lat, lng: event.home_lng }, rangeMi: event.range_mi }),
+    [route, event.home_lat, event.home_lng, event.range_mi]
+  )
+  // "I've downloaded the map": this person's word for it, on this device, for this event.
+  const [mapSaved, setMapSaved] = useState(() => mapDownloaded(event.id))
+  const tickMap = (done: boolean) => { setMapSaved(done); setMapDownloaded(event.id, done) }
 
   return (
     <div className={`event-page__section get-ready ${ready ? 'is-ready' : ''}`} data-testid='get-ready'>
@@ -48,6 +56,7 @@ const GetReady = ({ event, areaName, compact = false }: { event: GroupEvent; are
             : status.at
               ? t('getReady.missing', { parts: dataMissing.map(partName).join(', ') })
               : t('getReady.notYet')}
+          {mapSaved && <span data-testid='ready-map'> · {t('getReady.mapDownloaded')}</span>}
         </p>
       )}
       {status && (
@@ -62,12 +71,7 @@ const GetReady = ({ event, areaName, compact = false }: { event: GroupEvent; are
         </button>
         {!online && <span className='notification__hint'>{t('getReady.needsSignal')}</span>}
       </p>
-      <p className='notification__hint get-ready__maps'>
-        {t('getReady.maps', { area: areaName })}{' '}
-        <a href={GOOGLE_OFFLINE_HELP} target='_blank' rel='noreferrer'>{t('getReady.mapsGoogle')}</a>
-        {' · '}
-        <a href={APPLE_OFFLINE_HELP} target='_blank' rel='noreferrer'>{t('getReady.mapsApple')}</a>
-      </p>
+      <OfflineMapButton area={area} areaName={areaName} downloaded={mapSaved} onDownloaded={tickMap} />
     </div>
   )
 }
