@@ -63,9 +63,46 @@ jobs:
           path: test-results
           when: on_fail
 
+  # The offline suite (offline/*.spec.ts): the production build under vite preview, a stateful fake
+  # API, and Playwright Chromium with the service worker on. The browser is cached by lockfile; its
+  # system libraries come from apt each run.
+  offline:
+    executor: node22
+    # Only e2e runs Cypress; skipping its ~500 MB download keeps a slow mirror from hanging this job.
+    environment:
+      CYPRESS_INSTALL_BINARY: "0"
+    steps:
+      - checkout
+      - node/install-packages:
+          pkg-manager: npm
+      - restore_cache:
+          keys:
+            - playwright-chromium-v1-{{ checksum "package-lock.json" }}
+      - run:
+          name: Install Chromium
+          command: |
+            sudo -E env "PATH=$PATH" npx playwright install-deps chromium
+            npx playwright install chromium
+      - save_cache:
+          key: playwright-chromium-v1-{{ checksum "package-lock.json" }}
+          paths:
+            - ~/.cache/ms-playwright
+      - run:
+          name: Offline suite
+          command: timeout 20m npm run test:offline
+          no_output_timeout: 10m
+      # The HTML report, plus traces from any test that failed or needed its retry.
+      - store_artifacts:
+          path: playwright-report
+          destination: playwright-report
+      - store_artifacts:
+          path: test-results
+          destination: test-results
+
 workflows:
   test_my_app:
     jobs:
       - build
       - e2e
       - webkit
+      - offline
