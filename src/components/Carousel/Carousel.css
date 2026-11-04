@@ -1,0 +1,164 @@
+/* A row of cards that moves along on its own. Only the track moves; the buttons and dots stay put. */
+.carousel {
+    --carousel-ease: cubic-bezier(0.65, 0, 0.35, 1);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+    border-radius: 16px;
+}
+
+.carousel:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 4px;
+}
+
+.carousel__viewport {
+    overflow: hidden;
+    /* Room for the cards' borders; the page still scrolls up and down over it. */
+    padding: 2px 0;
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.carousel__track {
+    display: flex;
+    align-items: stretch;
+    width: max-content;
+    transition: transform 700ms var(--carousel-ease);
+    will-change: transform;
+}
+
+.carousel__track.is-instant,
+.carousel__track.is-instant .carousel__slide {
+    transition: none;
+}
+
+.carousel__slide {
+    flex: none;
+    display: flex;
+    min-width: 0;
+    transition: opacity 700ms var(--carousel-ease), transform 700ms var(--carousel-ease);
+}
+
+.carousel__slide > * {
+    flex: 1;
+    min-width: 0;
+}
+
+.carousel__slide img {
+    -webkit-user-drag: none;
+}
+
+/* Narrow: the neighbours at the edges step back a little. */
+.carousel__slide.is-side {
+    opacity: 0.55;
+    transform: scale(0.94);
+}
+
+.carousel__still {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    gap: 14px;
+    padding: 2px 0;
+}
+
+.carousel__still .carousel__slide {
+    flex: 0 1 auto;
+}
+
+/* Fixed sizes all through, so nothing here shifts as the cards move. */
+.carousel__controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.carousel__button {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+    transition: background-color 150ms ease;
+}
+
+.carousel__button:hover {
+    background: var(--accent);
+}
+
+.carousel__button:focus-visible,
+.carousel__dot:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.carousel__button--prev svg {
+    transform: rotate(90deg);
+}
+
+.carousel__button--next svg {
+    transform: rotate(-90deg);
+}
+
+.carousel__dots {
+    display: flex;
+    align-items: center;
+}
+
+/* A 24 px target around a 10 px dot; the current one fills in, the same size. */
+.carousel__dot {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.carousel__dot::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    box-sizing: border-box;
+    border-radius: 50%;
+    border: 2px solid var(--ink);
+    background: var(--surface);
+    transition: background-color 300ms ease, transform 300ms ease;
+}
+
+.carousel__dot[aria-current='true']::before {
+    background: var(--accent);
+    transform: scale(1.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .carousel__track,
+    .carousel__slide,
+    .carousel__dot::before {
+        transition: none;
+    }
+}
+
+.carousel__count {
+    min-width: 10ch;
+    text-align: center;
+    font-family: system-ui, sans-serif;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+}

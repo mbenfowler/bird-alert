@@ -4,7 +4,7 @@ import { toast } from 'react-toastify'
 import { LoadingState } from '../Loading/Loading'
 import { LoadProblem, OfflineNote } from '../Offline/Offline'
 import { errorMessage } from '../../apiCalls'
-import { queryKeys, useBirdsQuery, useEventScoutingQuery, useEventsQuery } from '../../hooks/queries'
+import { queryKeys, useBirdsQuery, useEventRecapQuery, useEventScoutingQuery, useEventsQuery } from '../../hooks/queries'
 import { useQueryClient } from '@tanstack/react-query'
 import { useEndEventMutation, useEventMemberMutation, useLeaveEventMutation, useRotateInviteMutation, useStartInviteMutation } from '../../hooks/mutations'
 import { useAreaName } from '../../shownArea'
@@ -23,6 +23,7 @@ import GetReady from './GetReady'
 import { isEventDay, useEventDay } from './useEventDay'
 import { safeZone, zonedDay } from './daySchedule'
 import { daysBefore, eventPath, isGroup, isPast, isScouting, membersText, recapText, scoutFrom, today } from './events'
+import Recap from '../Recap/Recap'
 import '../AlertCenter/Places.css'
 import './Events.css'
 
@@ -202,20 +203,21 @@ const EventBody = ({ event, updatedAt, error }: { event: GroupEvent; updatedAt: 
   const showCard = showScoutingCard(scouting.data, { past, onDay, scouting: isScouting(event) })
   useScoutingLink(showCard ? 'scouting' : 'scouting-details', !scouting.isPending || !showCard)
   const seeWhere = () => document.getElementById('scouting-details')?.scrollIntoView({ block: 'start', behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
-  return (
-    <section className='event-page event-detail' data-event={String(event.id)}>
-      <p className='event-detail__back'><Link to='/events'>{t('events.allEvents')}</Link></p>
-      <h1 className='fredericka event-page__title'>{event.name}</h1>
-      <OfflineNote updatedAt={updatedAt} error={error} />
-      <p className='event-page__what'>
+  // Once the last day is over (in the event's zone) the server may have its recap: open while fixes
+  // are taken, then sealed. While it's live it answers not_ended, and the page stays as it is.
+  const over = !event.active && event.ends_on < todayThere
+  const recap = useEventRecapQuery(event.id, over || past).data ?? null
+  const planning = (
+    <>
+      {!recap && <p className='event-page__what'>
         {areaName} · {dateRange(event.starts_on, event.ends_on)}
         {onDay && <span className='place__badge'>{t('events.today')}</span>}
         {!past && isScouting(event) && <span className='place__badge place__badge--scouting'>{t('events.scouting')}</span>}
         {event.kind === 'bigday' && <span className='place__badge place__badge--quiet'>{t('events.bigDay')}</span>}
         {event.archived && <span className='place__badge place__badge--quiet'>{t('events.archivedBadge')}</span>}
-      </p>
+      </p>}
       {onDay && <DayView event={event} day={day} nameOf={nameOf} />}
-      {!onDay && past && <p className='events-list__recap' data-testid='event-recap'>{recapText(event)}</p>}
+      {!onDay && past && !recap && <p className='events-list__recap' data-testid='event-recap'>{recapText(event)}</p>}
       {showCard && <ScoutingToday event={event} onSeeWhere={seeWhere} />}
       {showDay && <GetReady event={event} areaName={areaName} route={day.route} />}
       <div className='event-page__section event-detail__plan'>
@@ -243,6 +245,23 @@ const EventBody = ({ event, updatedAt, error }: { event: GroupEvent; updatedAt: 
         </div>
       )}
       <Actions event={event} onDay={onDay} />
+    </>
+  )
+  return (
+    <section className='event-page event-detail' data-event={String(event.id)}>
+      <p className='event-detail__back'><Link to='/events'>{t('events.allEvents')}</Link></p>
+      {/* With a recap the recap leads (its own heading names the event), and the plan and the day fold away below it. */}
+      {!recap && <h1 className='fredericka event-page__title'>{event.name}</h1>}
+      <OfflineNote updatedAt={updatedAt} error={error} />
+      {recap
+        ? <>
+            <Recap recap={recap} event={event} />
+            <details className='event-detail__folded' data-testid='event-planning'>
+              <summary className='place__heading'>{t('recap.planAndDay')}</summary>
+              {planning}
+            </details>
+          </>
+        : planning}
     </section>
   )
 }

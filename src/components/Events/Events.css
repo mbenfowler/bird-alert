@@ -1357,3 +1357,17 @@ a.event-scouting__bird:hover {
   margin: 0;
   align-items: center;
 }
+
+/* After the day: the recap leads, and the plan and the day fold away below it. */
+.event-detail__folded {
+    margin-top: 8px;
+}
+
+.event-detail__folded > summary {
+    cursor: pointer;
+    padding: 10px 0;
+}
+
+.event-detail__folded[open] > summary {
+    margin-bottom: 8px;
+}

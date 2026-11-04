@@ -2,11 +2,12 @@ import { useMemo } from 'react'
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions, getCountries, getProvinces,
-  getSavedBirds, getPlaces, getPlaceSeen, getPlaceSuggestions, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase, getNameLocales, getEvents, getEventPreview, getEventView, getEventScouting, getEventRoute, getEventRoutePlan, getEventSuggestions, getEventLog } from '../apiCalls'
+  getSavedBirds, getPlaces, getPlaceSeen, getPlaceSuggestions, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase, getNameLocales, getEvents, getEventPreview, getEventView, getEventScouting, getEventRoute, getEventRoutePlan, getEventSuggestions, getEventLog, getEventRecap, getSharedRecap } from '../apiCalls'
 import { DAY, MINUTE, WEEK } from '../queryClient'
 import { nameLocale } from '../i18n'
 import { isNetworkError } from '../offline'
-import type { Id, LifersScope, PersistenceClass, User } from '../types'
+import type { Id, LifersScope, PersistenceClass, Recap, User } from '../types'
+import { normalizeRecap } from '../components/Recap/recapData'
 
 /** Short stable fingerprint of a code list, so a changed species list gets its own cache entry. */
 export const codesKey = (codes: string[]) => {
@@ -529,6 +530,39 @@ export const useEventLogQuery = (id: Id, enabled = true, live = false) =>
 /** What an invite link is for, before joining (no sign-in needed). */
 export const useEventPreviewQuery = (token: string) =>
   useQuery({ queryKey: ['event-preview', token], queryFn: () => getEventPreview(token), staleTime: MINUTE, retry: 1 })
+
+/**
+ * An event's recap, once it's over: null while it's live (409 not_ended) or not ours to see (404),
+ * so the page just carries on as before. Kept on the phone, so it opens with no signal too.
+ */
+export const useEventRecapQuery = (id: Id, enabled: boolean) =>
+  useQuery({
+    queryKey: ['event-recap', id, nameLocale()] as const,
+    queryFn: async (): Promise<Recap | null> => {
+      try {
+        return await getEventRecap(id)
+      } catch (error) {
+        if (error instanceof ApiError && (error.status === 409 || error.status === 404)) return null
+        throw error
+      }
+    },
+    enabled,
+    staleTime: MINUTE,
+    gcTime: WEEK,
+    meta: { persist: true, offline: true },
+    select: (answer) => (answer ? normalizeRecap(answer) : null)
+  })
+
+/** A recap as its share link shows it (/recap/:code), for anyone; `enabled` lets a member's page ask only when wanted. */
+export const useSharedRecapQuery = (code: string | null | undefined, enabled = true) =>
+  useQuery({
+    queryKey: ['event-recap-shared', code ?? '', nameLocale()] as const,
+    queryFn: () => getSharedRecap(code!),
+    enabled: enabled && Boolean(code),
+    staleTime: 5 * MINUTE,
+    retry: 1,
+    select: normalizeRecap
+  })
 
 /** The view-only page: the plan, and on the day a tally that refreshes each minute. */
 export const useEventViewQuery = (token: string) =>

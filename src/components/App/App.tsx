@@ -51,10 +51,11 @@ const EventLog = lazy(() => import('../Events/EventLog'))
 const EventsPage = lazy(() => import('../Events/EventsPage'))
 const EventNew = lazy(() => import('../Events/EventNew'))
 const EventDetail = lazy(() => import('../Events/EventDetail'))
+const RecapPage = lazy(() => import('../Recap/RecapPage'))
 const Onboarding = lazy(() => import('../Onboarding/Onboarding'))
 
 // Routes reachable without a session. Everything else redirects to /login once we know there is no user.
-const PUBLIC_PATH_PREFIXES = ['/login', '/reset/', '/confirm/', '/unsubscribe/', '/share/', '/events/join/', '/events/view/']
+const PUBLIC_PATH_PREFIXES = ['/login', '/reset/', '/confirm/', '/unsubscribe/', '/share/', '/events/join/', '/events/view/', '/recap/']
 // Pages about the account alone; every other page is built from eBird's sightings and credits it.
 const NO_EBIRD_DATA = new Set(['login', 'settings', 'reset', 'confirm', 'unsubscribe'])
 
@@ -114,7 +115,7 @@ const App = () => {
   // counts: an account the server doesn't mark either way is left alone.
   const needsSetup = Boolean(user) && user?.onboarded_at === null
   useEffect(() => {
-    if (needsSetup && pathname !== '/welcome' && !pathname.startsWith('/share/') && !pathname.startsWith('/confirm/') && !pathname.startsWith('/unsubscribe/') && !pathname.startsWith('/events/join/') && !pathname.startsWith('/events/view/')) navigate('/welcome', { replace: true })
+    if (needsSetup && pathname !== '/welcome' && !pathname.startsWith('/share/') && !pathname.startsWith('/confirm/') && !pathname.startsWith('/unsubscribe/') && !pathname.startsWith('/events/join/') && !pathname.startsWith('/events/view/') && !pathname.startsWith('/recap/')) navigate('/welcome', { replace: true })
   }, [needsSetup, pathname, navigate])
   // Signed in and arrived where the login was taking them (a new account, after its setup): done with it.
   useEffect(() => {
@@ -251,6 +252,8 @@ const App = () => {
           <Route path='/share/:kind/:id' element={<Shared />} />
           <Route path='/events/join/:token' element={<JoinEvent />} />
           <Route path='/events/view/:token' element={<EventView />} />
+          {/* An event's recap as its share link shows it: no names, no personal spots, no sign-in. */}
+          <Route path='/recap/:code' element={<RecapPage />} />
           <Route path='/events/:id/tally' element={requireUser(<EventTally />)} />
           <Route path='/events/:id/log' element={requireUser(<EventLog />)} />
           {/* Scouting reports and event emails link to an event's own page. */}

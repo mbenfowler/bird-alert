@@ -177,7 +177,9 @@ export const setupTallySync = (queryClient: QueryClient) => {
     },
     onSettled: () => Promise.all([
       queryClient.invalidateQueries({ queryKey: queryKeys.events }),
-      queryClient.invalidateQueries({ queryKey: ['event-log'] })
+      queryClient.invalidateQueries({ queryKey: ['event-log'] }),
+      // After the day, the tally's fixes change its recap.
+      queryClient.invalidateQueries({ queryKey: ['event-recap'] })
     ])
   })
 }
