@@ -13,15 +13,17 @@ const PORT = Number(process.env.OFFLINE_PORT) || 4317
 export default defineConfig({
   testDir: './offline',
   timeout: 60_000,
-  // One at a time: the service worker's timings (a 3.5 s navigation fallback) get flaky under parallel load.
+  // One at a time: the service worker's timings (a 3.5 s navigation fallback) are tight on a small CI box.
   workers: 1,
+  // One retry in CI only, so a real failure still fails; its trace is kept for the artifacts.
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? 'line' : 'list',
+  // CI keeps an HTML report (playwright-report/) next to the traces in test-results/.
+  reporter: process.env.CI ? [['line'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: `http://localhost:${PORT}`,
     serviceWorkers: 'allow',
     timezoneId: 'America/Phoenix',
-    trace: 'retain-on-failure',
+    trace: process.env.CI ? 'on-first-retry' : 'retain-on-failure',
     ...devices['Pixel 7']
   },
   projects: [{ name: 'chromium', use: { browserName: 'chromium' } }],
