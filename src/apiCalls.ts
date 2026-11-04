@@ -1,4 +1,4 @@
-import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, Place, Province, Area,SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, BestHotspots, SpeciesHotspots, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share, Passkey, Chase, PersistenceClass, Id, SavedPlace, PlaceInput, PlaceSuggestion, LifersScope, GroupEvent, EventInput, EventPreview, EventView, EventScouting, EventRoute, EventRoutePlan, EventLogEntry } from './types'
+import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, Place, Province, Area,SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, BestHotspots, SpeciesHotspots, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share, Passkey, Chase, PersistenceClass, Id, SavedPlace, PlaceInput, PlaceSuggestion, LifersScope, GroupEvent, EventInput, EventPreview, EventView, EventScouting, EventRoute, EventRoutePlan, EventLogEntry, Recap } from './types'
 import { arrival } from './arrival'
 import { isStandalone } from './install'
 import { nameLocale, signupLocale, t } from './i18n'
@@ -209,6 +209,14 @@ export const putEventRoutePlan = (id: Id, plan: { start: EventRoutePlan['start']
 /** Back to the suggestion for everyone; the same 409 rule. */
 export const deleteEventRoutePlan = (id: Id, version: number) =>
     api<EventRoutePlan | null>('/saved', { method: 'DELETE', params: { kind: 'event-route-plan', id: String(id), version: String(version) } })
+/** An event's recap for a member: 409 not_ended while it's live, 404 for anyone not in it. */
+export const getEventRecap = (id: Id) => api<Recap>('/saved', { params: { kind: 'event-recap', event: String(id) } })
+/** The same recap as its share link shows it (no sign-in): no names, no personal spots. */
+// Bird names follow ?locale= here (no session to read a language from).
+export const getSharedRecap = (code: string) => {
+    const locale = nameLocale()
+    return api<Recap>('/saved', { params: { kind: 'event-recap', share: code, ...(locale ? { locale } : {}) } })
+}
 export const getEventView = (token: string) => api<EventView>('/saved', { params: { kind: 'event-view', token } })
 export const getSavedRoute = (region: string) => api<SavedRoute>('/saved', { params: { kind: 'route', region } })
 /** Only the fields given change: `stops: null` goes back to the suggestion, `start: null` clears the start. */

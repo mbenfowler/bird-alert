@@ -751,3 +751,81 @@ export interface EventRoute {
   routed: boolean
 }
 
+
+// ---- An event's recap (GET /api/saved?kind=event-recap) ----
+
+/** A bird with the moment it went on the tally. */
+export interface RecapBird {
+  speciesCode: string
+  comName: string
+  at: string
+}
+
+/** One species on the curve, in the order found (`n` is its place in the count). */
+export interface RecapTimelineRow extends RecapBird {
+  n: number
+  stopIndex: number | null
+  /** Null on the public view when it was at a personal spot. */
+  place: string | null
+  lifer: boolean
+  /** Members only; null on the public view. */
+  liferFor: string[] | null
+}
+
+export interface RecapLifer extends RecapBird {
+  place: string | null
+  /** Members only. */
+  who: string | null
+  /** Their life list count with this bird, when known. */
+  number: number | null
+}
+
+export interface RecapStop {
+  index: number
+  name: string
+  lat: number
+  lng: number
+  arrive: string | null
+  stayMin: number | null
+  /** The same as `added`: the tally keeps each bird at its first stop. */
+  species: number
+  /** New to the day's count here. */
+  added: number
+}
+
+/**
+ * The recap of an event once it's over: `open` while the tally still takes fixes (until
+ * `fixesUntil`), then `sealed`. The public view (`audience: 'public'`, by share code) has no names
+ * and no personal spots.
+ */
+export interface Recap {
+  audience: 'members' | 'public'
+  status: 'open' | 'sealed'
+  fixesUntil: string | null
+  shareCode?: string
+  event: { id: Id; name: string; kind: 'big_day' | 'bigday' | 'trip' | string; area: string | null; startsOn: string; endsOn: string; timezone: string | null; lat: number | null; lng: number | null }
+  members?: { id: Id; name: string; organizer: boolean }[]
+  totals: {
+    species: number
+    stops: number
+    miles: number | null
+    fieldMinutes: number | null
+    firstBird: RecapBird | null
+    lastBird: RecapBird | null
+    /** Its name is null on the public view when it was a personal spot. */
+    bestStop: { index: number; name: string | null; species: number } | null
+    bestHour: { start: string; added: number } | null
+  }
+  timeline: RecapTimelineRow[]
+  lifers: RecapLifer[]
+  highlights: {
+    rarest: (RecapBird & { aba: number; place: string | null }) | null
+    scoutingCalled: (RecapBird & { emailedOn: string; place: string | null }) | null
+  }
+  targets: { total: number; found: number; missed: string[] }
+  stops: RecapStop[]
+  route: { miles: number | null; line: [number, number][] | null }
+  byMember?: { name: string; count: number; only: string[] }[]
+  together?: number | null
+  candidates?: { speciesCode: string; comName: string }[]
+}

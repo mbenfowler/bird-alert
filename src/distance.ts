@@ -13,7 +13,7 @@ export const useDistanceUnit = () => unitFor(useSessionQuery().data?.state)
 const KM_PER_MILE = 1.609344
 
 /** A distance the server measured in miles, in the viewer's unit, to a tenth. */
-const inUnit = (miles: number, unit: DistanceUnit) => (unit === 'km' ? Math.round(miles * KM_PER_MILE * 10) / 10 : miles)
+export const inUnit = (miles: number, unit: DistanceUnit) => (unit === 'km' ? Math.round(miles * KM_PER_MILE * 10) / 10 : miles)
 
 /** "4.8 mi" or "7.7 km". */
 export const shortDistance = (miles: number, unit: DistanceUnit) => t(`distance.short.${unit}`, { n: number(inUnit(miles, unit)) })
