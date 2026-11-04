@@ -53,8 +53,9 @@ No `.env` is needed here; the API holds all the keys.
 | `npm test` | Vitest unit tests (`npm run test:watch` while developing) |
 | `npm run test:e2e` | Cypress, headless. Needs the dev server up; every network call is stubbed, so the API isn't required |
 | `npm run test:webkit` | Playwright in WebKit (Safari's engine) only: every page at three phone sizes, failing on anything laid out past the right edge of the screen. Starts the dev server itself if it is not up; API stubbed from the Cypress fixtures. First run: `npx playwright install webkit` |
+| `npm run test:offline` | Playwright in Chromium against the production build (`vite preview`, port `OFFLINE_PORT` or 4317) with a stateful fake API: the service worker, offline use and the event-day features. First run: `npx playwright install chromium` |
 
-Cypress also runs [axe](https://github.com/dequelabs/axe-core) on each main view and fails the build on serious accessibility problems. CircleCI runs lint, type-check, unit tests, the build, the Cypress suite, and the WebKit layout suite on every pull request. The WebKit run exists because Safari sizes some layouts differently from Chrome (grid tracks from no-wrap text, for one) and Cypress only runs Chrome's engine.
+Cypress also runs [axe](https://github.com/dequelabs/axe-core) on each main view and fails the build on serious accessibility problems. CircleCI runs lint, type-check, unit tests, the build, the Cypress suite, the WebKit layout suite, and the offline suite on every pull request. The WebKit run exists because Safari sizes some layouts differently from Chrome (grid tracks from no-wrap text, for one) and Cypress only runs Chrome's engine.
 
 ## Deploying
 

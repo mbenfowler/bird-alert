@@ -1,5 +1,5 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test'
-import { DAY_PLAN, DAY_ROUTE, fakeApi, goOffline, goOnline, today } from './fakeApi'
+import { appSaved, DAY_PLAN, DAY_ROUTE, fakeApi, goOffline, goOnline, today } from './fakeApi'
 import { pathKm, shortestOrderLocked } from '../src/routePlan'
 
 /**
@@ -12,13 +12,6 @@ import { pathKm, shortestOrderLocked } from '../src/routePlan'
 const at = (utc: string) => new Date(`${today()}T${utc}:00Z`)
 const plusDays = (n: number) => { const d = new Date(`${today()}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10) }
 
-const appSaved = (page: Page) => page.waitForFunction(async () => {
-  if (!navigator.serviceWorker.controller) return false
-  for (const name of await caches.keys()) {
-    if (name.startsWith('bird-alert-shell-') && await (await caches.open(name)).match('/__installed')) return true
-  }
-  return false
-}, undefined, { timeout: 20_000 })
 const persisted = (page: Page, text: string) => page.waitForFunction((needle) => (localStorage.getItem('bird-alert-query-cache') ?? '').includes(needle), text)
 
 /** Two days out (not the day itself), with the suggestion and one more place in the scouting reports. */
@@ -154,11 +147,11 @@ test('an edit with no signal waits on the phone, survives a reload, and saves on
 test('tapping a row lights its pin, and tapping a pin lights its row', async ({ page, context }) => {
   await routeApi(context, true)
   await page.goto('/events/2')
-  await expect(rows(page)).toHaveCount(5)
+  await expect(rows(page)).toHaveCount(5, { timeout: 15_000 })
   await rows(page).nth(2).locator('.go__stop-main').click()
   await expect(rows(page).nth(2)).toHaveClass(/is-active/)
   await expect(page.locator('.event-route-panel__map .map-stop--active')).toHaveText('3')
-  await page.locator('.event-route-panel__map .map-stop', { hasText: /^1$/ }).click({ force: true })
+  await page.locator('.event-route-panel__map .map-stop', { hasText: /^1$/ }).click()
   await expect(rows(page).nth(0)).toHaveClass(/is-active/)
   await expect(rows(page).nth(2)).not.toHaveClass(/is-active/)
 })

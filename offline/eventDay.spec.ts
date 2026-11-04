@@ -1,5 +1,5 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test'
-import { DAY_PLAN, DAY_ROUTE, fakeApi, goOffline, goOnline, today } from './fakeApi'
+import { appSaved, DAY_PLAN, DAY_ROUTE, fakeApi, goOffline, goOnline, today } from './fakeApi'
 
 /**
  * The event day on the production build: get ready for offline, the day view on top, stop mode
@@ -9,14 +9,6 @@ import { DAY_PLAN, DAY_ROUTE, fakeApi, goOffline, goOnline, today } from './fake
 
 /** 6:38 AM in Arizona today is `at('13:38')`. */
 const at = (utc: string) => new Date(`${today()}T${utc}:00Z`)
-
-const appSaved = (page: Page) => page.waitForFunction(async () => {
-  if (!navigator.serviceWorker.controller) return false
-  for (const name of await caches.keys()) {
-    if (name.startsWith('bird-alert-shell-') && await (await caches.open(name)).match('/__installed')) return true
-  }
-  return false
-}, undefined, { timeout: 20_000 })
 
 const persisted = (page: Page, text: string) => page.waitForFunction((needle) => (localStorage.getItem('bird-alert-query-cache') ?? '').includes(needle), text)
 

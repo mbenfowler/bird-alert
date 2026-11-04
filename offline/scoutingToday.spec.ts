@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { fakeApi, goOffline, today } from './fakeApi'
+import { appSaved, fakeApi, goOffline, today } from './fakeApi'
 
 /**
  * Today's scouting on the production build: the morning push opens /events/<id>#scouting, and with
@@ -8,13 +8,6 @@ import { fakeApi, goOffline, today } from './fakeApi'
 
 const plusDays = (n: number) => { const d = new Date(`${today()}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10) }
 
-const appSaved = (page: Page) => page.waitForFunction(async () => {
-  if (!navigator.serviceWorker.controller) return false
-  for (const name of await caches.keys()) {
-    if (name.startsWith('bird-alert-shell-') && await (await caches.open(name)).match('/__installed')) return true
-  }
-  return false
-}, undefined, { timeout: 20_000 })
 const persisted = (page: Page, text: string) => page.waitForFunction((needle) => (localStorage.getItem('bird-alert-query-cache') ?? '').includes(needle), text)
 
 test.use({ viewport: { width: 375, height: 812 } })
