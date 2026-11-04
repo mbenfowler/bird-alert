@@ -1086,11 +1086,6 @@ a.event-scouting__bird:hover {
 }
 
 /* Today's scouting (#scouting): where the morning push lands, high on the page. */
-.scouting-today,
-.event-scouting {
-  scroll-margin-top: 80px;
-}
-
 .scouting-today {
   align-items: stretch;
   min-width: 0;

@@ -114,13 +114,13 @@ describe('Events', () => {
       cy.contains('Anyone with it can join and plan with you.')
       cy.contains('button', 'Share invite link').click()
     })
-    cy.get('@copy').should('have.been.calledWith', 'http://localhost:3000/events/join/inv123')
+    cy.get('@copy').should('have.been.calledWith', `${Cypress.config('baseUrl')}/events/join/inv123`)
     cy.get('[data-testid="event-view-link"]').within(() => {
       cy.contains('h3', 'View-only page')
       cy.contains("For people who don't want an account: they see the plan and the day's tally.")
       cy.contains('button', 'Share view-only page').click()
     })
-    cy.get('@copy').should('have.been.calledWith', 'http://localhost:3000/events/view/view456')
+    cy.get('@copy').should('have.been.calledWith', `${Cypress.config('baseUrl')}/events/view/view456`)
     // Resetting the invite link asks first; cancelling sends nothing.
     cy.contains('[data-testid="event-invite-link"] button', 'Reset link').click()
     cy.contains('[data-testid="event-invite-link"]', 'Reset the invite link? Old invite links will stop working.')

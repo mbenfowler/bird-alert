@@ -40,14 +40,14 @@ export const targetRows = (event: { targets: GroupEvent['targets']; tally?: { co
   const latest = new Map<string, EventScouting['reported'][number]>()
   const derive = !scouting?.targets && scouting?.using !== 'likely_lifers'
   if (derive) for (const r of scouting?.reported ?? []) if (!latest.has(r.code) || r.obsDt > latest.get(r.code)!.obsDt) latest.set(r.code, r)
-  const missing = new Set(derive ? (scouting?.unreported ?? []).map(u => u.code) : [])
+  const missing = new Map(derive ? (scouting?.unreported ?? []).map(u => [u.code, u]) : [])
   return event.targets.map(target => {
     const known = fromServer.get(target.code)
     const report = latest.get(target.code)
     const status = known?.status ?? (report ? 'around' : missing.has(target.code) ? 'missing' : null)
     return {
       code: target.code,
-      name: known?.comName ?? report?.comName ?? nameOf(target.code),
+      name: known?.comName ?? report?.comName ?? missing.get(target.code)?.comName ?? nameOf(target.code),
       status,
       lastObsDt: known ? (known.last_obs_dt ?? null) : (report?.obsDt ?? null),
       lastLocName: known ? (known.last_loc_name ?? null) : (report?.locName ?? null),
