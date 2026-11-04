@@ -857,9 +857,10 @@
     cursor: default;
 }
 
-.go__stop-n--start {
-    background: #0f7b3a;
-    color: #fff;
+/* The start's badge: the stop numbers' ink disc with a flag in it. */
+.go__stop-n--start svg {
+    width: 15px;
+    height: 15px;
 }
 
 .go__start-empty {
@@ -896,24 +897,52 @@
 }
 
 /* A stop locked in place: the lock lit, its number ringed. */
-.go__lock {
-    font-size: 0.95rem;
-    line-height: 1;
+/* On an event's route the row's controls are full 44 px tap targets. The lock is a ringed button
+   like the stay stepper's: an outlined lock in ink when free, a gold button with a black lock when
+   locked. Its size never changes, so toggling it moves nothing. */
+.event-route__editor .go__stop-tools .go__icon-button {
+    width: 44px;
+    height: 44px;
 }
 
-.go__lock span {
-    filter: grayscale(1);
-    opacity: 0.55;
+.event-route__editor .go__stop-tools .go__icon-button svg {
+    width: 24px;
+    height: 24px;
+}
+
+.go__lock {
+    box-sizing: border-box;
+    border: 2px solid var(--ink) !important;
+    background: var(--surface) !important;
+    color: var(--ink);
 }
 
 .go__lock.is-on {
-    background: #ffd700;
-    border-radius: 50%;
+    background: #ffd700 !important;
+    color: #111;
+    border-color: #111 !important;
 }
 
-.go__lock.is-on span {
-    filter: none;
-    opacity: 1;
+.event-route__editor .go__stop-tools .go__lock svg {
+    width: 22px;
+    height: 22px;
+}
+
+/* On a phone the controls take their own line under the card, the same on every row. */
+@media (max-width: 480px) {
+    .event-route__editor .go__stop-row {
+        flex-wrap: wrap;
+    }
+
+    .event-route__editor .go__stop-row .go__stop-main {
+        flex: 1 1 0;
+    }
+
+    .event-route__editor .go__stop-tools {
+        flex: 1 0 100%;
+        justify-content: flex-end;
+        gap: 4px;
+    }
 }
 
 .go__stop.is-locked .go__stop-n {

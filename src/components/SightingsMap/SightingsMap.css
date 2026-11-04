@@ -149,18 +149,15 @@
     color: #1a56db;
 }
 
-/* Where the day starts: a dark disc with a white centre, no number. */
+/* Where the day starts: a dark disc with a white flag, as the route list's meeting point. */
 .map-stop--start {
-    width: 22px;
-    height: 22px;
     background: #111;
+    color: #fff;
 }
 
-.map-stop--start span {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #fff;
+.map-stop--start svg {
+    width: 15px;
+    height: 15px;
 }
 
 /* The public land being looked at: a gold ring on its pin (the road goes gold too). */

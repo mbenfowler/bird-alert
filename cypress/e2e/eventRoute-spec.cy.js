@@ -211,6 +211,8 @@ describe('Event route', () => {
       cy.get('[data-testid="route-editor"] .go__covers').should('have.text', 'Covers 3 of 7 targets reported this week')
       cy.get('.event-route-panel__map .map-stop:not(.map-stop--start)').should('have.length', 2)
       cy.get('.event-route-panel__map .map-stop--start').should('have.length', 1)
+      // The map's start is the same flag as the list's meeting point.
+      cy.get('[data-testid="start-badge"] svg path').invoke('attr', 'd').then(d => cy.get('.event-route-panel__map .map-stop--start svg path').should('have.attr', 'd', d))
     })
 
     it('edits save to the group a moment after the last one: the first turns the suggestion into the group’s (version 0)', () => {
