@@ -29,7 +29,8 @@
     "test:watch": "vitest",
     "test:webkit": "playwright test",
     "slides": "node marketing/render.mjs",
-    "slides:check": "eslint marketing && tsc -p marketing/tsconfig.json"
+    "slides:check": "eslint marketing && tsc -p marketing/tsconfig.json",
+    "test:offline": "vite build && playwright test -c playwright.offline.config.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
