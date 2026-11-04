@@ -165,7 +165,8 @@ describe('Event scouting', () => {
   it('targets with no reports get the empty line', () => {
     open(event(), { checked_at: null, days_to_go: 6, using: 'targets', reported: [], unreported: [{ code: 'eletro', comName: 'Elegant Trogon' }] })
     cy.get('[data-testid="event-scouting"]').should('contain', 'None of your targets have been reported nearby in the last week.')
-    cy.get('.event-scouting__progress').should('have.text', '0 of 1 target reported this week')
+    cy.get('[data-testid="event-scouting"] .event-scouting__progress').should('have.text', '0 of 1 target reported this week')
+    cy.get('[data-testid="scouting-progress"]').should('have.text', '0 of 1 target around this week')
     cy.get('.event-scouting__updated').should('not.exist')
     cy.get('.event-scouting__bird--missing').should('have.text', 'Elegant Trogon')
   })

@@ -66,9 +66,8 @@ const ScoutingToday = ({ event, onSeeWhere }: { event: GroupEvent; onSeeWhere: (
   const shown = allFresh ? fresh : fresh.slice(0, FRESH_SHOWN)
   const lifers = data?.using === 'likely_lifers'
   const rows = data ? targetRows(event, data, code => code) : []
-  const known = rows.some(row => row.status)
   const got = lifers ? new Set(data?.reported.map(r => r.code)).size : rows.filter(row => row.status === 'around').length
-  const total = lifers ? got + new Set(data?.unreported.map(u => u.code)).size : known ? rows.length : 0
+  const total = lifers ? got + new Set(data?.unreported.map(u => u.code)).size : rows.filter(row => row.status).length
   return (
     <div id='scouting' tabIndex={-1} className='event-page__section scouting-today' data-testid='scouting-today'>
       <h2 className='place__heading'>{t('scoutingToday.title')}</h2>
