@@ -75,24 +75,29 @@ const landedOnCard = () => {
 }
 
 describe("Today's scouting", () => {
-  it('leads with the push line, new reports rarest first, the bird of the day and the progress line', () => {
+  it('leads with the push line, then the bird of the day, the other new reports rarest first, and the progress line', () => {
     open(event(), SCOUTING)
     cy.get('[data-testid="scouting-today"]').within(() => {
       cy.contains('h2', 'Today’s scouting')
       cy.get('[data-testid="scouting-headline"]').should('have.text', '3 exciting birds near Chiricahuas: Rufous-backed Robin and more')
+      // In order: heading and headline, bird of the day, new since yesterday, progress, See where.
+      cy.get('h2, [data-testid="scouting-headline"], [data-testid="bird-of-day"], .place__subheading, [data-testid="scouting-progress"], .scouting-today__see')
+        .then(els => expect([...els].map(el => el.getAttribute('data-testid') || el.className)).to.deep.equal([
+          'place__heading', 'scouting-headline', 'bird-of-day', 'place__subheading', 'scouting-progress', 'link-text scouting-today__see'
+        ]))
       cy.contains('.place__subheading', 'New since yesterday')
-      cy.get('[data-testid="scouting-fresh"]').should('have.length', 4)
-      // Rarest first (ABA 4, 3, then the 2s in the server's order), each with where and when.
+      // The bird of the day (Tufted Flycatcher) is new too, but it isn't listed twice.
+      cy.get('[data-testid="scouting-fresh"]').should('have.length', 3)
+      // Rarest first (ABA 3, then the 2s in the server's order), each with where and when.
       cy.get('[data-testid="scouting-fresh"]').then(rows => expect([...rows].map(r => r.querySelector('strong').textContent))
-        .to.deep.equal(['Tufted Flycatcher', 'Rufous-backed Robin', 'Elegant Trogon', 'Mexican Chickadee']))
-      cy.get('[data-testid="scouting-fresh"]').eq(1).should('have.text', 'Rufous-backed Robin ABA Code 3 · a few each year · Tubac · this morning')
+        .to.deep.equal(['Rufous-backed Robin', 'Elegant Trogon', 'Mexican Chickadee']))
+      cy.get('[data-testid="scouting-fresh"]').eq(0).should('have.text', 'Rufous-backed Robin ABA Code 3 · a few each year · Tubac · this morning')
         .and('have.attr', 'data-aba', '3')
-      cy.get('[data-testid="scouting-fresh"]').eq(0).find('.aba-code').should('contain', 'ABA Code 4')
-      cy.get('[data-testid="scouting-fresh"]').eq(0).should('contain', 'Ramsey Canyon · 2 days ago')
-      cy.get('[data-testid="scouting-fresh"]').eq(2).should('contain', 'Cave Creek Canyon · yesterday').find('.aba-code').should('not.exist')
-      cy.get('[data-testid="scouting-fresh"]').eq(3).should('contain', 'Rustler Park · today')
-      // Heat edge by ABA code.
-      cy.get('[data-testid="scouting-fresh"]').eq(0).should('have.css', 'border-left-color', 'rgb(224, 86, 27)')
+      cy.get('[data-testid="scouting-fresh"]').eq(1).should('contain', 'Cave Creek Canyon · yesterday').find('.aba-code').should('not.exist')
+      cy.get('[data-testid="scouting-fresh"]').eq(2).should('contain', 'Rustler Park · today')
+      // Heat edge by ABA code: amber at 3, orange at 4.
+      cy.get('[data-testid="scouting-fresh"]').eq(0).should('have.css', 'border-left-color', 'rgb(217, 154, 0)')
+      cy.get('[data-testid="bird-of-day"]').should('have.css', 'border-left-color', 'rgb(224, 86, 27)')
       cy.get('[data-testid="bird-of-day"]').within(() => {
         cy.contains('Bird of the day')
         cy.contains('strong', 'Tufted Flycatcher')
@@ -128,6 +133,15 @@ describe("Today's scouting", () => {
     cy.contains('[data-testid="scouting-today"] button', '+3 more').click()
     cy.get('[data-testid="scouting-fresh"]').should('have.length', 8)
     cy.contains('[data-testid="scouting-today"] button', 'more').should('not.exist')
+  })
+
+  it('with the bird of the day the only new report, no list and no "nothing new" line', () => {
+    open(event(), { ...SCOUTING, fresh: [fresh({ code: 'tufflc', comName: 'Tufted Flycatcher', locName: 'Ramsey Canyon', aba: 4 })] })
+    cy.get('[data-testid="bird-of-day"]').should('contain', 'Tufted Flycatcher')
+    cy.get('[data-testid="scouting-fresh"]').should('not.exist')
+    cy.contains('[data-testid="scouting-today"] .place__subheading', 'New since yesterday').should('not.exist')
+    cy.get('[data-testid="scouting-none-new"]').should('not.exist')
+    cy.get('[data-testid="scouting-progress"]').should('exist')
   })
 
   it('says quietly when nothing is new, with the progress line', () => {
@@ -296,6 +310,33 @@ describe('Targets', () => {
     cy.get('[data-code="whepar"] button[aria-label="Remove Whiskered Screech-Owl"]').click()
     cy.get('[data-code="whepar"] button[aria-label="Yes, remove Whiskered Screech-Owl"]').click()
     cy.wait('@targets').its('request.body.codes').should('deep.equal', ['eletro', 'mexchi'])
+  })
+
+  for (const width of [375, 390]) {
+    it(`an empty route is as wide as its section at ${width}px`, () => {
+      cy.viewport(width, 800)
+      open(event(), SCOUTING)
+      cy.contains('[data-testid="route-editor"]', 'No stops yet. Add one below.')
+      cy.get('[data-testid="event-route"]').then(section => {
+        const inner = section[0].getBoundingClientRect().width - parseFloat(getComputedStyle(section[0]).paddingLeft) - parseFloat(getComputedStyle(section[0]).paddingRight)
+        cy.get('[data-testid="route-editor"]').should(editor => expect(editor[0].getBoundingClientRect().width).to.be.closeTo(inner, 1))
+      })
+      noSidewaysScroll()
+    })
+  }
+
+  it('a lifer is one small tag, so the chip stays on one line at 375', () => {
+    cy.viewport(375, 740)
+    open(event({ targets: [{ code: 'eletro' }, { code: 'mexchi', lifer_for_you: true }, { code: 'whepar' }] }), { ...SCOUTING, targets: SCOUTING.targets.map(t => ({ ...t, aba: t.code === 'mexchi' ? 3 : t.aba })) })
+    cy.get('[data-code="mexchi"] .event__lifer-mark').should('have.text', 'lifer')
+    cy.get('[data-code="mexchi"]').should(chip => {
+      const name = chip[0].querySelector('.event__target-name').getBoundingClientRect()
+      const tag = chip[0].querySelector('.event__lifer-mark').getBoundingClientRect()
+      const badge = chip[0].querySelector('.aba-code').getBoundingClientRect()
+      expect(chip[0].getBoundingClientRect().height, 'one line').to.be.lessThan(40)
+      expect(Math.abs(tag.top + tag.height / 2 - (name.top + name.height / 2)), 'tag beside the name').to.be.lessThan(4)
+      expect(Math.abs(badge.top + badge.height / 2 - (name.top + name.height / 2)), 'badge beside the name').to.be.lessThan(4)
+    })
   })
 
   it('fits a phone: 375 wide with 50 targets, the filter and the search', () => {

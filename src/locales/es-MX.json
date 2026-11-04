@@ -1564,7 +1564,8 @@
     "liferMark": "lifer",
     "onTally": "Ya en el conteo",
     "removeTargetYes": "Sí, quitar {{name}}",
-    "removeTargetSure": "¿Quitar?"
+    "removeTargetSure": "¿Quitar?",
+    "liferMarkFor": "lifer: {{names}}"
   },
   "eventDay": {
     "heading": "Hoy",

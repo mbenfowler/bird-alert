@@ -1446,7 +1446,8 @@
     "liferMark": "lifer",
     "onTally": "On the tally",
     "removeTargetYes": "Yes, remove {{name}}",
-    "removeTargetSure": "Remove?"
+    "removeTargetSure": "Remove?",
+    "liferMarkFor": "lifer: {{names}}"
   },
   "eventDay": {
     "heading": "Today",

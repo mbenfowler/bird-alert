@@ -732,8 +732,12 @@ a.event-scouting__bird:hover {
   gap: 8px 12px;
 }
 
+/* Full width even with no stops: the section lines its children up at the start, which would
+   otherwise shrink an empty route to its hint and button. */
 .event-route__editor {
   min-width: 0;
+  align-self: stretch;
+  box-sizing: border-box;
 }
 
 .event-route.is-updating .event-route__stops,
@@ -1281,15 +1285,18 @@ a.event-scouting__bird:hover {
   color: var(--muted);
 }
 
+/* A small tag, the same size as the short ABA badge, so a chip stays on one line. */
 .event__lifer-mark {
   flex: none;
-  padding: 0 5px;
-  border-radius: 4px;
+  padding: 0 6px;
+  border: 1.5px solid var(--ink);
+  border-radius: 8px;
   background: var(--surface);
   color: var(--ink);
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: lowercase;
+  font-family: system-ui, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .event__got {

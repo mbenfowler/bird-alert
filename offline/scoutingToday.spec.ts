@@ -41,7 +41,10 @@ test('#scouting opens on the card, scrolled to and lit up, with signal and then 
   const card = page.getByTestId('scouting-today')
   await expect(page.getByTestId('scouting-headline')).toHaveText('2 exciting birds near Cochise Big Day: Rufous-backed Robin and more')
   await expect(card).toHaveAttribute('data-flash', '')
-  await expect(page.getByTestId('scouting-fresh').first()).toContainText('Rufous-backed Robin')
+  // The bird of the day leads, and isn't listed again among the new reports.
+  await expect(page.getByTestId('bird-of-day')).toContainText('Rufous-backed Robin')
+  await expect(page.getByTestId('scouting-fresh')).toHaveCount(1)
+  await expect(page.getByTestId('scouting-fresh').first()).toContainText('Elegant Trogon')
   await expect(page.getByTestId('scouting-progress')).toHaveText('2 of 4 targets around this week')
   await appSaved(page)
   await persisted(page, '"headline"')

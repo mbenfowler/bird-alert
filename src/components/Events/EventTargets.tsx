@@ -23,7 +23,11 @@ const Chip = ({ row, group, youName, confirming, busy, onArm, onRemove }: {
 }) => {
   // Whose lifer each would be: you first (as "you"), then the others the group knows by name.
   const liferFor = [...(row.target.lifer_for_you ? [t('events.youLower')] : []), ...(row.target.lifer_for ?? []).filter(n => !row.target.lifer_for_you || n !== youName)]
-  const groupLifer = group && liferFor.length > 0
+  // One small tag: "lifer" when it'd be yours (or, solo, when it's a lifer), else whose ("lifer: Jane, Sam").
+  const others = (row.target.lifer_for ?? []).filter(n => n !== youName)
+  const mine = row.target.lifer_for_you || (!group && row.lifer)
+  const tag = mine ? t('events.liferMark') : group && others.length ? t('events.liferMarkFor', { names: others.join(', ') }) : null
+  const tagTitle = group && liferFor.length ? t('events.liferFor', { names: liferFor.join(', ') }) : undefined
   const reported = row.status === 'around' ? reportedLine(row, monthDay) : null
   return (
     <li className={`place__chip event__target ${row.status ? `event__target--${row.status}` : ''} ${confirming ? 'is-confirming' : ''}`} data-status={row.status ?? undefined} data-code={row.code} title={reported ?? undefined}>
@@ -33,9 +37,9 @@ const Chip = ({ row, group, youName, confirming, busy, onArm, onRemove }: {
         {row.name}
         {reported && <span className='visually-hidden'> · {reported}</span>}
         {row.status === 'missing' && <span className='visually-hidden'> · {t('events.statusMissing')}</span>}
-        {groupLifer ? <span className='event__lifer'> · {t('events.liferFor', { names: liferFor.join(', ') })}</span> : null}
+        {tagTitle && mine && others.length > 0 && <span className='visually-hidden'> · {tagTitle}</span>}
       </span>
-      {!groupLifer && row.lifer && <span className='event__lifer-mark'>{t('events.liferMark')}</span>}
+      {tag && <span className='event__lifer-mark' title={tagTitle}>{tag}</span>}
       {(row.aba ?? 0) >= 3 && <AbaCode code={row.aba} short />}
       {confirming
         ? <button type='button' className='event__remove-yes' aria-label={t('events.removeTargetYes', { name: row.name })} disabled={busy} onClick={onRemove}>{t('events.removeTargetSure')}</button>

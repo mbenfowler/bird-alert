@@ -1581,7 +1581,8 @@
     "liferMark": "nouvelle",
     "onTally": "Déjà au décompte",
     "removeTargetYes": "Oui, retirer {{name}}",
-    "removeTargetSure": "Retirer?"
+    "removeTargetSure": "Retirer?",
+    "liferMarkFor": "nouvelle : {{names}}"
   },
   "eventDay": {
     "heading": "Aujourd’hui",

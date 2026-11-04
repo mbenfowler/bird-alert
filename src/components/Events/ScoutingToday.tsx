@@ -56,15 +56,18 @@ const BirdOfDay = ({ bird, heat }: { bird: ScoutingBirdOfDay; heat: (aba?: numbe
 
 /**
  * Today's scouting, high on the event page and where the morning push lands (#scouting): the
- * push's own line, the target reports new since yesterday (rarest first), the bird of the day, how
- * many targets are around this week, and a link down to the places and map.
+ * push's own line, the bird of the day, the other target reports new since yesterday (rarest
+ * first), how many targets are around this week, and a link down to the places and map.
  */
 const ScoutingToday = ({ event, onSeeWhere }: { event: GroupEvent; onSeeWhere: () => void }) => {
   const scouting = useEventScoutingQuery(event.id)
   const heat = useHeat()
   const [allFresh, setAllFresh] = useState(false)
   const data = scouting.data
-  const fresh = rarestFirst(data?.fresh ?? [])
+  // The bird of the day leads the card, so it isn't listed again below it.
+  const hero = data?.bird_of_day ?? null
+  const anyFresh = (data?.fresh?.length ?? 0) > 0
+  const fresh = rarestFirst((data?.fresh ?? []).filter(f => !hero || f.code !== hero.code))
   const shown = allFresh ? fresh : fresh.slice(0, FRESH_SHOWN)
   const lifers = data?.using === 'likely_lifers'
   const rows = data ? targetRows(event, data, code => code) : []
@@ -78,6 +81,7 @@ const ScoutingToday = ({ event, onSeeWhere }: { event: GroupEvent; onSeeWhere: (
       {data && (
         <>
           {data.headline && <p className='scouting-today__headline' data-testid='scouting-headline'>{data.headline}</p>}
+          {hero && <BirdOfDay bird={hero} heat={heat} />}
           {fresh.length > 0
             ? <>
                 <p className='place__subheading'>{t('scoutingToday.newSince')}</p>
@@ -88,8 +92,7 @@ const ScoutingToday = ({ event, onSeeWhere }: { event: GroupEvent; onSeeWhere: (
                   <button type='button' className='link-button link-text scouting-today__more' onClick={() => setAllFresh(true)}>{t('scoutingView.moreBirds', { count: fresh.length - shown.length })}</button>
                 )}
               </>
-            : <p className='scouting-today__quiet' data-testid='scouting-none-new'>{t('scoutingToday.noneNew')}</p>}
-          {data.bird_of_day && <BirdOfDay bird={data.bird_of_day} heat={heat} />}
+            : !anyFresh && <p className='scouting-today__quiet' data-testid='scouting-none-new'>{t('scoutingToday.noneNew')}</p>}
           {total > 0 && (
             <div className='event-scouting__summary'>
               <div className='event-scouting__bar' aria-hidden='true'><span style={{ width: `${Math.round((got / total) * 100)}%` }} /></div>
