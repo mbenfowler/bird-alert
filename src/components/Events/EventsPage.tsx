@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router'
 import ErrorMessage from '../Error/ErrorMessage'
 import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
+import { OfflineNote } from '../Offline/Offline'
 import { useEventsQuery } from '../../hooks/queries'
 import { useAreaName } from '../../shownArea'
 import { dateRange, t } from '../../i18n'
@@ -56,7 +57,8 @@ const EventsPage = () => {
       {tripsMoved && <p className='notification__hint events-page__moved' role='status' data-testid='trips-moved'>{t('events.tripsMoved')}</p>}
       <p className='notification__hint'>{t('events.pageHint')}</p>
       {events.isPending && <LoadingState />}
-      {events.isError && <ErrorMessage networkError={errorMessage(events.error)} />}
+      {events.isError && !events.data && <ErrorMessage networkError={errorMessage(events.error)} />}
+      {events.data && <OfflineNote updatedAt={events.dataUpdatedAt} error={events.error} />}
       {events.data && (
         <>
           <h2 className='place__heading events-page__heading'>{t('events.upcoming')}</h2>

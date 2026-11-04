@@ -951,6 +951,17 @@
     "edit": "Modifier",
     "share": "Partager"
   },
+  "offline": {
+    "noSignal": "Pas de réseau. Voici ce qui est enregistré.",
+    "noSignalNothingSaved": "Pas de réseau, et ceci n’est pas encore enregistré sur ce téléphone. Ça se chargera quand tu auras du réseau.",
+    "savedAt": "Hors ligne · voici ce qui a été enregistré à {{time}}",
+    "waiting_one": "{{count}} en attente d’envoi",
+    "waiting_many": "{{count}} en attente d’envoi",
+    "waiting_other": "{{count}} en attente d’envoi",
+    "waitingOne": "En attente de réseau pour l’envoi",
+    "signInUnknown": "Pas de réseau. Bird Alert vérifiera ta connexion à ton compte quand tu auras du réseau.",
+    "tryAgain": "Réessayer"
+  },
   "routeError": {
     "title": "Impossible de charger cette page",
     "why": "C’est souvent un pépin de connexion, ou une mise à jour qui vient de sortir.",

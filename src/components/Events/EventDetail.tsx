@@ -4,6 +4,7 @@ import { toast } from 'react-toastify'
 import BirdPicker from '../WhereToGo/BirdPicker'
 import { CloseIcon } from '../Icons/Icons'
 import { LoadingState } from '../Loading/Loading'
+import { LoadProblem, OfflineNote } from '../Offline/Offline'
 import { errorMessage } from '../../apiCalls'
 import { useBirdsQuery, useEventSuggestionsQuery, useEventsQuery } from '../../hooks/queries'
 import { useEndEventMutation, useEventMemberMutation, useEventTargetsMutation, useLeaveEventMutation, useRotateInviteMutation, useStartInviteMutation } from '../../hooks/mutations'
@@ -195,7 +196,7 @@ const EventDetail = () => {
   const areaName = useAreaName(event?.state ?? '', event?.location ?? '')
   const [editing, setEditing] = useState(false)
   if (events.isPending) return <LoadingState />
-  if (!event) return <section className='event-page'><p className='event-page__missing'>{t('events.tallyMissing')}</p><Link to='/events'>{t('events.backToEvents')}</Link></section>
+  if (!event) return <section className='event-page'><LoadProblem error={events.error} missing={t('events.tallyMissing')} /><Link to='/events'>{t('events.backToEvents')}</Link></section>
 
   const past = isPast(event)
   const from = scoutFrom(event)
@@ -204,6 +205,7 @@ const EventDetail = () => {
     <section className='event-page event-detail' data-event={String(event.id)}>
       <p className='event-detail__back'><Link to='/events'>{t('events.allEvents')}</Link></p>
       <h1 className='fredericka event-page__title'>{event.name}</h1>
+      <OfflineNote updatedAt={events.dataUpdatedAt} error={events.error} />
       <p className='event-page__what'>
         {areaName} · {dateRange(event.starts_on, event.ends_on)}
         {event.active && <span className='place__badge'>{t('events.today')}</span>}

@@ -11,6 +11,7 @@ import { useDriveQuery, useEventRouteQuery, useEventScoutingQuery, useSessionQue
 import { useEventScoutingEmailMutation } from '../../hooks/mutations'
 import { toast } from 'react-toastify'
 import { ApiError, errorMessage, resendConfirmationEmail } from '../../apiCalls'
+import { isNetworkError } from '../../offline'
 import type { PlanPoint } from '../../routePlan'
 import { clockTime, daysUntil, t } from '../../i18n'
 import { editedAgo } from './editedAgo'
@@ -308,7 +309,7 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
         </p>
       )}
       {scouting.isPending && <LoadingState variant='inline' label={t('scoutingView.loading')} />}
-      {scouting.isError && <p className='notification__hint'>{t('scoutingView.failed')}</p>}
+      {scouting.isError && !data && <p className='notification__hint'>{isNetworkError(scouting.error) ? t('offline.noSignalNothingSaved') : t('scoutingView.failed')}</p>}
       {data && (
         <>
           {lifers && <p className='notification__hint event-scouting__fallback'>{t('scoutingView.fallback')}</p>}
@@ -368,7 +369,7 @@ const EventScouting = ({ event }: { event: GroupEvent }) => {
                       resetLabel={t('eventRoute.backSuggested')} startLabel={t('eventRoute.meetingPoint')} startEmpty={t('eventRoute.noMeetingPoint')} />
                   </div>
                 : <EventRoute route={route} pending={customStops === null && routeQuery.isPending} updating={customStops === null ? routeQuery.isPlaceholderData : drive.isPlaceholderData}
-                    failed={customStops === null && routeQuery.isError} heading={heading}
+                    failed={customStops === null && routeQuery.isError && !routeQuery.data} failedText={isNetworkError(routeQuery.error) ? t('offline.noSignalNothingSaved') : undefined} heading={heading}
                     start={start} lifers={lifers} picked={pickedExtra} renderBird={routeBird}
                     actions={(
                       <>

@@ -1,0 +1,34 @@
+/* "Offline · showing what was saved at 6:42 AM", and the count of tally changes still to send. */
+.offline-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.offline-note svg,
+.sync-badge svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+
+.sync-badge {
+  position: sticky;
+  top: calc(var(--safe-top) + 8px);
+  z-index: 5;
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 6px;
+  margin: 8px auto 0;
+  padding: 4px 12px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-weight: 700;
+}

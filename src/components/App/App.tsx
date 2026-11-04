@@ -24,6 +24,7 @@ import Nav from '../Nav/Nav'
 import Home from '../Home/Home'
 import NotFound from '../NotFound/NotFound'
 import { LoadingState } from '../Loading/Loading'
+import { OfflineSignIn, SyncBadge } from '../Offline/Offline'
 import { useTranslation } from 'react-i18next'
 import { applyLocale, noteLocale, t } from '../../i18n'
 import { forgetJoin, pendingJoin } from '../Events/pendingJoin'
@@ -57,8 +58,11 @@ const NO_EBIRD_DATA = new Set(['login', 'settings', 'reset', 'confirm', 'unsubsc
 
 const App = () => {
   const session = useSessionQuery()
-  // undefined while the cookie is being checked; null when logged out (or the API is unreachable).
-  const user = session.isError ? null : session.data
+  // undefined while the cookie is being checked; null only when the server said 401. With no signal
+  // the last known account (kept on the device) stays signed in, and is checked again once online.
+  const user = session.data
+  // Never signed in on this device and the check couldn't reach the server: nothing to show yet.
+  const sessionUnknown = user === undefined && session.isError
   // Bird names follow the person's language from the first render on; the page's words switch with it.
   const locale = user?.locale ?? null
   noteLocale(locale)
@@ -207,6 +211,7 @@ const App = () => {
 
   // Gate an element on having a user. While the session is being checked, show a spinner.
   const requireUser = (element: ReactElement) => {
+    if (sessionUnknown) return <OfflineSignIn retry={() => void session.refetch()} />
     if (user === undefined) return <div className='spinner'></div>
     if (user === null) return null
     return element
@@ -224,6 +229,7 @@ const App = () => {
       <Nav />
       <main className="App">
         <ConfirmNudge />
+        {user && <SyncBadge />}
         {/* Keyed by language, so a change of language redraws every page in it. */}
         <div className='route-view' ref={routeView} key={`${locale ?? ''}|${i18n.language}`}>
         <RouteError resetKey={pathname}>

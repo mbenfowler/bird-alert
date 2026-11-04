@@ -20,6 +20,9 @@ export const lazyWithReload = <T extends ComponentType<unknown>>(importer: () =>
         return false
       } catch { return true } // storage unavailable: no way to stop a loop, so do not start one
     }
+    // With no signal a reload would only end on the browser's offline page: show the error view
+    // (with its own reload) instead. The service worker normally has every chunk saved anyway.
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) throw error
     if (alreadyReloaded()) throw error
     window.location.reload()
     // The page is going away; keep the suspense fallback up until it does.

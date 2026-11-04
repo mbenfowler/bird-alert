@@ -868,6 +868,16 @@
     "edit": "Edit route",
     "share": "Share"
   },
+  "offline": {
+    "noSignal": "No signal. Showing what’s saved.",
+    "noSignalNothingSaved": "No signal, and this isn’t saved on this phone yet. It’ll load once you’re back online.",
+    "savedAt": "Offline · showing what was saved at {{time}}",
+    "waiting_one": "{{count}} waiting to sync",
+    "waiting_other": "{{count}} waiting to sync",
+    "waitingOne": "Waiting for signal to send",
+    "signInUnknown": "No signal. Bird Alert will check your sign-in once you’re back online.",
+    "tryAgain": "Try again"
+  },
   "routeError": {
     "title": "This page could not be loaded",
     "why": "Usually a connection hiccup, or an update that just went out.",

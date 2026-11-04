@@ -6,7 +6,9 @@ import { ApiError } from './apiCalls'
 declare module '@tanstack/react-query' {
   interface Register {
     // Queries flagged with { persist: true } survive reloads via localStorage; everything else is memory-only.
-    queryMeta: { persist?: boolean }
+    // { offline: true } keeps the last copy even once it's stale, so it can be shown with no signal
+    // (the event, its tally, scouting and route, and who's signed in).
+    queryMeta: { persist?: boolean; offline?: boolean }
   }
 }
 
@@ -47,11 +49,16 @@ const persister = createSyncStoragePersister({
 
 export const persistOptions: Omit<PersistQueryClientOptions, 'queryClient'> = {
   persister,
+  // A week: comfortably past a trip's last day, so what was saved the morning of still opens in a canyon.
   maxAge: WEEK,
   // Bump to drop every reader's persisted cache after a breaking shape change.
   buster: 'v4',
   dehydrateOptions: {
     shouldDehydrateQuery: (query) =>
-      query.state.status === 'success' && query.meta?.persist === true && !query.isStale()
+      query.state.status === 'success' && query.meta?.persist === true && (query.meta.offline === true || !query.isStale()),
+    // TanStack saves only paused writes; a tally change between retries on one bar is saved too
+    // (src/tallySync.ts), so a reload never loses a bird.
+    shouldDehydrateMutation: (mutation) =>
+      mutation.state.isPaused || (mutation.options.mutationKey?.[0] === 'event-tally' && mutation.state.status === 'pending')
   }
 }

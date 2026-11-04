@@ -135,12 +135,14 @@ const ExtraRow = ({ extra, i, active, unit, renderBird }: { extra: Extra; i: num
  * the drive between them and links into Google Maps, then the optional stops worth it with time to
  * spare. Stops can be taken out and optional ones put in; the route is planned again each time.
  */
-const EventRoute = ({ route, pending, updating, failed, heading = null, start, lifers, picked, renderBird, actions }: {
+const EventRoute = ({ route, pending, updating, failed, failedText, heading = null, start, lifers, picked, renderBird, actions }: {
   route: Route | undefined
   pending: boolean
   /** An edit is on its way; the last route stays up meanwhile. */
   updating: boolean
   failed: boolean
+  /** In place of the usual "couldn't plan a route" (no signal, and nothing saved). */
+  failedText?: string
   /** The group's own route: "Your group's route · edited by Sam · 2 hours ago". Null for the suggestion. */
   heading?: string | null
   /** The group's meeting point, when one is saved. */
@@ -176,7 +178,7 @@ const EventRoute = ({ route, pending, updating, failed, heading = null, start, l
   return (
     <div className={`event-route ${updating ? 'is-updating' : ''}`} data-testid='event-route' aria-busy={updating || pending}>
       {pending && <LoadingState variant='inline' label={t('eventRoute.loading')} />}
-      {failed && <p className='notification__hint'>{t('eventRoute.failed')}</p>}
+      {failed && <p className='notification__hint'>{failedText ?? t('eventRoute.failed')}</p>}
       {failed && actions}
       {route && !pending && (
         route.stops.length === 0
