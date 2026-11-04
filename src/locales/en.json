@@ -503,6 +503,15 @@
     "text": "<b>Get alerts on this iPhone:</b> tap Share <icon></icon> then <b>Add to Home Screen</b>.",
     "gotIt": "Got it"
   },
+  "invite": {
+    "title": "Bird Alert",
+    "message": "I use this for rare bird alerts near me. It’s free, made by a birder.",
+    "row": "Invite a birding friend",
+    "rowHint": "Send them a link. It’s free.",
+    "button": "Invite",
+    "nudge": "Know a birder who’d want this? Invite them",
+    "notNow": "Not now"
+  },
   "landing": {
     "justNow": "just now",
     "yesterday": "yesterday",
@@ -683,7 +692,8 @@
     "saved": "Saved birds",
     "settings": "Settings",
     "logout": "Logout",
-    "events": "Events"
+    "events": "Events",
+    "share": "Share Bird Alert"
   },
   "nearby": {
     "never": "never birded",

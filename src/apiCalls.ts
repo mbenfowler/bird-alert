@@ -114,6 +114,8 @@ export const unsubscribe = (token: string) => api<{ ok: true; emailType: string 
 
 // ---- user ----
 export const patchUser = (changes: UserPatch) => api<User>('/user', { method: 'PATCH', body: changes })
+/** This person's own invite link for a birding friend: { url: …/?ref=invite-<code>, code }. */
+export const getInviteLink = () => api<{ url: string; code: string }>('/user', { params: { kind: 'invite-link' } })
 
 // ---- watch list ----
 export const getSavedBirds = () => api<Bird[]>('/saved')

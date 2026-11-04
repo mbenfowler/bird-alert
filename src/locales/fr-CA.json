@@ -547,6 +547,15 @@
     "text": "<b>Reçois les alertes sur cet iPhone :</b> touche Partager <icon></icon> puis <b>Sur l’écran d’accueil</b>.",
     "gotIt": "Compris"
   },
+  "invite": {
+    "title": "Bird Alert",
+    "message": "J’utilise ça pour les alertes d’oiseaux rares près de chez moi. C’est gratuit, fait par un ornithologue.",
+    "row": "Inviter un ami ornitho",
+    "rowHint": "Envoie-lui un lien. C’est gratuit.",
+    "button": "Inviter",
+    "nudge": "Tu connais un ornitho que ça intéresserait? Invite-le",
+    "notNow": "Pas maintenant"
+  },
   "landing": {
     "justNow": "à l’instant",
     "yesterday": "hier",
@@ -748,7 +757,8 @@
     "saved": "Mes oiseaux",
     "settings": "Paramètres",
     "logout": "Déconnexion",
-    "events": "Événements"
+    "events": "Événements",
+    "share": "Partager Bird Alert"
   },
   "nearby": {
     "never": "jamais visité",

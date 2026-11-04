@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { toast } from 'react-toastify'
 import SightingsMap, { type MapPoint } from '../SightingsMap/SightingsMap'
 import SeasonStrip from '../SeasonStrip/SeasonStrip'
@@ -20,6 +20,7 @@ import type { Observation, Place, PlaceBand, PersistenceClass } from '../../type
 import { formatObsDt } from '../../format'
 import { article, chanceStyle } from '../../chance'
 import { offerPush } from '../../pushAsk'
+import { offerInvite } from '../../invite'
 import AccuracyBadge from '../AccuracyBadge/AccuracyBadge'
 import StillThere from '../StillThere/StillThere'
 import AbaCode from '../AbaCode/AbaCode'
@@ -89,6 +90,10 @@ const Sighting = () => {
   const where = useWhereToFindQuery(region, code)
   // A rarity or a bird passing through may already have moved on, so its report gets a "still there?".
   const chaseable = where.data?.class === 'rare' || where.data?.class === 'passage'
+  // Opened from an alert, and the bird is a rarity (ABA 3+, or rare here): a happy moment.
+  const fromPush = Boolean((useLocation().state as { fromPush?: boolean } | null)?.fromPush)
+  const rareFind = (bird?.aba ?? 0) >= 3 || where.data?.class === 'rare'
+  useEffect(() => { if (fromPush && rareFind) offerInvite('rare') }, [fromPush, rareFind])
   const start = useSavedRouteQuery(chaseable ? region : '').data?.start ?? null
   const [openNearby, setOpenNearby] = useState<string | null>(null)
   const [activeNearby, setActiveNearby] = useState<string | null>(null)

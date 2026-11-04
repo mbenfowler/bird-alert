@@ -15,6 +15,13 @@ describe('arrivalFor', () => {
   })
 })
 
+describe('invites', () => {
+  it('keeps a friend\'s invite whole (?ref=invite-<code>), and ignores any other ref', () => {
+    expect(arrivalFor('https://bird-alert.vercel.app/?ref=invite-abc123', '', 1)).toEqual({ landing: 'home', invite: 'invite-abc123', at: 1 })
+    expect(arrivalFor('https://bird-alert.vercel.app/?ref=newsletter', '', 1)).toEqual({ landing: 'home', at: 1 })
+  })
+})
+
 describe('arrival', () => {
   it('still has this visit\'s note when the browser keeps nothing in storage (Facebook\'s in-app browser)', async () => {
     const { noteArrival, arrival } = await import('./arrival')

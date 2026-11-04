@@ -1,10 +1,10 @@
 /**
  * What brought a visitor in, noted on their first visit so a signup can say where it came from:
  * the referring site's name (never the full address), a ?utm_source= tag, the share link they
- * landed on, and the kind of page. Kept in this browser for 30 days, first visit wins, and sent
- * only with a signup. Storage can be unavailable (private mode); then nothing is kept.
+ * landed on, a friend's invite (?ref=invite-<code>, kept whole), and the kind of page. Kept in this
+ * browser for 30 days, first visit wins, and sent only with a signup. Storage can be unavailable (private mode); then nothing is kept.
  */
-export interface Arrival { ref?: string; utm?: string; share?: string; landing: 'home' | 'share-sighting' | 'share-route' | 'login' | 'other'; at: number }
+export interface Arrival { ref?: string; utm?: string; share?: string; invite?: string; landing: 'home' | 'share-sighting' | 'share-route' | 'login' | 'other'; at: number }
 
 const KEY = 'arrivedFrom'
 const KEEP_MS = 30 * 24 * 60 * 60 * 1000
@@ -22,6 +22,8 @@ export const arrivalFor = (href: string, referrer: string, now = Date.now()): Ar
   const utm = (url.searchParams.get('utm_source') || '').toLowerCase()
   if (/^[a-z0-9_-]{1,40}$/.test(utm)) out.utm = utm
   if (share) out.share = share[2]
+  const invite = url.searchParams.get('ref') || ''
+  if (/^invite-[A-Za-z0-9_-]{1,60}$/.test(invite)) out.invite = invite
   return out
 }
 
@@ -49,3 +51,4 @@ export const arrival = (): Omit<Arrival, 'at'> | null => {
   delete rest.at
   return rest
 }
+

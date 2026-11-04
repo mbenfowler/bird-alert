@@ -539,6 +539,15 @@
     "text": "<b>Recibe alertas en este iPhone:</b> toca Compartir <icon></icon> y luego <b>Agregar a inicio</b>.",
     "gotIt": "Entendido"
   },
+  "invite": {
+    "title": "Bird Alert",
+    "message": "Uso esto para alertas de aves raras cerca de mí. Es gratis y lo hizo un pajarero.",
+    "row": "Invita a un amigo pajarero",
+    "rowHint": "Mándale un enlace. Es gratis.",
+    "button": "Invitar",
+    "nudge": "¿Conoces a un pajarero que lo querría? Invítalo",
+    "notNow": "Ahora no"
+  },
   "landing": {
     "justNow": "justo ahora",
     "yesterday": "ayer",
@@ -737,7 +746,8 @@
     "saved": "Mis aves",
     "settings": "Configuración",
     "logout": "Salir",
-    "events": "Eventos"
+    "events": "Eventos",
+    "share": "Compartir Bird Alert"
   },
   "nearby": {
     "never": "nadie ha pajareado aquí",
