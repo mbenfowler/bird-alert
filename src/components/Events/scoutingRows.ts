@@ -12,9 +12,12 @@ export const whenShort = (obsDt: string) => {
   return t('scoutingView.daysAgo', { count: ago })
 }
 
-/** Rarest first (highest ABA code); the server's order among equals. */
+/** ABA codes 3-5 count as rare (1-2 are regular birds), as on the server. */
+const rareCode = (aba: number | null | undefined) => (aba && aba >= 3 && aba <= 5 ? aba : 0)
+
+/** Rarest first (ABA code 3-5, higher first); otherwise the server's order (flagged, then newest). */
 export const rarestFirst = (fresh: ScoutingFresh[]) =>
-  fresh.map((f, i) => ({ f, i })).sort((a, b) => (b.f.aba ?? 0) - (a.f.aba ?? 0) || a.i - b.i).map(({ f }) => f)
+  fresh.map((f, i) => ({ f, i })).sort((a, b) => rareCode(b.f.aba) - rareCode(a.f.aba) || a.i - b.i).map(({ f }) => f)
 
 /** A target with what the page knows about it this week. `status` is null when scouting hasn't said. */
 export interface TargetRow {

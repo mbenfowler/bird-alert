@@ -677,7 +677,8 @@ export interface ScoutingBirdOfDay {
   locName?: string | null
   obsDt: string
   aba?: number | null
-  evidence?: Evidence | null
+  /** The reviewer line the email shows (a flagged report only); older shapes may send the evidence itself. */
+  evidence?: string | Evidence | null
   /** A photo URL (or the photo with its credit). */
   photo?: string | { url: string; credit?: string | null } | null
 }

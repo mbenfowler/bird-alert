@@ -120,9 +120,11 @@ describe("Today's scouting", () => {
 
   it('shows five new reports, then "+N more"', () => {
     const many = Array.from({ length: 8 }, (_, i) => fresh({ code: `b${i}`, comName: `Bird ${i}`, aba: i === 6 ? 5 : 1 }))
-    open(event(), { ...SCOUTING, fresh: many })
+    open(event(), { ...SCOUTING, fresh: many, bird_of_day: { ...SCOUTING.bird_of_day, evidence: 'Reviewed and accepted by eBird', photo: null } })
     cy.get('[data-testid="scouting-fresh"]').should('have.length', 5)
     cy.get('[data-testid="scouting-fresh"]').first().should('contain', 'Bird 6').and('have.attr', 'data-aba', '5')
+    // The live server sends the reviewer line as text, as the email shows it.
+    cy.get('[data-testid="bird-of-day"] .scouting-today__evidence').should('have.text', 'Reviewed and accepted by eBird')
     cy.contains('[data-testid="scouting-today"] button', '+3 more').click()
     cy.get('[data-testid="scouting-fresh"]').should('have.length', 8)
     cy.contains('[data-testid="scouting-today"] button', 'more').should('not.exist')

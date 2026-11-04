@@ -46,7 +46,9 @@ const BirdOfDay = ({ bird, heat }: { bird: ScoutingBirdOfDay; heat: (aba?: numbe
         <p className='scouting-today__label'>{t('scoutingToday.birdOfDay')}</p>
         <p className='scouting-today__bod-name'><strong>{bird.comName ?? bird.code}</strong>{(bird.aba ?? 0) >= 3 && <> <AbaCode code={bird.aba} /></>}</p>
         <p className='scouting-today__where'>{[bird.locName, whenShort(bird.obsDt)].filter(Boolean).join(' · ')}</p>
-        <Evidence evidence={bird.evidence} compact />
+        {typeof bird.evidence === 'string'
+          ? bird.evidence.trim() && <p className='evidence evidence--compact scouting-today__evidence'>{bird.evidence}</p>
+          : <Evidence evidence={bird.evidence} compact />}
       </div>
     </div>
   )

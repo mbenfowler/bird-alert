@@ -69,9 +69,9 @@ describe('sorting targets', () => {
 })
 
 describe('today\'s scouting', () => {
-  it('lists the fresh reports rarest first, keeping the server\'s order among equals', () => {
-    const fresh = [{ code: 'a', obsDt: 'x', aba: 2 }, { code: 'b', obsDt: 'x', aba: 5 }, { code: 'c', obsDt: 'x', aba: null }, { code: 'd', obsDt: 'x', aba: 2 }]
-    expect(rarestFirst(fresh).map(f => f.code)).toEqual(['b', 'a', 'd', 'c'])
+  it('lists the fresh reports rarest first (ABA 3-5), keeping the server\'s order otherwise', () => {
+    const fresh = [{ code: 'a', obsDt: 'x', aba: 2 }, { code: 'b', obsDt: 'x', aba: 5 }, { code: 'c', obsDt: 'x', aba: null, flagged: true }, { code: 'd', obsDt: 'x', aba: 3 }]
+    expect(rarestFirst(fresh).map(f => f.code)).toEqual(['b', 'd', 'a', 'c'])
   })
 
   it('shows in the scouting window, and before the day whenever there is news', () => {
