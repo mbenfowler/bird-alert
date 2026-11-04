@@ -303,9 +303,18 @@ describe('Events', () => {
     })
     cy.get('[data-testid="tally-count"]').should('contain', '1 species').and('contain', '1 of 2 targets')
     cy.get('.event-tally__list li').first().should('contain', 'Elegant Trogon').and('contain', 'Matt')
+    // Taking a bird off asks first (it goes for everyone), then offers Undo.
     cy.get('button[aria-label="Take Elegant Trogon off the tally"]').click()
+    cy.contains('.event-tally__confirm', 'Take it off for everyone?').contains('button', 'Take off').click()
     cy.wait('@remove').its('request.url').should('include', 'code=eletro')
     cy.get('[data-testid="tally-count"]').should('contain', '0 species')
+    cy.intercept('POST', '**/api/saved?kind=event-tally-undo*', (req) => {
+      tally = [{ code: req.body.species_code, added_by_name: 'Matt', added_at: new Date().toISOString() }]
+      req.reply({ statusCode: 200, body: event({ active: true, starts_on: day(0), ends_on: day(0), tally }) })
+    }).as('undo')
+    cy.contains('[data-testid="undo-toast"] button', 'Undo').click()
+    cy.wait('@undo').its('request.body').should('deep.equal', { species_code: 'eletro' })
+    cy.get('[data-testid="tally-count"]').should('contain', '1 species')
   })
 
   it('a bird new to the person who adds it is offered for their life list; one already on it says nothing', () => {
