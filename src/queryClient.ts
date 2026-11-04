@@ -59,6 +59,6 @@ export const persistOptions: Omit<PersistQueryClientOptions, 'queryClient'> = {
     // TanStack saves only paused writes; a tally change between retries on one bar is saved too
     // (src/tallySync.ts), so a reload never loses a bird.
     shouldDehydrateMutation: (mutation) =>
-      mutation.state.isPaused || (mutation.options.mutationKey?.[0] === 'event-tally' && mutation.state.status === 'pending')
+      mutation.state.isPaused || (['event-tally', 'event-position', 'event-route-save'].includes(String(mutation.options.mutationKey?.[0])) && mutation.state.status === 'pending')
   }
 }

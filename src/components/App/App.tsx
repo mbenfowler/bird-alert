@@ -46,6 +46,7 @@ const Shared = lazy(() => import('../Shared/Shared'))
 const JoinEvent = lazy(() => import('../Events/JoinEvent'))
 const EventView = lazy(() => import('../Events/EventView'))
 const EventTally = lazy(() => import('../Events/EventTally'))
+const EventLog = lazy(() => import('../Events/EventLog'))
 const EventsPage = lazy(() => import('../Events/EventsPage'))
 const EventNew = lazy(() => import('../Events/EventNew'))
 const EventDetail = lazy(() => import('../Events/EventDetail'))
@@ -248,6 +249,7 @@ const App = () => {
           <Route path='/events/join/:token' element={<JoinEvent />} />
           <Route path='/events/view/:token' element={<EventView />} />
           <Route path='/events/:id/tally' element={requireUser(<EventTally />)} />
+          <Route path='/events/:id/log' element={requireUser(<EventLog />)} />
           {/* Scouting reports and event emails link to an event's own page. */}
           <Route path='/events' element={requireUser(<EventsPage />)} />
           <Route path='/events/new' element={requireUser(<EventNew />)} />

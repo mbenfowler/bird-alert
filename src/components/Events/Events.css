@@ -812,3 +812,275 @@ a.event-scouting__bird:hover {
     transition: none;
   }
 }
+
+/* The day itself, at the top of the event page on the day. */
+.event-day {
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  background: var(--surface);
+}
+
+.event-day__sun {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.event-day__tally .place__badge {
+  margin-left: 6px;
+}
+
+.event-day__schedule {
+  margin: 0;
+  font-weight: 700;
+}
+
+.event-day__schedule.is-behind {
+  color: #b45309;
+}
+
+.event-day__stop {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.event-day__stop .place__subheading,
+.event-day__needed .place__subheading {
+  margin: 0;
+}
+
+.event-day__timer {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.event-day__go {
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  font-weight: 700;
+}
+
+.event-day__meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.event-day__directions .pill-button {
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+}
+
+.event-day__target.is-got {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.event-day__device {
+  margin: 0;
+}
+
+.event-day__meet {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.event-day__meet input {
+  min-height: 40px;
+  padding: 0 10px;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  font: inherit;
+}
+
+.event-day__row.is-now .event-scouting__place-name,
+.event-day__row.is-next .event-scouting__place-name {
+  font-weight: 800;
+}
+
+.event-day__times {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin: 0 0 0 30px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.event-day__times .place__badge {
+  margin-left: 0;
+}
+
+.event-day__here-link {
+  align-self: flex-start;
+  margin-left: 30px;
+  font-size: 0.85rem;
+}
+
+/* "Get ready for offline". */
+.get-ready__status {
+  margin: 0;
+  font-weight: 700;
+}
+
+.get-ready.is-ready .get-ready__status {
+  color: #15803d;
+}
+
+.get-ready__maps {
+  margin: 0;
+}
+
+/* The group log and the checklist keeper. */
+.event-log__tabs .place__badge {
+  margin-left: 6px;
+}
+
+.event-log__line {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.event-log__late {
+  flex: none;
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.event-log__list > li.is-removed .event-log__line {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.event-tally__confirm {
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+}
+
+.event-day__position {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 0;
+  font-weight: 700;
+}
+
+.event-day__waiting {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.event-day__waiting svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* The event's route section: heading with a ⋯ menu, a compact map, and the list as the editor. */
+.event-route-panel {
+  min-width: 0;
+}
+
+.event-route-panel__head {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.event-route-panel__head .place__heading {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.event-route-panel__more {
+  flex: none;
+  margin-left: auto;
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.event-route-panel__hint {
+  margin: 2px 0 0;
+}
+
+.event-route-panel__menu {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 6px 0;
+  padding: 10px 12px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.event-route-panel__map {
+  display: block;
+  width: 100%;
+  margin-bottom: 6px;
+  text-align: right;
+}
+
+.event-route-panel__grow {
+  margin-top: 2px;
+  font-size: 0.85rem;
+}
+
+.route-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.route-skeleton span {
+  display: block;
+  border-radius: 10px;
+  background: var(--surface-muted);
+  animation: route-skeleton 1.2s ease-in-out infinite alternate;
+}
+
+.route-skeleton__map {
+  height: 220px;
+}
+
+.route-skeleton__row {
+  height: 44px;
+}
+
+@keyframes route-skeleton {
+  from { opacity: 0.55; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-skeleton span {
+    animation: none;
+  }
+}

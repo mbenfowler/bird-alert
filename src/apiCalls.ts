@@ -1,4 +1,4 @@
-import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, Place, Province, Area,SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, BestHotspots, SpeciesHotspots, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share, Passkey, Chase, PersistenceClass, Id, SavedPlace, PlaceInput, PlaceSuggestion, LifersScope, GroupEvent, EventInput, EventPreview, EventView, EventScouting, EventRoute, EventRoutePlan } from './types'
+import type { PendingPush, EmailPreviewKind, EmailPreviewResult, Arrivals, Bird, BirdSound, Observation, Region, Place, Province, Area,SeasonMonth, User, UserPatch, WhereToFind, WhereToGo, BestHotspots, SpeciesHotspots, NearbyPublic, PlaceSearch, Drive, SavedRoute, SavedPoint, SeenBird, LifeListImport, SplitEvidence, SplitChoice, Share, Passkey, Chase, PersistenceClass, Id, SavedPlace, PlaceInput, PlaceSuggestion, LifersScope, GroupEvent, EventInput, EventPreview, EventView, EventScouting, EventRoute, EventRoutePlan, EventLogEntry } from './types'
 import { arrival } from './arrival'
 import { isStandalone } from './install'
 import { nameLocale, signupLocale, t } from './i18n'
@@ -160,9 +160,30 @@ export const putEventTargets = (id: Id, codes: string[]) => api<GroupEvent>('/sa
  * `client_id` names this one add, so a retry after a lost answer is the same bird (a repeat is a
  * no-op on the server); `observed_at` is when it was tapped, not when it finally got through.
  */
-export const postEventTally = (id: Id, code: string, add: { clientId?: string; observedAt?: string } = {}) =>
-  api<GroupEvent>('/saved', { method: 'POST', params: { kind: 'event-tally', id: String(id) }, body: { species_code: code, ...(add.clientId ? { client_id: add.clientId } : {}), ...(add.observedAt ? { observed_at: add.observedAt } : {}) }, timeoutMs: 20_000 })
-export const deleteEventTally = (id: Id, code: string) => api<null>('/saved', { method: 'DELETE', params: { kind: 'event-tally', id: String(id), code }, timeoutMs: 20_000 })
+export const postEventTally = (id: Id, code: string, add: { clientId?: string; observedAt?: string; lat?: number | null; lng?: number | null } = {}) =>
+  api<GroupEvent>('/saved', {
+    method: 'POST', params: { kind: 'event-tally', id: String(id) }, timeoutMs: 20_000,
+    body: {
+      species_code: code,
+      ...(add.clientId ? { client_id: add.clientId } : {}),
+      ...(add.observedAt ? { observed_at: add.observedAt } : {}),
+      ...(typeof add.lat === 'number' && typeof add.lng === 'number' ? { lat: add.lat, lng: add.lng } : {})
+    }
+  })
+export const deleteEventTally = (id: Id, code: string) => api<GroupEvent | null>('/saved', { method: 'DELETE', params: { kind: 'event-tally', id: String(id), code }, timeoutMs: 20_000 })
+/** A removed bird back as it was: its finder, time and spot. */
+export const postEventTallyUndo = (id: Id, code: string) => api<GroupEvent>('/saved', { method: 'POST', params: { kind: 'event-tally-undo', id: String(id) }, body: { species_code: code }, timeoutMs: 20_000 })
+/** "On my eBird checklist" for one bird on the tally, and taking it back: the caller's own. */
+export const postEventTallyMark = (id: Id, tallyId: Id) => api<GroupEvent>('/saved', { method: 'POST', params: { kind: 'event-tally-mark', id: String(id) }, body: { tally_id: tallyId }, timeoutMs: 20_000 })
+export const deleteEventTallyMark = (id: Id, tallyId: Id) => api<GroupEvent>('/saved', { method: 'DELETE', params: { kind: 'event-tally-mark', id: String(id), tally_id: String(tallyId) }, timeoutMs: 20_000 })
+/** "We're here": where the group is on its route (stop -1: the meeting point; null: not started), as tapped at `at`. The latest tap wins on the server. */
+export const postEventRoutePosition = (id: Id, position: { stop: number | null; at: string }) =>
+  api<unknown>('/saved', { method: 'POST', params: { kind: 'event-route-position', id: String(id) }, body: position, timeoutMs: 20_000 })
+/** Every bird put on the tally, removed ones too, in the order seen. */
+export const getEventLog = (id: Id) => {
+    const locale = nameLocale()
+    return api<EventLogEntry[]>('/saved', { params: { kind: 'event-log', id: String(id), ...(locale ? { locale } : {}) } })
+}
 export const joinEvent = (token: string, displayName: string) => api<GroupEvent>('/saved', { method: 'POST', params: { kind: 'event-join' }, body: { token, display_name: displayName } })
 export const getEventPreview = (token: string) => api<EventPreview>('/saved', { params: { kind: 'event-preview', token } })
 // Bird names here follow ?locale= (the header alone isn't read for this one).

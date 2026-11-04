@@ -68,7 +68,7 @@
 .map-pin--highlight .map-pin__head {
     background: var(--accent);
     border-color: var(--ink);
-    transform: scale(1.25);
+    box-shadow: 0 0 0 3px #111, 0 2px 6px rgba(0, 0, 0, 0.5);
     transform-origin: center;
 }
 
@@ -149,18 +149,15 @@
     color: #1a56db;
 }
 
-/* Where the day starts: a dark disc with a white centre, no number. */
+/* Where the day starts: a dark disc with a white flag, as the route list's meeting point. */
 .map-stop--start {
-    width: 22px;
-    height: 22px;
     background: #111;
+    color: #fff;
 }
 
-.map-stop--start span {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #fff;
+.map-stop--start svg {
+    width: 15px;
+    height: 15px;
 }
 
 /* The public land being looked at: a gold ring on its pin (the road goes gold too). */
@@ -209,4 +206,12 @@
     .map-stop.is-popping {
         animation: none;
     }
+}
+
+/* The stop picked out from the route list. */
+.map-stop--active {
+    background: #ffd700;
+    color: #111;
+    border-color: #111;
+    box-shadow: 0 0 0 3px #111, 0 2px 6px rgba(0, 0, 0, 0.5);
 }

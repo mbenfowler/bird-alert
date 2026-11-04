@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { releaseThisDevice } from './usePushNotifications'
 import { deleteAccount, deleteEvent, joinEvent, leaveEvent, patchEvent, patchEventMember, postEvent, putEventTargets, postEventScoutingEmail, rotateEventInvite, startEventInvite, deletePlace, patchPlace, postPlace, putPlaceSeen, putPlaceTargets, deleteSavedBird, deleteSeenBird, importLifeList, logout, patchUser, postSavedBird, postSeenBird, putSavedRoute } from '../apiCalls'
 import { clearLocalRoutes } from '../routePlan'
+import { clearDayProgress } from '../components/Events/daySchedule'
 import { queryKeys } from './queries'
 import type { Bird, EventInput, Id, PlaceInput, SeenBird, User } from '../types'
 
@@ -19,10 +20,11 @@ const forgetAccount = (queryClient: ReturnType<typeof useQueryClient>) => {
   queryClient.removeQueries({ queryKey: queryKeys.seen })
   // Events (kept on the device for offline use) and any tally changes still waiting go too.
   queryClient.removeQueries({ queryKey: queryKeys.events })
-  for (const key of ['event-scouting', 'event-route', 'event-route-plan']) queryClient.removeQueries({ queryKey: [key] })
-  queryClient.getMutationCache().findAll({ mutationKey: ['event-tally'] }).forEach(mutation => queryClient.getMutationCache().remove(mutation))
+  for (const key of ['event-scouting', 'event-route', 'event-route-plan', 'event-log']) queryClient.removeQueries({ queryKey: [key] })
+  for (const key of ['event-tally', 'event-position', 'event-route-save']) queryClient.getMutationCache().findAll({ mutationKey: [key] }).forEach(mutation => queryClient.getMutationCache().remove(mutation))
   // The next person on this browser starts from their own account's route.
   clearLocalRoutes()
+  clearDayProgress()
 }
 
 export const useLogoutMutation = () => {

@@ -88,6 +88,7 @@ test('a pending add can be taken off before it is sent, and is never sent', asyn
   // Every other entry's × stays usable too.
   await expect(page.getByRole('button', { name: 'Take Elegant Trogon off the tally' })).toBeEnabled()
   await page.getByRole('button', { name: 'Take Hepatic Tanager off the tally' }).click()
+  await page.getByRole('button', { name: 'Take off', exact: true }).click()
   await expect(page.locator('.event-tally__list li', { hasText: 'Hepatic Tanager' })).toHaveCount(0)
   await expect(page.getByTestId('sync-badge')).toHaveCount(0)
   await goOnline(context)

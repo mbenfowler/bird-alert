@@ -461,10 +461,35 @@ export interface EventTarget {
 
 /** A bird on the day's shared tally, and who got it. */
 export interface EventTallyEntry {
+  /** The server's row id (absent on a bird still waiting to be sent). */
+  id?: Id
   code: string
+  client_id?: string | null
   added_by_name?: string | null
   added_by_you?: boolean
+  /** When it reached the server. */
   added_at: string
+  /** When it was seen (the phone's clock at the tap); added_at for older rows. */
+  observed_at?: string | null
+  lat?: number | null
+  lng?: number | null
+  /** 0-based in the group's saved route: the stop within 2 km of where it was added. */
+  stop_index?: number | null
+  stop_name?: string | null
+  /** You ticked it as on your own eBird checklist. */
+  marked_by_me?: boolean
+}
+
+/** One bird in the group log: every bird put on the tally, removed ones too, in the order seen. */
+export interface EventLogEntry {
+  id: Id
+  speciesCode: string
+  comName?: string | null
+  by_name?: string | null
+  observed_at: string
+  stop_index?: number | null
+  stop_name?: string | null
+  removed?: boolean
 }
 
 /** How an event went: species on the tally, and how many of its targets. */
@@ -559,8 +584,8 @@ export interface EventView {
 
 /** The group's own route for an event, kept on the event so every member sees and edits the same one. */
 export interface EventRoutePlan {
-  /** The meeting point. */
-  start: { name: string; lat: number; lng: number } | null
+  /** The meeting point, and when the group meets there ('05:30', 24 h, the event's local time). */
+  start: { name: string; lat: number; lng: number; time?: string | null } | null
   /** null follows the suggestion. */
   stops: RoutePlanStop[] | null
   version: number
@@ -573,6 +598,18 @@ export interface EventRoutePlan {
   totals?: { drive_min: number | null; stay_min: number; total_min: number }
   /** Drive times came from the road router. */
   routed?: boolean
+  /** Where the group is: the last "We're here" anyone tapped (stop -1: the meeting point), the latest tap winning. */
+  position?: RoutePosition | null
+}
+
+/** The group's place on its route, shared: whoever tapped last, and when. */
+export interface RoutePosition {
+  /** 0-based in the saved stops; -1 is the meeting point. */
+  stop: number
+  /** When it was tapped. */
+  at: string
+  by_name?: string | null
+  by_you?: boolean
 }
 
 /** A stop on the group's route. */
@@ -586,6 +623,8 @@ export interface RoutePlanStop {
   /** What the server suggests for this place, from its targets. */
   suggested_stay_min?: number | null
   targets_here?: number
+  /** Kept at its place in the order when "Shortest route" reorders the rest. */
+  locked?: boolean
 }
 
 /** An event's scouting picture: its target birds (or likely lifers) reported lately in its area, and those not. */

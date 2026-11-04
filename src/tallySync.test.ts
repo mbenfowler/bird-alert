@@ -3,7 +3,8 @@ import { QueryClient, dehydrate, hydrate, onlineManager } from '@tanstack/react-
 import { ApiError, NetworkError } from './apiCalls'
 import { isGone, isNetworkError } from './offline'
 import { persistOptions } from './queryClient'
-import { TALLY_KEY, addLiferAfterSync, cancelPendingAdd, queueTallyChange, resumeTallyChanges, setupTallySync, withPending, type TallyChange } from './tallySync'
+import { queuePosition } from './routeSync'
+import { TALLY_KEY, addLiferAfterSync, cancelPendingAdd, queueTallyChange, resumeTallyChanges, setupTallySync, undoRemoval, withPending, type TallyChange } from './tallySync'
 
 const ok = (body: unknown = {}) => new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } })
 const newClient = () => {
@@ -33,6 +34,94 @@ describe('withPending', () => {
     const shown = withPending(server, [change({}), change({ code: 'eletro', clientId: 'c2' }), change({ code: 'mexchi', clientId: 'c3' }), change({ code: 'mexchi', clientId: 'c4', remove: true })])
     expect(shown.map(e => [e.code, Boolean(e.pending)])).toEqual([['heptan', true], ['eletro', false]])
     expect(shown[0]!.clientId).toBe('c1')
+  })
+
+  it('shows a waiting tick, and an undo bringing a removed bird back with its finder', () => {
+    const tally = [{ id: 7, code: 'eletro', added_by_name: 'Sam', added_at: '2026-11-10T13:00:00Z' }]
+    expect(withPending(tally, [change({ code: 'eletro', op: 'mark', tallyId: 7 })])[0]!.marked_by_me).toBe(true)
+    const removed = withPending(tally, [change({ code: 'eletro', remove: true })])
+    expect(removed).toEqual([])
+    const back = withPending(tally, [change({ code: 'eletro', remove: true }), change({ code: 'eletro', op: 'undo', clientId: 'c2' })])
+    expect(back.map(e => [e.code, e.added_by_name])).toEqual([['eletro', 'Sam']])
+    // Sent already: the server's tally lacks it, and the undo carries the entry.
+    expect(withPending([], [change({ code: 'eletro', op: 'undo', entry: tally[0] })]).map(e => e.added_by_name)).toEqual(['Sam'])
+  })
+})
+
+describe('the group position', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    onlineManager.setOnline(true)
+  })
+
+  it('a tap made offline survives a reload and is sent once with the time it was tapped', async () => {
+    onlineManager.setOnline(false)
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(ok()))
+    vi.stubGlobal('fetch', fetchMock)
+    const before = newClient()
+    const tap = queuePosition(before, { id: 2, stop: 1 })
+    await settle()
+    const saved = JSON.parse(JSON.stringify(dehydrate(before, persistOptions.dehydrateOptions)))
+    expect(saved.mutations).toHaveLength(1)
+    const after = newClient()
+    after.mount()
+    hydrate(after, saved)
+    void resumeTallyChanges(after)
+    await settle()
+    expect(fetchMock).not.toHaveBeenCalled()
+    onlineManager.setOnline(true)
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+    const [url, init] = fetchMock.mock.calls[0]!
+    expect(url).toContain('kind=event-route-position')
+    expect(JSON.parse(init.body)).toEqual({ stop: 1, at: tap.at })
+    after.unmount()
+  })
+})
+
+describe('marks and undo', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('sends a tick, an untick, a removal and its undo, each to its own endpoint', async () => {
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(ok()))
+    vi.stubGlobal('fetch', fetchMock)
+    const client = newClient()
+    queueTallyChange(client, { id: 2, code: 'eletro', op: 'mark', tallyId: 7 })
+    queueTallyChange(client, { id: 2, code: 'eletro', op: 'unmark', tallyId: 7 })
+    queueTallyChange(client, { id: 2, code: 'eletro', remove: true })
+    queueTallyChange(client, { id: 2, code: 'eletro', op: 'undo' })
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(4))
+    const calls = fetchMock.mock.calls.map(([url, init]) => [init.method, new URL(url, 'http://x').searchParams.get('kind'), init.body ? JSON.parse(init.body) : new URL(url, 'http://x').searchParams.get('tally_id')])
+    expect(calls).toEqual([
+      ['POST', 'event-tally-mark', { tally_id: 7 }],
+      ['DELETE', 'event-tally-mark', '7'],
+      ['DELETE', 'event-tally', null],
+      ['POST', 'event-tally-undo', { species_code: 'eletro' }]
+    ])
+  })
+
+  it('an undo before the removal is sent drops the removal: nothing is sent', async () => {
+    onlineManager.setOnline(false)
+    const fetchMock = vi.fn().mockResolvedValue(ok())
+    vi.stubGlobal('fetch', fetchMock)
+    const client = newClient()
+    client.mount()
+    const removal = queueTallyChange(client, { id: 2, code: 'eletro', remove: true })
+    await settle()
+    undoRemoval(client, removal)
+    expect(pending(client)).toHaveLength(0)
+    onlineManager.setOnline(true)
+    await settle()
+    expect(fetchMock).not.toHaveBeenCalled()
+    client.unmount()
+  })
+
+  it('sends lat and lng with an add when it has them', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(ok())
+    vi.stubGlobal('fetch', fetchMock)
+    const client = newClient()
+    queueTallyChange(client, { id: 2, code: 'heptan', lat: 31.441, lng: -110.302 })
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+    expect(JSON.parse(fetchMock.mock.calls[0]![1].body)).toMatchObject({ species_code: 'heptan', lat: 31.441, lng: -110.302 })
   })
 })
 

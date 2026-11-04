@@ -48,6 +48,29 @@ export const shortestOrder = (stops: PlanPoint[], start: PlanPoint | null = null
   return best
 }
 
+/**
+ * The order with the least driving when some stops are locked in place: each locked stop keeps its
+ * position, and only the others are tried in the free positions (every order: eight stops is at
+ * most 40,320). Distances are straight lines times a road factor, as `shortestOrder`.
+ */
+export const shortestOrderLocked = <T extends PlanPoint>(stops: T[], locked: boolean[], start: PlanPoint | null = null): T[] => {
+  if (!locked.some(Boolean)) return shortestOrder(stops, start) as T[]
+  const free = stops.filter((_, i) => !locked[i])
+  if (free.length <= 1) return stops
+  const place = (order: T[]) => {
+    let k = 0
+    return stops.map((stop, i) => (locked[i] ? stop : order[k++]!))
+  }
+  let best = stops
+  let bestKm = pathKm(stops, start)
+  for (const order of permutations(free)) {
+    const candidate = place(order)
+    const km = pathKm(candidate, start)
+    if (km < bestKm - 1e-9) { best = candidate; bestKm = km }
+  }
+  return best
+}
+
 /** Watch-list birds expected across the stops, each counted once; stops not among the places add nothing. */
 export const coverage = (stops: PlanPoint[], places: GoPlace[]) => {
   const byId = new Map(places.map(p => [p.locId, p]))
@@ -70,6 +93,27 @@ export const mapsUrl = (stops: PlanPoint[], start: PlanPoint | null = null) => {
   if (stops.length > 1) url.searchParams.set('waypoints', stops.slice(0, -1).map(pt).join('|'))
   url.searchParams.set('travelmode', 'driving')
   return url.toString()
+}
+
+/** Google Maps takes at most this many stops in between in a phone's browser (its Maps URLs documentation). */
+export const MAX_WAYPOINTS = 3
+
+/**
+ * The whole route as Google Maps links a phone can open without dropping stops: one link while
+ * there are at most three stops in between, else in parts, each starting where the last one ended.
+ * `from` is the stop number the part starts at (null: the meeting point) and `to` the one it ends at.
+ */
+export const routeLinks = (stops: PlanPoint[], start: PlanPoint | null = null): { url: string; from: number | null; to: number }[] => {
+  const points = start ? [start, ...stops] : stops
+  if (stops.length === 1 && !start) return [{ url: mapsUrl(stops)!, from: null, to: 1 }]
+  const number = (i: number) => (start ? i : i + 1)
+  const links: { url: string; from: number | null; to: number }[] = []
+  const per = MAX_WAYPOINTS + 1
+  for (let i = 0; i < points.length - 1; i += per) {
+    const last = Math.min(i + per, points.length - 1)
+    links.push({ url: mapsUrl(points.slice(i + 1, last + 1), points[i])!, from: start && i === 0 ? null : number(i), to: number(last) })
+  }
+  return links
 }
 
 /** The list with one item moved from `from` to `to`. */

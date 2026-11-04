@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router'
-import { useMutationState, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import { Trans } from 'react-i18next'
 import { celebrateLifer } from '../Pop/pop'
@@ -11,9 +12,12 @@ import { errorMessage } from '../../apiCalls'
 import { useBirdsQuery, useEventsQuery, useSeenCodes } from '../../hooks/queries'
 import { useToggleSeenMutation } from '../../hooks/mutations'
 import { useAreaName } from '../../shownArea'
-import { clockTime, t } from '../../i18n'
+import { clockTimeIn, t } from '../../i18n'
 import type { Bird } from '../../types'
-import { TALLY_KEY, addLiferAfterSync, cancelPendingAdd, queueTallyChange, withPending, type TallyChange } from '../../tallySync'
+import { addLiferAfterSync, cancelPendingAdd, queueTallyChange, undoRemoval, usePendingTally, withPending, type ShownTallyEntry } from '../../tallySync'
+import { currentSpot, useTallyLocation } from '../../tallyLocation'
+import { safeZone } from './daySchedule'
+import { eventPath } from './events'
 import '../AlertCenter/Places.css'
 import './Events.css'
 
@@ -30,8 +34,9 @@ const EventTally = () => {
   const toggleSeen = useToggleSeenMutation()
   const event = events.data?.find(e => String(e.id) === id)
   // Changes made here that haven't reached the server (no signal, or still being retried), oldest first.
-  const pending = useMutationState({ filters: { mutationKey: TALLY_KEY, status: 'pending' }, select: (m) => m.state.variables as TallyChange })
-    .filter(change => change && String(change.id) === id)
+  const pending = usePendingTally(event?.id ?? id)
+  const location = useTallyLocation(Boolean(event))
+  const [confirming, setConfirming] = useState<string | null>(null)
   const shown = event ? withPending(event.tally, pending) : []
   const areaName = useAreaName(event?.state ?? '', event?.location ?? '')
   const codes = [...new Set(shown.map(entry => entry.code))]
@@ -47,18 +52,46 @@ const EventTally = () => {
 
   const got = targetCodes.filter(code => codes.includes(code)).length
   const needed = targetCodes.filter(code => !codes.includes(code))
+  const timeZone = safeZone(event.timezone)
+  const when = (entry: Pick<ShownTallyEntry, 'observed_at' | 'added_at'>) => clockTimeIn(new Date(entry.observed_at ?? entry.added_at), timeZone)
+  const whoWhen = (entry: ShownTallyEntry) => (entry.added_by_you || entry.added_by_name
+    ? t('events.tallyBy', { name: entry.added_by_you ? t('events.you') : entry.added_by_name, time: when(entry) })
+    : when(entry))
   // Every change waits its turn and is sent when there's signal (src/tallySync.ts); nothing here waits on it.
-  const remove = (code: string) => {
-    const waiting = shown.find(entry => entry.code === code && entry.pending)
-    if (waiting?.clientId) cancelPendingAdd(queryClient, waiting.clientId)
-    else queueTallyChange(queryClient, { id: event.id, code, remove: true, by: event.display_name ?? null })
+  // Taking a bird off asks first (it goes for everyone), then offers Undo for a few seconds: the
+  // bird comes back as it was, with whoever found it first.
+  const remove = (entry: ShownTallyEntry) => {
+    setConfirming(null)
+    const name = nameOf(entry.code)
+    let undo: () => void
+    if (entry.pending && entry.clientId) {
+      cancelPendingAdd(queryClient, entry.clientId)
+      undo = () => { queueTallyChange(queryClient, { id: event.id, code: entry.code, by: entry.added_by_name ?? null, at: entry.added_at, lat: entry.lat, lng: entry.lng }) }
+    } else {
+      const kept = { ...entry }
+      delete kept.pending
+      delete kept.clientId
+      const removal = queueTallyChange(queryClient, { id: event.id, code: entry.code, remove: true, by: event.display_name ?? null, entry: kept })
+      undo = () => undoRemoval(queryClient, removal)
+    }
+    toast(({ closeToast }) => (
+      <span className='lifer-prompt' data-testid='undo-toast'>
+        <span>{t('events.removed', { name })}</span>
+        <button type='button' className='pill-button pill-button--small' onClick={() => { undo(); closeToast() }}>{t('events.undo')}</button>
+      </span>
+    ), { position: 'bottom-center', autoClose: 8000 })
   }
   // A bird new to the person who added it: offered for their life list, the same as "Seen it" (and celebrated the same way).
   // Only theirs and only when asked: dismissing changes nothing, and a bird already on the list says nothing.
   // Offered at once, but the life list only gets the bird once the tally has it (never for an add that's dropped).
   const add = (code: string) => {
-    if (codes.includes(code)) return
-    const { clientId } = queueTallyChange(queryClient, { id: event.id, code, by: event.display_name ?? null })
+    const already = shown.find(entry => entry.code === code)
+    if (already) {
+      toast.info(t('events.alreadyOn', { by: whoWhen(already) }), { position: 'bottom-center', autoClose: 3000 })
+      return
+    }
+    const spot = location.choice === 'yes' ? currentSpot() : null
+    const { clientId } = queueTallyChange(queryClient, { id: event.id, code, by: event.display_name ?? null, lat: spot?.lat ?? null, lng: spot?.lng ?? null })
     if (!seen.loaded || seen.codes.has(code)) return
     const name = nameOf(code)
     toast(({ closeToast }) => (
@@ -83,6 +116,13 @@ const EventTally = () => {
         <strong>{t('events.tallyCount', { count: codes.length })}</strong>
         {targetCodes.length > 0 && <span> · {t('events.tallyTargets', { got, total: targetCodes.length })}</span>}
       </p>
+      {location.choice === null && (
+        <p className='place__actions event__confirm event-tally__locate' data-testid='location-ask'>
+          <span>{t('events.locationAsk')}</span>
+          <button type='button' className='pill-button pill-button--small' onClick={location.allow}>{t('events.locationAllow')}</button>
+          <button type='button' className='link-button link-text' onClick={location.decline}>{t('events.locationNo')}</button>
+        </p>
+      )}
       <div className='event-tally__add'>
         <p className='place-form__label'>{t('events.tallyAdd')}</p>
         <BirdPicker region={event.location} regionName={areaName} placeholder={t('events.tallyPlaceholder')} onPick={add} />
@@ -92,8 +132,14 @@ const EventTally = () => {
             <li key={entry.code} className={entry.pending ? 'event-tally__entry--pending' : undefined} data-pending={entry.pending ? 'true' : undefined}>
               <span className='event-tally__bird'>{nameOf(entry.code)}</span>
               {entry.pending && <span className='event-tally__waiting' title={t('offline.waitingOne')}><ClockIcon /><span className='visually-hidden'>{t('offline.waitingOne')}</span></span>}
-              <span className='event-tally__who'>{entry.added_by_you || entry.added_by_name ? t('events.tallyBy', { name: entry.added_by_you ? t('events.you') : entry.added_by_name, time: clockTime(new Date(entry.added_at)) }) : clockTime(new Date(entry.added_at))}</span>
-              <button type='button' className='event-tally__undo' aria-label={t('events.undoLabel', { name: nameOf(entry.code) })} onClick={() => remove(entry.code)}><CloseIcon /></button>
+              <span className='event-tally__who'>{whoWhen(entry)}</span>
+              {confirming === entry.code
+                ? <span className='place__actions event__confirm event-tally__confirm' role='alert'>
+                    <span>{t('events.removeSure')}</span>
+                    <button type='button' className='pill-button pill-button--small' onClick={() => remove(entry)}>{t('events.removeYes')}</button>
+                    <button type='button' className='link-button link-text' onClick={() => setConfirming(null)}>{t('common.cancel')}</button>
+                  </span>
+                : <button type='button' className='event-tally__undo' aria-label={t('events.undoLabel', { name: nameOf(entry.code) })} onClick={() => setConfirming(entry.code)}><CloseIcon /></button>}
             </li>))}</ol>
         : <p className='notification__hint'>{t('events.tallyEmpty')}</p>}
       {needed.length > 0 && (
@@ -102,7 +148,10 @@ const EventTally = () => {
           <ul className='place__chips'>{needed.map(code => <li key={code}><button type='button' className='place__chip place__chip--add' onClick={() => add(code)}>+ {nameOf(code)}</button></li>)}</ul>
         </div>
       )}
-      <p><Link to={`/events/${encodeURIComponent(String(event.id))}`}>{t('events.backToEvent')}</Link></p>
+      <p className='place__actions'>
+        <Link to={eventPath(event.id)}>{t('events.backToEvent')}</Link>
+        <Link to={`${eventPath(event.id)}/log`}>{t('eventDay.groupLog')}</Link>
+      </p>
     </section>
   )
 }
