@@ -801,3 +801,24 @@
     border-radius: 10px;
     font: inherit;
 }
+
+/* An event's route, always editable: the add box sits behind one row, and a stop picked on the map lights up. */
+.go__add-row {
+    width: 100%;
+    min-height: 44px;
+    padding: 0 12px;
+    border: 2px dashed var(--line);
+    border-radius: 12px;
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+}
+
+.go__stop.is-active .go__stop-row {
+    outline: 3px solid #ffd700;
+    outline-offset: 2px;
+    border-radius: 10px;
+}

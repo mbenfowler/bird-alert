@@ -85,6 +85,10 @@ export const fakeApi = async (context: BrowserContext) => {
     /** Every position tap that reached the server, and every route PUT. */
     positionPosts: [] as Array<{ stop: number | null; at: string }>,
     planPuts: [] as Array<Record<string, unknown>>,
+    /** This week's scouting reports. */
+    reported: [] as Array<Record<string, unknown>>,
+    /** Fields to change on the event (another date, not today). */
+    eventPatch: {} as Record<string, unknown>,
     /** Return 'fail' to drop a request (as one bar of signal does), or nothing to answer it. */
     interfere: null as null | ((route: Route) => 'fail' | void),
     meFails: false,
@@ -98,7 +102,8 @@ export const fakeApi = async (context: BrowserContext) => {
     scout: false, active: true, tally_open: true, timezone: 'America/Phoenix', role: 'organizer', display_name: 'Matt',
     members: [{ display_name: 'Matt', role: 'organizer', you: true }, { display_name: 'Jane', role: 'member' }, { display_name: 'Sam', role: 'member' }],
     targets: [{ code: 'eletro' }, { code: 'heptan' }, { code: 'mexchi' }, { code: 'rivhum1' }],
-    tally: shown(), invite_url: '/events/join/inv', view_url: '/events/view/view2'
+    tally: shown(), invite_url: '/events/join/inv', view_url: '/events/view/view2',
+    ...state.eventPatch
   })
   const log = () => [...state.tally].sort((a, b) => a.observed_at.localeCompare(b.observed_at) || a.id - b.id).map(e => ({
     id: e.id, speciesCode: e.code, comName: BIRDS.find(b => b.speciesCode === e.code)?.comName ?? e.code, by_name: e.added_by_name,
@@ -151,7 +156,7 @@ export const fakeApi = async (context: BrowserContext) => {
         return route.fulfill(json(event()))
       }
       if (kind === 'event-log') return route.fulfill(json(log()))
-      if (kind === 'event-scouting') return route.fulfill(json({ using: 'targets', reported: [], unreported: [] }))
+      if (kind === 'event-scouting') return route.fulfill(json({ using: 'targets', reported: state.reported, unreported: [] }))
       if (kind === 'event-route-plan' && method === 'PUT') {
         const body = request.postDataJSON() as Record<string, unknown> & { version: number }
         state.planPuts.push(body)
@@ -177,6 +182,8 @@ export const fakeApi = async (context: BrowserContext) => {
       if (kind === 'seen' || kind === 'places') return route.fulfill(json([]))
       return route.fulfill(json([]))
     }
+    // The road router is down: the saved route's own drive times stand in.
+    if (url.pathname.endsWith('/api/ebird/drive')) return route.fulfill(json({ error: 'Router unavailable' }, 503))
     if (url.pathname.endsWith('/api/ebird/regions')) return route.fulfill(json([{ code: COCHISE, name: 'Cochise' }, { code: 'US-AZ-013', name: 'Maricopa' }]))
     if (url.pathname.endsWith('/api/push/trace')) { state.traces.push(request.postDataJSON() as { event: string }); return route.fulfill({ status: 204, body: '' }) }
     if (url.pathname.endsWith('/api/push/pending')) return route.fulfill(json({ push: null }))

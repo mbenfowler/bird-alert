@@ -41,7 +41,10 @@ interface SightingsMapProps {
     /** A place being considered: a ghost stop on the end, reached by a dashed line. Never re-frames the map. */
     preview?: { lat: number; lng: number; label: string; from: [number, number] } | null
     /** The roads for an edited route are still on their way: keep the line as it was until they come. */
-    settling?: boolean } | null
+    settling?: boolean
+    /** A stop tapped on the map (0-based), and the stop the page has picked out. */
+    onStop?: (index: number) => void
+    activeStop?: number | null } | null
   /** Fallback centre when there are no points. */
   center?: [number, number]
   height?: number | string
@@ -201,9 +204,10 @@ const TrackMoves = ({ moving }: { moving: RefObject<boolean> }) => {
 
 // The same icon object every render: a new one makes Leaflet swap the marker's element, losing its pop.
 const stopIcons = new Map<number, L.DivIcon>()
-const stopIcon = (n: number) => {
-  if (!stopIcons.has(n)) stopIcons.set(n, L.divIcon({ className: 'map-stop', html: `<span>${n}</span>`, iconSize: [26, 26], iconAnchor: [13, 13] }))
-  return stopIcons.get(n)!
+const stopIcon = (n: number, active = false) => {
+  const key = active ? -n : n
+  if (!stopIcons.has(key)) stopIcons.set(key, L.divIcon({ className: `map-stop ${active ? 'map-stop--active' : ''}`, html: `<span>${n}</span>`, iconSize: [26, 26], iconAnchor: [13, 13] }))
+  return stopIcons.get(key)!
 }
 const START_ICON = L.divIcon({ className: 'map-stop map-stop--start', html: '<span></span>', iconSize: [22, 22], iconAnchor: [11, 11] })
 
@@ -385,7 +389,8 @@ const SightingsMap = ({ points, focus = null, route = null, center = [39.8, -98.
               </>
             )}
             {route.stops.map((stop, i) => (
-              <Marker key={`stop-${i}`} position={[stop.lat, stop.lng]} icon={stopIcon(i + 1)} zIndexOffset={2000}>
+              <Marker key={`stop-${i}`} position={[stop.lat, stop.lng]} icon={stopIcon(i + 1, route.activeStop === i)} zIndexOffset={route.activeStop === i ? 2200 : 2000}
+                eventHandlers={route.onStop ? { click: () => route.onStop!(i) } : undefined}>
                 <Tooltip direction='top' offset={[0, -14]}>{stop.label}</Tooltip>
               </Marker>
             ))}

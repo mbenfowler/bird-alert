@@ -3,7 +3,8 @@ import { QueryClient, dehydrate, hydrate, onlineManager } from '@tanstack/react-
 import { ApiError, NetworkError } from './apiCalls'
 import { isGone, isNetworkError } from './offline'
 import { persistOptions } from './queryClient'
-import { TALLY_KEY, addLiferAfterSync, cancelPendingAdd, queuePosition, queueTallyChange, resumeTallyChanges, setupTallySync, undoRemoval, withPending, type TallyChange } from './tallySync'
+import { queuePosition } from './routeSync'
+import { TALLY_KEY, addLiferAfterSync, cancelPendingAdd, queueTallyChange, resumeTallyChanges, setupTallySync, undoRemoval, withPending, type TallyChange } from './tallySync'
 
 const ok = (body: unknown = {}) => new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } })
 const newClient = () => {

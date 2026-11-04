@@ -932,7 +932,8 @@
     "show": "Mostrar la ruta en el mapa",
     "openMaps": "Abrir en Maps",
     "edit": "Editar ruta",
-    "share": "Compartir"
+    "share": "Compartir",
+    "addStopRow": "+ Agregar una parada"
   },
   "offline": {
     "noSignal": "Sin señal. Mostrando lo que está guardado.",
@@ -1095,7 +1096,14 @@
     "moreExtras_other": "Ver {{count}} más",
     "skipped_one": "{{count}} lugar más solo tiene aves que ya verías.",
     "skipped_many": "{{count}} lugares más solo tienen aves que ya verías.",
-    "skipped_other": "{{count}} lugares más solo tienen aves que ya verías."
+    "skipped_other": "{{count}} lugares más solo tienen aves que ya verías.",
+    "suggestedHeading": "Ruta sugerida",
+    "suggestedHint": "Cambia lo que sea y se vuelve la ruta de tu grupo.",
+    "waiting": "Guardado en este teléfono; se envía al grupo cuando haya señal.",
+    "more": "Más acciones de la ruta",
+    "startHere": "Empezar desde mi ubicación",
+    "mapBigger": "Mapa más grande",
+    "mapSmaller": "Mapa más chico"
   },
   "routeTimes": {
     "stay": "Tiempo ahí: {{time}}",
@@ -1565,7 +1573,7 @@
     "startOver": "Empezar de nuevo",
     "stopsHeading": "Paradas y horarios",
     "meetingTime": "Hora de encuentro",
-    "meetingNone": "Pon una hora de encuentro junto al punto de encuentro (Editar ruta) para ver los horarios previstos.",
+    "meetingNone": "Pon una hora de encuentro debajo del punto de encuentro, en la ruta, para ver los horarios previstos.",
     "meetRow": "Encuentro: {{name}}",
     "plannedRange": "{{from}}–{{to}}",
     "owling": "🦉 antes del alba",

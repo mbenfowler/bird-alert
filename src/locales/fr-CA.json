@@ -949,7 +949,8 @@
     "show": "Afficher l’itinéraire sur la carte",
     "openMaps": "Ouvrir dans Maps",
     "edit": "Modifier",
-    "share": "Partager"
+    "share": "Partager",
+    "addStopRow": "+ Ajouter un arrêt"
   },
   "offline": {
     "noSignal": "Pas de réseau. Voici ce qui est enregistré.",
@@ -1112,7 +1113,14 @@
     "moreExtras_other": "Afficher {{count}} autres",
     "skipped_one": "{{count}} autre lieu n’a que des oiseaux que tu verrais déjà.",
     "skipped_many": "{{count}} autres lieux n’ont que des oiseaux que tu verrais déjà.",
-    "skipped_other": "{{count}} autres lieux n’ont que des oiseaux que tu verrais déjà."
+    "skipped_other": "{{count}} autres lieux n’ont que des oiseaux que tu verrais déjà.",
+    "suggestedHeading": "Trajet suggéré",
+    "suggestedHint": "Change n’importe quoi et il devient le trajet de ton groupe.",
+    "waiting": "Enregistré sur ce téléphone; il ira au groupe quand il y aura du réseau.",
+    "more": "Autres actions du trajet",
+    "startHere": "Partir de ma position",
+    "mapBigger": "Agrandir la carte",
+    "mapSmaller": "Réduire la carte"
   },
   "routeTimes": {
     "stay": "Sur place : {{time}}",
@@ -1582,7 +1590,7 @@
     "startOver": "Recommencer",
     "stopsHeading": "Arrêts et horaires",
     "meetingTime": "Heure du rendez-vous",
-    "meetingNone": "Indique l’heure du rendez-vous à côté du point de rendez-vous (Modifier le trajet) pour voir les heures prévues.",
+    "meetingNone": "Indique l’heure du rendez-vous sous le point de rendez-vous, dans le trajet, pour voir les heures prévues.",
     "meetRow": "Rendez-vous : {{name}}",
     "plannedRange": "{{from}}–{{to}}",
     "owling": "🦉 avant l’aube",

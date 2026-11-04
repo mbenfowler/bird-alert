@@ -15,6 +15,7 @@ import { dateRange, monthDay, t } from '../../i18n'
 import type { GroupEvent } from '../../types'
 import EventPlan from './EventPlan'
 import EventScouting from './EventScouting'
+import EventRoutePanel from './EventRoutePanel'
 import DayView, { DayStops, SunLine } from './DayView'
 import GetReady from './GetReady'
 import { isEventDay, useEventDay } from './useEventDay'
@@ -242,7 +243,6 @@ const EventBody = ({ event, updatedAt, error }: { event: GroupEvent; updatedAt: 
       {onDay && <DayView event={event} day={day} nameOf={nameOf} />}
       {!onDay && past && <p className='events-list__recap' data-testid='event-recap'>{recapText(event)}</p>}
       {showDay && <GetReady event={event} areaName={areaName} />}
-      {showDay && <DayStops day={day} onDay={onDay} />}
       <div className='event-page__section event-detail__plan'>
         <h2 className='place__heading'>{t('events.plan')}</h2>
         {editing
@@ -254,6 +254,9 @@ const EventBody = ({ event, updatedAt, error }: { event: GroupEvent; updatedAt: 
               <button type='button' className='link-button link-text' onClick={() => setEditing(true)}>{t('events.changePlan')}</button>
             </>}
       </div>
+      {/* The route, open from the start and edited in place (the group's, or the suggestion until anyone changes it). */}
+      {!past && <EventRoutePanel event={event} onDay={onDay} />}
+      {showDay && <DayStops day={day} onDay={onDay} />}
       {!onDay && <Targets event={event} areaName={areaName} />}
       {!past && <EventScouting event={event} />}
       {onDay && <Targets event={event} areaName={areaName} />}

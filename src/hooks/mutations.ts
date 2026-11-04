@@ -21,7 +21,7 @@ const forgetAccount = (queryClient: ReturnType<typeof useQueryClient>) => {
   // Events (kept on the device for offline use) and any tally changes still waiting go too.
   queryClient.removeQueries({ queryKey: queryKeys.events })
   for (const key of ['event-scouting', 'event-route', 'event-route-plan', 'event-log']) queryClient.removeQueries({ queryKey: [key] })
-  for (const key of ['event-tally', 'event-position']) queryClient.getMutationCache().findAll({ mutationKey: [key] }).forEach(mutation => queryClient.getMutationCache().remove(mutation))
+  for (const key of ['event-tally', 'event-position', 'event-route-save']) queryClient.getMutationCache().findAll({ mutationKey: [key] }).forEach(mutation => queryClient.getMutationCache().remove(mutation))
   // The next person on this browser starts from their own account's route.
   clearLocalRoutes()
   clearDayProgress()

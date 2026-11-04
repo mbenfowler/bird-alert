@@ -33,7 +33,14 @@ export interface RouteEditorProps {
   onStart: (start: PlanPoint | null) => void
   onReset: () => void
   onDone: () => void
-  onStopClick?: (stop: PlanPoint) => void
+  onStopClick?: (stop: PlanPoint, index: number) => void
+  /** The stop picked out (from its pin on the map), shown highlighted. */
+  activeStop?: number | null
+  /**
+   * Always editing, with no Done, reset or shortest-order buttons (the page has its own menu), and
+   * the add box behind one "+ Add a stop" row.
+   */
+  inline?: boolean
   /** The reset button's words, when the page says it differently. */
   resetLabel?: string
   /** What the start is called, and what it says when there is none, when the page says it differently. */
@@ -55,7 +62,8 @@ const legText = (leg: Leg, unit: DistanceUnit) => leg ? t('route.leg', { minutes
  * the shortest order, set where the day starts, and go back to the suggestion. Shared by the
  * morning route on Where to go and an event's route.
  */
-const RouteEditor = ({ state, stops, start, arriving, editing, describe, suggestions, suggestionsLabel, preview = null, between, custom, onStops, onStart, onReset, onDone, onStopClick, resetLabel, startLabel, startEmpty, stays, legLabel, startTime }: RouteEditorProps) => {
+const RouteEditor = ({ state, stops, start, arriving, editing, describe, suggestions, suggestionsLabel, preview = null, between, custom, onStops, onStart, onReset, onDone, onStopClick, resetLabel, startLabel, startEmpty, stays, legLabel, startTime, activeStop = null, inline = false }: RouteEditorProps) => {
+  const [adding, setAdding] = useState(false)
   const unit = useDistanceUnit()
   const [settingStart, setSettingStart] = useState(false)
   const [locating, setLocating] = useState<'idle' | 'busy' | 'failed'>('idle')
@@ -103,7 +111,7 @@ const RouteEditor = ({ state, stops, start, arriving, editing, describe, suggest
   }
 
   const full = stops.length >= MAX_ROUTE_STOPS
-  const addStop = (point: PlanPoint) => { if (!full && !stops.some(s => samePlace(s, point))) onStops([...stops, point]) }
+  const addStop = (point: PlanPoint) => { if (!full && !stops.some(s => samePlace(s, point))) onStops([...stops, point]); setAdding(false) }
   const fresh = suggestions.filter(s => !stops.some(stop => samePlace(stop, s.point)))
 
   const locate = () => {
@@ -155,14 +163,14 @@ const RouteEditor = ({ state, stops, start, arriving, editing, describe, suggest
             const stayMinutes = stay ? stay.minutes ?? stay.suggested : null
             const text = <><span className='go__stop-n'>{i + 1}</span><span className='go__stop-text'><strong>{stop.name}</strong>{describe(stop, i)}</span></>
             return (
-              <li key={stop.locId ?? `${stop.lat},${stop.lng}`} className={`go__stop ${dragging === i ? 'is-dragging' : ''}`}>
+              <li key={stop.locId ?? `${stop.lat},${stop.lng}`} className={`go__stop ${dragging === i ? 'is-dragging' : ''} ${activeStop === i ? 'is-active' : ''}`} data-testid='route-row'>
                 {leg}
                 <div className='go__stop-row'>
                   {editing && (
                     <span className='go__drag' role='presentation' title={t('route.drag')} onPointerDown={startDrag(i)}><DragIcon /></span>
                   )}
                   {onStopClick
-                    ? <button type='button' className='go__stop-main' onClick={() => onStopClick(stop)}>{text}</button>
+                    ? <button type='button' className='go__stop-main' onClick={() => onStopClick(stop, i)}>{text}</button>
                     : <span className='go__stop-main'>{text}</span>}
                   {editing && (
                     <span className='go__stop-tools'>
@@ -199,7 +207,20 @@ const RouteEditor = ({ state, stops, start, arriving, editing, describe, suggest
 
       {between}
 
-      {editing && (
+      {editing && inline && (
+        <div className='go__add'>
+          {full
+            ? <p className='go__hint'>{t('route.full', { count: MAX_ROUTE_STOPS })}</p>
+            : adding
+              ? <>
+                  <PlaceSearch state={state} label={t('route.addStop')} placeholder={t('route.addPlaceholder')} onPick={addStop} autoFocus
+                    suggestions={fresh.slice(0, 6)} suggestionsLabel={suggestionsLabel} />
+                  <button type='button' className='go__link-button' onClick={() => setAdding(false)}>{t('common.cancel')}</button>
+                </>
+              : <button type='button' className='go__add-row' onClick={() => setAdding(true)} data-testid='add-stop'>{t('route.addStopRow')}</button>}
+        </div>
+      )}
+      {editing && !inline && (
         <>
           <div className='go__add'>
             {full

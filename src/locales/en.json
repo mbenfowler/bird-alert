@@ -866,7 +866,8 @@
     "show": "Show route on map",
     "openMaps": "Open in Maps",
     "edit": "Edit route",
-    "share": "Share"
+    "share": "Share",
+    "addStopRow": "+ Add a stop"
   },
   "offline": {
     "noSignal": "No signal. Showing what’s saved.",
@@ -1004,7 +1005,14 @@
     "moreExtras_one": "Show {{count}} more",
     "moreExtras_other": "Show {{count}} more",
     "skipped_one": "{{count}} other place only has birds you’d already see.",
-    "skipped_other": "{{count}} other places only have birds you’d already see."
+    "skipped_other": "{{count}} other places only have birds you’d already see.",
+    "suggestedHeading": "Suggested route",
+    "suggestedHint": "Change anything and it becomes your group’s route.",
+    "waiting": "Saved on this phone; it goes to the group when there’s signal.",
+    "more": "More route actions",
+    "startHere": "Start from my location",
+    "mapBigger": "Bigger map",
+    "mapSmaller": "Smaller map"
   },
   "routeTimes": {
     "stay": "Stay {{time}}",
@@ -1445,7 +1453,7 @@
     "startOver": "Start over",
     "stopsHeading": "Stops and times",
     "meetingTime": "Meeting time",
-    "meetingNone": "Set a meeting time next to the meeting point (Edit route) to see planned times.",
+    "meetingNone": "Set a meeting time under the meeting point in the route to see planned times.",
     "meetRow": "Meet: {{name}}",
     "plannedRange": "{{from}}–{{to}}",
     "owling": "🦉 before dawn",

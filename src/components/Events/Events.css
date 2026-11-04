@@ -998,3 +998,88 @@ a.event-scouting__bird:hover {
   width: 14px;
   height: 14px;
 }
+
+/* The event's route section: heading with a ⋯ menu, a compact map, and the list as the editor. */
+.event-route-panel {
+  min-width: 0;
+}
+
+.event-route-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.event-route-panel__head .place__heading {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.event-route-panel__more {
+  flex: none;
+  margin-left: auto;
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.event-route-panel__hint {
+  margin: 2px 0 0;
+}
+
+.event-route-panel__menu {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 6px 0;
+  padding: 10px 12px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.event-route-panel__map {
+  display: block;
+  width: 100%;
+  margin-bottom: 6px;
+  text-align: right;
+}
+
+.event-route-panel__grow {
+  margin-top: 2px;
+  font-size: 0.85rem;
+}
+
+.route-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.route-skeleton span {
+  display: block;
+  border-radius: 10px;
+  background: var(--surface-muted);
+  animation: route-skeleton 1.2s ease-in-out infinite alternate;
+}
+
+.route-skeleton__map {
+  height: 220px;
+}
+
+.route-skeleton__row {
+  height: 44px;
+}
+
+@keyframes route-skeleton {
+  from { opacity: 0.55; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-skeleton span {
+    animation: none;
+  }
+}

@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useEventRoutePlanQuery, useEventRouteQuery, useEventScoutingQuery } from '../../hooks/queries'
 import { sunTimes } from '../../solar'
-import { queuePosition, usePendingPosition, usePendingTally, withPending } from '../../tallySync'
+import { usePendingTally, withPending } from '../../tallySync'
+import { queuePosition, suggestionAsRoute, usePendingPosition } from '../../routeSync'
 import type { GroupEvent } from '../../types'
 import { speciesByPlace } from './customRoute'
 import { dayRoute, dayState, plannedTimes, progressFrom, safeZone, scheduleStart, zoneOffsetMin, zonedInstant } from './daySchedule'
@@ -45,7 +46,8 @@ export const useEventDay = (event: GroupEvent, enabled: boolean) => {
     : plan.data?.position ? { ...plan.data.position, pending: false } : null
   const progress = progressFrom(position)
   /** "We're here" at a stop (-1: the meeting point; null: start over), for the whole group. */
-  const setPosition = (stop: number | null) => { queuePosition(queryClient, { id: event.id, stop }) }
+  // A route that's still only the suggestion is saved as the group's first (in the same queue, so offline too).
+  const setPosition = (stop: number | null) => { queuePosition(queryClient, { id: event.id, stop, ensure: plan.data?.stops ? null : suggestionAsRoute(queryClient, event.id) }) }
   const now = useNow()
 
   const route = useMemo(() => {
