@@ -87,6 +87,8 @@ export const fakeApi = async (context: BrowserContext) => {
     planPuts: [] as Array<Record<string, unknown>>,
     /** This week's scouting reports. */
     reported: [] as Array<Record<string, unknown>>,
+    /** The rest of the scouting answer: headline, fresh, bird_of_day, targets. */
+    scoutingExtra: {} as Record<string, unknown>,
     /** Fields to change on the event (another date, not today). */
     eventPatch: {} as Record<string, unknown>,
     /** Return 'fail' to drop a request (as one bar of signal does), or nothing to answer it. */
@@ -156,7 +158,7 @@ export const fakeApi = async (context: BrowserContext) => {
         return route.fulfill(json(event()))
       }
       if (kind === 'event-log') return route.fulfill(json(log()))
-      if (kind === 'event-scouting') return route.fulfill(json({ using: 'targets', reported: state.reported, unreported: [] }))
+      if (kind === 'event-scouting') return route.fulfill(json({ using: 'targets', reported: state.reported, unreported: [], ...state.scoutingExtra }))
       if (kind === 'event-route-plan' && method === 'PUT') {
         const body = request.postDataJSON() as Record<string, unknown> & { version: number }
         state.planPuts.push(body)
