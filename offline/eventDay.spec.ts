@@ -59,7 +59,9 @@ test('get ready for offline saves the day, then the event, tally and log all ope
   await expect(page.getByTestId('ready-status')).toContainText(/✓ Ready for offline · 4 birds, 5 stops · saved \d/)
   await expect(page.getByTestId('ready-app')).toContainText('App saved for offline')
   await expect(page.getByTestId('ready-app')).toContainText('3 of 3 photos saved')
-  await expect(page.getByText('how in Google Maps')).toHaveAttribute('href', /support\.google\.com/)
+  // Android: Google Maps only, opened on the day's area.
+  await expect(page.getByTestId('maps-open-google')).toHaveAttribute('href', /^https:\/\/www\.google\.com\/maps\/@\?api=1&map_action=map&center=-?[\d.]+,-?[\d.]+&zoom=(8|9|10|11|12)$/)
+  await expect(page.getByTestId('maps-open-apple')).toHaveCount(0)
   await persisted(page, '"event-log"')
 
   await goOffline(context)
