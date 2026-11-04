@@ -950,7 +950,14 @@
     "openMaps": "Ouvrir dans Maps",
     "edit": "Modifier",
     "share": "Partager",
-    "addStopRow": "+ Ajouter un arrêt"
+    "addStopRow": "+ Ajouter un arrêt",
+    "startBadge": "D",
+    "startWhere": "Où commence la journée?",
+    "setStart": "Choisir le rendez-vous",
+    "addTime": "Ajouter l’heure",
+    "lockLabel": "Garder {{name}} au no {{n}}",
+    "lockTip": "Garder cet arrêt au no {{n}}",
+    "shortestRoute": "Trajet le plus court"
   },
   "offline": {
     "noSignal": "Pas de réseau. Voici ce qui est enregistré.",
@@ -1120,7 +1127,10 @@
     "more": "Autres actions du trajet",
     "startHere": "Partir de ma position",
     "mapBigger": "Agrandir la carte",
-    "mapSmaller": "Réduire la carte"
+    "mapSmaller": "Réduire la carte",
+    "alreadyShortest": "C’est déjà le plus court",
+    "savedMinutes": "Environ {{time}} de route en moins",
+    "savedDistance": "Environ {{distance}} de route en moins"
   },
   "routeTimes": {
     "stay": "Sur place : {{time}}",

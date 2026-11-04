@@ -9,7 +9,8 @@ import { customRoute, speciesByPlace, stayTotal, withStays } from './customRoute
 import { editedAgo } from './editedAgo'
 import { useDriveQuery, useEventRouteQuery, useEventScoutingQuery } from '../../hooks/queries'
 import { isNetworkError } from '../../offline'
-import { routeLinks, shortestOrder, type PlanPoint } from '../../routePlan'
+import { pathKm, routeLinks, shortestOrderLocked, type PlanPoint } from '../../routePlan'
+import { toast } from 'react-toastify'
 import { prefersReducedMotion } from '../../routeDraw'
 import { duration } from '../../duration'
 import { shortDistance, useDistanceUnit } from '../../distance'
@@ -46,7 +47,29 @@ const EventRoutePanel = ({ event, onDay }: { event: GroupEvent; onDay: boolean }
     : suggested
 
   // Every change saves the whole route as the group's: the first one turns the suggestion into it.
-  const keep = (stops: PlanPoint[]) => stops.map(stop => ({ locId: stop.locId, name: stop.name, lat: stop.lat, lng: stop.lng, stay_min: (stop as { stay_min?: number | null }).stay_min ?? null }))
+  const keep = (stops: PlanPoint[]) => stops.map(stop => {
+    const { stay_min, locked } = stop as { stay_min?: number | null; locked?: boolean }
+    return { locId: stop.locId, name: stop.name, lat: stop.lat, lng: stop.lng, stay_min: stay_min ?? null, ...(locked ? { locked: true } : {}) }
+  })
+  const isLocked = (i: number) => Boolean((shownStops[i] as { locked?: boolean } | undefined)?.locked)
+  const toggleLock = (i: number) => group.edit({ start, stops: keep(shownStops).map((stop, j) => (j === i ? { ...stop, locked: !stop.locked } : stop)) })
+  // "Shortest route": the least driving from the meeting point (or the first stop), locked stops kept
+  // at their numbers. Distances are straight lines times a road factor (the app has no drive-time
+  // matrix); the saving is told in minutes at the route's own pace when it has drive times, else in distance.
+  const shortest = () => {
+    const from = start ? { locId: null, ...start } : null
+    const locked = shownStops.map((_, i) => isLocked(i))
+    const next = shortestOrderLocked(shownStops, locked, from)
+    const before = pathKm(shownStops, from)
+    const after = pathKm(next, from)
+    if (after >= before - 0.05) { toast.info(t('eventRoute.alreadyShortest'), { position: 'bottom-center', autoClose: 3000 }); return }
+    editStops(next)
+    const minutesPerKm = route && typeof route.total_min === 'number' && before > 0 ? route.total_min / before : null
+    const saved = minutesPerKm !== null ? Math.round((before - after) * minutesPerKm) : null
+    toast.success(saved !== null && saved > 0
+      ? t('eventRoute.savedMinutes', { time: duration(saved) })
+      : t('eventRoute.savedDistance', { distance: shortDistance(Math.round(((before - after) / 1.609344) * 10) / 10, unit) }), { position: 'bottom-center', autoClose: 3000 })
+  }
   const editStops = (stops: PlanPoint[]) => group.edit({ start, stops: keep(stops) })
   const editStay = (i: number, minutes: number | null) => group.edit({ start, stops: keep(shownStops).map((stop, j) => (j === i ? { ...stop, stay_min: minutes } : stop)) })
   const editStart = (next: PlanPoint | null) => group.edit({ start: next ? { name: next.name, lat: next.lat, lng: next.lng, time: start?.time ?? null } : null, stops: keep(shownStops) })
@@ -142,7 +165,6 @@ const EventRoutePanel = ({ event, onDay }: { event: GroupEvent; onDay: boolean }
           {custom && <button type='button' role='menuitem' className='link-button link-text' onClick={() => { setConfirmReset(true); setMenu(false) }}>{t('eventRoute.backSuggested')}</button>}
           <button type='button' role='menuitem' className='link-button link-text' disabled={locating === 'busy'} onClick={locate}>{locating === 'busy' ? t('route.finding') : t('eventRoute.startHere')}</button>
           {locating === 'failed' && <p className='go__hint'>{t('route.locateFailed')}</p>}
-          {route && route.stops.length > 1 && <button type='button' role='menuitem' className='link-button link-text' onClick={() => { editStops(shortestOrder(shownStops, start ? { locId: null, ...start } : null)); setMenu(false) }}>{t('route.shortest')}</button>}
           <RouteLinks links={links} partLabel={partLabel} />
         </div>
       )}
@@ -196,6 +218,7 @@ const EventRoutePanel = ({ event, onDay }: { event: GroupEvent; onDay: boolean }
             legLabel={(leg) => t('eventRoute.leg', { time: duration(leg.minutes), distance: shortDistance(leg.miles, unit) })}
             onStops={editStops} onStart={editStart} onReset={() => setConfirmReset(true)} onDone={() => undefined}
             onStopClick={(_stop, i) => setActive(i)} activeStop={active}
+            locks={{ of: isLocked, onToggle: toggleLock }} onShortest={shortest}
             resetLabel={t('eventRoute.backSuggested')} startLabel={t('eventRoute.meetingPoint')} startEmpty={t('eventRoute.noMeetingPoint')}
             startTime={{ value: start?.time ?? null, onChange: editTime, label: t('eventDay.meetingTime') }} />
         </div>

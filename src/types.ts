@@ -623,6 +623,8 @@ export interface RoutePlanStop {
   /** What the server suggests for this place, from its targets. */
   suggested_stay_min?: number | null
   targets_here?: number
+  /** Kept at its place in the order when "Shortest route" reorders the rest. */
+  locked?: boolean
 }
 
 /** An event's scouting picture: its target birds (or likely lifers) reported lately in its area, and those not. */

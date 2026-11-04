@@ -933,7 +933,14 @@
     "openMaps": "Abrir en Maps",
     "edit": "Editar ruta",
     "share": "Compartir",
-    "addStopRow": "+ Agregar una parada"
+    "addStopRow": "+ Agregar una parada",
+    "startBadge": "S",
+    "startWhere": "¿Dónde empieza el día?",
+    "setStart": "Fijar punto de encuentro",
+    "addTime": "Agregar hora",
+    "lockLabel": "Mantener {{name}} en el #{{n}}",
+    "lockTip": "Mantener esta parada en el #{{n}}",
+    "shortestRoute": "Ruta más corta"
   },
   "offline": {
     "noSignal": "Sin señal. Mostrando lo que está guardado.",
@@ -1103,7 +1110,10 @@
     "more": "Más acciones de la ruta",
     "startHere": "Empezar desde mi ubicación",
     "mapBigger": "Mapa más grande",
-    "mapSmaller": "Mapa más chico"
+    "mapSmaller": "Mapa más chico",
+    "alreadyShortest": "Ya es la más corta",
+    "savedMinutes": "Ahorraste unos {{time}} de manejo",
+    "savedDistance": "Ahorraste unos {{distance}} de manejo"
   },
   "routeTimes": {
     "stay": "Tiempo ahí: {{time}}",

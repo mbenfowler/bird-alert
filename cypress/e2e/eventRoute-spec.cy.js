@@ -92,7 +92,7 @@ const open = ({ route, user = TEST_USER, geo = null, stored = null, setup = null
 
 describe('Event route', () => {
   const names = (sel) => cy.get(sel).then(els => [...els].map(e => e.textContent))
-  const editorStops = () => names('[data-testid="route-editor"] .go__stop-text strong')
+  const editorStops = () => names('[data-testid="route-editor"] [data-testid="route-row"] .go__stop-text strong')
   const texts = (sel) => cy.get(sel).then(els => [...els].map(e => e.textContent))
   const menu = () => cy.get('[data-testid="route-menu"]').click()
 
@@ -205,7 +205,8 @@ describe('Event route', () => {
       cy.get('[data-testid="route-heading"]').should('have.text', 'Your group’s route · edited by Sam · 2 hours ago')
       cy.contains('Change anything and it becomes').should('not.exist')
       editorStops().should('deep.equal', ['Southwestern Research Station', 'Cave Creek Canyon'])
-      cy.get('[data-testid="route-editor"] .go__start').should('contain', 'Meeting point').and('contain', 'Portal Store')
+      cy.get('[data-testid="start-card"]').should('contain', 'Meeting point').and('contain', 'Portal Store · 5:15 AM')
+      cy.contains('[data-testid="start-card"] button', 'Change')
       cy.get('[data-testid="meeting-time"]').should('have.value', '05:15')
       cy.get('[data-testid="route-editor"] .go__covers').should('have.text', 'Covers 3 of 7 targets reported this week')
       cy.get('.event-route-panel__map .map-stop:not(.map-stop--start)').should('have.length', 2)
@@ -216,7 +217,7 @@ describe('Event route', () => {
       const server = { record: { start: null, stops: null, version: 0 } }
       open({ route: suggestion(), plan: server, setup: stubDrive })
       cy.wait('@plan')
-      cy.get('[data-testid="route-editor"] .go__start-label').should('have.text', 'Meeting point')
+      cy.get('[data-testid="start-card"]').should('contain', 'Meeting point').and('contain', 'Where does the day start?')
       editorStops().should('deep.equal', ['Rustler Park', 'Cave Creek Canyon', 'Southwestern Research Station'])
       // Two quick edits, one save, straight from the list.
       cy.get('[aria-label="Move Rustler Park down"]').click()
@@ -235,11 +236,12 @@ describe('Event route', () => {
       editorStops().should('deep.equal', ['Cave Creek Canyon', 'Rustler Park', 'Paradise'])
       cy.contains('[data-testid="route-status"]', 'Saved')
       cy.get('@savePlan').its('request.body.version').should('equal', 1)
-      cy.contains('[data-testid="route-editor"] .go__start button', 'Set').click()
+      cy.contains('[data-testid="start-card"] button', 'Set meeting point').click()
       cy.get('[data-testid="route-editor"] .go__start-picker input[type="search"]').type('31.9512, -109.3133')
       cy.contains('[data-testid="route-editor"] .go__start-picker button', 'Use 31.9512, -109.3133').click()
       cy.get('@savePlan.all').should('have.length', 3).its(2).its('request.body').should('deep.include', { start: { name: '31.9512, -109.3133', lat: 31.9512, lng: -109.3133, time: null }, version: 2 })
       // The meeting time, right under the meeting point.
+      cy.contains('[data-testid="start-card"] button', 'Add time').click()
       cy.get('[data-testid="meeting-time"]').type('05:45')
       cy.get('@savePlan.all').should('have.length', 4).its(3).its('request.body.start').should('deep.include', { time: '05:45' })
     })
@@ -294,7 +296,7 @@ describe('Event route', () => {
       menu()
       cy.contains('[data-testid="route-menu-items"] button', 'Start from my location').click()
       cy.wait('@savePlan').its('request.body.start').should('deep.equal', { name: 'My location', lat: 31.9512, lng: -109.3133, time: null })
-      cy.get('[data-testid="route-editor"] .go__start').should('contain', 'My location')
+      cy.get('[data-testid="start-card"]').should('contain', 'My location')
     })
 
     it('offers a route made on this device before routes were shared, once', () => {

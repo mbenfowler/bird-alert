@@ -867,7 +867,14 @@
     "openMaps": "Open in Maps",
     "edit": "Edit route",
     "share": "Share",
-    "addStopRow": "+ Add a stop"
+    "addStopRow": "+ Add a stop",
+    "startBadge": "S",
+    "startWhere": "Where does the day start?",
+    "setStart": "Set meeting point",
+    "addTime": "Add time",
+    "lockLabel": "Keep {{name}} at #{{n}}",
+    "lockTip": "Keep this stop at #{{n}}",
+    "shortestRoute": "Shortest route"
   },
   "offline": {
     "noSignal": "No signal. Showing what’s saved.",
@@ -1012,7 +1019,10 @@
     "more": "More route actions",
     "startHere": "Start from my location",
     "mapBigger": "Bigger map",
-    "mapSmaller": "Smaller map"
+    "mapSmaller": "Smaller map",
+    "alreadyShortest": "Already the shortest",
+    "savedMinutes": "Saved about {{time}} of driving",
+    "savedDistance": "Saved about {{distance}} of driving"
   },
   "routeTimes": {
     "stay": "Stay {{time}}",

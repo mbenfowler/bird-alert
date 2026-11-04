@@ -822,3 +822,101 @@
     outline-offset: 2px;
     border-radius: 10px;
 }
+
+/* The meeting point as stop "0" of an event's route: a card like a stop's, with its own buttons. */
+.go__start-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0 0 4px;
+    padding: 10px;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+}
+
+.go__start-card.is-open {
+    border-color: var(--ink);
+}
+
+.go__start-card .go__stop-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.go__start-card .go__stop-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: default;
+}
+
+.go__stop-n--start {
+    background: #0f7b3a;
+    color: #fff;
+}
+
+.go__start-empty {
+    color: var(--muted);
+}
+
+.go__start-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding-left: 38px;
+}
+
+.go__start-time-field input {
+    min-height: 36px;
+    padding: 0 8px;
+    border: 2px solid var(--line);
+    border-radius: 999px;
+    font: inherit;
+}
+
+/* "+ Add a stop" and "Shortest route" side by side. */
+.go__add-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.go__add-actions .go__add-row {
+    flex: 1 1 160px;
+    width: auto;
+}
+
+/* A stop locked in place: the lock lit, its number ringed. */
+.go__lock {
+    font-size: 0.95rem;
+    line-height: 1;
+}
+
+.go__lock span {
+    filter: grayscale(1);
+    opacity: 0.55;
+}
+
+.go__lock.is-on {
+    background: #ffd700;
+    border-radius: 50%;
+}
+
+.go__lock.is-on span {
+    filter: none;
+    opacity: 1;
+}
+
+.go__stop.is-locked .go__stop-n {
+    outline: 2px solid #ffd700;
+    outline-offset: 2px;
+}

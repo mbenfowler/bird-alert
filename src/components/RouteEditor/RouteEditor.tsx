@@ -3,7 +3,7 @@ import PlaceSearch, { type Suggestion } from '../PlaceSearch/PlaceSearch'
 import { ChevronIcon, CloseIcon, DragIcon, LocateIcon } from '../Icons/Icons'
 import { shortDistance, useDistanceUnit, type DistanceUnit } from '../../distance'
 import { MAX_ROUTE_STOPS, move, roadKm, samePlace, shortestOrder, type PlanPoint } from '../../routePlan'
-import { t } from '../../i18n'
+import { clockTime, t } from '../../i18n'
 import { duration } from '../../duration'
 import StayStepper, { type Stay } from './StayStepper'
 import '../WhereToGo/WhereToGo.css'
@@ -41,6 +41,10 @@ export interface RouteEditorProps {
    * the add box behind one "+ Add a stop" row.
    */
   inline?: boolean
+  /** Stops locked in place for "Shortest route": a toggle on each row (inline only). */
+  locks?: { of: (i: number) => boolean; onToggle: (i: number) => void }
+  /** "Shortest route", beside "+ Add a stop" (inline only). */
+  onShortest?: () => void
   /** The reset button's words, when the page says it differently. */
   resetLabel?: string
   /** What the start is called, and what it says when there is none, when the page says it differently. */
@@ -54,6 +58,12 @@ export interface RouteEditorProps {
   startTime?: { value: string | null; onChange: (time: string | null) => void; label: string }
 }
 
+/** '05:15' as the phone shows a time of day ("5:15 AM"). */
+const clockOf = (hhmm: string) => {
+  const [h, m] = hhmm.split(':').map(Number)
+  return Number.isFinite(h) && Number.isFinite(m) ? clockTime(new Date(2000, 0, 1, h, m)) : hhmm
+}
+
 const legText = (leg: Leg, unit: DistanceUnit) => leg ? t('route.leg', { minutes: leg.minutes, distance: shortDistance(leg.miles, unit) }) : t('route.legUnknown')
 
 /**
@@ -62,7 +72,8 @@ const legText = (leg: Leg, unit: DistanceUnit) => leg ? t('route.leg', { minutes
  * the shortest order, set where the day starts, and go back to the suggestion. Shared by the
  * morning route on Where to go and an event's route.
  */
-const RouteEditor = ({ state, stops, start, arriving, editing, describe, suggestions, suggestionsLabel, preview = null, between, custom, onStops, onStart, onReset, onDone, onStopClick, resetLabel, startLabel, startEmpty, stays, legLabel, startTime, activeStop = null, inline = false }: RouteEditorProps) => {
+const RouteEditor = ({ state, stops, start, arriving, editing, describe, suggestions, suggestionsLabel, preview = null, between, custom, onStops, onStart, onReset, onDone, onStopClick, resetLabel, startLabel, startEmpty, stays, legLabel, startTime, activeStop = null, inline = false, locks, onShortest }: RouteEditorProps) => {
+  const [addingTime, setAddingTime] = useState(false)
   const [adding, setAdding] = useState(false)
   const unit = useDistanceUnit()
   const [settingStart, setSettingStart] = useState(false)
@@ -126,7 +137,35 @@ const RouteEditor = ({ state, stops, start, arriving, editing, describe, suggest
 
   return (
     <>
-      {(start || editing) && (
+      {inline && editing && (
+        <div className={`go__start-card ${settingStart ? 'is-open' : ''}`} data-testid='start-card'>
+          <div className='go__stop-row'>
+            <span className='go__stop-main'>
+              <span className='go__stop-n go__stop-n--start' aria-hidden='true'>{t('route.startBadge')}</span>
+              <span className='go__stop-text'>
+                <strong>{startLabel ?? t('route.start')}</strong>
+                {start
+                  ? <span data-testid='start-name'>{[start.name, startTime?.value ? clockOf(startTime.value) : null].filter(Boolean).join(' · ')}</span>
+                  : <span className='go__start-empty'>{t('route.startWhere')}</span>}
+              </span>
+            </span>
+            {start && <button type='button' className='go__icon-button' aria-label={t('route.clearStart')} onClick={() => onStart(null)}><CloseIcon /></button>}
+          </div>
+          <div className='go__start-buttons'>
+            <button type='button' className={`pill-button pill-button--small ${start ? '' : 'pill-button--primary'}`} aria-expanded={settingStart} onClick={() => setSettingStart(s => !s)} data-testid='set-start'>
+              {start ? t('common.change') : t('route.setStart')}
+            </button>
+            {start && startTime && (startTime.value || addingTime
+              ? <label className='go__start-time-field'>
+                  <span className='visually-hidden'>{startTime.label}</span>
+                  <input type='time' value={startTime.value ?? ''} data-testid='meeting-time' autoFocus={addingTime && !startTime.value}
+                    onChange={(e) => startTime.onChange(e.target.value || null)} onBlur={() => setAddingTime(false)} />
+                </label>
+              : <button type='button' className='pill-button pill-button--small' onClick={() => setAddingTime(true)} data-testid='add-time'>{t('route.addTime')}</button>)}
+          </div>
+        </div>
+      )}
+      {!inline && (start || editing) && (
         <div className='go__start'>
           <span className='go__start-dot' aria-hidden='true' />
           <span className='go__start-text'>
@@ -137,7 +176,7 @@ const RouteEditor = ({ state, stops, start, arriving, editing, describe, suggest
           {editing && start && !settingStart && <button type='button' className='go__icon-button' aria-label={t('route.clearStart')} onClick={() => onStart(null)}><CloseIcon /></button>}
         </div>
       )}
-      {editing && start && startTime && !settingStart && (
+      {!inline && editing && start && startTime && !settingStart && (
         <label className='go__start-time'>
           <span className='go__start-label'>{startTime.label}</span>
           <input type='time' value={startTime.value ?? ''} data-testid='meeting-time' onChange={(e) => startTime.onChange(e.target.value || null)} />
@@ -159,11 +198,12 @@ const RouteEditor = ({ state, stops, start, arriving, editing, describe, suggest
           {stops.map((stop, i) => {
             const arrive = arriving[i] ?? null
             const leg = i > 0 || start ? <span className='go__leg'>{arrive && legLabel ? legLabel(arrive) : legText(arrive, unit)}</span> : null
+            const isLocked = Boolean(locks?.of(i))
             const stay = stays?.of(i)
             const stayMinutes = stay ? stay.minutes ?? stay.suggested : null
             const text = <><span className='go__stop-n'>{i + 1}</span><span className='go__stop-text'><strong>{stop.name}</strong>{describe(stop, i)}</span></>
             return (
-              <li key={stop.locId ?? `${stop.lat},${stop.lng}`} className={`go__stop ${dragging === i ? 'is-dragging' : ''} ${activeStop === i ? 'is-active' : ''}`} data-testid='route-row'>
+              <li key={stop.locId ?? `${stop.lat},${stop.lng}`} className={`go__stop ${dragging === i ? 'is-dragging' : ''} ${activeStop === i ? 'is-active' : ''} ${isLocked ? 'is-locked' : ''}`} data-testid='route-row' data-locked={isLocked ? 'true' : undefined}>
                 {leg}
                 <div className='go__stop-row'>
                   {editing && (
@@ -174,6 +214,12 @@ const RouteEditor = ({ state, stops, start, arriving, editing, describe, suggest
                     : <span className='go__stop-main'>{text}</span>}
                   {editing && (
                     <span className='go__stop-tools'>
+                      {locks && (
+                        <button type='button' className={`go__icon-button go__lock ${isLocked ? 'is-on' : ''}`} aria-pressed={isLocked}
+                          aria-label={t('route.lockLabel', { name: stop.name, n: i + 1 })} title={t('route.lockTip', { n: i + 1 })} onClick={() => locks.onToggle(i)} data-testid='lock'>
+                          <span aria-hidden='true'>{isLocked ? '🔒' : '🔓'}</span>
+                        </button>
+                      )}
                       <button type='button' className='go__icon-button' aria-label={t('route.moveUp', { name: stop.name })} disabled={i === 0} onClick={() => onStops(move(stops, i, i - 1))}><ChevronIcon className='is-up' /></button>
                       <button type='button' className='go__icon-button' aria-label={t('route.moveDown', { name: stop.name })} disabled={i === stops.length - 1} onClick={() => onStops(move(stops, i, i + 1))}><ChevronIcon /></button>
                       <button type='button' className='go__icon-button' aria-label={t('route.remove', { name: stop.name })} onClick={() => onStops(stops.filter((_, j) => j !== i))}><CloseIcon /></button>
@@ -217,7 +263,10 @@ const RouteEditor = ({ state, stops, start, arriving, editing, describe, suggest
                     suggestions={fresh.slice(0, 6)} suggestionsLabel={suggestionsLabel} />
                   <button type='button' className='go__link-button' onClick={() => setAdding(false)}>{t('common.cancel')}</button>
                 </>
-              : <button type='button' className='go__add-row' onClick={() => setAdding(true)} data-testid='add-stop'>{t('route.addStopRow')}</button>}
+              : <div className='go__add-actions'>
+                  <button type='button' className='go__add-row' onClick={() => setAdding(true)} data-testid='add-stop'>{t('route.addStopRow')}</button>
+                  {onShortest && stops.length > 1 && <button type='button' className='pill-button pill-button--small' onClick={onShortest} data-testid='shortest'>{t('route.shortestRoute')}</button>}
+                </div>}
         </div>
       )}
       {editing && !inline && (

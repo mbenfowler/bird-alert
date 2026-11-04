@@ -18,7 +18,7 @@ export const ROUTE_KEYS: string[] = [ROUTE_SAVE_KEY[0], POSITION_KEY[0]]
 const SCOPE = { id: 'event-route' }
 
 type Start = EventRoutePlan['start']
-type SavedStop = Pick<RoutePlanStop, 'locId' | 'name' | 'lat' | 'lng' | 'stay_min'>
+type SavedStop = Pick<RoutePlanStop, 'locId' | 'name' | 'lat' | 'lng' | 'stay_min' | 'locked'>
 
 export interface RouteSave {
   id: Id
@@ -91,7 +91,7 @@ export const setupRouteSync = (queryClient: QueryClient) => {
       const version = step && step.from === change.baseVersion ? step.to : change.baseVersion
       inFlight.add(change.clientId)
       try {
-        const stops = change.stops?.map(({ locId, name, lat, lng, stay_min }) => ({ locId, name, lat, lng, stay_min: stay_min ?? null })) ?? null
+        const stops = change.stops?.map(({ locId, name, lat, lng, stay_min, locked }) => ({ locId, name, lat, lng, stay_min: stay_min ?? null, ...(locked ? { locked: true } : {}) })) ?? null
         const record = await putEventRoutePlan(change.id, { start: change.start, stops, version })
         rebased.set(String(change.id), { from: change.baseVersion, to: record.version })
         const before = queryClient.getQueryData<EventRoutePlan>(planKey(change.id))

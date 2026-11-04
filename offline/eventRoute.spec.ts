@@ -1,5 +1,6 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test'
 import { DAY_PLAN, DAY_ROUTE, fakeApi, goOffline, goOnline, today } from './fakeApi'
+import { pathKm, shortestOrderLocked } from '../src/routePlan'
 
 /**
  * The event page's route on the production build: open on load (the group's, else the
@@ -191,4 +192,108 @@ test('"Start the day" on a route that is still the suggestion saves it first, th
   expect(puts(api)[0]).toMatchObject({ version: 0 })
   expect(api.calls.indexOf('PUT event-route-plan')).toBeLessThan(api.calls.indexOf('POST event-route-position'))
   await expect(page.getByTestId('group-position')).toContainText('Now at Ramsey Canyon Preserve · you')
+})
+
+/** The group's route with its stops in a poor order: San Pedro House (far east) first. */
+const SCRAMBLED = { ...DAY_PLAN, stops: [DAY_PLAN.stops[4]!, DAY_PLAN.stops[2]!, DAY_PLAN.stops[0]!, DAY_PLAN.stops[3]!, DAY_PLAN.stops[1]!] }
+const asPoints = (stops: typeof DAY_PLAN.stops) => stops.map(s => ({ locId: s.locId, name: s.name, lat: s.lat, lng: s.lng }))
+const MEET = { locId: null, ...DAY_PLAN.start }
+
+test('"Shortest route" sits under the list and reorders for the least driving from the meeting point', async ({ page, context }) => {
+  const api = await routeApi(context, true)
+  api.plan = SCRAMBLED
+  await page.goto('/events/2')
+  await expect(rows(page)).toHaveCount(5)
+  const button = page.getByTestId('shortest')
+  await expect(button).toHaveText('Shortest route')
+  await expect(page.getByTestId('route-menu-items')).toHaveCount(0)
+  const expected = shortestOrderLocked(asPoints(SCRAMBLED.stops), [false, false, false, false, false], MEET).map(p => p.name)
+  await button.click()
+  await expect(page.getByText(/^Saved about .* of driving$/)).toBeVisible()
+  await expect.poll(() => puts(api).length, { timeout: 10_000 }).toBe(1)
+  expect((puts(api)[0]!.stops as Array<{ name: string }>).map(s => s.name)).toEqual(expected)
+  expect(pathKm(asPoints(SCRAMBLED.stops), MEET)).toBeGreaterThan(pathKm(shortestOrderLocked(asPoints(SCRAMBLED.stops), [false, false, false, false, false], MEET), MEET))
+  await page.getByTestId('shortest').click()
+  await expect(page.getByText('Already the shortest')).toBeVisible()
+})
+
+test('a locked stop keeps its number when "Shortest route" reorders the rest, even if that drives further, and the lock is saved', async ({ page, context }) => {
+  const api = await routeApi(context, true)
+  api.plan = SCRAMBLED
+  await page.goto('/events/2')
+  await expect(rows(page)).toHaveCount(5)
+  const lock = page.getByRole('button', { name: 'Keep San Pedro House at #1' })
+  await expect(lock).toHaveAttribute('aria-pressed', 'false')
+  await expect(lock).toHaveAttribute('title', 'Keep this stop at #1')
+  await lock.click()
+  await expect(lock).toHaveAttribute('aria-pressed', 'true')
+  await expect(rows(page).nth(0)).toHaveAttribute('data-locked', 'true')
+  await expect.poll(() => puts(api).length, { timeout: 10_000 }).toBe(1)
+  expect((puts(api)[0]!.stops as Array<{ locked?: boolean }>)[0]).toMatchObject({ locId: 'L500', locked: true })
+  expect((puts(api)[0]!.stops as Array<{ locked?: boolean }>)[1]!.locked).toBeUndefined()
+
+  const locked = [true, false, false, false, false]
+  const expected = shortestOrderLocked(asPoints(SCRAMBLED.stops), locked, MEET)
+  const free = shortestOrderLocked(asPoints(SCRAMBLED.stops), [false, false, false, false, false], MEET)
+  // Locking San Pedro first makes the best route longer than the unlocked best.
+  expect(pathKm(expected, MEET)).toBeGreaterThan(pathKm(free, MEET))
+  await page.getByTestId('shortest').click()
+  await expect.poll(() => puts(api).length, { timeout: 10_000 }).toBe(2)
+  const sent = puts(api)[1]!.stops as Array<{ name: string; locked?: boolean }>
+  expect(sent.map(s => s.name)).toEqual(expected.map(p => p.name))
+  expect(sent[0]).toMatchObject({ name: 'San Pedro House', locked: true })
+  await expect(rows(page).nth(0)).toContainText('San Pedro House')
+  await expect(rows(page).nth(0)).toHaveAttribute('data-locked', 'true')
+})
+
+test('toggling a lock moves nothing: the up, down and remove buttons keep their places, at 375 px', async ({ page, context }) => {
+  await routeApi(context, true)
+  await page.goto('/events/2')
+  await expect(rows(page)).toHaveCount(5)
+  const row = rows(page).nth(2)
+  const places = () => row.locator('.go__stop-tools button').evaluateAll(els => els.map(el => { const r = el.getBoundingClientRect(); return [Math.round(r.x + window.scrollX), Math.round(r.y + window.scrollY)] }))
+  const before = await places()
+  expect(before).toHaveLength(4)
+  await row.getByTestId('lock').click()
+  await expect(row).toHaveAttribute('data-locked', 'true')
+  expect(await places()).toEqual(before)
+  await expect(page.getByTestId('route-status')).toHaveText('Saved', { timeout: 10_000 })
+  expect(await places()).toEqual(before)
+  await row.getByTestId('lock').click()
+  await expect(row).not.toHaveAttribute('data-locked', 'true')
+  expect(await places()).toEqual(before)
+  const { scroll, client } = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }))
+  expect(scroll).toBeLessThanOrEqual(client)
+})
+
+test('the meeting point is stop "0": a card with Set meeting point, then Change and Add time', async ({ page, context }) => {
+  const api = await routeApi(context, false)
+  await page.goto('/events/2')
+  const card = page.getByTestId('start-card')
+  await expect(card).toContainText('Meeting point')
+  await expect(card).toContainText('Where does the day start?')
+  await expect(card.getByRole('button', { name: 'Add time' })).toHaveCount(0)
+  await card.getByRole('button', { name: 'Set meeting point' }).click()
+  // The search and "Use my location" open right under the card.
+  const picker = page.locator('.go__start-picker')
+  await expect(picker).toBeVisible()
+  await expect(picker.getByRole('button', { name: 'Use my location' })).toBeVisible()
+  const cardBottom = (await card.boundingBox())!.y + (await card.boundingBox())!.height
+  expect(Math.abs((await picker.boundingBox())!.y - cardBottom)).toBeLessThan(24)
+  await picker.locator('input[type="search"]').fill('31.55, -110.3')
+  await picker.getByRole('button', { name: 'Use 31.55, -110.3' }).click()
+  await expect(card).toContainText('31.55, -110.3')
+  await expect(card.getByRole('button', { name: 'Change' })).toBeVisible()
+  await expect.poll(() => puts(api).length, { timeout: 10_000 }).toBe(1)
+  expect(puts(api)[0]).toMatchObject({ version: 0, start: { lat: 31.55, lng: -110.3, time: null } })
+  // The drive from the meeting point to stop 1 sits between them, like the others.
+  await expect(page.locator('[data-testid="route-editor"] .go__stop').first().locator('.go__leg')).toBeVisible()
+
+  await card.getByRole('button', { name: 'Add time' }).click()
+  await page.getByTestId('meeting-time').fill('05:15')
+  await expect(card).toContainText('31.55, -110.3 · 5:15 AM')
+  await expect.poll(() => puts(api).length, { timeout: 10_000 }).toBe(2)
+  expect(puts(api)[1]!.start).toMatchObject({ time: '05:15' })
+  const { scroll, client } = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }))
+  expect(scroll).toBeLessThanOrEqual(client)
 })

@@ -48,6 +48,29 @@ export const shortestOrder = (stops: PlanPoint[], start: PlanPoint | null = null
   return best
 }
 
+/**
+ * The order with the least driving when some stops are locked in place: each locked stop keeps its
+ * position, and only the others are tried in the free positions (every order: eight stops is at
+ * most 40,320). Distances are straight lines times a road factor, as `shortestOrder`.
+ */
+export const shortestOrderLocked = <T extends PlanPoint>(stops: T[], locked: boolean[], start: PlanPoint | null = null): T[] => {
+  if (!locked.some(Boolean)) return shortestOrder(stops, start) as T[]
+  const free = stops.filter((_, i) => !locked[i])
+  if (free.length <= 1) return stops
+  const place = (order: T[]) => {
+    let k = 0
+    return stops.map((stop, i) => (locked[i] ? stop : order[k++]!))
+  }
+  let best = stops
+  let bestKm = pathKm(stops, start)
+  for (const order of permutations(free)) {
+    const candidate = place(order)
+    const km = pathKm(candidate, start)
+    if (km < bestKm - 1e-9) { best = candidate; bestKm = km }
+  }
+  return best
+}
+
 /** Watch-list birds expected across the stops, each counted once; stops not among the places add nothing. */
 export const coverage = (stops: PlanPoint[], places: GoPlace[]) => {
   const byId = new Map(places.map(p => [p.locId, p]))
