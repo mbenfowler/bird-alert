@@ -108,6 +108,10 @@ describe("Today's scouting", () => {
       })
       cy.get('[data-testid="scouting-progress"]').should('have.text', '1 of 3 targets around this week')
       cy.get('[data-testid="scouting-none-new"]').should('not.exist')
+      // Each name opens its sighting page in the event's county, on the report itself when this week's reports have it.
+      cy.contains('[data-testid="bird-of-day"] a', 'Tufted Flycatcher').should('have.attr', 'href', `/sighting/tufflc/latest?region=${COCHISE}`)
+      cy.contains('[data-testid="scouting-fresh"] a', 'Elegant Trogon').should('have.attr', 'href', `/sighting/eletro/S100?region=${COCHISE}`)
+      cy.contains('[data-testid="scouting-fresh"] a', 'Rufous-backed Robin').should('have.attr', 'href', `/sighting/rubrob/latest?region=${COCHISE}`)
     })
     // Above the route, the targets and the scouting details.
     cy.get('[data-testid="scouting-today"]').then(card => {
