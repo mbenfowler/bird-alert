@@ -3,11 +3,13 @@
 <head><meta charset="utf-8"><title>Bird Alert! 6/7: plan it with your group</title><link rel="stylesheet" href="slides.css">
 <style>
   .clip { height: 860px; position: relative; }
-  /* Starts at the route's summary line (490 of the screen's 390 px-wide shot down), so the stops,
-     their times and the day's totals fit. */
-  .clip img { position: absolute; left: 0; top: calc(-438px * 490 / 390); width: 100%; }
+  /* The route panel from its top: who edited it, the map, the meeting point and the first stops. */
+  .clip img { position: absolute; left: 0; top: 0; width: 100%; }
   .crop { overflow: hidden; }
   .crop img { display: block; width: 100%; }
+  /* The editor's end: the last stop with its stepper, then the day's totals. */
+  .crop.end { position: relative; }
+  .crop.end img { position: absolute; bottom: 0; left: 0; }
 </style></head>
 <body>
 <div class="slide">
@@ -15,7 +17,7 @@
   <span class="pill">Plan it with your group</span>
   <h1>One route for the whole group.</h1>
   <p class="body" style="margin-top: 22px; width: 430px; font-size: 32px">Send a link. Everyone sees and edits the same route: time at each stop, the drive between, and the day’s total.</p>
-  <div class="lift" style="left: 80px; top: 600px; width: 420px"><div class="crop" style="height: 400px"><img src="../.cache/shots/route-edit.png" alt=""></div></div>
+  <div class="lift" style="left: 80px; top: 600px; width: 420px"><div class="crop end" style="height: 400px"><img src="../.cache/shots/route-edit.png" alt=""></div></div>
   <div class="lift" style="left: 80px; top: 1060px; width: 420px; background: var(--bg)"><div class="crop" style="height: 196px"><img src="../.cache/shots/people.png" alt=""></div></div>
   <div class="phone tilt-r" style="left: 560px; top: 430px"><div class="clip"><img src="../.cache/shots/route.png" alt=""></div></div>
 </div>
