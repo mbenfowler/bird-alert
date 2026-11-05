@@ -103,8 +103,8 @@
     padding: 0;
 }
 
-.sighting__hero .season-strip__bars {
-    height: 84px;
+.sighting__hero .season-strip__month {
+    min-height: 84px;
 }
 
 .sighting__hero .season-strip__bar {

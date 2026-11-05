@@ -1064,7 +1064,7 @@
     "month_other": "{{month}}: reported on {{reported}} of {{count}} days",
     "monthUnknown": "{{month}}: no history yet",
     "caption": "Share of days with a report in {{regionName}} over the last 12 months.",
-    "captionPartial_one": "Share of days with a report in {{regionName}} over the last 12 months, {{count}} months on file so far.",
+    "captionPartial_one": "Share of days with a report in {{regionName}} over the last 12 months, {{count}} month on file so far.",
     "captionPartial_other": "Share of days with a report in {{regionName}} over the last 12 months, {{count}} months on file so far."
   },
   "settings": {
