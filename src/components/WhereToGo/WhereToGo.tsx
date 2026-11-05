@@ -211,7 +211,7 @@ const WhereToGo = () => {
                   </button>
                   <div className='go__birds'>
                     {place.birds.slice(0, 8).map(b => (
-                      <Link key={b.speciesCode} className='go__bird' style={{ '--chance': chanceColour(b.chance) } as CSSProperties} to={`/sighting/${b.speciesCode}/${b.lastSeen?.subId ?? ''}${user.mode === 'home' ? '' : `?region=${region}`}`}>{b.comName} {b.chance}%</Link>
+                      <Link key={b.speciesCode} className='go__bird' style={{ '--chance': chanceColour(b.chance) } as CSSProperties} to={`/sighting/${b.speciesCode}/${b.lastSeen?.subId ?? 'latest'}${user.mode === 'home' ? '' : `?region=${region}`}`}>{b.comName} {b.chance}%</Link>
                     ))}
                     {place.birds.length > 8 && <span className='go__more'>{t('go.more', { count: place.birds.length - 8 })}</span>}
                   </div>
