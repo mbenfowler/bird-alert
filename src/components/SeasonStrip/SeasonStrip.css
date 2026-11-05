@@ -14,7 +14,6 @@
     display: grid;
     grid-template-columns: repeat(12, 1fr);
     gap: 6px;
-    height: 96px;
     align-items: end;
 }
 
@@ -23,7 +22,8 @@
     flex-direction: column;
     align-items: center;
     justify-content: flex-end;
-    height: 100%;
+    /* A floor, not a fixed height: the tallest bar plus its letter can never spill onto the caption. */
+    min-height: 96px;
     gap: 4px;
 }
 
@@ -54,6 +54,7 @@
 .season-strip__label {
     font-family: system-ui, sans-serif;
     font-size: 0.75rem;
+    line-height: 1.2;
     color: var(--muted);
 }
 
