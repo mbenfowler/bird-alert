@@ -101,3 +101,19 @@ export const reportedLine = (row: Pick<TargetRow, 'lastObsDt' | 'lastLocName'>, 
   const date = monthDay(row.lastObsDt.slice(0, 10))
   return row.lastLocName ? t('events.reportedAt', { date, place: row.lastLocName }) : t('events.reportedOn', { date })
 }
+
+/**
+ * Where a scouting bird links: its sighting page in the event's county, on the report itself when
+ * this week's reports carry it (same bird, same place, same time; else same bird and place). With
+ * no matching report the page opens on the bird's newest report in the county.
+ */
+export const scoutSightingPath = (
+  location: string,
+  bird: { code: string; locId?: string | null; locName?: string | null; obsDt: string },
+  reported: Pick<EventScouting['reported'][number], 'code' | 'locId' | 'locName' | 'obsDt' | 'subId'>[]
+) => {
+  const samePlace = (r: (typeof reported)[number]) => r.code === bird.code && Boolean(r.subId) &&
+    ((bird.locId && r.locId === bird.locId) || (bird.locName && r.locName === bird.locName))
+  const report = reported.find(r => samePlace(r) && r.obsDt === bird.obsDt) ?? reported.find(samePlace)
+  return `/sighting/${encodeURIComponent(bird.code)}/${encodeURIComponent(report?.subId ?? 'latest')}?region=${encodeURIComponent(location)}`
+}

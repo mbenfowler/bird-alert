@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { filterTargets, rarestFirst, showScoutingCard, sortTargets, targetRows } from './scoutingRows'
+import { filterTargets, rarestFirst, scoutSightingPath, showScoutingCard, sortTargets, targetRows } from './scoutingRows'
 import type { EventScouting, ScoutingTarget } from '../../types'
 
 const name = (code: string) => code.toUpperCase()
@@ -82,5 +82,23 @@ describe('today\'s scouting', () => {
     expect(showScoutingCard(news, { past: false, onDay: false, scouting: false })).toBe(true)
     expect(showScoutingCard(news, { past: false, onDay: true, scouting: false })).toBe(false)
     expect(showScoutingCard(news, { past: true, onDay: false, scouting: false })).toBe(false)
+  })
+})
+
+describe('scouting bird links', () => {
+  const reported = [
+    { code: 'eletro', locId: 'L1', locName: 'Cave Creek', obsDt: '2026-11-04 07:30', subId: 'S1' },
+    { code: 'eletro', locId: 'L1', locName: 'Cave Creek', obsDt: '2026-11-05 08:00', subId: 'S2' },
+    { code: 'tufflc', locId: 'L9', locName: 'Ramsey Canyon', obsDt: '2026-11-05 08:15', subId: 'S9' }
+  ]
+  it('opens the report itself: same bird, place and time, else same bird and place', () => {
+    expect(scoutSightingPath('US-AZ-003', { code: 'eletro', locId: 'L1', obsDt: '2026-11-05 08:00' }, reported)).toBe('/sighting/eletro/S2?region=US-AZ-003')
+    expect(scoutSightingPath('US-AZ-003', { code: 'eletro', locId: 'L1', obsDt: '2026-11-05 09:00' }, reported)).toBe('/sighting/eletro/S1?region=US-AZ-003')
+    // The bird of the day has no locId; its place name finds the report.
+    expect(scoutSightingPath('US-AZ-003', { code: 'tufflc', locName: 'Ramsey Canyon', obsDt: '2026-11-05 08:15' }, reported)).toBe('/sighting/tufflc/S9?region=US-AZ-003')
+  })
+  it('opens the bird in the event county when no report matches', () => {
+    expect(scoutSightingPath('US-AZ-003', { code: 'rubrob', locId: 'L5', obsDt: '2026-11-05 07:40' }, reported)).toBe('/sighting/rubrob/latest?region=US-AZ-003')
+    expect(scoutSightingPath('US-AZ-003', { code: 'eletro', locId: 'L7', obsDt: '2026-11-05 07:40' }, reported)).toBe('/sighting/eletro/latest?region=US-AZ-003')
   })
 })

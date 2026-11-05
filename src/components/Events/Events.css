@@ -1161,6 +1161,17 @@ a.event-scouting__bird:hover {
 }
 
 /* One report: the bird, its ABA badge, where and when; a heat edge by ABA code. */
+/* The bird's name opens its sighting page, styled like the bird links on the sightings table. */
+.scouting-today__link {
+  color: var(--link);
+  text-decoration: none;
+}
+
+.scouting-today__link:hover,
+.scouting-today__link:focus-visible {
+  text-decoration: underline;
+}
+
 .scouting-today__fresh {
   min-width: 0;
   padding: 4px 8px;
