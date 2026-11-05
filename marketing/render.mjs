@@ -382,22 +382,14 @@ const SCREENS = [
     shot: element('scouting', '[data-testid="event-scouting"]')
   },
   {
-    name: 'route', path: '/events/7#route', ready: '[data-testid="route-stop"]',
+    // The event's route panel: the map, then the stops, always editable in place (time at each stop
+    // with its stepper, the drive between, the day's totals).
+    name: 'route', path: '/events/7#route', ready: '[data-testid="route-row"] [data-testid="stop-stay"]',
     shot: async (page) => ({
-      route: await shoot(page, '[data-testid="event-scouting"]'),
+      route: await shoot(page, '[data-testid="event-route"]'),
+      'route-edit': await shoot(page, '[data-testid="route-editor"]'),
       people: await shoot(page, '.event-detail__people')
     })
-  },
-  {
-    // The same route open for editing: the time at each stop, with its stepper.
-    name: 'route-edit', path: '/events/7#route', ready: '[data-testid="route-stop"]',
-    before: async (page) => {
-      await page.click('.event-route__edit')
-      await page.waitForSelector('[data-testid="stop-stay"]')
-      // The editor's Done bar sticks to the bottom of the screen; shot whole, it belongs at the end.
-      await page.addStyleTag({ content: '.go__route.is-editing .go__route-actions { position: static !important; }' })
-    },
-    shot: element('route-edit', '[data-testid="route-editor"]')
   },
   {
     name: 'install', path: '/settings?tab=alerts', iphone: true, ready: '.install-group', shot: element('install', '.install-group')
