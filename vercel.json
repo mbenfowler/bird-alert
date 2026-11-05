@@ -10,6 +10,10 @@
       "destination": "https://bird-alert-be.vercel.app/api/ebird/share-page?kind=:kind&id=:id"
     },
     {
+      "source": "/recap/:code",
+      "destination": "https://bird-alert-be.vercel.app/api/ebird/share-page?kind=recap&id=:code"
+    },
+    {
       "source": "/((?!api/|assets/|images/|robots.txt|sitemap.xml).*)",
       "destination": "/index.html"
     }
