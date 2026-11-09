@@ -13,6 +13,7 @@ import { useDebouncedValue } from '../../hooks/useDebouncedValue'
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll'
 import './Home.css'
 import { t } from '../../i18n'
+import { usePageMemory } from '../../pageMemory'
 import { Trans } from 'react-i18next'
 
 const PAGE_SIZE = 12
@@ -40,7 +41,8 @@ const Home = () => {
     const loadMore = () => { if (birdPages.hasNextPage && !birdPages.isFetchingNextPage) void birdPages.fetchNextPage() }
     const sentinelRef = useInfiniteScroll(loadMore, Boolean(birdPages.hasNextPage) && !birdPages.isFetchingNextPage)
 
-    const [search, setSearch] = useState('')
+    // A search left for a bird's page is still there on the way back.
+    const [search, setSearch] = usePageMemory<string>('search', '', (value): value is string => typeof value === 'string')
     const rawTerm = search.trim()
     const term = useDebouncedValue(rawTerm, SEARCH_DEBOUNCE_MS)
     const isSearching = rawTerm.length > 0

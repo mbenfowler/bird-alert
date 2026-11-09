@@ -401,3 +401,19 @@ button.timing__option:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: -3px;
 }
+
+/* Back, at the top of the pages one step in: the small pill, a chevron pointing the way. Its own
+   line, so it never shares a row with the page's title or buttons. */
+.back-button {
+    display: flex;
+    width: fit-content;
+    margin: 0 0 10px;
+}
+
+.back-button__icon {
+    width: 1.25em;
+    height: 1.25em;
+    margin-left: -6px;
+    margin-right: 2px;
+    transform: rotate(90deg);
+}

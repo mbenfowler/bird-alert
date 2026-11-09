@@ -60,7 +60,7 @@ describe('Polish: motion', () => {
     cy.visit('http://localhost:3000/')
     cy.get('.birds-list .card', { timeout: 15000 })
     cy.get('.route-view').should('not.have.attr', 'data-last-transition')
-    cy.get('#settingsText').click({ force: true })
+    cy.get('.nav-icon--settings').click()
     cy.url().should('include', '/settings')
     cy.get('.route-view').should('have.attr', 'data-last-transition', '/settings')
     cy.contains('h2', 'Your details')

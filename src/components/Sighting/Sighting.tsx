@@ -26,6 +26,7 @@ import StillThere from '../StillThere/StillThere'
 import AbaCode from '../AbaCode/AbaCode'
 import Evidence from '../Evidence/Evidence'
 import { celebrateLifer, popStar } from '../Pop/pop'
+import BackButton from '../BackButton/BackButton'
 import './Sighting.css'
 import { clockTime, t } from '../../i18n'
 
@@ -178,6 +179,7 @@ const Sighting = () => {
 
   return (
     <section className='sighting'>
+      <BackButton />
       <header className='sighting__hero'>
         <img className='sighting__photo' src={img} alt={t('card.photoAlt', { name })} />
         <div className='sighting__title'>

@@ -1,13 +1,9 @@
 import { useEffect, useRef } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import { useSessionQuery } from '../../hooks/queries'
-import { useLogoutMutation } from '../../hooks/mutations'
 import './Nav.css'
 import { t } from '../../i18n'
 import { useLoginHere } from '../../returnTo'
-import { shareInvite } from '../../share'
-
-const canHover = typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches
 
 const Nav = () => {
     const session = useSessionQuery()
@@ -17,12 +13,6 @@ const Nav = () => {
     const loggedOut = session.data === null
     const { pathname } = useLocation()
     const loginHere = useLoginHere()
-    const logoutMutation = useLogoutMutation()
-    const navigate = useNavigate()
-
-    const handleLogout = () => {
-        logoutMutation.mutate(undefined, { onSettled: () => navigate('/login') })
-    }
 
     // Pages that fill exactly one screen size themselves under the bar through --nav-height.
     const navRef = useRef<HTMLElement>(null)
@@ -56,19 +46,8 @@ const Nav = () => {
                         carries drag and preview gestures that were swallowing most taps on these. */}
                     <Link to='/saved' className='nav-icon nav-icon--saved' aria-label={t('nav.saved')} draggable={false}><span className='nav-img' aria-hidden='true' /></Link>
                     <Link to='/events' className='nav-icon nav-icon--events' aria-label={t('nav.events')} draggable={false}><span className='nav-img' aria-hidden='true' /></Link>
-                    <div id='settings'>
-                        {/* The hover menu exists only where hovering does. On touch screens it was hidden by a clip
-                            under the gear, and iOS then dropped most taps on the gear; Log out lives on the settings page. */}
-                        {canHover &&
-                            <div id="settingsActions">
-                                <Link to='/settings'><p id='settingsText'>{t('nav.settings')}</p></Link>
-                                <button type='button' className='link-button' id='shareApp' onClick={() => void shareInvite()}><p>{t('nav.share')}</p></button>
-                                <button type='button' className='link-button' onClick={handleLogout} disabled={logoutMutation.isPending}><p>{t('nav.logout')}</p></button>
-                            </div>}
-                        <Link to='/settings' className='nav-icon nav-icon--settings' aria-label={t('nav.settings')} draggable={false}>
-                            <span className='nav-img' aria-hidden='true' />
-                        </Link>
-                    </div>
+                    {/* Settings holds Share and Log out; the gear is a plain link on every screen. */}
+                    <Link to='/settings' className='nav-icon nav-icon--settings' aria-label={t('nav.settings')} draggable={false}><span className='nav-img' aria-hidden='true' /></Link>
                 </div>
             }
         </nav>

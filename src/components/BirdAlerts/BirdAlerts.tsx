@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router'
+import { useEffect, useMemo, useRef } from 'react'
+import { Link, useLocation } from 'react-router'
 import AlertCard from '../AlertCard/AlertCard'
 import ArrivalCard from '../ArrivalCard/ArrivalCard'
 import { AlertIcon, ChevronIcon, CompassIcon, MapIcon, MigrationIcon, ShareIcon, StarIcon } from '../Icons/Icons'
@@ -12,8 +12,11 @@ import { isNewSince, previousVisit, watchVisits } from '../../lastVisit'
 import { shareThing } from '../../share'
 import type { Observation } from '../../types'
 import { t } from '../../i18n'
+import { recall, remember, usePageMemory } from '../../pageMemory'
 
 type AlertType = 'star' | 'notable' | 'arriving'
+const isAlertType = (value: unknown): value is AlertType => value === 'star' || value === 'notable' || value === 'arriving'
+const isBoolean = (value: unknown): value is boolean => typeof value === 'boolean'
 
 const TITLES: Record<AlertType, string> = { star: 'alerts.watchLabel', notable: 'mapPage.notableLabel', arriving: 'alerts.arriving' }
 
@@ -28,11 +31,19 @@ const BirdAlerts = () => {
     const area = useShownArea()
     const region = area.region
     const targets = useShownTargets(area)
-    const [alertType, setAlertType] = useState<AlertType>('star')
-    const [expanded, setExpanded] = useState(true)
+    // Coming back from a sighting (Back, or the browser's) finds the tab, the panel and the row as they were left.
+    const [alertType, setAlertType] = usePageMemory<AlertType>('alertsTab', 'star', isAlertType)
+    const [expanded, setExpanded] = usePageMemory<boolean>('alertsOpen', true, isBoolean)
+    const { key: entry } = useLocation()
     // Each tab's row starts at its first card, however far the previous one was scrolled.
     const listRef = useRef<HTMLDivElement>(null)
-    useEffect(() => { listRef.current?.scrollTo({ left: 0 }) }, [alertType])
+    const firstTab = useRef(alertType)
+    useEffect(() => {
+      if (alertType === firstTab.current) return
+      firstTab.current = alertType
+      remember(entry, 'alertsRow', 0)
+      listRef.current?.scrollTo({ left: 0 })
+    }, [alertType, entry])
     // Sightings reported since the last visit ended get a New mark.
     const since = previousVisit()
     useEffect(() => { watchVisits() }, [])
@@ -56,6 +67,20 @@ const BirdAlerts = () => {
     const learning = Boolean(arriving.data?.learning)
     const arrivals = alertType === 'arriving' && !learning ? (arriving.data?.arrivals ?? []) : []
     const isLoading = alertType === 'star' ? observations.isPending : alertType === 'notable' ? notable.isPending : arriving.isPending
+    // How far the row was scrolled, kept as it moves and put back once its cards are there again.
+    const rowRestored = useRef(false)
+    useEffect(() => {
+      const el = listRef.current
+      if (!el) return
+      if (!rowRestored.current && !isLoading) {
+        rowRestored.current = true
+        const left = recall<number>(entry, 'alertsRow')
+        if (typeof left === 'number' && left > 0) el.scrollLeft = left
+      }
+      const save = () => remember(entry, 'alertsRow', el.scrollLeft)
+      el.addEventListener('scroll', save, { passive: true })
+      return () => el.removeEventListener('scroll', save)
+    }, [entry, isLoading, alertType])
     const count = alertType === 'star' ? birdAlerts.length : alertType === 'notable' ? notable.data?.length : arriving.data ? arrivals.length : undefined
     const title = t(TITLES[alertType])
     const emptyText = alertType === 'star' ? t('alerts.emptyWatch')

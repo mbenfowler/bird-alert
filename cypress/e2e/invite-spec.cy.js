@@ -39,13 +39,6 @@ describe('Invite a birding friend: always findable', () => {
     cy.contains('Link copied. Paste it anywhere.')
   })
 
-  it('the ⚙ menu has Share Bird Alert', () => {
-    stubCopy()
-    cy.contains('#settingsActions button', 'Share Bird Alert').click({ force: true })
-    cy.wait('@inviteLink')
-    cy.get('@copy').should('have.been.calledOnceWith', LOCAL_URL)
-  })
-
   it('fits a 375px phone, with the same room below it as between the other sections', () => {
     cy.viewport(375, 740)
     cy.contains('.invite-friend', 'Invite a birding friend').should('be.visible')
