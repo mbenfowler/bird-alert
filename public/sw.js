@@ -1,5 +1,5 @@
 /* Bird Alert service worker: shows push notifications, routes taps to the map app or the site, and keeps the app itself for offline use. */
-const SW_VERSION = '2026-11-09.1'
+const SW_VERSION = '2026-11-09.2'
 
 // What this worker does with each notification is reported to the server (same-origin, with the
 // session cookie), so a tap that goes nowhere on a phone can be read back. Best effort, never awaited alone.
@@ -123,7 +123,8 @@ const staleWhileRevalidate = async (request, event) => {
 // fetched them, so a target's photo still shows in a canyon. An <img> asks without CORS, so its
 // answer is opaque; it is kept all the same. The oldest go past PHOTO_LIMIT.
 const PHOTO_CACHE = 'bird-alert-photos'
-const PHOTO_HOSTS = ['upload.wikimedia.org']
+// Wikimedia serves thumbnails from thumb.wikimedia.org now; older saved addresses use upload.
+const PHOTO_HOSTS = ['upload.wikimedia.org', 'thumb.wikimedia.org']
 const PHOTO_LIMIT = 400
 const photo = async (request) => {
   const cache = await caches.open(PHOTO_CACHE)

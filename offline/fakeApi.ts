@@ -11,7 +11,8 @@ export const USER = {
 }
 
 /** A photo URL on Wikipedia's host, which the service worker keeps (answered here, never fetched). */
-export const PHOTO = (code: string) => `https://upload.wikimedia.org/wikipedia/commons/${code}.jpg`
+// Wikimedia's thumbnail address, as eBird birds' photos come now.
+export const PHOTO = (code: string) => `https://thumb.wikimedia.org/wikipedia/commons/${code}.jpg`
 
 const BIRDS = [
   { speciesCode: 'eletro', comName: 'Elegant Trogon', sciName: 'Trogon elegans', birdImg: PHOTO('eletro') },
@@ -198,7 +199,7 @@ export const fakeApi = async (context: BrowserContext) => {
   await context.route('https://fonts.gstatic.com/**', (route) => route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*' }, body: '' }))
   await context.route('https://cdnjs.buymeacoffee.com/**', (route) => route.fulfill({ status: 200, contentType: 'application/javascript', body: '' }))
   // A 1×1 GIF for every bird photo.
-  await context.route('https://upload.wikimedia.org/**', (route) => route.fulfill({ status: 200, contentType: 'image/gif', headers: { 'access-control-allow-origin': '*' }, body: Buffer.from('R0lGODlhAQABAAAAACw=', 'base64') }))
+  await context.route(/^https:\/\/(upload|thumb)\.wikimedia\.org\//, (route) => route.fulfill({ status: 200, contentType: 'image/gif', headers: { 'access-control-allow-origin': '*' }, body: Buffer.from('R0lGODlhAQABAAAAACw=', 'base64') }))
   await context.route(/\/_vercel\//, (route) => route.fulfill({ status: 204, body: '' }))
   await context.route(/tile\.openstreetmap\.org/, (route) => route.fulfill({ status: 204, body: '' }))
   // The event day's forecast stays off (it hides when it can't be had).

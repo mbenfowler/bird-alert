@@ -71,7 +71,7 @@ test('get ready for offline saves the day, then the event, tally and log all ope
   await expect(page.getByTestId('day-stops').getByTestId('day-stop')).toHaveCount(5)
   await noSidewaysScroll(page)
   // A bird photo comes from the worker's saved copy.
-  const photo = await page.evaluate(async (url) => (await fetch(url, { mode: 'no-cors' })).type, 'https://upload.wikimedia.org/wikipedia/commons/heptan.jpg')
+  const photo = await page.evaluate(async (url) => (await fetch(url, { mode: 'no-cors' })).type, 'https://thumb.wikimedia.org/wikipedia/commons/heptan.jpg')
   expect(['basic', 'cors', 'opaque']).toContain(photo)
 
   await page.getByTestId('day-open-log').click()
