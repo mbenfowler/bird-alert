@@ -8,6 +8,8 @@ beforeEach(() => {
   cy.intercept('GET', 'https://cdnjs.buymeacoffee.com/**', { statusCode: 200, headers: { 'content-type': 'application/javascript' }, body: '' })
   cy.intercept('GET', 'https://fonts.googleapis.com/**', { statusCode: 200, headers: { 'content-type': 'text/css' }, body: '' })
   cy.intercept('GET', 'https://fonts.gstatic.com/**', { statusCode: 204, body: '' })
+  // The event day's forecast: off unless a spec answers it (eventWeather-spec).
+  cy.intercept('GET', 'https://api.open-meteo.com/**', { statusCode: 503, body: {} })
 })
 
 // The ask to turn on alerts after saving a bird rises over the foot of the page; outside its own

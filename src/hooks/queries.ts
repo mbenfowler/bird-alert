@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import { keepPreviousData, queryOptions, useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query'
+import { useEffect, useMemo, useRef } from 'react'
+import { keepPreviousData, queryOptions, type QueryClient, useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query'
 import {
   ApiError, getBirdsByCodes, getCurrentUser, getRecentObservations, getNotableObservations, getRegions, getCountries, getProvinces,
   getSavedBirds, getPlaces, getPlaceSeen, getPlaceSuggestions, getSpeciesList, searchBirds, getPushStatus, getSpeciesObservations, getArrivals, getSeasonality, getWhereToFind, getWhereToGo, getBestHotspots, getSpeciesHotspots, getNearbyPublic, getPlaceSearch, getDrive, getSavedRoute, getSeenBirds, getNotableThisWeek, getShare, getChase, getNameLocales, getEvents, getEventPreview, getEventView, getEventScouting, getEventRoute, getEventRoutePlan, getEventSuggestions, getEventLog, getEventRecap, getSharedRecap } from '../apiCalls'
@@ -8,6 +8,9 @@ import { nameLocale } from '../i18n'
 import { isNetworkError } from '../offline'
 import type { Id, LifersScope, PersistenceClass, Recap, User } from '../types'
 import { normalizeRecap } from '../components/Recap/recapData'
+import { dayRoute, safeZone, zonedDay } from '../components/Events/daySchedule'
+import { today } from '../components/Events/events'
+import { covers, fetchEventWeather, forecastWindow, type EventWeather, type Point } from '../weather'
 
 /** Short stable fingerprint of a code list, so a changed species list gets its own cache entry. */
 export const codesKey = (codes: string[]) => {
@@ -505,8 +508,58 @@ export const eventDayQueries = (id: Id) => {
     { queryKey: ['event-route-plan', id] as const, queryFn: () => getEventRoutePlan(id), ...offline },
     { queryKey: ['event-route', id, nameLocale()] as const, queryFn: () => getEventRoute(id), ...offline },
     { queryKey: ['event-scouting', id, nameLocale()] as const, queryFn: () => getEventScouting(id), ...offline },
-    { queryKey: ['event-log', id, nameLocale()] as const, queryFn: () => getEventLog(id), ...offline }
+    { queryKey: ['event-log', id, nameLocale()] as const, queryFn: () => getEventLog(id), ...offline },
+    // The forecast at the meeting point and each stop, from the route just fetched beside it.
+    {
+      queryKey: eventWeatherKey(id),
+      queryFn: async ({ client }: { client: QueryClient }) => {
+        const fresh = { staleTime: MINUTE } as const
+        const events = await client.fetchQuery({ queryKey: queryKeys.events, queryFn: getEvents, ...fresh })
+        const event = (Array.isArray(events) ? events : []).find(e => String(e.id) === String(id))
+        if (!event) return null
+        const plan = await client.fetchQuery({ queryKey: ['event-route-plan', id] as const, queryFn: () => getEventRoutePlan(id), ...fresh }).catch(() => undefined)
+        const suggested = await client.fetchQuery({ queryKey: ['event-route', id, nameLocale()] as const, queryFn: () => getEventRoute(id), ...fresh }).catch(() => undefined)
+        const route = dayRoute(plan, suggested)
+        const points: Point[] = route ? [...(route.start ? [route.start] : []), ...route.stops] : []
+        const zone = safeZone(event.timezone)
+        return fetchEventWeather(points, event.starts_on, zone ? zonedDay(new Date(), zone) : today(), zone)
+      },
+      ...offline
+    }
   ]
+}
+
+export const eventWeatherKey = (id: Id) => ['event-weather', id] as const
+
+/**
+ * The forecast at each place of the day's route (the meeting point and the stops), kept on the
+ * phone with the rest of the day. Asked for only for today or a day ahead within the forecast;
+ * asked again when the route's places change. A failure just leaves the weather off.
+ */
+export const useEventWeatherQuery = (id: Id, points: Point[], day: string, timeZone: string | undefined, enabled: boolean) => {
+  const todayThere = timeZone ? zonedDay(new Date(), timeZone) : today()
+  // One entry per event (as "Get ready" saves it); a changed route is caught below and asked again.
+  // eslint-disable-next-line @tanstack/query/exhaustive-deps
+  const query = useQuery({
+    queryKey: eventWeatherKey(id),
+    queryFn: (): Promise<EventWeather | null> => fetchEventWeather(points, day, todayThere, timeZone),
+    enabled: enabled && points.length > 0 && forecastWindow(day, todayThere) !== null,
+    staleTime: 60 * MINUTE,
+    gcTime: WEEK,
+    retry: 1,
+    meta: { persist: true, offline: true }
+  })
+  // Once per set of places: a route changed since the forecast was saved asks again.
+  const places = points.map(p => `${p.lat.toFixed(3)},${p.lng.toFixed(3)}`).join(';')
+  const asked = useRef<string | null>(null)
+  const missing = query.isSuccess && points.length > 0 && !covers(query.data, points)
+  const { refetch, isFetching } = query
+  useEffect(() => {
+    if (!missing || isFetching || asked.current === places || navigator.onLine === false) return
+    asked.current = places
+    void refetch()
+  }, [missing, places]) // eslint-disable-line react-hooks/exhaustive-deps
+  return query
 }
 
 /** The county's species list as the bird picker keeps it. */

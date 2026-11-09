@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useEventRoutePlanQuery, useEventRouteQuery, useEventScoutingQuery } from '../../hooks/queries'
+import { useEventRoutePlanQuery, useEventRouteQuery, useEventScoutingQuery, useEventWeatherQuery } from '../../hooks/queries'
+import { weatherAt, type Point } from '../../weather'
 import { sunTimes } from '../../solar'
 import { usePendingTally, withPending } from '../../tallySync'
 import { queuePosition, suggestionAsRoute, usePendingPosition } from '../../routeSync'
@@ -72,7 +73,20 @@ export const useEventDay = (event: GroupEvent, enabled: boolean) => {
     return sunTimes(day, where.lat, where.lng, offset)
   }, [where?.lat, where?.lng, day, timeZone]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // The forecast at the meeting point and each stop (none when it can't be had: it just stays off).
+  const points = useMemo<Point[]>(() => (route ? [...(route.start ? [route.start] : []), ...route.stops] : []), [route])
+  const weatherQuery = useEventWeatherQuery(event.id, points, day, timeZone, enabled)
+  const weather = weatherQuery.data ?? null
+  /** The weather at a place at a moment of the day; null when there's no forecast for it. */
+  const weatherFor = (point: Point, at: Date | null | undefined) => weatherAt(weather, point, at, timeZone)
+  const firstAt = planned[0] ? new Date(planned[0].arrive.getTime() - (stops[0]?.legMin ?? 0) * 60_000) : null
+  // At the start: the meeting point when leaving it, else the first stop on arriving.
+  const startWeather = route?.start
+    ? (firstAt ? { name: route.start.name, at: firstAt, hour: weatherFor(route.start, firstAt) } : null)
+    : stops[0] && planned[0] ? { name: stops[0].name, at: planned[0].arrive, hour: weatherFor(stops[0], planned[0].arrive) } : null
+
   return {
+    weather, weatherFor, startWeather: startWeather?.hour ? startWeather : null,
     route, stops, planned, state, progress, position, setPosition, meetAt, startAt, now, sun, timeZone, tally, tallyCodes, targets,
     loading: enabled && (plan.isPending || suggestedQuery.isPending) && !route,
     failed: enabled && !route && (plan.isError || suggestedQuery.isError),

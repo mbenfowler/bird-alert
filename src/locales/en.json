@@ -1702,5 +1702,39 @@
     "next": "Next",
     "goTo": "Show {{n}} of {{count}}",
     "slide": "{{n}} of {{count}}"
+  },
+  "dayWeather": {
+    "sun": {
+      "nauticalDawn": "Nautical dawn",
+      "civilDawn": "Civil dawn",
+      "sunrise": "Sunrise",
+      "sunset": "Sunset",
+      "civilDusk": "Civil dusk",
+      "nauticalDusk": "Nautical dusk"
+    },
+    "kind": {
+      "clear": "Clear",
+      "clearNight": "Clear",
+      "partly": "Partly cloudy",
+      "cloudy": "Cloudy",
+      "fog": "Fog",
+      "rain": "Rain",
+      "snow": "Snow",
+      "storm": "Thunderstorms",
+      "wind": "Windy"
+    },
+    "temp": {
+      "mi": "{{n}}°F",
+      "km": "{{n}}°C"
+    },
+    "speed": {
+      "mi": "{{n}} mph",
+      "km": "{{n}} km/h"
+    },
+    "wind": "wind {{speed}}",
+    "gusts": "gusts {{speed}}",
+    "rain": "{{n}}% rain",
+    "atStart": "Forecast at {{place}}, {{time}}:",
+    "credit": "Weather from Open-Meteo.com"
   }
 }

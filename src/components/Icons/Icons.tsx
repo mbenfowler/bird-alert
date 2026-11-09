@@ -114,3 +114,110 @@ export const ClockIcon = (props: SVGProps<SVGSVGElement>) => (
     <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
   </svg>
 )
+
+// ---- Sun and weather ----
+// The cloud is Material Icons' "cloud" (Google, Apache License 2.0); the rest are drawn here to match.
+
+const CLOUD_PATH = 'M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z'
+/** The cloud, smaller and higher, with room under it for rain, snow or lightning. */
+const HighCloud = () => <path d={CLOUD_PATH} transform='translate(2.4 0) scale(0.8)' />
+const RAYS = [0, 45, 90, 135, 180, 225, 270, 315]
+
+/** The sun: a clear day. */
+export const SunIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <circle cx='12' cy='12' r='4.5' />
+    {RAYS.map(a => <rect key={a} x='11' y='1' width='2' height='4' rx='1' transform={`rotate(${a} 12 12)`} />)}
+  </svg>
+)
+
+/** A crescent moon: a clear night. */
+export const MoonIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <path d='M12.5 3a9 9 0 1 0 8.5 11.9A7.5 7.5 0 0 1 12.5 3z' />
+  </svg>
+)
+
+/** A cloud: overcast. */
+export const CloudIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <path d={CLOUD_PATH} />
+  </svg>
+)
+
+/** The sun behind a cloud: partly cloudy. */
+export const PartlyCloudyIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <circle cx='8' cy='8' r='3.2' />
+    {RAYS.filter(a => a !== 135).map(a => <rect key={a} x='7.25' y='1' width='1.5' height='2.6' rx='0.75' transform={`rotate(${a} 8 8)`} />)}
+    <path d={CLOUD_PATH} transform='translate(6 9.4) scale(0.75)' />
+  </svg>
+)
+
+/** Bars of mist under a cloud: fog. */
+export const FogIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <HighCloud />
+    <rect x='3' y='18' width='18' height='2' rx='1' />
+    <rect x='6' y='21.5' width='12' height='2' rx='1' />
+  </svg>
+)
+
+/** Drops under a cloud: drizzle, rain or showers. */
+export const RainIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <HighCloud />
+    {[6, 11, 16].map(x => <rect key={x} x={x} y='17.5' width='2' height='5' rx='1' transform={`rotate(20 ${x + 1} 20)`} />)}
+  </svg>
+)
+
+/** Flakes under a cloud: snow. */
+export const SnowIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <HighCloud />
+    {[[7, 19], [12, 21.5], [17, 19]].map(([x, y]) => <circle key={x} cx={x} cy={y} r='1.6' />)}
+  </svg>
+)
+
+/** Lightning under a cloud: a thunderstorm. */
+export const StormIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <HighCloud />
+    <path d='M13 15.5 8.5 20.5H11.5L10.5 24 15.5 18.5H12.5z' />
+  </svg>
+)
+
+/** Streaks of air: strong gusts. */
+export const WindIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <path d='M3 8.5h10.5a2.5 2.5 0 1 0-2.5-2.5M3 12.5h15a3 3 0 1 1-3 3M3 16.5h7' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' />
+  </svg>
+)
+
+const Horizon = () => <rect x='2' y='19' width='20' height='2' rx='1' />
+
+/** Half a sun on the horizon with an arrow up: sunrise. */
+export const SunriseIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <Horizon />
+    <path d='M6.5 17.5a5.5 5.5 0 0 1 11 0z' />
+    <path d='M12 2 8.5 6H11v3h2V6h2.5z' />
+  </svg>
+)
+
+/** Half a sun on the horizon with an arrow down: sunset. */
+export const SunsetIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <Horizon />
+    <path d='M6.5 17.5a5.5 5.5 0 0 1 11 0z' />
+    <path d='M12 10.5 15.5 6.5H13v-4h-2v4H8.5z' />
+  </svg>
+)
+
+/** Rays over the horizon, the sun still under it: civil twilight. */
+export const TwilightIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <Horizon />
+    {[-60, -30, 0, 30, 60].map(a => <rect key={a} x='11' y='7' width='2' height='6' rx='1' transform={`rotate(${a} 12 19)`} />)}
+  </svg>
+)

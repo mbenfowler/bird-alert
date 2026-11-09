@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import { LoadingState } from '../Loading/Loading'
-import { ClockIcon } from '../Icons/Icons'
+import { ClockIcon, SunriseIcon, SunsetIcon, TwilightIcon } from '../Icons/Icons'
+import { StartWeather, StopWeather, WeatherCredit } from './Weather'
 import { clockTimeIn, t } from '../../i18n'
 import { duration } from '../../duration'
 import { shortDistance, useDistanceUnit } from '../../distance'
@@ -14,7 +15,10 @@ import type { EventDay } from './useEventDay'
 
 type NameOf = (code: string) => string
 
-/** "Nautical dawn 5:50 AM · Civil dawn 6:20 AM · Sunrise 6:45 AM · Sunset 5:25 PM · Civil dusk 5:51 PM", in the event's zone. */
+const owl = () => <span className='event-day__owl-icon'>🦉</span>
+const SUN_ICONS = { nauticalDawn: owl, civilDawn: TwilightIcon, sunrise: SunriseIcon, sunset: SunsetIcon, civilDusk: TwilightIcon, nauticalDusk: owl } as const
+
+/** The sun's times as tiles (icon, name, time), dawn to dusk, in the event's zone; three to a row on a phone. */
 export const SunLine = ({ sun, timeZone }: { sun: SunTimes | null; timeZone?: string }) => {
   if (!sun) return null
   const items = ([
@@ -24,7 +28,16 @@ export const SunLine = ({ sun, timeZone }: { sun: SunTimes | null; timeZone?: st
   if (!items.length) return null
   return (
     <ul className='event-day__sun' data-testid='sun-times' aria-label={t('eventDay.sunLabel')}>
-      {items.map(([key, at]) => <li key={key}>{t(`eventDay.${key}`, { time: clockTimeIn(at!, timeZone) })}</li>)}
+      {items.map(([key, at]) => {
+        const Icon = SUN_ICONS[key]
+        return (
+          <li key={key} className='event-day__sun-tile' data-testid={`sun-${key}`}>
+            <span className='event-day__sun-icon' aria-hidden='true'><Icon /></span>
+            <span className='event-day__sun-label'>{t(`dayWeather.sun.${key}`)}</span>
+            <span className='event-day__sun-time'>{clockTimeIn(at!, timeZone)}</span>
+          </li>
+        )
+      })}
     </ul>
   )
 }
@@ -110,6 +123,7 @@ const DayView = ({ event, day, nameOf }: { event: GroupEvent; day: EventDay; nam
     <div className='event-page__section event-day' data-testid='day-view'>
       <h2 className='place__heading'>{t('eventDay.heading')}</h2>
       <SunLine sun={day.sun} timeZone={timeZone} />
+      <StartWeather start={day.startWeather} timeZone={timeZone} />
       <p className='place__actions event-day__tally'>
         <Link className='pill-button pill-button--primary' to={`${eventPath(event.id)}/tally`} data-testid='day-open-tally'>{t('eventDay.openTally', { count: species })}</Link>
         <Link className='pill-button' to={`${eventPath(event.id)}/log`} data-testid='day-open-log'>
@@ -220,6 +234,7 @@ export const DayStops = ({ day, onDay }: { day: EventDay; onDay: boolean }) => {
               <p className='event-day__times'>
                 {p && <span data-testid='planned-time'>{t('eventDay.plannedRange', { from: clockTimeIn(p.arrive, timeZone), to: clockTimeIn(p.leave, timeZone) })}</span>}
                 {stop.stayMin > 0 && <span>{t('routeTimes.stay', { time: duration(stop.stayMin) })}</span>}
+                {p && <StopWeather hour={day.weatherFor(stop, p.arrive)} />}
                 {owl && <span className='event-route__tag event-day__owl' data-testid='owl'>{t('eventDay.owling')}</span>}
                 {isNow && <span className='place__badge'>{t('eventDay.here')}</span>}
                 {isNext && <span className='place__badge place__badge--quiet'>{t('eventDay.next')}</span>}
@@ -234,6 +249,7 @@ export const DayStops = ({ day, onDay }: { day: EventDay; onDay: boolean }) => {
         })}
       </ol>
       <RouteLinks links={links} partLabel={partLabel} />
+      {day.weather && <WeatherCredit />}
     </div>
   )
 }

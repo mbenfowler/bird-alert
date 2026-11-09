@@ -201,6 +201,8 @@ export const fakeApi = async (context: BrowserContext) => {
   await context.route('https://upload.wikimedia.org/**', (route) => route.fulfill({ status: 200, contentType: 'image/gif', headers: { 'access-control-allow-origin': '*' }, body: Buffer.from('R0lGODlhAQABAAAAACw=', 'base64') }))
   await context.route(/\/_vercel\//, (route) => route.fulfill({ status: 204, body: '' }))
   await context.route(/tile\.openstreetmap\.org/, (route) => route.fulfill({ status: 204, body: '' }))
+  // The event day's forecast stays off (it hides when it can't be had).
+  await context.route('https://api.open-meteo.com/**', (route) => route.fulfill({ status: 503, body: '{}' }))
   return state
 }
 

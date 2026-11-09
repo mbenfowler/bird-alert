@@ -1854,5 +1854,39 @@
     "next": "Suivant",
     "goTo": "Afficher {{n}} sur {{count}}",
     "slide": "{{n}} sur {{count}}"
+  },
+  "dayWeather": {
+    "sun": {
+      "nauticalDawn": "Aube nautique",
+      "civilDawn": "Aube civile",
+      "sunrise": "Lever du soleil",
+      "sunset": "Coucher du soleil",
+      "civilDusk": "Crépuscule civil",
+      "nauticalDusk": "Crépuscule nautique"
+    },
+    "kind": {
+      "clear": "Dégagé",
+      "clearNight": "Dégagé",
+      "partly": "Partiellement nuageux",
+      "cloudy": "Nuageux",
+      "fog": "Brouillard",
+      "rain": "Pluie",
+      "snow": "Neige",
+      "storm": "Orages",
+      "wind": "Venteux"
+    },
+    "temp": {
+      "mi": "{{n}} °F",
+      "km": "{{n}} °C"
+    },
+    "speed": {
+      "mi": "{{n}} mi/h",
+      "km": "{{n}} km/h"
+    },
+    "wind": "vent {{speed}}",
+    "gusts": "rafales {{speed}}",
+    "rain": "{{n}} % de pluie",
+    "atStart": "Prévisions à {{place}}, {{time}} :",
+    "credit": "Météo : Open-Meteo.com"
   }
 }
