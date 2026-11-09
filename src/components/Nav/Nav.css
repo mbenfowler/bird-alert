@@ -70,57 +70,6 @@ nav .text-link {
     background-image: url('/images/settings.png');
 }
 
-#settings {
-    display: flex;
-    align-items: center;
-    height: 45px;
-    width: 45px;
-    justify-content: flex-end;
-}
-
-
-/* The gear reveals Settings / Logout on hover. On touch screens a tap would only trigger the hover
-   and shift the link under the finger, so there the gear is a plain link and Logout lives on the
-   settings page instead. */
-@media (hover: hover) and (pointer: fine) {
-    #settings {
-        overflow-x: clip;
-    }
-    #settings:hover {
-        animation: action-hover 0.25s ease-in forwards;
-    }
-}
-
-@keyframes action-hover {
-    0% {
-        width: 45px;
-    }
-    100% {
-        width: 125px;
-    }
-}
-
-/* The Settings / Logout labels exist only on wide screens with a real pointer, revealed on hover.
-   Everywhere else they are not shown at all; the gear goes to settings, Log out lives there. */
-#settingsActions {
-    display: none;
-    flex-direction: column;
-}
-
-@media (hover: hover) and (pointer: fine) and (min-width: 700px) {
-    #settingsActions {
-        display: flex;
-    }
-}
-
-#settingsActions {
-    font-size: 20px;
-}
-
-#settingsActions p:hover {
-    color: red;
-}
-
 #titleBird {
     font-family: 'Fredericka the Great';
 }
@@ -151,11 +100,6 @@ nav .text-link {
 nav a {
     color: inherit;
     text-decoration: inherit;
-}
-
-/* Hovering anywhere in the settings cluster highlights the label */
-#settings:hover #settingsText {
-    color: red;
 }
 
 .nav-login {

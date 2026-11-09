@@ -37,11 +37,11 @@ describe('Phone-width layout', () => {
     })
   })
 
-  it('on a phone the Settings and Logout labels are not shown over the icons', () => {
+  it('the gear is a plain link to settings, with no menu over the icons', () => {
     login()
     cy.get('.birds-list .card', { timeout: 15000 })
-    cy.get('#settingsActions').should('not.be.visible')
-    cy.get('.nav-icon--settings').should('be.visible')
+    cy.get('#settingsActions').should('not.exist')
+    cy.get('.nav-icon--settings').should('be.visible').and('have.attr', 'href', '/settings')
   })
 
   it('the forgotten-password link is a clear button once the email is known', () => {

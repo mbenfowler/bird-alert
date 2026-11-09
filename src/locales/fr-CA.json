@@ -757,9 +757,7 @@
     "login": "Connexion",
     "saved": "Mes oiseaux",
     "settings": "Paramètres",
-    "logout": "Déconnexion",
-    "events": "Événements",
-    "share": "Partager Bird Alert"
+    "events": "Événements"
   },
   "nearby": {
     "never": "jamais visité",

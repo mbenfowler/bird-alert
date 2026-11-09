@@ -32,7 +32,7 @@ describe('Translations', () => {
       cy.get('select[name="locale"]').select(locale)
       cy.wait('@patchUser').its('request.body').should('deep.equal', { locale })
       cy.get('html').should('have.attr', 'lang', locale)
-      cy.contains('#settingsText', settings)
+      cy.get('.nav-icon--settings').should('have.attr', 'aria-label', settings)
       cy.contains('h2', words.account.title)
       cy.contains(words.account.languageHint)
       cy.contains(words.settings.tab.alerts)

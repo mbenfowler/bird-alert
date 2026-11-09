@@ -692,9 +692,7 @@
     "login": "Log in",
     "saved": "Saved birds",
     "settings": "Settings",
-    "logout": "Logout",
-    "events": "Events",
-    "share": "Share Bird Alert"
+    "events": "Events"
   },
   "nearby": {
     "never": "never birded",

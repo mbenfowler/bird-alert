@@ -746,9 +746,7 @@
     "login": "Entrar",
     "saved": "Mis aves",
     "settings": "Configuración",
-    "logout": "Salir",
-    "events": "Eventos",
-    "share": "Compartir Bird Alert"
+    "events": "Eventos"
   },
   "nearby": {
     "never": "nadie ha pajareado aquí",
