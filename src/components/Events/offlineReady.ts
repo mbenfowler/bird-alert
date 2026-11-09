@@ -2,7 +2,7 @@ import type { QueryClient } from '@tanstack/react-query'
 import { BIRDS_PER_REQUEST, birdsQueryOptions, eventDayQueries, queryKeys, speciesListOptions } from '../../hooks/queries'
 import { nameLocale } from '../../i18n'
 import type { Bird, EventRoute, EventRoutePlan, GroupEvent, Id } from '../../types'
-import { WEEK } from '../../queryClient'
+import { saveNow, WEEK } from '../../queryClient'
 
 /**
  * "Get ready for offline": everything the day reads, fetched now with signal and kept on the phone
@@ -165,6 +165,7 @@ export const getReady = async (queryClient: QueryClient, event: GroupEvent, onSt
     for (const batch of chunkOf(photos, 6)) await Promise.all(batch.map(url => fetch(url, { mode: 'no-cors', credentials: 'omit' }).catch(() => undefined)))
   }
   step('app')
+  await saveNow(queryClient).catch(() => undefined)
   const status = await checkReady(queryClient, normal)
   if (isReady(status)) markReady(event.id, Date.now())
   return { ...status, at: readyAt(event.id) }
