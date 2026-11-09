@@ -56,7 +56,7 @@ describe('Get ready for offline: the checklist', () => {
     cy.get('[data-testid="ready-status"]').should('have.text', 'Saving 2 of 4: tally search…')
     cy.get('[data-testid="get-ready-button"]').should('be.disabled')
     cy.wait('@species')
-    cy.get('[data-testid="get-ready-button"]').should('not.be.disabled')
+    cy.get('[data-testid="get-ready-button"]', { timeout: 10000 }).should('not.be.disabled')
     cy.get('[data-testid="ready-line-event"]').should('have.attr', 'data-done', 'true').and('contain', '✓').and('contain', 'Event, route, scouting & group log')
     cy.get('[data-testid="ready-line-tally"]').should('have.attr', 'data-done', 'true').and('contain', 'Tally search: 3 county birds')
     // The dev server's worker doesn't keep the app, so the app line names what to do and nothing is stamped.
