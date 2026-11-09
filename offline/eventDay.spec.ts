@@ -82,6 +82,26 @@ test('get ready for offline saves the day, then the event, tally and log all ope
   await noSidewaysScroll(page)
 })
 
+test('photos Wikimedia turns away at first ("too many requests") are not kept broken, and are asked for again', async ({ page, context }) => {
+  await dayApi(context)
+  const refused = new Set<string>()
+  await context.route(/^https:\/\/(upload|thumb)\.wikimedia\.org\//, (route) => {
+    const url = route.request().url()
+    if (refused.has(url)) return route.fallback()
+    refused.add(url)
+    return route.fulfill({ status: 429, headers: { 'access-control-allow-origin': '*' }, body: '' })
+  })
+  await page.goto('/events/2')
+  await appSaved(page)
+  await page.reload()
+  await page.getByTestId('get-ready-button').click()
+  await expect(page.getByTestId('ready-line-photos')).toHaveAttribute('data-done', 'true')
+  await expect(page.getByTestId('ready-line-photos')).toContainText('Target photos: 3 of 3')
+  expect(refused.size).toBe(3)
+  // The kept copy is the photo, not the refusal.
+  expect(await page.evaluate(async (url) => (await fetch(url)).status, 'https://thumb.wikimedia.org/wikipedia/commons/heptan.jpg')).toBe(200)
+})
+
 test('on the day the day view leads the page, above the route and the targets', async ({ page, context }) => {
   await dayApi(context)
   await setClock(page, at('13:38'))

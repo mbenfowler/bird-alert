@@ -1,5 +1,5 @@
 /* Bird Alert service worker: shows push notifications, routes taps to the map app or the site, and keeps the app itself for offline use. */
-const SW_VERSION = '2026-11-09.2'
+const SW_VERSION = '2026-11-09.3'
 
 // What this worker does with each notification is reported to the server (same-origin, with the
 // session cookie), so a tap that goes nowhere on a phone can be read back. Best effort, never awaited alone.
@@ -120,8 +120,10 @@ const staleWhileRevalidate = async (request, event) => {
 }
 
 // Bird photos (Wikipedia's, the same URL for weeks): kept once seen or once "Get ready for offline"
-// fetched them, so a target's photo still shows in a canyon. An <img> asks without CORS, so its
-// answer is opaque; it is kept all the same. The oldest go past PHOTO_LIMIT.
+// fetched them, so a target's photo still shows in a canyon. Asked for with CORS (Wikimedia allows
+// it), so a refusal like "too many requests" is seen and not kept, and the phone counts the photo
+// at its real size: a no-CORS answer is opaque, and browsers count each one as megabytes, which
+// filled the phone's allowance partway through. The oldest go past PHOTO_LIMIT.
 const PHOTO_CACHE = 'bird-alert-photos'
 // Wikimedia serves thumbnails from thumb.wikimedia.org now; older saved addresses use upload.
 const PHOTO_HOSTS = ['upload.wikimedia.org', 'thumb.wikimedia.org']
@@ -130,8 +132,10 @@ const photo = async (request) => {
   const cache = await caches.open(PHOTO_CACHE)
   const saved = await cache.match(request.url, { ignoreVary: true })
   if (saved) return saved
-  const response = await fetch(request)
-  if (response.ok || response.type === 'opaque') {
+  const response = await fetch(request.url, { mode: 'cors', credentials: 'omit' }).catch(() => null)
+  // CORS refused or the network failed: answer the page the old way, kept or not.
+  if (!response) return fetch(request)
+  if (response.ok) {
     // Saved before answering, so "Get ready" can count it as soon as its fetch returns.
     try { await cache.put(request.url, response.clone()) } catch { return response }
     cache.keys().then((keys) => Promise.all(keys.slice(0, Math.max(0, keys.length - PHOTO_LIMIT)).map((key) => cache.delete(key)))).catch(() => undefined)

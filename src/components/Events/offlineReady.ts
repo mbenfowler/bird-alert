@@ -78,6 +78,15 @@ const appStatus = async (): Promise<ReadyStatus['app']> => {
   return 'saving'
 }
 
+const unsavedPhotos = async (urls: string[]) => {
+  if (typeof caches === 'undefined') return []
+  try {
+    const cache = await caches.open(PHOTO_CACHE)
+    const found = await Promise.all(urls.map(url => cache.match(url, { ignoreVary: true })))
+    return urls.filter((_, i) => !found[i])
+  } catch { return [] }
+}
+
 const savedPhotos = async (urls: string[]) => {
   if (typeof caches === 'undefined' || !urls.length) return 0
   try {
@@ -161,8 +170,14 @@ export const getReady = async (queryClient: QueryClient, event: GroupEvent, onSt
   // Only the service worker keeps them, so on a first visit wait for it to take the page over;
   // without it the fetches would pass it by and nothing would be kept.
   if (await swInCharge()) {
-    // A few at a time: fifty at once can trip Wikimedia's limits and leave gaps.
-    for (const batch of chunkOf(photos, 6)) await Promise.all(batch.map(url => fetch(url, { mode: 'no-cors', credentials: 'omit' }).catch(() => undefined)))
+    // A few at a time: fifty at once can trip Wikimedia's limits and leave gaps. Then the ones still
+    // missing again, after a pause, a couple more times.
+    let missing = photos
+    for (let pass = 0; pass < 3 && missing.length; pass++) {
+      if (pass) await new Promise(resolve => setTimeout(resolve, 1500 * pass))
+      for (const batch of chunkOf(missing, pass ? 3 : 6)) await Promise.all(batch.map(url => fetch(url, { mode: 'no-cors', credentials: 'omit' }).catch(() => undefined)))
+      missing = await unsavedPhotos(missing)
+    }
   }
   step('app')
   await saveNow(queryClient).catch(() => undefined)
