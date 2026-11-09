@@ -9,9 +9,12 @@ import { Analytics } from '@vercel/analytics/react'
 import { redactPageView } from './analytics'
 import { noteArrival } from './arrival'
 import { resumeTallyChanges, setupTallySync } from './tallySync'
+import { forgetPages } from './pageMemory'
 
 // Where this visitor came from, noted once, sent only if they sign up.
 noteArrival()
+// A reload or relaunch starts every page fresh; what pages kept is for Back within this visit.
+forgetPages()
 
 // TanStack starts out assuming a network. Opened from the Home Screen with no signal, it starts
 // offline instead, so the saved data shows as saved and tally changes wait rather than fail;

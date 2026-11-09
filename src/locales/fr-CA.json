@@ -364,6 +364,7 @@
   "common": {
     "wentWrong": "Un problème est survenu :",
     "returnHome": "Retour à l’accueil",
+    "back": "Retour",
     "continue": "Continuer",
     "sending": "Envoi…",
     "showMore": "Afficher plus ({{shown}} sur {{count}})",

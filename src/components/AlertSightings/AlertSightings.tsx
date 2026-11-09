@@ -6,6 +6,7 @@ import { LoadingState } from '../Loading/Loading'
 import { errorMessage } from '../../apiCalls'
 import { formatObsDt } from '../../format'
 import { parseSightingRefs, useCurrentUser, useRegionsQuery, useSightingsQuery } from '../../hooks/queries'
+import BackButton from '../BackButton/BackButton'
 import './AlertSightings.css'
 import { countyLabel, useLinkRegion } from '../../linkRegion'
 import { t } from '../../i18n'
@@ -41,6 +42,7 @@ const AlertSightings = () => {
 
   return (
     <section className='alert-sightings'>
+      <BackButton />
       <h1 className='fredericka'>{t('alerts.watchLabel')}</h1>
       {!refs.length && <p className='list-note'><Trans i18nKey='alertSightings.noRefs' components={{ home: <Link to='/' /> }} /></p>}
       {sightings.isError && <ErrorMessage networkError={errorMessage(sightings.error)} />}

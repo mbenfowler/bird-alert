@@ -2,6 +2,7 @@ import { useSearchParams } from 'react-router'
 import WhereToGo from './WhereToGo'
 import BestHotspots from './BestHotspots'
 import AreaBanner from '../AreaBanner/AreaBanner'
+import BackButton from '../BackButton/BackButton'
 import { t } from '../../i18n'
 
 export type GoTab = 'birds' | 'best'
@@ -35,6 +36,7 @@ const GoPage = () => {
     <>
       <AreaBanner />
       <div className='go-tabs'>
+        <BackButton />
         <div className='timing go-tabs__switch' role='group' aria-label={t('go.tabsLabel')}>
           {TABS.map(({ tab: which, label }) => (
             <button key={which} type='button' className={`timing__option ${tab === which ? 'is-selected' : ''}`} aria-pressed={tab === which} onClick={() => setTab(which)}>{t(label)}</button>

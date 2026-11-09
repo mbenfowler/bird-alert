@@ -338,6 +338,7 @@
   "common": {
     "wentWrong": "Something went wrong:",
     "returnHome": "Return home",
+    "back": "Back",
     "continue": "Continue",
     "sending": "Sending…",
     "showMore": "Show more ({{shown}} of {{count}})",

@@ -9,6 +9,7 @@ import { useNotableQuery, useObservationsQuery, useRegionsQuery, useSavedCodes, 
 import type { Observation } from '../../types'
 import AreaBanner from '../AreaBanner/AreaBanner'
 import { useShownArea, useShownTargets } from '../../shownArea'
+import BackButton from '../BackButton/BackButton'
 import './MapPage.css'
 import { t } from '../../i18n'
 
@@ -55,6 +56,7 @@ const MapPage = () => {
   return (
     <section className='map-page'>
       <AreaBanner />
+      <BackButton />
       <header className='map-page__bar'>
         <h1 className='fredericka'>
           {code ? t('mapPage.species', { name: speciesName ?? code, regionName }) : feed === 'watchlist' ? t('mapPage.watch', { regionName }) : t('mapPage.notable', { regionName })}

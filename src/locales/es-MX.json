@@ -358,6 +358,7 @@
   "common": {
     "wentWrong": "Algo salió mal:",
     "returnHome": "Volver al inicio",
+    "back": "Regresar",
     "continue": "Continuar",
     "sending": "Enviando…",
     "showMore": "Ver más ({{shown}} de {{count}})",

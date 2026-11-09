@@ -30,6 +30,7 @@ import { useTranslation } from 'react-i18next'
 import { applyLocale, noteLocale, t } from '../../i18n'
 import { forgetJoin, pendingJoin } from '../Events/pendingJoin'
 import { forgetNext, loginTo, storedNext } from '../../returnTo'
+import { useScrollMemory } from '../../pageMemory'
 
 // Everything off the main path loads on demand, keeping the first visit light.
 const Saved = lazy(() => import('../Saved/Saved'))
@@ -87,6 +88,8 @@ const App = () => {
   useEffect(() => {
     if (navigationType === 'PUSH' && !window.location.hash) window.scrollTo(0, 0)
   }, [pathname, navigationType])
+  // Back to a page (POP) finds it scrolled where it was left.
+  useScrollMemory()
 
   // Moving to another page fades the new one in (a sighting swapping for another stays put). An
   // animation on the element, not a remount, so nothing reloads; opacity only, since a transform
