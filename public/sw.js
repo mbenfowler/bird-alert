@@ -1,5 +1,5 @@
 /* Bird Alert service worker: shows push notifications, routes taps to the map app or the site, and keeps the app itself for offline use. */
-const SW_VERSION = '2026-11-09.3'
+const SW_VERSION = '2026-11-09.4'
 
 // What this worker does with each notification is reported to the server (same-origin, with the
 // session cookie), so a tap that goes nowhere on a phone can be read back. Best effort, never awaited alone.
@@ -128,6 +128,18 @@ const PHOTO_CACHE = 'bird-alert-photos'
 // Wikimedia serves thumbnails from thumb.wikimedia.org now; older saved addresses use upload.
 const PHOTO_HOSTS = ['upload.wikimedia.org', 'thumb.wikimedia.org']
 const PHOTO_LIMIT = 400
+// Photos kept the old way (opaque, counted as megabytes each) go, so they stop filling the
+// allowance; each is asked for again the CORS way the next time it shows or "Get ready" runs.
+const dropOpaquePhotos = async () => {
+  const cache = await caches.open(PHOTO_CACHE)
+  const keys = await cache.keys()
+  let dropped = 0
+  for (const key of keys) {
+    const saved = await cache.match(key)
+    if (saved && saved.type === 'opaque') { await cache.delete(key); dropped++ }
+  }
+  return { kept: keys.length - dropped, dropped }
+}
 const photo = async (request) => {
   const cache = await caches.open(PHOTO_CACHE)
   const saved = await cache.match(request.url, { ignoreVary: true })
@@ -171,7 +183,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting()
   if (PRECACHE) event.waitUntil(precache())
 })
-self.addEventListener('activate', (event) => event.waitUntil(Promise.all([self.clients.claim(), trace('activate'), PRECACHE ? cleanup().catch(() => undefined) : undefined])))
+self.addEventListener('activate', (event) => event.waitUntil(Promise.all([self.clients.claim(), trace('activate'), PRECACHE ? cleanup().catch(() => undefined) : undefined, dropOpaquePhotos().then((photos) => trace('photos-cleanup', photos), () => undefined)])))
 
 // Only these platforms render a large picture and a useful-sized icon. Elsewhere (macOS shows a
 // thumbnail too small to read, iOS shows nothing custom) the recognisable app logo is better.
