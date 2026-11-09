@@ -100,17 +100,17 @@ describe('Offline maps in Get ready', () => {
     cy.get('[data-testid="maps-steps"]').should('contain', 'Offline Maps → Add.')
   })
 
-  it('"I’ve downloaded the map" shows in the status line, for this event, after a reload', () => {
+  it('"I’ve downloaded the map" ticks the checklist’s map line, as the person’s own tick, for this event, after a reload', () => {
     open({ ua: IPHONE, touch: 5 })
-    cy.get('[data-testid="ready-map"]').should('not.exist')
+    cy.get('[data-testid="ready-line-map"]').should('have.attr', 'data-done', 'false').and('contain', 'Offline map: do this in your maps app')
     cy.contains('label', 'I’ve downloaded the map').click()
-    cy.get('[data-testid="ready-status"] [data-testid="ready-map"]').should('have.text', ' · ✓ Map downloaded')
+    cy.get('[data-testid="ready-line-map"]').should('have.attr', 'data-done', 'true').and('contain', '✓').and('contain', 'Offline map: downloaded (your own tick)')
     cy.window().then(win => expect(win.localStorage.getItem('bird-alert:event-map-saved:5')).to.equal('1'))
     open({ ua: IPHONE, touch: 5 })
     cy.get('[data-testid="map-downloaded"]').should('be.checked')
-    cy.get('[data-testid="ready-map"]').should('contain', '✓ Map downloaded')
+    cy.get('[data-testid="ready-line-map"]').should('have.attr', 'data-done', 'true')
     cy.get('[data-testid="map-downloaded"]').uncheck()
-    cy.get('[data-testid="ready-map"]').should('not.exist')
+    cy.get('[data-testid="ready-line-map"]').should('have.attr', 'data-done', 'false')
   })
 
   it('no sideways scroll at 375px', () => {
