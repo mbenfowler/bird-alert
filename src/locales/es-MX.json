@@ -1360,7 +1360,7 @@
     "backTo": "Volver a {{name}}",
     "planIt": "Planearlo",
     "title": "Tus lugares",
-    "hint": "Cambia a un lugar cuando estés ahí, o agrega fechas de viaje y cambia solo. Las alertas siguen al lugar donde estás, con sus propias especies objetivo; al terminar, todo regresa a casa.",
+    "hint": "Cambia a un lugar cuando estés ahí. Las alertas siguen al lugar donde estás, con sus propias especies objetivo; al terminar, todo regresa a casa. Planea un viaje o un Big Day en Eventos, y su lugar se activa solo ese día.",
     "home": "Casa",
     "homeSaved": "¡Casa guardada!",
     "keepHome": "Seguir recibiendo las alertas de casa mientras estoy fuera",
@@ -1380,7 +1380,7 @@
     "deleteLabel": "Eliminar {{name}}",
     "hereNow": "Ya estoy aquí",
     "switched": "Cambiaste a {{name}}.",
-    "plan": "Planear",
+    "seeBirds": "Ver aves aquí",
     "active": "Estás aquí",
     "targets": "Especies objetivo",
     "targetsNone": "Todavía no hay especies objetivo.",
@@ -1392,6 +1392,8 @@
     "ends": "Hasta",
     "saved": "¡Lugar guardado!",
     "deleted": "Lugar eliminado.",
+    "deleteSure": "¿Eliminar este lugar? Tus eventos se quedan.",
+    "usedBy": "Lo usa:",
     "pickName": "Ponle un nombre al lugar.",
     "pickArea": "Elige la zona del lugar.",
     "pickDates": "Elige las dos fechas.",
@@ -1418,7 +1420,7 @@
     "tripEmails": "Correos de eventos",
     "tripEmailsHint": "Cuando empieza un evento y el día antes de que termine.",
     "welcomeBack": "¡Qué bueno que volviste! Las alertas regresaron a {{name}}.",
-    "planEvent": "Planear un evento aquí"
+    "newEvent": "Nuevo evento aquí"
   },
   "events": {
     "yourName": "¿Cómo debe llamarte tu grupo?",

@@ -124,4 +124,38 @@ describe('Places and exploring', () => {
     cy.get('#trip_emails_enabled').click({ force: true })
     cy.wait('@patchUser').its('request.body').should('deep.equal', { trip_emails_enabled: false })
   })
+
+  it('a place card: See birds here, New event here, its upcoming events, and Delete asks first', () => {
+    stubAuth({ loggedIn: true })
+    stubRegions()
+    stubBirds()
+    cy.intercept('GET', '**/api/saved?kind=places*', { statusCode: 200, body: [colorado()] }).as('getPlaces')
+    cy.intercept('GET', '**/api/saved?kind=place-suggestions*', { statusCode: 200, body: { suggestions: [] } })
+    const event = (id, name, from, to, extra = {}) => ({ id, name, state: 'CO', location: DENVER, range_mi: 30, place_id: 7, starts_on: from, ends_on: to, active: false, role: 'organizer', members: [], targets: [], tally: [], ...extra })
+    cy.intercept('GET', '**/api/saved?kind=events*', { statusCode: 200, body: [
+      event(31, 'Denver Big Day', day(3), day(3)),
+      event(32, 'Last spring', day(-60), day(-58), { past: true }),
+      event(33, 'Somewhere else', day(5), day(6), { place_id: 8 })
+    ] }).as('getEvents')
+    cy.intercept('DELETE', '**/api/saved?kind=place*', { statusCode: 204 }).as('deletePlace')
+    cy.visit('http://localhost:3000/settings?tab=places')
+    cy.get('#places').scrollIntoView()
+    cy.get('#places .notification__hint').first().should('contain', 'under Events').and('not.contain', 'trip dates')
+    cy.contains('.place a', 'New event here').should('have.attr', 'href', '/events/new?place=7')
+    cy.get('[data-testid="place-used-by"]').should('contain', 'Used by:').and('contain', 'Denver Big Day')
+      .and('not.contain', 'Last spring').and('not.contain', 'Somewhere else')
+    cy.contains('[data-testid="place-used-by"] a', 'Denver Big Day').should('have.attr', 'href', '/events/31')
+    // Delete asks first; Cancel keeps the place.
+    cy.get('.place button[aria-label="Delete Colorado (work)"]').click()
+    cy.get('.place__confirm').should('contain', 'Delete this place? Your events stay.')
+    cy.contains('.place__confirm button', 'Cancel').click()
+    cy.get('.place__confirm').should('not.exist')
+    cy.get('@deletePlace.all').should('have.length', 0)
+    cy.get('.place button[aria-label="Delete Colorado (work)"]').click()
+    cy.contains('.place__confirm button', 'Delete').click()
+    cy.wait('@deletePlace')
+    // See birds here explores the place's area.
+    cy.contains('.place button', 'See birds here').click()
+    cy.url().should('include', `region=${DENVER}`)
+  })
 })

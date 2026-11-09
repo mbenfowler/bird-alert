@@ -66,7 +66,7 @@ describe('Events', () => {
     cy.contains('.place__what', 'Chiricahuas')
     cy.contains('Trips').should('not.exist')
     cy.contains('Add trip dates').should('not.exist')
-    cy.contains('.place a', 'Plan an event here').click()
+    cy.contains('.place a', 'New event here').click()
     cy.url().should('include', '/events/new?place=7')
     cy.get('[data-testid="event-where"]').should('contain', 'Chiricahuas').and('contain', 'Cochise')
     cy.get('.event-plan input[name="scout"]').click({ force: true })
