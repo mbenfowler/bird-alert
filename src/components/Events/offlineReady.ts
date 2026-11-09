@@ -3,6 +3,8 @@ import { BIRDS_PER_REQUEST, birdsQueryOptions, eventDayQueries, queryKeys, speci
 import { nameLocale } from '../../i18n'
 import type { Bird, EventRoute, EventRoutePlan, GroupEvent, Id } from '../../types'
 import { saveNow, WEEK } from '../../queryClient'
+import { postPushTrace } from '../../apiCalls'
+import { deviceId } from '../../hooks/usePushNotifications'
 
 /**
  * "Get ready for offline": everything the day reads, fetched now with signal and kept on the phone
@@ -129,6 +131,30 @@ export const checkReady = async (queryClient: QueryClient, event: GroupEvent): P
 
 const chunkOf = <T,>(items: T[], size: number) => Array.from({ length: Math.ceil(items.length / size) }, (_, i) => items.slice(i * size, (i + 1) * size))
 
+/**
+ * Photos that still didn't save: one more tried by hand, with the reason, the phone's storage and
+ * what the photo store holds, to the owner's trace (POST /api/push/trace), so a phone stuck short
+ * can be read back.
+ */
+const tracePhotoGap = async (total: number, missing: string[]) => {
+  const detail: Record<string, unknown> = { event: 'photos-missing', source: 'app', deviceId: deviceId(), total, missing: missing.length, sample: missing[0] }
+  try {
+    const estimate = await navigator.storage?.estimate?.()
+    if (estimate) detail.storage = { usage: estimate.usage, quota: estimate.quota }
+  } catch (error) { detail.storage = String(error) }
+  try {
+    const cache = await caches.open(PHOTO_CACHE)
+    const kept = await Promise.all((await cache.keys()).map(key => cache.match(key)))
+    detail.cache = { count: kept.length, opaque: kept.filter(r => r?.type === 'opaque').length }
+    const response = await fetch(missing[0], { mode: 'cors', credentials: 'omit', cache: 'no-store' })
+    detail.direct = { status: response.status, type: response.type }
+    if (response.ok) {
+      try { await cache.put(missing[0], response); detail.put = 'ok' } catch (error) { detail.put = `${(error as Error)?.name}: ${(error as Error)?.message}` }
+    }
+  } catch (error) { detail.error = `${(error as Error)?.name}: ${(error as Error)?.message}` }
+  await postPushTrace(detail)
+}
+
 /** Whether the service worker runs this page, waiting up to 10 s for a new one to take it over. */
 const swInCharge = async () => {
   if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return false
@@ -178,6 +204,7 @@ export const getReady = async (queryClient: QueryClient, event: GroupEvent, onSt
       for (const batch of chunkOf(missing, pass ? 3 : 6)) await Promise.all(batch.map(url => fetch(url, { mode: 'no-cors', credentials: 'omit' }).catch(() => undefined)))
       missing = await unsavedPhotos(missing)
     }
+    if (missing.length) await tracePhotoGap(photos.length, missing)
   }
   step('app')
   await saveNow(queryClient).catch(() => undefined)
