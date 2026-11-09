@@ -948,6 +948,38 @@ a.event-scouting__bird:hover {
   color: #15803d;
 }
 
+/* The checklist: ✓ when it's on the phone, ☐ and a short reason when it isn't. */
+.get-ready__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.get-ready__line {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.get-ready__mark {
+  flex: none;
+  width: 1.1em;
+  font-weight: 700;
+  text-align: center;
+}
+
+.get-ready__line.is-done .get-ready__mark {
+  color: #15803d;
+}
+
+.get-ready__reason {
+  color: var(--muted, #5b6470);
+}
+
 .get-ready__maps {
   display: flex;
   flex-direction: column;
