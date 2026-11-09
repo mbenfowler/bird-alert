@@ -118,6 +118,22 @@ export const checkReady = async (queryClient: QueryClient, event: GroupEvent): P
   return { missing, species: speciesDone ? species.length : 0, photos: { saved, total: photos.length }, app, at: readyAt(event.id) }
 }
 
+const chunkOf = <T,>(items: T[], size: number) => Array.from({ length: Math.ceil(items.length / size) }, (_, i) => items.slice(i * size, (i + 1) * size))
+
+/** Whether the service worker runs this page, waiting up to 10 s for a new one to take it over. */
+const swInCharge = async () => {
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return false
+  if (navigator.serviceWorker.controller) return true
+  if (typeof navigator.serviceWorker.getRegistration !== 'function') return false
+  const registration = await navigator.serviceWorker.getRegistration().catch(() => undefined)
+  if (!registration) return false
+  return new Promise<boolean>((resolve) => {
+    const done = () => resolve(Boolean(navigator.serviceWorker.controller))
+    const timer = setTimeout(done, 10_000)
+    navigator.serviceWorker.addEventListener('controllerchange', () => { clearTimeout(timer); done() }, { once: true })
+  })
+}
+
 /** The step "Save for offline" is on: 1 to 4, one per checklist line. */
 export interface ReadyStep { step: number; total: number; line: ReadyLine }
 
@@ -142,7 +158,12 @@ export const getReady = async (queryClient: QueryClient, event: GroupEvent, onSt
   // Photos: asked for the way an <img> does, so the service worker keeps them under the same address.
   step('photos')
   const photos = birdsFor(queryClient, normal).map(photoOf).filter((url): url is string => Boolean(url))
-  await Promise.all(photos.map(url => fetch(url, { mode: 'no-cors', credentials: 'omit' }).catch(() => undefined)))
+  // Only the service worker keeps them, so on a first visit wait for it to take the page over;
+  // without it the fetches would pass it by and nothing would be kept.
+  if (await swInCharge()) {
+    // A few at a time: fifty at once can trip Wikimedia's limits and leave gaps.
+    for (const batch of chunkOf(photos, 6)) await Promise.all(batch.map(url => fetch(url, { mode: 'no-cors', credentials: 'omit' }).catch(() => undefined)))
+  }
   step('app')
   const status = await checkReady(queryClient, normal)
   if (isReady(status)) markReady(event.id, Date.now())
