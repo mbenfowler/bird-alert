@@ -1518,18 +1518,41 @@
   },
   "getReady": {
     "heading": "Get ready for offline",
-    "button": "Get ready for offline",
-    "again": "Save again",
+    "button": "Save for offline",
+    "update": "Update",
     "working": "Saving…",
-    "ready_one": "✓ Ready for offline · {{birds}} birds, {{count}} stop · saved {{time}}",
-    "ready_other": "✓ Ready for offline · {{birds}} birds, {{count}} stops · saved {{time}}",
-    "missing": "Not saved yet: {{parts}}. Try again with signal.",
-    "notYet": "Save the day to this phone while you have signal: the event, the route, scouting, the county’s birds and the target photos.",
-    "appSaved": "App saved for offline",
-    "appSaving": "The app is still saving itself for offline; open it once more with signal",
-    "appUnsupported": "This browser can’t keep the app for offline",
-    "photos_one": "{{saved}} of {{count}} photo saved",
-    "photos_other": "{{saved}} of {{count}} photos saved",
+    "step": "Saving {{step}} of {{total}}: {{part}}…",
+    "stepName": {
+      "event": "the event",
+      "tally": "tally search",
+      "photos": "target photos",
+      "app": "checking the app"
+    },
+    "line": {
+      "event": "Event, route, scouting & group log",
+      "tally": "Tally search: the county’s birds",
+      "tallyCount_one": "Tally search: {{count}} county bird",
+      "tallyCount_other": "Tally search: {{count}} county birds",
+      "photos": "Target photos",
+      "photosCount": "Target photos: {{saved}} of {{total}}",
+      "app": "App saved to this phone",
+      "map": "Offline map: do this in your maps app, then tick it below",
+      "mapTicked": "Offline map: downloaded (your own tick)"
+    },
+    "done": "saved",
+    "notDone": "not saved",
+    "why": {
+      "signal": "needs signal",
+      "notYet": "not saved yet",
+      "failed": "didn’t save, try again",
+      "appSaving": "still saving — open the app once more with signal",
+      "appUnsupported": "this browser can’t keep the app offline"
+    },
+    "notYet": "Not saved yet. Save while you have signal.",
+    "partial": "Not all saved yet: see the lines above.",
+    "savedFor": "Saved {{time}} · good for {{days}} days, until {{until}}",
+    "savedOld": "Saved {{time}}, over {{days}} days ago · update it with signal",
+    "mapNote": "The map inside Bird Alert needs signal. With no signal, use your maps app’s offline map.",
     "needsSignal": "Needs signal",
     "maps": "Download {{area}} in your maps app too, so directions work with no signal.",
     "openGoogle": "Open in Google Maps",
@@ -1542,18 +1565,7 @@
     "stepsApple1": "Tap your picture → Offline Maps → Add.",
     "stepsApple2": "Fit the box to the area, then tap Download.",
     "stepsApple3": "Or search {{area}}, tap it, then tap Download.",
-    "mapDownloadedTick": "I’ve downloaded the map",
-    "mapDownloaded": "✓ Map downloaded",
-    "part": {
-      "event": "the event",
-      "route": "the route",
-      "scouting": "scouting",
-      "log": "the group log",
-      "species": "the county’s birds",
-      "names": "bird names",
-      "photos": "photos",
-      "app": "the app"
-    }
+    "mapDownloadedTick": "I’ve downloaded the map"
   },
   "eventLog": {
     "heading": "{{name}}: group log",

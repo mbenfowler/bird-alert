@@ -1,6 +1,6 @@
 import { QueryClient } from '@tanstack/react-query'
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister'
-import type { PersistQueryClientOptions } from '@tanstack/react-query-persist-client'
+import { persistQueryClientSave, type PersistQueryClientOptions } from '@tanstack/react-query-persist-client'
 import { ApiError } from './apiCalls'
 
 declare module '@tanstack/react-query' {
@@ -61,4 +61,16 @@ export const persistOptions: Omit<PersistQueryClientOptions, 'queryClient'> = {
     shouldDehydrateMutation: (mutation) =>
       mutation.state.isPaused || (['event-tally', 'event-position', 'event-route-save'].includes(String(mutation.options.mutationKey?.[0])) && mutation.state.status === 'pending')
   }
+}
+
+// The same store, written without the second's wait, for saveNow.
+const promptPersister = createSyncStoragePersister({ storage: safeStorage(), key: 'bird-alert-query-cache', throttleTime: 0 })
+
+/**
+ * Writes the cache to the phone now rather than within the second: "Save for offline" says ready
+ * only once it is really there, so closing the app straight after can't lose the last part.
+ */
+export const saveNow = async (client: QueryClient = queryClient) => {
+  await persistQueryClientSave({ queryClient: client, persister: promptPersister, buster: persistOptions.buster, dehydrateOptions: persistOptions.dehydrateOptions })
+  await new Promise(resolve => setTimeout(resolve, 20))
 }

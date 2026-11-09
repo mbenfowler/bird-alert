@@ -164,8 +164,8 @@ const useScoutingLink = (id: string, ready: boolean) => {
   }, [hash, key, ready, id])
 }
 
-/** Within this many days of the start, "Get ready for offline" sits at the top. */
-const READY_DAYS = 3
+/** Within this many days of the start (the week before), "Get ready for offline" sits at the top. */
+const READY_DAYS = 7
 
 /**
  * One event (/events/:id, where scouting reports and event emails link). On the day it leads with
