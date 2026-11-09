@@ -794,7 +794,12 @@
     "blocked": "Notifications are blocked for Bird Alert in this browser’s settings. Allow them there, then turn alerts on in Settings.",
     "failed": "That didn’t work: {{error}}",
     "turningOn": "Turning on…",
-    "turnOn": "Turn on alerts"
+    "turnOn": "Turn on alerts",
+    "restorePhone": "Alerts got switched off on this phone.",
+    "restoreDevice": "Alerts got switched off in this browser.",
+    "restoreTurnOn": "Turn them back on",
+    "restored": "Alerts are back on.",
+    "checkFailed": "Couldn’t check with the server just now. Alerts stay on for this device."
   },
   "range": {
     "justCounty": "Just my {{word}}",

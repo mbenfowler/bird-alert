@@ -8,7 +8,7 @@ const DAY = 86_400_000
  * The browser's notifications and push, faked for every page load in the test: permission as given
  * (granting it when asked), and a subscription only once one is made, unless `subscribed`.
  */
-const fakePush = ({ permission = 'default', subscribed = false, iphone = false, record = null } = {}) => {
+const fakePush = ({ permission = 'default', subscribed = false, iphone = false, record = null, here = null } = {}) => {
   cy.on('window:before:load', (win) => {
     const makeSub = () => ({ endpoint: 'https://push.example/abc', toJSON: () => ({ endpoint: 'https://push.example/abc', keys: { p256dh: 'k', auth: 'a' } }), unsubscribe: async () => true })
     let sub = subscribed ? makeSub() : null
@@ -24,6 +24,7 @@ const fakePush = ({ permission = 'default', subscribed = false, iphone = false, 
     })
     if (iphone) Object.defineProperty(win.navigator, 'userAgent', { value: IPHONE })
     if (record) win.localStorage.setItem(KEY, JSON.stringify(record))
+    if (here) win.localStorage.setItem('bird-alert:push-here', here)
   })
   cy.intercept('GET', '**/api/push/public-key', { statusCode: 200, body: { publicKey: 'BFakeKeyForTests' } })
   cy.intercept('POST', '**/api/push/subscribe', { statusCode: 201, body: { ok: true } }).as('subscribe')
@@ -110,6 +111,32 @@ describe('Push ask', () => {
     login()
     cy.get('#rosgoo').click()
     cy.contains('Bird saved to watch list!')
+    cy.get('.push-ask').should('not.exist')
+  })
+
+  it('alerts this device had on, lost with the permission reset: one tap turns them back on', () => {
+    fakePush({ here: 'on' })
+    login()
+    cy.get('.push-ask').should('be.visible')
+    cy.get('#push-ask-question').should('have.text', 'Alerts got switched off in this browser.')
+    cy.screenshot('push-restore-prompt', { capture: 'viewport' })
+    cy.contains('.push-ask button', 'Turn them back on').click()
+    cy.wait('@subscribe').its('request.body.deviceId').should('match', /^[A-Za-z0-9_-]{8,64}$/)
+    cy.get('.push-ask').should('not.exist')
+    cy.contains('Alerts are back on.')
+  })
+
+  it('alerts this device had on, still allowed: back on without asking', () => {
+    fakePush({ permission: 'granted', here: 'on' })
+    login()
+    cy.wait('@subscribe').its('request.body.endpoint').should('eq', 'https://push.example/abc')
+    cy.get('.push-ask').should('not.exist')
+  })
+
+  it('a device that turned alerts off here is never asked to turn them back on', () => {
+    fakePush({ here: 'off' })
+    login()
+    cy.get('#rosgoo').should('exist')
     cy.get('.push-ask').should('not.exist')
   })
 })

@@ -868,7 +868,12 @@
     "blocked": "Les notifications sont bloquées pour Bird Alert dans les paramètres de ce navigateur. Autorise-les là, puis active les alertes dans Paramètres.",
     "failed": "Ça n’a pas marché : {{error}}",
     "turningOn": "Activation…",
-    "turnOn": "Activer les alertes"
+    "turnOn": "Activer les alertes",
+    "restorePhone": "Les alertes se sont désactivées sur ce téléphone.",
+    "restoreDevice": "Les alertes se sont désactivées dans ce navigateur.",
+    "restoreTurnOn": "Les réactiver",
+    "restored": "Les alertes sont réactivées.",
+    "checkFailed": "Impossible de vérifier auprès du serveur pour l’instant. Les alertes restent activées sur cet appareil."
   },
   "range": {
     "justCounty": "Mon {{word}} seulement",

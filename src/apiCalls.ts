@@ -256,14 +256,17 @@ export const getWhereToFind = (region: string, code: string) => api<WhereToFind>
 // ---- web push ----
 export interface PushStatus {
     subscribed: boolean
+    /** This device (or, for older rows, this kind of browser) had alerts on for the account. */
+    knownDevice?: boolean
     devices: number
     lastRun: { at: string; notified?: number; heldForQuietHours?: number } | null
 }
 export const getPushPublicKey = () => api<{ publicKey: string }>('/push/public-key')
-export const subscribePush = (subscription: PushSubscriptionJSON & { userAgent?: string }) =>
+export const subscribePush = (subscription: PushSubscriptionJSON & { userAgent?: string; deviceId?: string }) =>
     api<{ ok: true }>('/push/subscribe', { method: 'POST', body: subscription })
 export const unsubscribePush = (endpoint: string) => api<null>('/push/unsubscribe', { method: 'POST', body: { endpoint } })
-export const getPushStatus = (endpoint?: string) => api<PushStatus>('/push/status', endpoint ? { params: { endpoint } } : {})
+export const getPushStatus = (endpoint?: string, deviceId?: string) =>
+  api<PushStatus>('/push/status', { params: { ...(endpoint ? { endpoint } : {}), ...(deviceId ? { deviceId } : {}) } })
 export const sendTestPush = (endpoint?: string) => api<{ sent: number; gone: number }>('/push/test', { method: 'POST', body: endpoint ? { endpoint } : {} })
 
 /** Best-effort note of what the app did with a notification, for reading back from the server. */
