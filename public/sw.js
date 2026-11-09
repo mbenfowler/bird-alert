@@ -1,5 +1,5 @@
 /* Bird Alert service worker: shows push notifications, routes taps to the map app or the site, and keeps the app itself for offline use. */
-const SW_VERSION = '2026-11-03.2'
+const SW_VERSION = '2026-11-09.1'
 
 // What this worker does with each notification is reported to the server (same-origin, with the
 // session cookie), so a tap that goes nowhere on a phone can be read back. Best effort, never awaited alone.
@@ -241,6 +241,45 @@ const openUrl = (url) => self.clients.matchAll({ type: 'window', includeUncontro
   } else step('navigate', 'unsupported')
   step('openWindow', await self.clients.openWindow(url).then((w) => (w ? 'window' : 'null'), (e) => `fail ${e && e.message}`))
   return report
+})
+
+// The app asks which worker it has, for its load-time trace.
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'sw-version' && event.ports && event.ports[0]) event.ports[0].postMessage(SW_VERSION)
+})
+
+// The browser renewed or dropped this worker's push subscription (an expired endpoint, or keys
+// rotated). Subscribe again with the same server key and tell the server, replacing the old
+// endpoint (same-origin, with the session cookie, like the trace). If this fails, the app heals it
+// on its next launch (checkThisDevice).
+const urlBase64ToUint8Array = (base64) => {
+  const padding = '='.repeat((4 - (base64.length % 4)) % 4)
+  const raw = atob((base64 + padding).replace(/-/g, '+').replace(/_/g, '/'))
+  return Uint8Array.from(raw, (char) => char.charCodeAt(0))
+}
+const serverKey = async (oldSubscription) => {
+  const known = oldSubscription && oldSubscription.options && oldSubscription.options.applicationServerKey
+  if (known) return known
+  const response = await fetch('/api/push/public-key')
+  if (!response.ok) throw new Error(`public-key ${response.status}`)
+  return urlBase64ToUint8Array((await response.json()).publicKey)
+}
+self.addEventListener('pushsubscriptionchange', (event) => {
+  const oldEndpoint = (event.oldSubscription && event.oldSubscription.endpoint) || null
+  event.waitUntil((async () => {
+    try {
+      const subscription = event.newSubscription ||
+        await self.registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: await serverKey(event.oldSubscription) })
+      const response = await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...subscription.toJSON(), userAgent: self.navigator.userAgent, oldEndpoint })
+      })
+      await trace('pushsubscriptionchange', { oldEndpoint, renewed: true, status: response.status })
+    } catch (error) {
+      await trace('pushsubscriptionchange', { oldEndpoint, renewed: false, error: error && error.message })
+    }
+  })())
 })
 
 // On iPhone the push context cannot reach the open app at all, so a tap is handed over through the

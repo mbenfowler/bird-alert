@@ -16,7 +16,9 @@ import PushAsk from '../PushAsk/PushAsk'
 import EbirdCredit from '../EbirdCredit/EbirdCredit'
 import PullToRefresh from '../PullToRefresh/PullToRefresh'
 import { prefersReducedMotion } from '../../routeDraw'
-import { claimThisDevice } from '../../hooks/usePushNotifications'
+import { checkThisDevice, deviceId } from '../../hooks/usePushNotifications'
+import { offerRestore } from '../../pushAsk'
+import { isIOS } from '../../install'
 import { soundTheAlarm } from '../../alertMode'
 import { useSessionQuery } from '../../hooks/queries'
 import './App.css'
@@ -59,6 +61,29 @@ const Onboarding = lazy(() => import('../Onboarding/Onboarding'))
 const PUBLIC_PATH_PREFIXES = ['/login', '/reset/', '/confirm/', '/unsubscribe/', '/share/', '/events/join/', '/events/view/', '/recap/']
 // Pages about the account alone; every other page is built from eBird's sightings and credits it.
 const NO_EBIRD_DATA = new Set(['login', 'settings', 'reset', 'confirm', 'unsubscribe'])
+
+/** The service worker's version, asked over a message channel; null when there is none or it doesn't answer. */
+const workerVersion = (worker: ServiceWorker | null | undefined) => new Promise<string | null>((resolve) => {
+  if (!worker) return resolve(null)
+  const channel = new MessageChannel()
+  const timer = setTimeout(() => resolve(null), 1500)
+  channel.port1.onmessage = (event) => { clearTimeout(timer); resolve(typeof event.data === 'string' ? event.data : null) }
+  try { worker.postMessage({ type: 'sw-version' }, [channel.port2]) } catch { clearTimeout(timer); resolve(null) }
+})
+
+/** What this device's push looks like right now, to the owner's notification trace (POST /api/push/trace). */
+const tracePushHealth = async (result: string) => {
+  const sw = 'serviceWorker' in navigator ? navigator.serviceWorker : null
+  const registration = await sw?.getRegistration().catch(() => undefined)
+  const subscription = await registration?.pushManager?.getSubscription().catch(() => null)
+  void postPushTrace({
+    event: 'app-load', source: 'app', bundle: APP_BUILD, deviceId: deviceId(), result,
+    permission: 'Notification' in window ? Notification.permission : 'unsupported',
+    hasSubscription: Boolean(subscription), registration: Boolean(registration),
+    swVersion: await workerVersion(registration?.active ?? sw?.controller),
+    standalone: window.matchMedia('(display-mode: standalone)').matches
+  })
+}
 
 const App = () => {
   const session = useSessionQuery()
@@ -109,10 +134,25 @@ const App = () => {
     // Logged out on a page that needs an account: log in, then come back here (?next=, and this tab).
     if (user === null && !isPublicPath) navigate(loginTo(`${pathname}${search}${hash}`), { replace: true })
   }, [user, isPublicPath, navigate, pathname, search, hash])
-  // This browser's notifications go to whoever is signed in now, not to whoever turned them on.
+  // This browser's notifications go to whoever is signed in now, not to whoever turned them on. And
+  // a device that had alerts on but lost its subscription (iOS drops a Home Screen app's service worker
+  // now and then) gets it back: silently when allowed, else by a one-tap prompt. On load, and on return
+  // to the foreground at most every half hour. iPhones report what they found, for the owner's trace.
   const signedInId = user?.id
   useEffect(() => {
-    if (signedInId) void claimThisDevice().catch(() => undefined)
+    if (!signedInId) return
+    let last = 0
+    const run = async () => {
+      if (Date.now() - last < 30 * 60_000) return
+      last = Date.now()
+      const result = await checkThisDevice().catch((error: unknown) => `error: ${error instanceof Error ? error.message : String(error)}`)
+      if (result === 'ask') offerRestore()
+      if (isIOS() || result === 'healed' || result === 'ask') void tracePushHealth(String(result))
+    }
+    void run()
+    const onVisible = () => { if (document.visibilityState === 'visible') void run() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [signedInId])
   // A new account goes through the short setup once. Only an explicit null (setup not yet done)
   // counts: an account the server doesn't mark either way is left alone.

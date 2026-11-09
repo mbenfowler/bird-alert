@@ -7,7 +7,7 @@ import { isIOS, isStandalone } from './install'
  */
 
 export type LocalPush = 'unsupported' | 'denied' | 'off' | 'on'
-export type PushAskVariant = 'enable' | 'install'
+export type PushAskVariant = 'enable' | 'install' | 'restore'
 export interface PushAskRecord { dismissals: number; last: number }
 
 const KEY = 'bird-alert:push-ask'
@@ -62,6 +62,20 @@ export const offerPush = async (name: string): Promise<boolean> => {
   listener({ name, variant: iosTab ? 'install' : 'enable' })
   return true
 }
+
+const RESTORE_KEY = 'bird-alert:push-restore-ask'
+/**
+ * Alerts were on here and the browser lost them (iOS drops a Home Screen app's subscription, or resets
+ * its permission): one tap brings them back. Asked once a visit, and after "Not now" not for a day.
+ */
+export const offerRestore = (now = Date.now()): boolean => {
+  if (!listener || askedThisVisit) return false
+  try { if (now - (Number(localStorage.getItem(RESTORE_KEY)) || 0) < DAY) return false } catch { /* ask */ }
+  askedThisVisit = true
+  listener({ name: '', variant: 'restore' })
+  return true
+}
+export const dismissRestore = (now = Date.now()) => { try { localStorage.setItem(RESTORE_KEY, String(now)) } catch { /* private mode */ } }
 
 /** "Not now": quiet for a week, and after three of them, for good. */
 export const dismissPushAsk = (now = Date.now()) => {

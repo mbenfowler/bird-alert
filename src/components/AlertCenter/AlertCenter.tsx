@@ -121,6 +121,7 @@ const AlertCenter = () => {
             <label htmlFor='push_enabled'>{t('alertCenter.pushLabel')}</label>
             <p className='notification__hint'>{t(`alertCenter.pushHint.${push.state}`)}</p>
             {push.error && <p className='notification__hint notification__hint--error' role='alert'>{push.error}</p>}
+            {push.notice && !push.error && <p className='notification__hint' role='status'>{push.notice}</p>}
           </div>
           <div className='notification__controls'>
             {push.state === 'busy' && <LoadingState variant='inline' label={t('alertCenter.updatingPush')} />}
