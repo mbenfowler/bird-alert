@@ -19,6 +19,7 @@ import { showScoutingCard } from './scoutingRows'
 import { prefersReducedMotion } from '../../routeDraw'
 import EventRoutePanel from './EventRoutePanel'
 import DayView, { DayStops, SunLine } from './DayView'
+import { StartWeather } from './Weather'
 import GetReady from './GetReady'
 import { isEventDay, useEventDay } from './useEventDay'
 import { safeZone, zonedDay } from './daySchedule'
@@ -227,6 +228,7 @@ const EventBody = ({ event, updatedAt, error }: { event: GroupEvent; updatedAt: 
           : <>
               <p>{event.kind === 'bigday' ? t('events.planBigDay', { date: monthDay(event.starts_on) }) : t('events.planDates', { dates: dateRange(event.starts_on, event.ends_on) })}</p>
               {showDay && oneDay && <SunLine sun={day.sun} timeZone={day.timeZone} />}
+              {showDay && oneDay && <StartWeather start={day.startWeather} timeZone={day.timeZone} />}
               <p className='notification__hint'>{from ? t('events.planScouting', { date: monthDay(from) }) : t('events.planNoScouting')}</p>
               <button type='button' className='link-button link-text' onClick={() => setEditing(true)}>{t('events.changePlan')}</button>
             </>}

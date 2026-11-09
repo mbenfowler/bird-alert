@@ -1850,5 +1850,39 @@
     "next": "Siguiente",
     "goTo": "Mostrar {{n}} de {{count}}",
     "slide": "{{n}} de {{count}}"
+  },
+  "dayWeather": {
+    "sun": {
+      "nauticalDawn": "Alba náutica",
+      "civilDawn": "Alba civil",
+      "sunrise": "Salida del sol",
+      "sunset": "Puesta del sol",
+      "civilDusk": "Anochecer civil",
+      "nauticalDusk": "Anochecer náutico"
+    },
+    "kind": {
+      "clear": "Despejado",
+      "clearNight": "Despejado",
+      "partly": "Parcialmente nublado",
+      "cloudy": "Nublado",
+      "fog": "Niebla",
+      "rain": "Lluvia",
+      "snow": "Nieve",
+      "storm": "Tormentas",
+      "wind": "Ventoso"
+    },
+    "temp": {
+      "mi": "{{n}} °F",
+      "km": "{{n}} °C"
+    },
+    "speed": {
+      "mi": "{{n}} mph",
+      "km": "{{n}} km/h"
+    },
+    "wind": "viento {{speed}}",
+    "gusts": "ráfagas {{speed}}",
+    "rain": "{{n}} % de lluvia",
+    "atStart": "Pronóstico en {{place}}, {{time}}:",
+    "credit": "Clima de Open-Meteo.com"
   }
 }
