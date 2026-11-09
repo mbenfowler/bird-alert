@@ -308,3 +308,14 @@
   .place__targets.is-flashing { animation: none; }
 }
 
+
+/* Deleting a place asks first, in the same red as deleting an event. */
+.pill-button.place__delete {
+  color: #fff;
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+.place__used-by {
+  margin: 0;
+}

@@ -1252,7 +1252,7 @@
     "backTo": "Back to {{name}}",
     "planIt": "Plan it",
     "title": "Your places",
-    "hint": "Switch to a place when you're there, or add trip dates and it switches on its own. Alerts follow the place you're in, with its own target birds; everything comes back home afterwards.",
+    "hint": "Switch to a place when you're there. Alerts follow the place you're in, with its own target birds; everything comes back home afterwards. Plan a trip or a Big Day under Events, and its place switches on by itself on the day.",
     "home": "Home",
     "homeSaved": "Home saved!",
     "keepHome": "Keep my home alerts while I'm away",
@@ -1272,7 +1272,7 @@
     "deleteLabel": "Delete {{name}}",
     "hereNow": "I'm here now",
     "switched": "Switched to {{name}}.",
-    "plan": "Plan",
+    "seeBirds": "See birds here",
     "active": "You're here",
     "targets": "Target birds",
     "targetsNone": "No target birds yet.",
@@ -1284,6 +1284,8 @@
     "ends": "Until",
     "saved": "Place saved!",
     "deleted": "Place deleted.",
+    "deleteSure": "Delete this place? Your events stay.",
+    "usedBy": "Used by:",
     "pickName": "Give the place a name.",
     "pickArea": "Choose the place's area.",
     "pickDates": "Choose both dates.",
@@ -1308,7 +1310,7 @@
     "tripEmails": "Event emails",
     "tripEmailsHint": "When an event starts and the day before it ends.",
     "welcomeBack": "Welcome back: alerts are back to {{name}}.",
-    "planEvent": "Plan an event here"
+    "newEvent": "New event here"
   },
   "events": {
     "yourName": "What should your group call you?",

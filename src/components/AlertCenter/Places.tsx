@@ -6,12 +6,13 @@ import BirdPicker from '../WhereToGo/BirdPicker'
 import ErrorMessage from '../Error/ErrorMessage'
 import { CloseIcon } from '../Icons/Icons'
 import { errorMessage } from '../../apiCalls'
-import { useBirdsQuery, useCurrentUser, usePlaceSeenQuery, usePlaceSuggestionsQuery, usePlacesQuery } from '../../hooks/queries'
+import { useBirdsQuery, useCurrentUser, useEventsQuery, usePlaceSeenQuery, usePlaceSuggestionsQuery, usePlacesQuery } from '../../hooks/queries'
 import { useDeletePlaceMutation, usePatchUserMutation, usePlaceSeenMutation, usePlaceTargetsMutation, useSavePlaceMutation } from '../../hooks/mutations'
 import { useAreaName } from '../../shownArea'
 import { unitFor } from '../../distance'
 import { areaWord, stateName, stateOfRegion } from '../../usStates'
-import { t } from '../../i18n'
+import { dateRange, t } from '../../i18n'
+import { eventPath, isPast } from '../Events/events'
 import type { SavedPlace } from '../../types'
 import './AlertCenter.css'
 import './Places.css'
@@ -186,7 +187,12 @@ const PlaceCard = ({ place }: { place: SavedPlace }) => {
   const navigate = useNavigate()
   const patch = usePatchUserMutation()
   const remove = useDeletePlaceMutation()
+  const events = useEventsQuery()
   const [editing, setEditing] = useState(false)
+  const [confirming, setConfirming] = useState(false)
+  // Events still to come (or under way) planned from this place.
+  const usedBy = (events.data ?? []).filter(e => e.place_id != null && String(e.place_id) === String(place.id) && !isPast(e))
+    .sort((a, b) => a.starts_on.localeCompare(b.starts_on))
   const areaName = useAreaName(place.state, place.location)
   const here = user.activePlace ? String(user.activePlace.id) === String(place.id) : false
   if (editing) return <li className='place'><PlaceForm place={place} onDone={() => setEditing(false)} /></li>
@@ -200,14 +206,27 @@ const PlaceCard = ({ place }: { place: SavedPlace }) => {
         {here
           ? <button type='button' className='pill-button pill-button--small' disabled={patch.isPending} onClick={() => patch.mutate({ active_place_id: null })}>{t('places.backHome')}</button>
           : <button type='button' className='pill-button pill-button--small' disabled={patch.isPending} onClick={() => patch.mutate({ active_place_id: place.id }, { onSuccess: () => toast.success(t('places.switched', { name: place.name }), { position: 'bottom-center' }) })}>{t('places.hereNow')}</button>}
-        <button type='button' className='link-button link-text' onClick={() => navigate(`/?region=${encodeURIComponent(place.location)}`)}>{t('places.plan')}</button>
-        <Link className='link-button link-text' to={`/events/new?place=${encodeURIComponent(String(place.id))}`}>{t('places.planEvent')}</Link>
+        <button type='button' className='link-button link-text' onClick={() => navigate(`/?region=${encodeURIComponent(place.location)}`)}>{t('places.seeBirds')}</button>
+        <Link className='link-button link-text' to={`/events/new?place=${encodeURIComponent(String(place.id))}`}>{t('places.newEvent')}</Link>
         <button type='button' className='link-button link-text' aria-label={t('places.editLabel', { name: place.name })} onClick={() => setEditing(true)}>{t('places.edit')}</button>
-        <button type='button' className='link-button link-text' aria-label={t('places.deleteLabel', { name: place.name })} disabled={remove.isPending}
-          onClick={() => remove.mutate(place.id, { onSuccess: () => toast.success(t('places.deleted'), { position: 'bottom-center' }), onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' }) })}>
-          {t('places.delete')}
-        </button>
+        {!confirming && <button type='button' className='link-button link-text' aria-label={t('places.deleteLabel', { name: place.name })} onClick={() => setConfirming(true)}>{t('places.delete')}</button>}
       </p>
+      {confirming && (
+        <p className='place__actions place__confirm' role='alert'>
+          <span>{t('places.deleteSure')}</span>
+          <button type='button' className='pill-button pill-button--small place__delete' disabled={remove.isPending}
+            onClick={() => remove.mutate(place.id, { onSuccess: () => toast.success(t('places.deleted'), { position: 'bottom-center' }), onError: (error) => toast.error(errorMessage(error), { position: 'bottom-center' }) })}>
+            {t('places.delete')}
+          </button>
+          <button type='button' className='link-button link-text' onClick={() => setConfirming(false)}>{t('common.cancel')}</button>
+        </p>
+      )}
+      {usedBy.length > 0 && (
+        <p className='notification__hint place__used-by' data-testid='place-used-by'>
+          {t('places.usedBy')}{' '}
+          {usedBy.map((e, i) => <span key={e.id}>{i > 0 && '; '}<Link className='link-button link-text' to={eventPath(e.id)}>{e.name}</Link> · {dateRange(e.starts_on, e.ends_on)}</span>)}
+        </p>
+      )}
       <Targets place={place} areaName={areaName} />
       <Scope place={place} />
       <SeenHere place={place} areaName={areaName} />
