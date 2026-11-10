@@ -28,6 +28,9 @@
     width: 100%;
     aspect-ratio: 4 / 3;
     object-fit: cover;
+    /* Wikipedia's bird photos are often taller than this box; cropping from the middle cut heads
+       off, so the crop leans to the top, where the head usually is. */
+    object-position: 50% 20%;
     border-radius: 10px;
 }
 
