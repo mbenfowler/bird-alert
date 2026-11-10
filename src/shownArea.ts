@@ -49,7 +49,12 @@ export const useShownArea = (): ShownArea => {
   const [params, setParams] = useSearchParams()
   useSyncExternalStore(subscribe, snapshot, snapshot)
   const home = { region: user.location, state: user.state }
-  const place = user.activePlace ?? null
+  // While an event is on, the server keeps the account at the event's area (alerts follow it) and
+  // sends it as activeEvent rather than a place; the app shows that area the same way.
+  const event = user.activeEvent?.location && user.activeEvent.state ? user.activeEvent : null
+  const place: ActivePlace | null = event
+    ? { id: `event-${event.id}`, name: event.name, state: event.state!, location: event.location!, via: 'event' }
+    : user.activePlace ?? null
 
   const asked = params.get('region') ?? ''
   const fromLink = stateOfRegion(asked) && asked !== user.location ? asked : null

@@ -105,7 +105,7 @@ export interface ActivePlace {
   name: string
   state: string
   location: string
-  via: 'trip' | 'manual'
+  via: 'trip' | 'manual' | 'event'
   trip?: { starts_on: string; ends_on: string }
 }
 
@@ -555,6 +555,10 @@ export interface ActiveEvent {
   id: Id
   name: string
   count?: number
+  /** The event's area (sent with /me since events stood alone). */
+  state?: string
+  location?: string
+  kind?: 'trip' | 'bigday'
 }
 
 /** What an invite link shows before joining. */
