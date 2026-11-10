@@ -132,8 +132,10 @@ const EventTally = () => {
       {entries.length
         ? <ol className='event-tally__list'>{entries.map(entry => (
             <li key={entry.code} className={entry.pending ? 'event-tally__entry--pending' : undefined} data-pending={entry.pending ? 'true' : undefined}>
-              <span className='event-tally__photo' aria-hidden='true'>{photoOf(entry.code) && <img src={photoOf(entry.code)!} alt='' loading='lazy' onError={(e) => { e.currentTarget.hidden = true }} />}</span>
-              <span className='event-tally__bird'>{nameOf(entry.code)}</span>
+              <Link className='event-tally__link' to={`/sighting/${encodeURIComponent(entry.code)}/latest?region=${encodeURIComponent(event.location)}`}>
+                <span className='event-tally__photo' aria-hidden='true'>{photoOf(entry.code) && <img src={photoOf(entry.code)!} alt='' loading='lazy' onError={(e) => { e.currentTarget.hidden = true }} />}</span>
+                <span className='event-tally__bird'>{nameOf(entry.code)}</span>
+              </Link>
               {entry.pending && <span className='event-tally__waiting' title={t('offline.waitingOne')}><ClockIcon /><span className='visually-hidden'>{t('offline.waitingOne')}</span></span>}
               <span className='event-tally__who'>{whoWhen(entry)}</span>
               {confirming === entry.code
