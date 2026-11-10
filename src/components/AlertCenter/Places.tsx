@@ -197,7 +197,7 @@ const PlaceCard = ({ place }: { place: SavedPlace }) => {
   const here = user.activePlace ? String(user.activePlace.id) === String(place.id) : false
   // While an event is on, it sets the person's area until it ends (the server's rule), so "I'm here
   // now" can't take; say so, and offer a look instead.
-  const event = user.activeEvent && user.activePlace && String(user.activePlace.id).startsWith('event-') ? user.activePlace : null
+  const event = user.activeEvent?.location && user.activeEvent.state ? user.activeEvent : null
   const eventArea = useAreaName(event?.state ?? place.state, event?.location ?? place.location)
   const [eventNote, setEventNote] = useState(false)
   const seeBirds = () => navigate(`/?region=${encodeURIComponent(place.location)}`)

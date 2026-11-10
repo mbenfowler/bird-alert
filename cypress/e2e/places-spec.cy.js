@@ -78,8 +78,8 @@ describe('Places and exploring', () => {
   })
 
   it('during an event, "I\'m here now" says the event keeps the area and offers Explore instead', () => {
-    const activePlace = { id: 'event-2', name: 'Big Day 2027', state: 'AZ', location: 'US-AZ-003', via: 'event' }
-    stubAuth({ loggedIn: true, user: { ...TEST_USER, activePlace, activeEvent: { id: 2, name: 'Big Day 2027', count: 0 } } })
+    // What /me sends during an event: the event on its own, no place.
+    stubAuth({ loggedIn: true, user: { ...TEST_USER, activePlace: null, active_place_id: 7, activeEvent: { id: 2, name: 'Big Day 2027', kind: 'bigday', state: 'AZ', location: 'US-AZ-003', starts_on: '2026-11-10', ends_on: '2026-11-10' } } })
     stubRegions()
     stubBirds()
     cy.intercept('GET', '**/api/saved?kind=places*', { statusCode: 200, body: [colorado()] })
@@ -90,6 +90,15 @@ describe('Places and exploring', () => {
     cy.get('@patch').should('not.have.been.called')
     cy.contains('[data-testid="here-now-event"] button', 'Explore it').click()
     cy.location('search').should('include', `region=${DENVER}`)
+  })
+
+  it('during an event, the home screen shows the event\'s area, not home', () => {
+    stubAuth({ loggedIn: true, user: { ...TEST_USER, activePlace: null, activeEvent: { id: 2, name: 'Big Day 2027', kind: 'bigday', state: 'AZ', location: 'US-AZ-003', starts_on: '2026-11-10', ends_on: '2026-11-10' } } })
+    stubRegions()
+    cy.intercept('GET', '**/api/ebird/observations*').as('observations')
+    cy.visit('http://localhost:3000/')
+    cy.wait('@observations').its('request.url').should('include', 'region=US-AZ-003')
+    cy.get('.area-banner--place').should('contain', 'Big Day 2027')
   })
 
   it('at a place, the home screen shows it until asked for home', () => {
