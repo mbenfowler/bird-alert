@@ -1162,6 +1162,7 @@
     "noneRegion": "No reports of this species in your region in the last 30 days.",
     "tooOld": "This report is older than 30 days, so its details are no longer in eBird's recent feed.",
     "viewEbird": "View on eBird",
+    "viewChecklist": "eBird checklist",
     "whereFind": "Where to find it",
     "best": "Best {{when}}",
     "usuallyBest": "Usually best: {{when}}",

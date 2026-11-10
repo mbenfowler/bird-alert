@@ -183,7 +183,11 @@ const Sighting = () => {
       <header className='sighting__hero'>
         <img className='sighting__photo' src={img} alt={t('card.photoAlt', { name })} />
         <div className='sighting__title'>
-          <h1 className='fredericka'>{name}</h1>
+          <div className='sighting__name'>
+            <h1 className='fredericka'>{name}</h1>
+            {bird && <SoundPill state={sound.state} name={name} className='pill-button--small' onToggle={() => { void sound.toggle() }} />}
+            {bird?.wikiURL && <a className='pill-button pill-button--small' href={bird.wikiURL} target='_blank' rel='noreferrer'>{t('sighting.wikipedia')}</a>}
+          </div>
           {bird?.sciName && <p className='sighting__sci'>{bird.sciName}</p>}
           {bird?.aba && bird.aba >= 3 && bird.aba <= 5 && <p className='sighting__aba'><AbaCode code={bird.aba} explain /></p>}
           <p className='sighting__blurb'>
@@ -192,11 +196,11 @@ const Sighting = () => {
           {/* The recording's credit, which its license asks for, above the buttons so the row never moves. */}
           {(sound.state === 'playing' || sound.state === 'paused') && <p className='sighting__credit'><SoundCredit sound={sound.sound} /></p>}
           <div className='sighting__actions'>
-            {bird && <SoundPill state={sound.state} name={name} onToggle={() => { void sound.toggle() }} />}
-            {bird && <button type='button' className='pill-button' onClick={watch} disabled={toggleSaved.isPending} aria-pressed={isWatched}>{isWatched ? t('sighting.onWatch') : t('sighting.addWatch')}</button>}
+            <a className='pill-button pill-button--primary' href={ebirdHref} target='_blank' rel='noreferrer'>{current?.subId ? t('sighting.viewChecklist') : t('sighting.viewEbird')}</a>
             {bird && current && <button type='button' className='pill-button' onClick={() => {
               void shareThing({ kind: 'sighting', speciesCode: bird.speciesCode, locId: current.locId, locName: current.locName, lat: current.lat, lng: current.lng, obsDt: current.obsDt, howMany: current.howMany ?? null, subId: current.subId, regionName }, t('sighting.shareTitle', { name: bird.comName, place: current.locName }))
             }}><ShareIcon className='pill-button__icon' />{t('sighting.share')}</button>}
+            {bird && <button type='button' className={`pill-button ${isWatched ? 'pill-button--watched' : ''}`} onClick={watch} disabled={toggleSaved.isPending} aria-pressed={isWatched}>{isWatched ? t('sighting.onWatch') : t('sighting.addWatch')}</button>}
             {bird && (() => {
               const isSeen = seen.codes.has(bird.speciesCode)
               return <button type='button' className={`pill-button ${isSeen ? 'pill-button--seen' : ''}`} disabled={!seen.loaded} aria-pressed={isSeen}
@@ -209,7 +213,6 @@ const Sighting = () => {
                   })
                 }}>{isSeen ? t('sighting.onLife') : t('sighting.seenIt')}</button>
             })()}
-            {bird?.wikiURL && <a className='pill-button' href={bird.wikiURL} target='_blank' rel='noreferrer'>{t('sighting.wikipedia')}</a>}
           </div>
         </div>
         {seasonality.data?.months && (
@@ -243,12 +246,13 @@ const Sighting = () => {
                   <span>{formatObsDt(current.obsDt)}{current.howMany ? ` · ${t('sighting.seenCount', { count: current.howMany })}` : ''}</span>
                 </p>
               : <p className='sighting__meta'><span>{t('sighting.tooOld')}</span></p>}
-            {/* The checklist itself is the View on eBird button just below. */}
+            {/* The checklist itself is the eBird checklist button by the photo. */}
             {current && <Evidence evidence={current.evidence} />}
-            <div className='sighting__actions'>
-              {current && <a className='pill-button pill-button--primary pill-button--small' href={mapsHref(current)} target='_blank' rel='noreferrer'>{t('route.openMaps')}</a>}
-              <a className='pill-button pill-button--small' href={ebirdHref} target='_blank' rel='noreferrer'>{t('sighting.viewEbird')}</a>
-            </div>
+            {current && (
+              <div className='sighting__actions'>
+                <a className='pill-button pill-button--primary pill-button--small' href={mapsHref(current)} target='_blank' rel='noreferrer'>{t('route.openMaps')}</a>
+              </div>
+            )}
           </div>
         </div>
 

@@ -261,6 +261,18 @@ html, body {
     background: #d4ecdc;
 }
 
+/* On the watch list: the same pill, in the amber of the star, so it reads as on at a glance. */
+.pill-button--watched {
+    border-color: #a15c00;
+    background: #fff1cc;
+    color: #7a4500;
+    -webkit-text-fill-color: #7a4500;
+}
+
+.pill-button--watched:hover:not(:disabled) {
+    background: #ffe6a3;
+}
+
 /* Dropdowns: the browser's own arrow off, a chevron of ours with room to breathe. */
 .select {
     -webkit-appearance: none;
