@@ -192,6 +192,7 @@ const Sighting = () => {
           {/* The recording's credit, which its license asks for, above the buttons so the row never moves. */}
           {(sound.state === 'playing' || sound.state === 'paused') && <p className='sighting__credit'><SoundCredit sound={sound.sound} /></p>}
           <div className='sighting__actions'>
+            <a className='pill-button pill-button--primary' href={ebirdHref} target='_blank' rel='noreferrer'>{current?.subId ? t('sighting.viewChecklist') : t('sighting.viewEbird')}</a>
             {bird && <SoundPill state={sound.state} name={name} onToggle={() => { void sound.toggle() }} />}
             {bird && <button type='button' className='pill-button' onClick={watch} disabled={toggleSaved.isPending} aria-pressed={isWatched}>{isWatched ? t('sighting.onWatch') : t('sighting.addWatch')}</button>}
             {bird && current && <button type='button' className='pill-button' onClick={() => {
@@ -210,7 +211,6 @@ const Sighting = () => {
                 }}>{isSeen ? t('sighting.onLife') : t('sighting.seenIt')}</button>
             })()}
             {bird?.wikiURL && <a className='pill-button' href={bird.wikiURL} target='_blank' rel='noreferrer'>{t('sighting.wikipedia')}</a>}
-            <a className='pill-button' href={ebirdHref} target='_blank' rel='noreferrer'>{current?.subId ? t('sighting.viewChecklist') : t('sighting.viewEbird')}</a>
           </div>
         </div>
         {seasonality.data?.months && (
