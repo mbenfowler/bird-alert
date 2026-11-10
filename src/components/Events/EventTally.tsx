@@ -44,9 +44,11 @@ const EventTally = () => {
   // Sorted, so a bird added offline (often a target already named) asks for the same saved list.
   const names = useBirdsQuery([...new Set([...codes, ...targetCodes])].sort())
   // With no signal a new bird's name may only be in another saved list (the picker's, an earlier page's).
-  const nameOf = (code: string) => names.data?.find(b => b.speciesCode === code)?.comName
-    ?? queryClient.getQueriesData<Bird[]>({ queryKey: ['birds'] }).flatMap(([, birds]) => (Array.isArray(birds) ? birds : [])).find(b => b.speciesCode === code)?.comName
-    ?? code
+  const birdOf = (code: string) => names.data?.find(b => b.speciesCode === code)
+    ?? queryClient.getQueriesData<Bird[]>({ queryKey: ['birds'] }).flatMap(([, birds]) => (Array.isArray(birds) ? birds : [])).find(b => b.speciesCode === code)
+  const nameOf = (code: string) => birdOf(code)?.comName ?? code
+  // A small photo to put a face to the name; with no signal it shows if it was saved, else a blank.
+  const photoOf = (code: string) => { const img = birdOf(code)?.birdImg; return img && /^https:\/\//.test(img) ? img : null }
   if (events.isPending) return <LoadingState />
   if (!event) return <section className='event-page'><LoadProblem error={events.error} missing={t('events.tallyMissing')} /><Link to='/events'>{t('events.backToEvents')}</Link></section>
 
@@ -130,7 +132,10 @@ const EventTally = () => {
       {entries.length
         ? <ol className='event-tally__list'>{entries.map(entry => (
             <li key={entry.code} className={entry.pending ? 'event-tally__entry--pending' : undefined} data-pending={entry.pending ? 'true' : undefined}>
-              <span className='event-tally__bird'>{nameOf(entry.code)}</span>
+              <Link className='event-tally__link' to={`/sighting/${encodeURIComponent(entry.code)}/latest?region=${encodeURIComponent(event.location)}`}>
+                <span className='event-tally__photo' aria-hidden='true'>{photoOf(entry.code) && <img src={photoOf(entry.code)!} alt='' loading='lazy' onError={(e) => { e.currentTarget.hidden = true }} />}</span>
+                <span className='event-tally__bird'>{nameOf(entry.code)}</span>
+              </Link>
               {entry.pending && <span className='event-tally__waiting' title={t('offline.waitingOne')}><ClockIcon /><span className='visually-hidden'>{t('offline.waitingOne')}</span></span>}
               <span className='event-tally__who'>{whoWhen(entry)}</span>
               {confirming === entry.code
