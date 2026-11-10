@@ -186,6 +186,7 @@ const Sighting = () => {
           <div className='sighting__name'>
             <h1 className='fredericka'>{name}</h1>
             {bird && <SoundPill state={sound.state} name={name} className='pill-button--small' onToggle={() => { void sound.toggle() }} />}
+            {bird?.wikiURL && <a className='pill-button pill-button--small' href={bird.wikiURL} target='_blank' rel='noreferrer'>{t('sighting.wikipedia')}</a>}
           </div>
           {bird?.sciName && <p className='sighting__sci'>{bird.sciName}</p>}
           {bird?.aba && bird.aba >= 3 && bird.aba <= 5 && <p className='sighting__aba'><AbaCode code={bird.aba} explain /></p>}
@@ -212,7 +213,6 @@ const Sighting = () => {
                   })
                 }}>{isSeen ? t('sighting.onLife') : t('sighting.seenIt')}</button>
             })()}
-            {bird?.wikiURL && <a className='pill-button' href={bird.wikiURL} target='_blank' rel='noreferrer'>{t('sighting.wikipedia')}</a>}
           </div>
         </div>
         {seasonality.data?.months && (
