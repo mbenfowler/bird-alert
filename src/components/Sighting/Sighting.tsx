@@ -197,10 +197,10 @@ const Sighting = () => {
           {(sound.state === 'playing' || sound.state === 'paused') && <p className='sighting__credit'><SoundCredit sound={sound.sound} /></p>}
           <div className='sighting__actions'>
             <a className='pill-button pill-button--primary' href={ebirdHref} target='_blank' rel='noreferrer'>{current?.subId ? t('sighting.viewChecklist') : t('sighting.viewEbird')}</a>
-            {bird && <button type='button' className='pill-button' onClick={watch} disabled={toggleSaved.isPending} aria-pressed={isWatched}>{isWatched ? t('sighting.onWatch') : t('sighting.addWatch')}</button>}
             {bird && current && <button type='button' className='pill-button' onClick={() => {
               void shareThing({ kind: 'sighting', speciesCode: bird.speciesCode, locId: current.locId, locName: current.locName, lat: current.lat, lng: current.lng, obsDt: current.obsDt, howMany: current.howMany ?? null, subId: current.subId, regionName }, t('sighting.shareTitle', { name: bird.comName, place: current.locName }))
             }}><ShareIcon className='pill-button__icon' />{t('sighting.share')}</button>}
+            {bird && <button type='button' className={`pill-button ${isWatched ? 'pill-button--watched' : ''}`} onClick={watch} disabled={toggleSaved.isPending} aria-pressed={isWatched}>{isWatched ? t('sighting.onWatch') : t('sighting.addWatch')}</button>}
             {bird && (() => {
               const isSeen = seen.codes.has(bird.speciesCode)
               return <button type='button' className={`pill-button ${isSeen ? 'pill-button--seen' : ''}`} disabled={!seen.loaded} aria-pressed={isSeen}
