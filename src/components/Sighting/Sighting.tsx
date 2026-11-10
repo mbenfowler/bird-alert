@@ -247,7 +247,7 @@ const Sighting = () => {
             {current && <Evidence evidence={current.evidence} />}
             <div className='sighting__actions'>
               {current && <a className='pill-button pill-button--primary pill-button--small' href={mapsHref(current)} target='_blank' rel='noreferrer'>{t('route.openMaps')}</a>}
-              <a className='pill-button pill-button--small' href={ebirdHref} target='_blank' rel='noreferrer'>{t('sighting.viewEbird')}</a>
+              <a className='pill-button pill-button--small' href={ebirdHref} target='_blank' rel='noreferrer'>{current?.subId ? t('sighting.viewChecklist') : t('sighting.viewEbird')}</a>
             </div>
           </div>
         </div>
