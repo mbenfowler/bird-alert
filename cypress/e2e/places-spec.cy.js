@@ -77,6 +77,21 @@ describe('Places and exploring', () => {
     cy.wait('@patchUser').its('request.body').should('deep.equal', { keep_home_alerts: false })
   })
 
+  it('during an event, "I\'m here now" says the event keeps the area and offers Explore instead', () => {
+    const activePlace = { id: 'event-2', name: 'Big Day 2027', state: 'AZ', location: 'US-AZ-003', via: 'event' }
+    stubAuth({ loggedIn: true, user: { ...TEST_USER, activePlace, activeEvent: { id: 2, name: 'Big Day 2027', count: 0 } } })
+    stubRegions()
+    stubBirds()
+    cy.intercept('GET', '**/api/saved?kind=places*', { statusCode: 200, body: [colorado()] })
+    cy.intercept('PATCH', '**/api/user*', cy.spy().as('patch'))
+    cy.visit('http://localhost:3000/settings?tab=places')
+    cy.contains('.place button', "I'm here now").click()
+    cy.get('[data-testid="here-now-event"]').should('contain', "You're at Big Day 2027 today, so your alerts stay on").and('contain', 'Colorado (work)')
+    cy.get('@patch').should('not.have.been.called')
+    cy.contains('[data-testid="here-now-event"] button', 'Explore it').click()
+    cy.location('search').should('include', `region=${DENVER}`)
+  })
+
   it('at a place, the home screen shows it until asked for home', () => {
     const activePlace = { id: 7, name: 'Colorado (work)', state: 'CO', location: DENVER, via: 'manual' }
     stubAuth({ loggedIn: true, user: { ...TEST_USER, activePlace } })

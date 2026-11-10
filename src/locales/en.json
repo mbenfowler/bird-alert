@@ -1272,6 +1272,8 @@
     "deleteLabel": "Delete {{name}}",
     "hereNow": "I'm here now",
     "switched": "Switched to {{name}}.",
+    "hereNowEvent": "You're at {{event}} today, so your alerts stay on {{area}} until it ends. Just want to look at {{name}}?",
+    "exploreIt": "Explore it",
     "seeBirds": "See birds here",
     "active": "You're here",
     "targets": "Target birds",
