@@ -10,7 +10,7 @@ describe('Sighting page and region map', () => {
     cy.get('.alerts-list .alert-link').first().click()
     cy.url().should('include', '/sighting/cangoo/S155544243')
     cy.get('.sighting__title h1').should('contain', 'Canada Goose')
-    cy.get('.sighting__photo').should('have.attr', 'src').and('include', 'unsplash')
+    cy.get('.sighting__photo img').should('have.attr', 'src').and('include', 'unsplash')
     cy.get('.sighting__meta').should('contain', "Rusty's Gainesville Yard")
     cy.get('.sightings-map .map-pin').should('have.length.at.least', 1)
     cy.get('.sightings-map .map-pin--highlight').should('have.length', 1)

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type CSSProperties } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { toast } from 'react-toastify'
 import SightingsMap, { type MapPoint } from '../SightingsMap/SightingsMap'
@@ -181,7 +181,10 @@ const Sighting = () => {
     <section className='sighting'>
       <BackButton />
       <header className='sighting__hero'>
-        <img className='sighting__photo' src={img} alt={t('card.photoAlt', { name })} />
+        {/* The whole photo, never cropped; a blurred copy fills the box around a tall or wide one. */}
+        <div className='sighting__photo' style={{ '--photo': `url("${img}")` } as CSSProperties}>
+          <img src={img} alt={t('card.photoAlt', { name })} />
+        </div>
         <div className='sighting__title'>
           <div className='sighting__name'>
             <h1 className='fredericka'>{name}</h1>
