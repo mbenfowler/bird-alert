@@ -5,7 +5,7 @@ import { useCurrentUser, useEventsQuery } from '../../hooks/queries'
 import { usePatchUserMutation } from '../../hooks/mutations'
 import { useAreaName } from '../../shownArea'
 import { daysUntil, t } from '../../i18n'
-import { eventPath, tallyCodes } from './events'
+import { eventPath, tallyCodes, today } from './events'
 import '../AreaBanner/AreaBanner.css'
 
 /**
@@ -15,9 +15,15 @@ import '../AreaBanner/AreaBanner.css'
  */
 const EventBanner = () => {
   const user = useCurrentUser()
-  const active = user.activeEvent ?? null
   const upcoming = user.upcomingEvent ?? null
-  const events = useEventsQuery(Boolean(active))
+  // The server says which event is on today, but the account kept on the phone can be from
+  // yesterday: opened with no signal on the day, the event's own dates (kept too) decide.
+  const events = useEventsQuery(Boolean(user.activeEvent))
+  const now = today()
+  const onToday = events.data?.find(e => !e.archived && !e.past && e.starts_on <= now && now <= e.ends_on)
+  const active = user.activeEvent
+    ?? (onToday ? { id: onToday.id, name: onToday.name } : null)
+    ?? (upcoming && upcoming.starts_on <= now ? { id: upcoming.id, name: upcoming.name } : null)
   const patch = usePatchUserMutation()
   const homeName = useAreaName(user.state, user.location)
   const [welcome, setWelcome] = useState(() => (!active ? user.lastEvent ?? null : null))
