@@ -195,6 +195,16 @@ const PlaceCard = ({ place }: { place: SavedPlace }) => {
     .sort((a, b) => a.starts_on.localeCompare(b.starts_on))
   const areaName = useAreaName(place.state, place.location)
   const here = user.activePlace ? String(user.activePlace.id) === String(place.id) : false
+  // While an event is on, it sets the person's area until it ends (the server's rule), so "I'm here
+  // now" can't take; say so, and offer a look instead.
+  const event = user.activeEvent && user.activePlace && String(user.activePlace.id).startsWith('event-') ? user.activePlace : null
+  const eventArea = useAreaName(event?.state ?? place.state, event?.location ?? place.location)
+  const [eventNote, setEventNote] = useState(false)
+  const seeBirds = () => navigate(`/?region=${encodeURIComponent(place.location)}`)
+  const hereNow = () => {
+    if (event) { setEventNote(true); return }
+    patch.mutate({ active_place_id: place.id }, { onSuccess: () => toast.success(t('places.switched', { name: place.name }), { position: 'bottom-center' }) })
+  }
   if (editing) return <li className='place'><PlaceForm place={place} onDone={() => setEditing(false)} /></li>
   return (
     <li className={`place ${here ? 'is-here' : ''}`}>
@@ -205,12 +215,19 @@ const PlaceCard = ({ place }: { place: SavedPlace }) => {
       <p className='place__actions'>
         {here
           ? <button type='button' className='pill-button pill-button--small' disabled={patch.isPending} onClick={() => patch.mutate({ active_place_id: null })}>{t('places.backHome')}</button>
-          : <button type='button' className='pill-button pill-button--small' disabled={patch.isPending} onClick={() => patch.mutate({ active_place_id: place.id }, { onSuccess: () => toast.success(t('places.switched', { name: place.name }), { position: 'bottom-center' }) })}>{t('places.hereNow')}</button>}
-        <button type='button' className='link-button link-text' onClick={() => navigate(`/?region=${encodeURIComponent(place.location)}`)}>{t('places.seeBirds')}</button>
+          : <button type='button' className='pill-button pill-button--small' disabled={patch.isPending} onClick={hereNow}>{t('places.hereNow')}</button>}
+        <button type='button' className='link-button link-text' onClick={seeBirds}>{t('places.seeBirds')}</button>
         <Link className='link-button link-text' to={`/events/new?place=${encodeURIComponent(String(place.id))}`}>{t('places.newEvent')}</Link>
         <button type='button' className='link-button link-text' aria-label={t('places.editLabel', { name: place.name })} onClick={() => setEditing(true)}>{t('places.edit')}</button>
         {!confirming && <button type='button' className='link-button link-text' aria-label={t('places.deleteLabel', { name: place.name })} onClick={() => setConfirming(true)}>{t('places.delete')}</button>}
       </p>
+      {eventNote && event && (
+        <p className='place__actions place__note' role='status' data-testid='here-now-event'>
+          <span>{t('places.hereNowEvent', { event: event.name, area: eventArea, name: place.name })}</span>
+          <button type='button' className='pill-button pill-button--small' onClick={seeBirds}>{t('places.exploreIt')}</button>
+          <button type='button' className='link-button link-text' onClick={() => setEventNote(false)}>{t('common.ok')}</button>
+        </p>
+      )}
       {confirming && (
         <p className='place__actions place__confirm' role='alert'>
           <span>{t('places.deleteSure')}</span>

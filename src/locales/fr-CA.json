@@ -1397,6 +1397,8 @@
     "deleteLabel": "Supprimer {{name}}",
     "hereNow": "J’y suis",
     "switched": "Passé à {{name}}.",
+    "hereNowEvent": "Aujourd’hui, tu es à « {{event}} », donc tes alertes restent sur {{area}} jusqu’à la fin. Tu veux seulement regarder {{name}}?",
+    "exploreIt": "Explorer",
     "seeBirds": "Voir les oiseaux ici",
     "active": "Tu es ici",
     "targets": "Espèces cibles",
