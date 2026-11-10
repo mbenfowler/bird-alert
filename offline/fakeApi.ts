@@ -95,6 +95,8 @@ export const fakeApi = async (context: BrowserContext) => {
     /** Return 'fail' to drop a request (as one bar of signal does), or nothing to answer it. */
     interfere: null as null | ((route: Route) => 'fail' | void),
     meFails: false,
+    /** Fields the session answer adds to USER (activeEvent, …). */
+    userPatch: {} as Record<string, unknown>,
     /** What the service worker reported (POST /api/push/trace): 'activate', 'push', … */
     traces: [] as Array<{ event: string; title?: string }>
   }
@@ -123,7 +125,7 @@ export const fakeApi = async (context: BrowserContext) => {
     state.calls.push(`${method} ${kind ?? url.pathname}`)
     if (url.pathname.endsWith('/api/auth/me')) {
       if (state.meFails) return route.abort('connectionreset')
-      return route.fulfill(state.loggedIn ? json(USER) : json({ error: 'Not logged in' }, 401))
+      return route.fulfill(state.loggedIn ? json({ ...USER, ...state.userPatch }) : json({ error: 'Not logged in' }, 401))
     }
     if (url.pathname.endsWith('/api/birds')) {
       const codes = (url.searchParams.get('codes') ?? '').split(',')
