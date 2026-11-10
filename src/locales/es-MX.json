@@ -1263,7 +1263,7 @@
     "noneRegion": "No hay reportes de esta especie en tu región en los últimos 30 días.",
     "tooOld": "Este reporte tiene más de 30 días, así que sus detalles ya no están en el feed reciente de eBird.",
     "viewEbird": "Ver en eBird",
-    "viewChecklist": "Ver la lista en eBird",
+    "viewChecklist": "Lista en eBird",
     "whereFind": "Dónde encontrarla",
     "best": "Mejor {{when}}",
     "usuallyBest": "Suele ser mejor: {{when}}",

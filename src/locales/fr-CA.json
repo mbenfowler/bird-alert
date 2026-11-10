@@ -1280,7 +1280,7 @@
     "noneRegion": "Aucune mention de cette espèce dans ta région dans les 30 derniers jours.",
     "tooOld": "Cette mention date de plus de 30 jours, alors ses détails ne sont plus dans le fil récent d’eBird.",
     "viewEbird": "Voir sur eBird",
-    "viewChecklist": "Voir la liste dans eBird",
+    "viewChecklist": "Liste eBird",
     "whereFind": "Où le trouver",
     "best": "Idéal {{when}}",
     "usuallyBest": "Meilleur moment : {{when}}",
