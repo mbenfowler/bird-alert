@@ -25,6 +25,18 @@ const stubPage = (recap, tally = []) => {
 const copied = (win) => cy.stub(win.navigator.clipboard, 'writeText').as('copy').resolves()
 
 describe('Event recap', () => {
+  it('first and last bird close together: a dash on the middle of the birded stretch, a time either side', () => {
+    const recap = membersRecap()
+    recap.totals.firstBird.at = '2026-11-10T14:21:00Z'
+    recap.totals.lastBird.at = '2026-11-10T15:38:00Z'
+    stubPage({ statusCode: 200, body: recap })
+    cy.visit('/events/2')
+    cy.wait('@recap')
+    cy.get('[data-testid="recap-bird-span"]').invoke('text').should('match', /^7:21\sAMfirst bird–8:38\sAMlast bird$/)
+    cy.get('.recap-strip__label').should('have.length', 3)
+    cy.get('.recap-strip__birding').should('exist')
+  })
+
   it('no bird placed at any stop: the stops show without a column of +0', () => {
     const recap = membersRecap()
     recap.stops = recap.stops.map((s) => ({ ...s, added: 0, species: 0 }))

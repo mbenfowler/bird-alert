@@ -1727,6 +1727,8 @@
     "stripLabel": "Primera ave {{first}}, última ave {{last}}. Salida del sol {{sunrise}}, puesta del sol {{sunset}}.",
     "firstBird": "{{time}} · primera ave",
     "lastBird": "última ave · {{time}}",
+    "firstBirdWord": "primera ave",
+    "lastBirdWord": "última ave",
     "sunrise": "amanecer {{time}}",
     "sunset": "atardecer {{time}}",
     "noon": "mediodía",

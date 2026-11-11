@@ -1602,6 +1602,8 @@
     "stripLabel": "First bird {{first}}, last bird {{last}}. Sunrise {{sunrise}}, sunset {{sunset}}.",
     "firstBird": "{{time}} · first bird",
     "lastBird": "last bird · {{time}}",
+    "firstBirdWord": "first bird",
+    "lastBirdWord": "last bird",
     "sunrise": "sunrise {{time}}",
     "sunset": "sunset {{time}}",
     "noon": "noon",

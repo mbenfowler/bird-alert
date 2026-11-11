@@ -197,6 +197,15 @@
     background: #e9b949;
 }
 
+/* The stretch between the first and last birds: the time spent birding. */
+.recap-strip__birding {
+    position: absolute;
+    top: 22px;
+    height: 12px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.55);
+}
+
 .recap-strip__mark {
     position: absolute;
     top: 14px;
@@ -212,6 +221,40 @@
     top: -4px;
     color: #ffffff;
     white-space: nowrap;
+}
+
+.recap-strip__label--dash {
+    transform: translateX(-50%);
+}
+
+/* Close together: time over word on each side, so the bar sits a line lower. */
+.recap-strip__label--stack {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.recap-strip__label--stack.recap-strip__label--end {
+    align-items: flex-end;
+}
+
+.recap-strip__label--stack small {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+.recap-strip--close .recap-strip__bar {
+    height: 68px;
+}
+
+.recap-strip--close .recap-strip__track,
+.recap-strip--close .recap-strip__sun,
+.recap-strip--close .recap-strip__birding {
+    top: 36px;
+}
+
+.recap-strip--close .recap-strip__mark {
+    top: 28px;
 }
 
 .recap-strip__hours {
