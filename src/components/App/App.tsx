@@ -20,6 +20,7 @@ import { checkThisDevice, deviceId } from '../../hooks/usePushNotifications'
 import { offerRestore } from '../../pushAsk'
 import { isIOS } from '../../install'
 import { soundTheAlarm } from '../../alertMode'
+import { kindFor } from '../../alertSounds'
 import { useSessionQuery } from '../../hooks/queries'
 import './App.css'
 import Login from '../Login/Login'
@@ -188,7 +189,28 @@ const App = () => {
     }
     // A target is followed once, and never offered as a toast when the app is already there or on its way.
     let lastOpened: string | null = null
-    let lastAlarmed: string | null = null
+    // Each alert sounds once on this device, whichever way the page heard of it first.
+    // Keyed by title and target (a batch's "/map" repeats every hour), kept for ten minutes.
+    const alarmed = new Map<string, number>()
+    // A run of pushes (the hourly batch sends several at once) sounds once, for the biggest.
+    let burst: string[] = []
+    let burstTimer: number | undefined
+    const RANK: Record<string, number> = { watchlist: 0, notable: 1, lifer: 1, mega: 2 }
+    const alarmFor = (title: string, path: string | null) => {
+      const key = `${title}|${path ?? ''}`
+      const now = Date.now()
+      for (const [k, at] of alarmed) if (now - at > 10 * 60_000) alarmed.delete(k)
+      if (alarmed.has(key)) return
+      alarmed.set(key, now)
+      burst.push(title)
+      window.clearTimeout(burstTimer)
+      burstTimer = window.setTimeout(() => {
+        const loudest = burst.reduce((best, next) => (RANK[kindFor(next)] > RANK[kindFor(best)] ? next : best))
+        burst = []
+        note('app-alarm', { title: loudest })
+        soundTheAlarm(loudest)
+      }, 1500)
+    }
     const here = () => window.location.pathname + window.location.search + window.location.hash
     const go = (path: string | null, via: string) => {
       if (!path || cancelled || path === lastOpened) return
@@ -202,7 +224,7 @@ const App = () => {
       if (push.path === lastOpened || push.path === here()) return
       note('app-toast', { via, target: push.path })
       // Once per alert, however many times it is offered.
-      if (push.path !== lastAlarmed) { lastAlarmed = push.path; soundTheAlarm(push.title) }
+      alarmFor(push.title, push.path)
       // On iPhone the system banner is a dead end while the app is open, so this toast is the way in; give it time.
       toast(t('app.pushToast', { title: push.title }), { toastId: push.path, position: 'top-center', autoClose: 20000, closeOnClick: true, onClick: () => navigateRef.current(push.path, { state: { fromPush: true } }) })
     }
@@ -215,6 +237,11 @@ const App = () => {
     const onMessage = (event: MessageEvent) => {
       const data = event.data as { type?: unknown; url?: unknown } | null
       if (data && data.type === 'open') { void takePendingOpen(); go(samePath(data.url), 'message') }
+      // The worker tells every open page the moment a push arrives, even one in a background tab
+      // (which never asks the server), so a desktop left open behind other windows still sounds.
+      if (data && data.type === 'push' && typeof (data as { title?: unknown }).title === 'string') {
+        alarmFor((data as { title: string }).title, samePath(typeof data.url === 'string' ? data.url : null))
+      }
     }
     // The server knows about every push it sent and every tap the worker reported, which is the
     // only route that reaches an open iPhone app. Polled while visible: quickly after a push.
@@ -248,6 +275,7 @@ const App = () => {
       cancelled = true
       window.clearInterval(timer)
       window.clearTimeout(serverTimer)
+      window.clearTimeout(burstTimer)
       document.removeEventListener('visibilitychange', onVisible)
       window.removeEventListener('focus', onFocus)
       document.removeEventListener('visibilitychange', check)

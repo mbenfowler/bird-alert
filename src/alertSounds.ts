@@ -58,6 +58,16 @@ if (typeof window !== 'undefined') {
   for (const type of ['pointerdown', 'keydown'] as const) window.addEventListener(type, unlockAudio, { passive: true })
 }
 const ready = () => (audio && audio.state === 'running' ? audio : null)
+/**
+ * The audio for an alarm that wasn't set off by a tap (a push, often in a background tab): a page
+ * clicked at any point since it loaded may start it again; one never touched stays silent.
+ */
+const wake = async () => {
+  if (ready()) return ready()
+  unlockAudio()
+  try { await Promise.race([audio?.resume(), new Promise(resolve => setTimeout(resolve, 300))]) } catch { /* not allowed yet */ }
+  return ready()
+}
 
 /** One note: a shape, a pitch (optionally sliding), a soft envelope, through an optional low-pass. */
 const note = (a: AudioContext, o: { at: number; dur: number; freq: number; to?: number; type?: OscillatorType; gain: number; decay?: boolean; lowpass?: number }) => {
@@ -77,12 +87,11 @@ const note = (a: AudioContext, o: { at: number; dur: number; freq: number; to?: 
   osc.start(o.at)
   osc.stop(o.at + o.dur + 0.05)
 }
-const synth = (build: (a: AudioContext, t: number, v: number) => number) => ({ volume }: PlayContext) => new Promise<void>((resolve) => {
-  const a = ready()
+const synth = (build: (a: AudioContext, t: number, v: number) => number) => ({ volume }: PlayContext) => wake().then((a) => new Promise<void>((resolve) => {
   if (!a) return resolve()
   const seconds = build(a, a.currentTime + 0.02, volume)
   window.setTimeout(resolve, seconds * 1000 + 50)
-})
+}))
 
 const chime = synth((a, t, v) => {
   // Three bell notes, each with a quiet octave above, ringing out.
