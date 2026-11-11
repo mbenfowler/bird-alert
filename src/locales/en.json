@@ -1313,6 +1313,7 @@
     "tripEmails": "Event emails",
     "tripEmailsHint": "When an event starts and the day before it ends.",
     "welcomeBack": "Welcome back: alerts are back to {{name}}.",
+    "welcomeBackPlace": "Welcome back. Your alerts are still set to {{name}}.",
     "newEvent": "New event here"
   },
   "events": {

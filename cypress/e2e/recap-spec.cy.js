@@ -37,6 +37,17 @@ describe('Event recap', () => {
     cy.get('.recap-strip__birding').should('exist')
   })
 
+  it('no bird placed at any stop: the stops show without a column of +0', () => {
+    const recap = membersRecap()
+    recap.stops = recap.stops.map((s) => ({ ...s, added: 0, species: 0 }))
+    recap.totals.bestStop = null
+    stubPage({ statusCode: 200, body: recap })
+    cy.visit('/events/2')
+    cy.wait('@recap')
+    cy.get('[data-testid="recap-stops"] li').should('have.length', 6)
+    cy.get('[data-testid="recap-stops"] .recap-stop__count').should('not.exist')
+  })
+
   it('leads the event page once it is over, with the plan folded away below', () => {
     stubPage({ statusCode: 200, body: membersRecap() })
     cy.visit('/events/2', { onBeforeLoad: copied })

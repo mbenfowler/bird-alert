@@ -16,7 +16,7 @@ import PushAsk from '../PushAsk/PushAsk'
 import EbirdCredit from '../EbirdCredit/EbirdCredit'
 import PullToRefresh from '../PullToRefresh/PullToRefresh'
 import { prefersReducedMotion } from '../../routeDraw'
-import { checkThisDevice, deviceId } from '../../hooks/usePushNotifications'
+import { checkThisDevice, deviceId, lastAskReason } from '../../hooks/usePushNotifications'
 import { offerRestore } from '../../pushAsk'
 import { isIOS } from '../../install'
 import { soundTheAlarm } from '../../alertMode'
@@ -148,7 +148,7 @@ const App = () => {
       last = Date.now()
       const result = await checkThisDevice().catch((error: unknown) => `error: ${error instanceof Error ? error.message : String(error)}`)
       if (result === 'ask') offerRestore()
-      if (isIOS() || result === 'healed' || result === 'ask') void tracePushHealth(String(result))
+      if (isIOS() || result === 'healed' || result === 'ask') void tracePushHealth(result === 'ask' ? `ask: ${lastAskReason}`.slice(0, 120) : String(result))
     }
     void run()
     const onVisible = () => { if (document.visibilityState === 'visible') void run() }

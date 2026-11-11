@@ -1423,6 +1423,7 @@
     "tripEmails": "Correos de eventos",
     "tripEmailsHint": "Cuando empieza un evento y el día antes de que termine.",
     "welcomeBack": "¡Qué bueno que volviste! Las alertas regresaron a {{name}}.",
+    "welcomeBackPlace": "¡Qué bueno que volviste! Tus alertas siguen en {{name}}.",
     "newEvent": "Nuevo evento aquí"
   },
   "events": {
