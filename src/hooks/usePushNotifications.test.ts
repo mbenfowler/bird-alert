@@ -10,7 +10,7 @@ const api = vi.hoisted(() => ({
 }))
 vi.mock('../apiCalls', () => api)
 
-import { checkThisDevice, usePushNotifications, PUSH_CHANGED } from './usePushNotifications'
+import { checkThisDevice, lastAskReason, usePushNotifications, PUSH_CHANGED } from './usePushNotifications'
 
 const makeSub = (endpoint = 'https://web.push.apple.com/new') => ({ endpoint, toJSON: () => ({ endpoint, keys: { p256dh: 'k', auth: 'a' } }), unsubscribe: vi.fn(async () => true) })
 
@@ -110,6 +110,27 @@ describe('checkThisDevice', () => {
     expect(await checkThisDevice()).toBe('ask')
     fakeBrowser({ permission: 'default' })
     expect(await checkThisDevice()).toBe('ask')
+  })
+
+  it('finds the subscription on the worker running the page when the page address lookup has none', async () => {
+    localStorage.setItem('bird-alert:push-here', 'on')
+    fakeBrowser({ refuse: true })
+    const live = makeSub('https://fcm.googleapis.com/live')
+    const running = { pushManager: { getSubscription: vi.fn(async () => live), subscribe: vi.fn() } }
+    const worker = navigator.serviceWorker as unknown as Record<string, unknown>
+    Object.defineProperty(navigator, 'serviceWorker', { configurable: true, value: { ...worker, ready: Promise.resolve(running), controller: {} } })
+    expect(await checkThisDevice()).toBe('on')
+    expect(api.subscribePush).toHaveBeenCalledWith(expect.objectContaining({ endpoint: 'https://fcm.googleapis.com/live' }))
+  })
+
+  it('says why it asked', async () => {
+    localStorage.setItem('bird-alert:push-here', 'on')
+    fakeBrowser({ refuse: true })
+    expect(await checkThisDevice()).toBe('ask')
+    expect(lastAskReason).toMatch(/^NotAllowedError: /)
+    fakeBrowser({ permission: 'default' })
+    await checkThisDevice()
+    expect(lastAskReason).toBe('permission default')
   })
 
   it('leaves alone a device that never had alerts, one turned off here, and one blocked', async () => {
