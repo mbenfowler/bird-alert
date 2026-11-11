@@ -16,6 +16,21 @@ describe('Alert! mode', () => {
     cy.get('html', { timeout: 12000 }).should('not.have.attr', 'data-alarm')
   })
 
+  it('a burst of pushes told by the worker (as a background tab hears them) sounds once, for the biggest bird', () => {
+    cy.intercept('GET', '**/api/push/pending', { body: { push: null } })
+    cy.intercept('POST', '**/api/push/trace', { statusCode: 204 }).as('trace')
+    cy.window().then((win) => {
+      const channel = new win.BroadcastChannel('bird-alert-notifications')
+      channel.postMessage({ type: 'push', title: '⭐ House Finch spotted 30 mi away!', url: 'http://localhost:3000/sighting/houfin/S10' })
+      channel.postMessage({ type: 'push', title: '❗ Notable: Western Tanager reported nearby', url: 'http://localhost:3000/sighting/westan/S11' })
+      channel.postMessage({ type: 'push', title: '🚨 ABA Code 4: Fan-tailed Warbler reported nearby', url: 'http://localhost:3000/sighting/fatwar/S12' })
+      channel.close()
+    })
+    cy.get('html').should('have.attr', 'data-alarm', 'siren')
+    cy.wait('@trace').its('request.body').should('include', { event: 'app-alarm', title: '🚨 ABA Code 4: Fan-tailed Warbler reported nearby' })
+    cy.get('@trace.all').then((calls) => expect(calls.filter((c) => c.request.body.event === 'app-alarm')).to.have.length(1))
+  })
+
   it('stays dark when this device turned the lights off', () => {
     cy.window().then((win) => win.localStorage.setItem('alertMode', JSON.stringify({ lights: false, sound: false })))
     cy.intercept('GET', '**/api/push/pending', { body: { push: { title: '❗ Notable: Black Scoter reported nearby', url: 'http://localhost:3000/sighting/blksco2/S2', sentAt: new Date().toISOString(), tappedAt: null, offeredAt: null, openedAt: null } } })
