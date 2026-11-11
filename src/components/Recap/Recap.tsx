@@ -68,9 +68,11 @@ const Hero = ({ recap, zone }: { recap: RecapData; zone: string }) => {
             {strip.at.first !== null && <div className='recap-strip__mark' style={{ left: `${strip.at.first}%` }} />}
             {strip.at.last !== null && <div className='recap-strip__mark' style={{ left: `${strip.at.last}%` }} />}
             {close
-              // Marks too close for two labels: one over the stretch they birded.
-              ? <div className='recap-strip__label recap-strip__label--span' data-testid='recap-bird-span' style={spanAt(strip.at.first!, strip.at.last!)}>
-                  {t('recap.birdSpan', { first: timeIn(first, zone), last: timeIn(last, zone) })}
+              // Marks too close for two labels: the dash on the middle of the birded stretch, a time either side.
+              ? <div data-testid='recap-bird-span'>
+                  <div className='recap-strip__label recap-strip__label--end' style={{ right: `calc(${100 - spanMiddle(strip.at.first!, strip.at.last!)}% + 0.6em)` }}>{timeIn(first, zone)}</div>
+                  <div className='recap-strip__label recap-strip__label--dash' style={{ left: `${spanMiddle(strip.at.first!, strip.at.last!)}%` }}>–</div>
+                  <div className='recap-strip__label' style={{ left: `calc(${spanMiddle(strip.at.first!, strip.at.last!)}% + 0.6em)` }}>{timeIn(last, zone)}</div>
                 </div>
               : <>
                   {strip.at.first !== null && <div className='recap-strip__label' style={{ left: `${strip.at.first}%` }}>{t('recap.firstBird', { time: timeIn(first, zone) })}</div>}
@@ -90,13 +92,8 @@ const Hero = ({ recap, zone }: { recap: RecapData; zone: string }) => {
   )
 }
 
-/** One label over the birded stretch: centred on it, or held to its edge near either end of the bar. */
-const spanAt = (first: number, last: number) => {
-  const middle = (first + last) / 2
-  if (middle < 22) return { left: `${first}%` }
-  if (middle > 78) return { right: `${100 - last}%` }
-  return { left: `${middle}%`, transform: 'translateX(-50%)' }
-}
+/** The middle of the birded stretch, kept far enough from either end of the bar for a time on each side. */
+const spanMiddle = (first: number, last: number) => Math.max(18, Math.min(82, (first + last) / 2))
 
 /** The day in numbers: stops, distance, time out, the best stop and the best hour, each only when known. */
 const Stats = ({ recap, zone }: { recap: RecapData; zone: string }) => {

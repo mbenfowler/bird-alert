@@ -223,8 +223,8 @@
     white-space: nowrap;
 }
 
-.recap-strip__label--span {
-    font-weight: 600;
+.recap-strip__label--dash {
+    transform: translateX(-50%);
 }
 
 .recap-strip__hours {
