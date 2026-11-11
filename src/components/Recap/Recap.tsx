@@ -70,9 +70,9 @@ const Hero = ({ recap, zone }: { recap: RecapData; zone: string }) => {
             {close
               // Marks too close for two labels: the dash on the middle of the birded stretch, a time either side.
               ? <div data-testid='recap-bird-span'>
-                  <div className='recap-strip__label recap-strip__label--end' style={{ right: `calc(${100 - spanMiddle(strip.at.first!, strip.at.last!)}% + 0.6em)` }}>{timeIn(first, zone)}</div>
+                  <div className='recap-strip__label recap-strip__label--end' style={{ right: `calc(${100 - spanMiddle(strip.at.first!, strip.at.last!)}% + 0.6em)` }}>{t('recap.firstBirdBefore', { time: timeIn(first, zone) })}</div>
                   <div className='recap-strip__label recap-strip__label--dash' style={{ left: `${spanMiddle(strip.at.first!, strip.at.last!)}%` }}>–</div>
-                  <div className='recap-strip__label' style={{ left: `calc(${spanMiddle(strip.at.first!, strip.at.last!)}% + 0.6em)` }}>{timeIn(last, zone)}</div>
+                  <div className='recap-strip__label' style={{ left: `calc(${spanMiddle(strip.at.first!, strip.at.last!)}% + 0.6em)` }}>{t('recap.lastBirdAfter', { time: timeIn(last, zone) })}</div>
                 </div>
               : <>
                   {strip.at.first !== null && <div className='recap-strip__label' style={{ left: `${strip.at.first}%` }}>{t('recap.firstBird', { time: timeIn(first, zone) })}</div>}
@@ -92,8 +92,8 @@ const Hero = ({ recap, zone }: { recap: RecapData; zone: string }) => {
   )
 }
 
-/** The middle of the birded stretch, kept far enough from either end of the bar for a time on each side. */
-const spanMiddle = (first: number, last: number) => Math.max(18, Math.min(82, (first + last) / 2))
+/** The middle of the birded stretch, kept far enough from either end of the bar for a label on each side. */
+const spanMiddle = (first: number, last: number) => Math.max(28, Math.min(72, (first + last) / 2))
 
 /** The day in numbers: stops, distance, time out, the best stop and the best hour, each only when known. */
 const Stats = ({ recap, zone }: { recap: RecapData; zone: string }) => {
