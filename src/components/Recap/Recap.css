@@ -227,6 +227,36 @@
     transform: translateX(-50%);
 }
 
+/* Close together: time over word on each side, so the bar sits a line lower. */
+.recap-strip__label--stack {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.recap-strip__label--stack.recap-strip__label--end {
+    align-items: flex-end;
+}
+
+.recap-strip__label--stack small {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+.recap-strip--close .recap-strip__bar {
+    height: 68px;
+}
+
+.recap-strip--close .recap-strip__track,
+.recap-strip--close .recap-strip__sun,
+.recap-strip--close .recap-strip__birding {
+    top: 36px;
+}
+
+.recap-strip--close .recap-strip__mark {
+    top: 28px;
+}
+
 .recap-strip__hours {
     display: flex;
     justify-content: space-between;

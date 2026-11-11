@@ -32,7 +32,7 @@ describe('Event recap', () => {
     stubPage({ statusCode: 200, body: recap })
     cy.visit('/events/2')
     cy.wait('@recap')
-    cy.get('[data-testid="recap-bird-span"]').invoke('text').should('match', /^first bird · 7:21\sAM–8:38\sAM · last bird$/)
+    cy.get('[data-testid="recap-bird-span"]').invoke('text').should('match', /^7:21\sAMfirst bird–8:38\sAMlast bird$/)
     cy.get('.recap-strip__label').should('have.length', 3)
     cy.get('.recap-strip__birding').should('exist')
   })
