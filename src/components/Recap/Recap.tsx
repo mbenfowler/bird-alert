@@ -40,6 +40,8 @@ const Hero = ({ recap, zone }: { recap: RecapData; zone: string }) => {
   ].filter(Boolean).join(' · ')
   const first = recap.totals.firstBird?.at ?? recap.timeline[0]?.at
   const last = recap.totals.lastBird?.at ?? recap.timeline[recap.timeline.length - 1]?.at
+  // Each label takes about a third of the bar; closer than that, they'd print over each other.
+  const close = Boolean(strip && strip.at.first !== null && strip.at.last !== null && strip.at.last - strip.at.first < 40)
   const span = strip && strip.at.sunrise !== null && strip.at.sunset !== null ? { left: strip.at.sunrise, width: strip.at.sunset - strip.at.sunrise } : null
   return (
     <section className='recap-hero' aria-labelledby='recapTitle'>
@@ -62,14 +64,18 @@ const Hero = ({ recap, zone }: { recap: RecapData; zone: string }) => {
           <div className='recap-strip__bar' aria-hidden='true'>
             <div className='recap-strip__track' />
             {span && <div className='recap-strip__sun' style={{ left: `${span.left}%`, width: `${span.width}%` }} />}
-            {strip.at.first !== null && <>
-              <div className='recap-strip__mark' style={{ left: `${strip.at.first}%` }} />
-              <div className='recap-strip__label' style={{ left: `${strip.at.first}%` }}>{t('recap.firstBird', { time: timeIn(first, zone) })}</div>
-            </>}
-            {strip.at.last !== null && <>
-              <div className='recap-strip__mark' style={{ left: `${strip.at.last}%` }} />
-              <div className='recap-strip__label recap-strip__label--end' style={{ right: `${100 - strip.at.last}%` }}>{t('recap.lastBird', { time: timeIn(last, zone) })}</div>
-            </>}
+            {strip.at.first !== null && <div className='recap-strip__mark' style={{ left: `${strip.at.first}%` }} />}
+            {strip.at.last !== null && <div className='recap-strip__mark' style={{ left: `${strip.at.last}%` }} />}
+            {close
+              // Marks too close for two labels: one, from whichever side has the room.
+              ? <div className={`recap-strip__label ${strip.at.first! > 50 ? 'recap-strip__label--end' : ''}`} data-testid='recap-bird-span'
+                  style={strip.at.first! > 50 ? { right: `${100 - strip.at.last!}%` } : { left: `${strip.at.first}%` }}>
+                  {t('recap.birdSpan', { first: timeIn(first, zone), last: timeIn(last, zone) })}
+                </div>
+              : <>
+                  {strip.at.first !== null && <div className='recap-strip__label' style={{ left: `${strip.at.first}%` }}>{t('recap.firstBird', { time: timeIn(first, zone) })}</div>}
+                  {strip.at.last !== null && <div className='recap-strip__label recap-strip__label--end' style={{ right: `${100 - strip.at.last}%` }}>{t('recap.lastBird', { time: timeIn(last, zone) })}</div>}
+                </>}
           </div>
           <div className='recap-strip__hours' aria-hidden='true'>
             <span>{hourLabel(Math.floor(strip.start / 60) % 24)}</span>
