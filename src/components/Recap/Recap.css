@@ -197,6 +197,15 @@
     background: #e9b949;
 }
 
+/* The stretch between the first and last birds: the time spent birding. */
+.recap-strip__birding {
+    position: absolute;
+    top: 22px;
+    height: 12px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.55);
+}
+
 .recap-strip__mark {
     position: absolute;
     top: 14px;
@@ -212,6 +221,10 @@
     top: -4px;
     color: #ffffff;
     white-space: nowrap;
+}
+
+.recap-strip__label--span {
+    font-weight: 600;
 }
 
 .recap-strip__hours {

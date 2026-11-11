@@ -64,12 +64,12 @@ const Hero = ({ recap, zone }: { recap: RecapData; zone: string }) => {
           <div className='recap-strip__bar' aria-hidden='true'>
             <div className='recap-strip__track' />
             {span && <div className='recap-strip__sun' style={{ left: `${span.left}%`, width: `${span.width}%` }} />}
+            {strip.at.first !== null && strip.at.last !== null && <div className='recap-strip__birding' style={{ left: `${strip.at.first}%`, width: `${strip.at.last - strip.at.first}%` }} />}
             {strip.at.first !== null && <div className='recap-strip__mark' style={{ left: `${strip.at.first}%` }} />}
             {strip.at.last !== null && <div className='recap-strip__mark' style={{ left: `${strip.at.last}%` }} />}
             {close
-              // Marks too close for two labels: one, from whichever side has the room.
-              ? <div className={`recap-strip__label ${strip.at.first! > 50 ? 'recap-strip__label--end' : ''}`} data-testid='recap-bird-span'
-                  style={strip.at.first! > 50 ? { right: `${100 - strip.at.last!}%` } : { left: `${strip.at.first}%` }}>
+              // Marks too close for two labels: one over the stretch they birded.
+              ? <div className='recap-strip__label recap-strip__label--span' data-testid='recap-bird-span' style={spanAt(strip.at.first!, strip.at.last!)}>
                   {t('recap.birdSpan', { first: timeIn(first, zone), last: timeIn(last, zone) })}
                 </div>
               : <>
@@ -88,6 +88,14 @@ const Hero = ({ recap, zone }: { recap: RecapData; zone: string }) => {
       )}
     </section>
   )
+}
+
+/** One label over the birded stretch: centred on it, or held to its edge near either end of the bar. */
+const spanAt = (first: number, last: number) => {
+  const middle = (first + last) / 2
+  if (middle < 22) return { left: `${first}%` }
+  if (middle > 78) return { right: `${100 - last}%` }
+  return { left: `${middle}%`, transform: 'translateX(-50%)' }
 }
 
 /** The day in numbers: stops, distance, time out, the best stop and the best hour, each only when known. */

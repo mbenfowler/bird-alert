@@ -32,8 +32,9 @@ describe('Event recap', () => {
     stubPage({ statusCode: 200, body: recap })
     cy.visit('/events/2')
     cy.wait('@recap')
-    cy.get('[data-testid="recap-bird-span"]').invoke('text').should('match', /^first bird 7:21\sAM · last bird 8:38\sAM$/)
+    cy.get('[data-testid="recap-bird-span"]').invoke('text').should('match', /^birding 7:21\sAM – 8:38\sAM$/)
     cy.get('.recap-strip__label').should('have.length', 1)
+    cy.get('.recap-strip__birding').should('exist')
   })
 
   it('leads the event page once it is over, with the plan folded away below', () => {
