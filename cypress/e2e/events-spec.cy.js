@@ -234,6 +234,14 @@ describe('Events', () => {
     cy.get('[data-testid="welcome-back"]').should('not.exist')
   })
 
+  it('back from an event while still at a place set by hand: the welcome says where alerts are', () => {
+    const activePlace = { id: 7, name: 'Colorado (work)', state: 'CO', location: 'US-CO-031', via: 'manual' }
+    stubAuth({ loggedIn: true, user: { ...TEST_USER, activePlace, active_place_id: 7, lastEvent: { id: 4, name: 'Madera Canyon', ended_on: day(-1) } } })
+    stubRegions()
+    cy.visit('http://localhost:3000/')
+    cy.get('[data-testid="welcome-back"]').should('contain', 'Welcome back. Your alerts are still set to Colorado (work).')
+  })
+
   it('an invite opened logged out is remembered through signing in, then joins with a name', () => {
     const state = stubAuth({ loggedIn: false })
     cy.intercept('GET', '**/api/saved?kind=event-preview*', { statusCode: 200, body: { name: 'Chiricahuas', area: 'Cochise County, Arizona', starts_on: '2027-05-09', ends_on: '2027-05-09', kind: 'bigday', members: 3 } }).as('preview')

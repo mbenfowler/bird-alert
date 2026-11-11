@@ -11,7 +11,8 @@ import '../AreaBanner/AreaBanner.css'
 /**
  * Events on the home screen. On the day it leads: "Big Day today: Chiricahuas · 31 species · Open
  * tally". Otherwise an event within the week ("Chiricahuas in 3 days · Plan it"), and once, after
- * one ends, that alerts are back home (marked seen at once so it never shows again).
+ * one ends, that alerts are back home, or still at a place set by hand (marked seen at once so it never
+ * shows again; the server then drops a place in the event's area).
  */
 const EventBanner = () => {
   const user = useCurrentUser()
@@ -49,7 +50,7 @@ const EventBanner = () => {
     <>
       {welcome && (
         <p className='area-banner area-banner--quiet' role='status' data-testid='welcome-back'>
-          <span>{t('places.welcomeBack', { name: homeName })}</span>
+          <span>{user.activePlace ? t('places.welcomeBackPlace', { name: user.activePlace.name }) : t('places.welcomeBack', { name: homeName })}</span>
           <button type='button' className='link-button link-text' onClick={() => setWelcome(null)}>{t('common.ok')}</button>
         </p>
       )}
