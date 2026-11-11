@@ -48,19 +48,26 @@ const announce = () => window.dispatchEvent(new Event(PUSH_CHANGED))
 const fileWithServer = (subscription: PushSubscription) =>
   subscribePush({ ...subscription.toJSON(), userAgent: navigator.userAgent, deviceId: deviceId() })
 
-/** This browser's push subscription, when notifications are allowed and it has one. */
-const currentSubscription = async () => {
-  if (!supported() || Notification.permission !== 'granted') return null
-  // getRegistration, not .ready: .ready waits forever on a page that never registered the worker.
-  const registration = await navigator.serviceWorker.getRegistration()
-  return registration ? registration.pushManager.getSubscription() : null
-}
-
 /** The worker's registration, waiting a little for main.tsx to register it on a fresh start. */
 const readyRegistration = (timeoutMs = 10_000) => Promise.race([
   navigator.serviceWorker.ready,
   new Promise<null>(resolve => setTimeout(() => resolve(null), timeoutMs))
 ])
+
+/**
+ * This browser's push subscription, when notifications are allowed and it has one. Asks the
+ * registration for this page's address and, when that has none, the worker running the page: the
+ * Alerts switch asks the latter, and Chrome on a Mac has had one while the former said none.
+ */
+const currentSubscription = async () => {
+  if (!supported() || Notification.permission !== 'granted') return null
+  // getRegistration, not .ready alone: .ready waits forever on a page that never registered the worker.
+  const registration = await navigator.serviceWorker.getRegistration()
+  const found = registration ? await registration.pushManager.getSubscription() : null
+  if (found || !navigator.serviceWorker.controller) return found
+  const running = await readyRegistration(3_000)
+  return running && running !== registration ? running.pushManager.getSubscription() : null
+}
 
 const subscribeHere = async (registration: ServiceWorkerRegistration) => {
   const { publicKey } = await getPushPublicKey()
@@ -75,6 +82,9 @@ const subscribeHere = async (registration: ServiceWorkerRegistration) => {
  * tap to come back: iOS wants a gesture, or it reset the permission), or 'none' (nothing to do here).
  */
 export type DeviceCheck = 'on' | 'healed' | 'ask' | 'none'
+
+/** Why the last check asked for a tap, for the owner's trace: the permission, no worker, or the browser's own error. */
+export let lastAskReason = ''
 
 /**
  * On each sign-in, load and return to the foreground. Notifications belong to the browser, so they
@@ -96,16 +106,17 @@ export const checkThisDevice = async (): Promise<DeviceCheck> => {
   // localStorage may have gone with the subscription, so the server's memory counts too.
   const known = here === 'on' || Boolean((await getPushStatus(undefined, deviceId()).catch(() => null))?.knownDevice)
   if (!known) return 'none'
-  if (Notification.permission !== 'granted') return 'ask'
+  if (Notification.permission !== 'granted') { lastAskReason = `permission ${Notification.permission}`; return 'ask' }
   const registration = await readyRegistration()
-  if (!registration) return 'ask'
+  if (!registration) { lastAskReason = 'no worker'; return 'ask' }
   try {
     await subscribeHere(registration)
     rememberHere('on')
     announce()
     return 'healed'
-  } catch {
+  } catch (error) {
     // WebKit may refuse to subscribe without a tap.
+    lastAskReason = error instanceof Error ? `${error.name}: ${error.message}` : String(error)
     return 'ask'
   }
 }
