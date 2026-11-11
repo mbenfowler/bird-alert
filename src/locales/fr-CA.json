@@ -1440,6 +1440,7 @@
     "tripEmails": "Courriels d’événement",
     "tripEmailsHint": "Quand un événement commence, et la veille de sa fin.",
     "welcomeBack": "De retour : tes alertes sont revenues à {{name}}.",
+    "welcomeBackPlace": "De retour ! Tes alertes sont encore réglées sur {{name}}.",
     "newEvent": "Nouvel événement ici"
   },
   "events": {
