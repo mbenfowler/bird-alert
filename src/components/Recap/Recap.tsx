@@ -270,6 +270,9 @@ const Route = ({ recap, zone }: { recap: RecapData; zone: string }) => {
   const sunset = dayStrip(recap, zone)?.sunset ?? null
   const path = recap.route.line ?? recap.stops.map(s => [s.lat, s.lng] as [number, number])
   const miles = recap.route.miles ?? recap.totals.miles
+  // A bird counts at a stop only when it was added with location on, near the stop. With none, a
+  // column of +0 says nothing: the stops show without counts.
+  const counted = recap.stops.some(s => s.added > 0)
   return (
     <section className='recap-route'>
       <figure className='recap-card recap-route__map'>
@@ -289,11 +292,11 @@ const Route = ({ recap, zone }: { recap: RecapData; zone: string }) => {
                 <span className='recap-stop__name'>{s.name}</span>
                 {when && <span className='recap-stop__when'>{when}</span>}
               </div>
-              <div className='recap-stop__count'>
+              {counted && <div className='recap-stop__count'>
                 {/* One number: the tally keeps each bird at its first stop, so what a stop found is what it added. */}
                 <span className='recap-stop__species'>+{number(s.added)}</span>
                 <span className='recap-stop__added'>{[t('recap.stopNew'), best ? t('recap.stopBest') : null].filter(Boolean).join(' · ')}</span>
-              </div>
+              </div>}
             </li>
           )
         })}
