@@ -25,16 +25,13 @@ const stubPage = (recap, tally = []) => {
 const copied = (win) => cy.stub(win.navigator.clipboard, 'writeText').as('copy').resolves()
 
 describe('Event recap', () => {
-  it('first and last bird close together: one label, not two printed over each other', () => {
-    const recap = membersRecap()
-    recap.totals.firstBird.at = '2026-11-10T14:21:00Z'
-    recap.totals.lastBird.at = '2026-11-10T15:38:00Z'
-    stubPage({ statusCode: 200, body: recap })
+  it('the day strip is a picture: night, daylight and the birding stretch, with the times in its label', () => {
+    stubPage({ statusCode: 200, body: membersRecap() })
     cy.visit('/events/2')
     cy.wait('@recap')
-    cy.get('[data-testid="recap-bird-span"]').invoke('text').should('match', /^birding 7:21\sAM – 8:38\sAM$/)
-    cy.get('.recap-strip__label').should('have.length', 1)
     cy.get('.recap-strip__birding').should('exist')
+    cy.get('.recap-strip__mark').should('have.length', 2)
+    cy.get('.recap-strip').should('have.attr', 'aria-label').and('match', /5:41/)
   })
 
   it('leads the event page once it is over, with the plan folded away below', () => {

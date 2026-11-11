@@ -40,8 +40,6 @@ const Hero = ({ recap, zone }: { recap: RecapData; zone: string }) => {
   ].filter(Boolean).join(' · ')
   const first = recap.totals.firstBird?.at ?? recap.timeline[0]?.at
   const last = recap.totals.lastBird?.at ?? recap.timeline[recap.timeline.length - 1]?.at
-  // Each label takes about a third of the bar; closer than that, they'd print over each other.
-  const close = Boolean(strip && strip.at.first !== null && strip.at.last !== null && strip.at.last - strip.at.first < 40)
   const span = strip && strip.at.sunrise !== null && strip.at.sunset !== null ? { left: strip.at.sunrise, width: strip.at.sunset - strip.at.sunrise } : null
   return (
     <section className='recap-hero' aria-labelledby='recapTitle'>
@@ -67,15 +65,6 @@ const Hero = ({ recap, zone }: { recap: RecapData; zone: string }) => {
             {strip.at.first !== null && strip.at.last !== null && <div className='recap-strip__birding' style={{ left: `${strip.at.first}%`, width: `${strip.at.last - strip.at.first}%` }} />}
             {strip.at.first !== null && <div className='recap-strip__mark' style={{ left: `${strip.at.first}%` }} />}
             {strip.at.last !== null && <div className='recap-strip__mark' style={{ left: `${strip.at.last}%` }} />}
-            {close
-              // Marks too close for two labels: one over the stretch they birded.
-              ? <div className='recap-strip__label recap-strip__label--span' data-testid='recap-bird-span' style={spanAt(strip.at.first!, strip.at.last!)}>
-                  {t('recap.birdSpan', { first: timeIn(first, zone), last: timeIn(last, zone) })}
-                </div>
-              : <>
-                  {strip.at.first !== null && <div className='recap-strip__label' style={{ left: `${strip.at.first}%` }}>{t('recap.firstBird', { time: timeIn(first, zone) })}</div>}
-                  {strip.at.last !== null && <div className='recap-strip__label recap-strip__label--end' style={{ right: `${100 - strip.at.last}%` }}>{t('recap.lastBird', { time: timeIn(last, zone) })}</div>}
-                </>}
           </div>
           <div className='recap-strip__hours' aria-hidden='true'>
             <span>{hourLabel(Math.floor(strip.start / 60) % 24)}</span>
@@ -88,14 +77,6 @@ const Hero = ({ recap, zone }: { recap: RecapData; zone: string }) => {
       )}
     </section>
   )
-}
-
-/** One label over the birded stretch: centred on it, or held to its edge near either end of the bar. */
-const spanAt = (first: number, last: number) => {
-  const middle = (first + last) / 2
-  if (middle < 22) return { left: `${first}%` }
-  if (middle > 78) return { right: `${100 - last}%` }
-  return { left: `${middle}%`, transform: 'translateX(-50%)' }
 }
 
 /** The day in numbers: stops, distance, time out, the best stop and the best hour, each only when known. */
