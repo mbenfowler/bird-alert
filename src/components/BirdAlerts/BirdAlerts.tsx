@@ -23,8 +23,8 @@ const TITLES: Record<AlertType, string> = { star: 'alerts.watchLabel', notable: 
 
 /**
  * Recent sightings panel. Expanded on every visit; the user can collapse it to a one-line bar to
- * give the bird list the screen. Three tabs: birds on the watch list, eBird's notable sightings,
- * and species due back about now that have not been reported yet.
+ * give the bird list the screen. Three tabs: eBird's notable sightings (open on arrival), birds on
+ * the watch list, and species due back about now that have not been reported yet.
  */
 const BirdAlerts = () => {
     // The area shown (home, a place the person is in, or one being explored); at a place, its
@@ -33,7 +33,7 @@ const BirdAlerts = () => {
     const region = area.region
     const targets = useShownTargets(area)
     // Coming back from a sighting (Back, or the browser's) finds the tab, the panel and the row as they were left.
-    const [alertType, setAlertType] = usePageMemory<AlertType>('alertsTab', 'star', isAlertType)
+    const [alertType, setAlertType] = usePageMemory<AlertType>('alertsTab', 'notable', isAlertType)
     const [expanded, setExpanded] = usePageMemory<boolean>('alertsOpen', true, isBoolean)
     const { key: entry } = useLocation()
     // Each tab's row starts at its first card, however far the previous one was scrolled.
@@ -118,8 +118,8 @@ const BirdAlerts = () => {
       <section id='birdAlerts' className={expanded ? 'is-expanded' : 'is-collapsed'} aria-labelledby='alertsHeading'>
           <div className='alerts-bar'>
             <div className='alerts-tabs' role='group' aria-label={t('alerts.typeLabel')}>
-              <button type='button' className={`alert-icon ${alertType === 'star' ? 'button-pressed' : ''}`} id='star' aria-pressed={alertType === 'star'} aria-label={t('alerts.starLabel')} title={t('alerts.starTitle')} onClick={() => pick('star')}><StarIcon /></button>
               <button type='button' className={`alert-icon ${alertType === 'notable' ? 'button-pressed' : ''}`} id='notable' aria-pressed={alertType === 'notable'} aria-label={t('alerts.notableLabel')} title={t('mapPage.notableLabel')} onClick={() => pick('notable')}><AlertIcon /></button>
+              <button type='button' className={`alert-icon ${alertType === 'star' ? 'button-pressed' : ''}`} id='star' aria-pressed={alertType === 'star'} aria-label={t('alerts.starLabel')} title={t('alerts.starTitle')} onClick={() => pick('star')}><StarIcon /></button>
               <button type='button' className={`alert-icon ${alertType === 'arriving' ? 'button-pressed' : ''}`} id='arriving' aria-pressed={alertType === 'arriving'} aria-label={t('alerts.arrivingLabel')} title={t('alerts.arriving')} onClick={() => pick('arriving')}><MigrationIcon /></button>
             </div>
             <h2 id='alertsHeading' className='alerts-header'>

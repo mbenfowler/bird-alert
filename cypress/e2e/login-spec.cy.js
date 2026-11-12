@@ -5,6 +5,13 @@ describe("Login flow for a user that already has location set", () => {
     login()
   })
 
+  it("Home opens on Notable sightings, its button first", () => {
+    cy.visit('http://localhost:3000/')
+    cy.get('.alerts-tabs button').first().should('have.id', 'notable').and('have.attr', 'aria-pressed', 'true')
+    cy.get('.alerts-tabs button').eq(1).should('have.id', 'star')
+    cy.get('.alerts-header').should('contain', 'Notable')
+  })
+
   it("should be able to login with correct email and password", () => {
       cy.get('#titleBird').should('contain', 'Bird')
       .get('#titleAlert').should('contain', 'Alert')

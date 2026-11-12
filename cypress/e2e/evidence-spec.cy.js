@@ -18,6 +18,8 @@ describe('The evidence behind a rare-bird report', () => {
     cy.fixture('recentBirds').then((obs) => {
       cy.intercept('GET', '**/api/ebird/notable*', { body: withEvidence(obs) }).as('notable')
     })
+    // Home fetches the Notable tab as it loads: load it again with these rows.
+    cy.visit('http://localhost:3000/')
     cy.get('#notable').click()
     cy.wait('@notable')
     const card = (n) => cy.get('.alerts-list .alert-card').eq(n)
