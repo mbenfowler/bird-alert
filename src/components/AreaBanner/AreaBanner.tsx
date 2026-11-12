@@ -10,9 +10,27 @@ import './AreaBanner.css'
 /**
  * Which area the page shows, said plainly with a way back: an area being explored, or the saved
  * place the person is in. At home it offers "Explore another area", which changes what this visit
- * shows and nothing in Settings. (Events coming up and just over have their own banner.)
+ * shows and nothing in Settings (Home shows that under its list's heading instead). (Events coming
+ * up and just over have their own banner.)
  */
-const AreaBanner = () => {
+/**
+ * "Explore another area" and its picker, for pages that place it themselves (Home puts it under
+ * the list's heading). Only changes what this visit shows.
+ */
+export const ExploreAnother = ({ className = '' }: { className?: string }) => {
+  const shown = useShownArea()
+  const [picking, setPicking] = useState(false)
+  if (!picking) return <p className={`area-banner__another-row ${className}`}><button type='button' className='link-button link-text area-banner__another' onClick={() => setPicking(true)}>{t('explore.another')}</button></p>
+  return (
+    <div className={`area-banner__picker ${className}`}>
+      <AreaPicker current={null} onPick={(area) => { shown.explore(area); setPicking(false) }} />
+      <button type='button' className='link-button link-text' onClick={() => setPicking(false)}>{t('common.cancel')}</button>
+    </div>
+  )
+}
+
+/** `exploreAtHome` false: the page shows ExploreAnother itself, so at home the banner leaves it out. */
+const AreaBanner = ({ exploreAtHome = true }: { exploreAtHome?: boolean }) => {
   const shown = useShownArea()
   const navigate = useNavigate()
   const patch = usePatchUserMutation()
@@ -63,8 +81,8 @@ const AreaBanner = () => {
           <button type='button' className='link-button link-text' onClick={() => shown.showHome(false)}>{t('places.backTo', { name: shown.place.name })}</button>
         </p>
       )}
-      {another && <p className='area-banner__another-row'>{another}</p>}
-      {picker}
+      {exploreAtHome && another && <p className='area-banner__another-row'>{another}</p>}
+      {exploreAtHome && picker}
     </div>
   )
 }

@@ -223,6 +223,10 @@
     }
   },
   "alerts": {
+    "freshNow": "Signalé à l’instant",
+    "freshAgo_one": "Signalé il y a {{count}} min",
+    "freshAgo_many": "Signalé il y a {{count}} min",
+    "freshAgo_other": "Signalé il y a {{count}} min",
     "watchLabel": "Observations de ta liste de suivi",
     "watchTitle": "Liste de suivi",
     "arriving": "Bientôt de retour",

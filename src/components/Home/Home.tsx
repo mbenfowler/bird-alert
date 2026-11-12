@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import BirdAlerts from '../BirdAlerts/BirdAlerts'
-import AreaBanner from '../AreaBanner/AreaBanner'
+import AreaBanner, { ExploreAnother } from '../AreaBanner/AreaBanner'
 import EventBanner from '../Events/EventBanner'
 import { useShownArea } from '../../shownArea'
 import BirdsList from '../BirdsList/BirdsList'
@@ -104,7 +104,7 @@ const Home = () => {
     return (
         <>
             <EventBanner />
-            <AreaBanner />
+            <AreaBanner exploreAtHome={false} />
             <section id='alertArea'>
                 <BirdAlerts />
             </section>
@@ -124,6 +124,7 @@ const Home = () => {
                 <h2 className='fredericka list-heading'>
                     {isSearching ? t('home.results') : <Trans i18nKey='home.title' values={{ region: regionLabel }} components={{ region: <span className='list-heading__region' /> }} />}
                 </h2>
+                {!isSearching && shown.mode === 'home' && <ExploreAnother className='list-explore' />}
                 {isSearching ? renderSearch() : renderBirds()}
             </section>
         </>

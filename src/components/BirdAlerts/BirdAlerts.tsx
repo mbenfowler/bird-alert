@@ -13,6 +13,7 @@ import { shareThing } from '../../share'
 import type { Observation } from '../../types'
 import { t } from '../../i18n'
 import { recall, remember, usePageMemory } from '../../pageMemory'
+import { FRESH_EVENT, freshAlerts, freshKey, useFreshAlerts } from '../../freshAlerts'
 
 type AlertType = 'star' | 'notable' | 'arriving'
 const isAlertType = (value: unknown): value is AlertType => value === 'star' || value === 'notable' || value === 'arriving'
@@ -61,7 +62,26 @@ const BirdAlerts = () => {
       [observations.data, savedCodes, targets]
     )
 
-    const shown = alertType === 'star' ? birdAlerts : alertType === 'notable' ? (notable.data ?? []) : []
+    // An alert that just came in: its card leads the row, arrives with a flourish and pulses for the hour.
+    const fresh = useFreshAlerts()
+    const freshOf = (alert: Observation) => fresh.get(freshKey(alert.speciesCode, alert.subId))
+    const listed = alertType === 'star' ? birdAlerts : alertType === 'notable' ? (notable.data ?? []) : []
+    const shown = fresh.size ? [...listed.filter(a => freshOf(a)), ...listed.filter(a => !freshOf(a))] : listed
+    // When one arrives with the page open, fetch the sightings again so its card is there, on the
+    // Notable tab unless the bird is already on the watch-list row being looked at.
+    const refetchObservations = observations.refetch
+    const refetchNotable = notable.refetch
+    useEffect(() => {
+      const arrived = () => {
+        void refetchObservations()
+        void refetchNotable()
+        const now = freshAlerts()
+        const onWatchRow = alertType === 'star' && birdAlerts.some(a => now.has(freshKey(a.speciesCode, a.subId)))
+        if (alertType !== 'notable' && !onWatchRow) { setAlertType('notable'); setExpanded(true) }
+      }
+      window.addEventListener(FRESH_EVENT, arrived)
+      return () => window.removeEventListener(FRESH_EVENT, arrived)
+    }, [refetchObservations, refetchNotable, setAlertType, setExpanded, alertType, birdAlerts])
     // While a county's history is too thin to tell migrants from residents, the feed is every species
     // from this week last year; that list is not shown, only the note that we are still learning.
     const learning = Boolean(arriving.data?.learning)
@@ -121,12 +141,14 @@ const BirdAlerts = () => {
                 {isLoading && <LoadingState variant='inline' label={t('alerts.loading')} />}
                 {!isLoading && !shown.length && !arrivals.length && <p className='alerts-empty'>{emptyText}</p>}
                 {shown.map((alert, index) => {
-                  const isNew = isNewSince(alert.obsDt, since)
+                  const hot = freshOf(alert)
+                  const isNew = !hot && isNewSince(alert.obsDt, since)
                   return (
                   // The card opens the sighting; the share button sits beside the link, not in it (a
                   // button inside a link would open the sighting too).
-                  <div key={`${alert.subId}-${alert.speciesCode}`} className='alerts-item alerts-item--sighting' style={{ '--i': index } as React.CSSProperties}>
+                  <div key={`${alert.subId}-${alert.speciesCode}`} className={`alerts-item alerts-item--sighting ${hot ? 'is-fresh' : ''} ${hot?.arriving ? 'is-arriving' : ''}`} style={{ '--i': index } as React.CSSProperties} data-testid={hot ? 'fresh-alert' : undefined}>
                     <Link className={`alert-link ${isNew ? 'is-new' : ''}`} to={`/sighting/${alert.speciesCode}/${alert.subId}${area.mode === 'home' ? '' : `?region=${area.region}`}`}>
+                      {hot && <span className='alert-fresh'><span className='alert-new__dot' aria-hidden='true' />{hot.minutes < 1 ? t('alerts.freshNow') : t('alerts.freshAgo', { count: hot.minutes })}</span>}
                       {isNew && <span className='alert-new'><span className='alert-new__dot' aria-hidden='true' />{t('alerts.new')}<span className='visually-hidden'>{t('alerts.newHidden')}</span></span>}
                       <AlertCard alert={alert} />
                       <span className='visually-hidden'>{t('alerts.openHidden')}</span>
