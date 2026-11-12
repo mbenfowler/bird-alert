@@ -211,6 +211,9 @@
     }
   },
   "alerts": {
+    "freshNow": "Reported just now",
+    "freshAgo_one": "Reported {{count}} min ago",
+    "freshAgo_other": "Reported {{count}} min ago",
     "watchLabel": "Watch list sightings",
     "watchTitle": "Watch list",
     "arriving": "Arriving soon",
