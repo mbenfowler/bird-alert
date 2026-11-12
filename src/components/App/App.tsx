@@ -21,6 +21,7 @@ import { offerRestore } from '../../pushAsk'
 import { isIOS } from '../../install'
 import { soundTheAlarm } from '../../alertMode'
 import { kindFor } from '../../alertSounds'
+import { noteFreshAlert } from '../../freshAlerts'
 import { useSessionQuery } from '../../hooks/queries'
 import './App.css'
 import Login from '../Login/Login'
@@ -202,6 +203,8 @@ const App = () => {
       for (const [k, at] of alarmed) if (now - at > 10 * 60_000) alarmed.delete(k)
       if (alarmed.has(key)) return
       alarmed.set(key, now)
+      // The alert bar brings the bird's card in and keeps it pulsing for the hour.
+      noteFreshAlert(path, now)
       burst.push(title)
       window.clearTimeout(burstTimer)
       burstTimer = window.setTimeout(() => {

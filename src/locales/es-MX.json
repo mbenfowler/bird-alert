@@ -219,6 +219,10 @@
     }
   },
   "alerts": {
+    "freshNow": "Reportado hace un momento",
+    "freshAgo_one": "Reportado hace {{count}} min",
+    "freshAgo_many": "Reportado hace {{count}} min",
+    "freshAgo_other": "Reportado hace {{count}} min",
     "watchLabel": "Avistamientos de tu lista de seguimiento",
     "watchTitle": "Seguimiento",
     "arriving": "Por llegar",
