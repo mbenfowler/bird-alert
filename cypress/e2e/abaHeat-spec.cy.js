@@ -12,13 +12,9 @@ const card = (code) => cy.get(`.alerts-list .alert-card[data-aba="${code}"]`)
 
 describe('ABA heat on alert cards', () => {
   const open = () => {
-    login()
-    cy.get('.alerts-list .alert-link', { timeout: 15000 })
-    cy.fixture('notableWeek').then((week) => {
-      cy.intercept('GET', '**/api/ebird/notable*', { body: row(week[0]) }).as('row')
-    })
+    cy.fixture('notableWeek').then((week) => login({ notable: row(week[0]) }))
     cy.get('#notable').click()
-    cy.wait('@row')
+    cy.wait('@notable')
   }
 
   it('warms each card by its ABA code, pulses a 5 and marks a 6 as unconfirmed', () => {

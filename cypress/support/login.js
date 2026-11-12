@@ -27,7 +27,12 @@ export const TEST_USER = {
  * The watch list is a tiny in-memory fake: GET returns the current list, POST and DELETE
  * change it, so optimistic updates and the refetch that follows them stay consistent.
  */
-export const login = () => {
+/**
+ * Signs in and lands on Home with the watch-list tab open, as most specs expect (the app itself
+ * opens on Notable). `notable` (rows) or `notableFixture` (a fixture's name) is what the Notable tab
+ * gets: it's fetched as Home loads, so a spec's own stub set after login would come too late.
+ */
+export const login = ({ notable = [], notableFixture = null } = {}) => {
   let loggedIn = false
   const birdsByCode = {}
   const watchList = { birds: [] }
@@ -132,7 +137,7 @@ export const login = () => {
   // eBird, as proxied by the backend.
   cy.intercept('GET', '**/api/ebird/species-list?region=US-GA-139', { statusCode: 200, fixture: 'birdCodes' }).as('speciesList')
   cy.intercept('GET', '**/api/ebird/observations?region=US-GA-139', { statusCode: 200, fixture: 'recentBirds' }).as('observations')
-  cy.intercept('GET', '**/api/ebird/notable*', { statusCode: 200, body: [] }).as('notable')
+  cy.intercept('GET', '**/api/ebird/notable*', notableFixture ? { statusCode: 200, fixture: notableFixture } : { statusCode: 200, body: notable }).as('notable')
   // Per-species feed: only that species' rows from the fixture, as eBird would return.
   const recent = { observations: [] }
   cy.fixture('recentBirds').then((obs) => { recent.observations = obs })
@@ -160,4 +165,5 @@ export const login = () => {
   cy.get('.input.email').type('robin@example.com{enter}')
   cy.get('.input.password', { timeout: 10000 }).should('be.visible')
   cy.get('.input.password').type('1234{enter}')
+  cy.get('#star', { timeout: 15000 }).click()
 }

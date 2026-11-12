@@ -10,6 +10,8 @@ describe('Back button', () => {
     cy.fixture('recentBirds').then((obs) => {
       cy.intercept('GET', '**/api/ebird/notable*', { statusCode: 200, body: obs.slice(0, 3) }).as('notableSome')
     })
+    // Home fetches the Notable tab as it loads: load it again with these rows.
+    cy.visit('http://localhost:3000/')
     cy.get('#notable').click()
     cy.get('#notable').should('have.attr', 'aria-pressed', 'true')
     cy.get('.alerts-list .alert-link').first().click()
