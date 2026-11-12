@@ -39,6 +39,9 @@ describe('Places and exploring', () => {
     stubRegions()
     cy.intercept('GET', '**/api/ebird/area-search*', { statusCode: 200, body: { areas: [{ location: DENVER, state: 'CO', country: 'US', name: 'Denver', label: 'Denver, Colorado, United States', countyWord: 'county' }] } }).as('areaSearch')
     cy.visit('http://localhost:3000/')
+    // Under the list's heading, not floating over the alert bar.
+    cy.get('.list-heading + .list-explore').should('contain', 'Explore another area')
+    cy.get('#alertArea .area-banner__another').should('not.exist')
     cy.contains('button', 'Explore another area').click()
     cy.get('.area-banner__picker input').type('denver{enter}')
     cy.wait('@areaSearch')
