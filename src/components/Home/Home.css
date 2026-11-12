@@ -26,6 +26,16 @@
     white-space: nowrap;
 }
 
+/* "Explore another area", just under the heading it changes. */
+.area-banner__another-row.list-explore {
+    margin: -6px 0 12px;
+    text-align: center;
+}
+
+.area-banner__picker.list-explore {
+    margin: 0 0 12px;
+}
+
 @media screen and (max-width: 600px) {
     .list-heading__region {
         display: block;
