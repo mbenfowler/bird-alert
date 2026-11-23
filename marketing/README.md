@@ -20,12 +20,32 @@ The finished PNGs are committed in [`out/`](out/):
 Wording rule: alerts arrive *soon after* a report reaches eBird, never "the moment". The app
 checks eBird on a schedule; promising more would be untrue.
 
+## Print pieces
+
+`print/` holds pages for printing, on US Letter, rendered to `out/print/<name>.pdf` (to print)
+and `<name>.png` (to look at):
+
+| File | What it is |
+| --- | --- |
+| `flyer.pdf` | One page for a handout table: headline, three points, the home screen, a Snow Goose print, and a QR code. |
+| `handout.pdf` | Two half-page handouts on one landscape sheet, with a dashed line to cut on. |
+| `join-card.pdf` | Four cards to a sheet for a guide's group: the event's name, when and where, and a QR code of its invite link. |
+
+The join card takes its words and link from `print/join-card.json` (`name`, `when`, `organizer`,
+`url`). For a guide's event, put their invite link in `url` and render with `--print`. The sample
+in the repository is made up and links to the app.
+
+The QR codes go to `bird-alert.vercel.app/?utm_source=snowgoose`, so signups from them show up as
+`snowgoose` in the signup sources. Change `data-qr` for another event. White paper, not the slides'
+grey, so a home printer doesn't lay down a wash. Chromium renders them, since WebKit can't print.
+
 ## Regenerating
 
 ```sh
 npm run slides                  # every app screen, then every slide
 npm run slides -- --slides      # only the slides, from the screens already shot
 npm run slides -- --only=route  # one screen (by its name in render.mjs), then the slides
+npm run slides -- --print       # only the print pieces, from the screens already shot
 ```
 
 `render.mjs` starts Vite on a free port, opens each screen in WebKit at 390 px wide and 3×, with

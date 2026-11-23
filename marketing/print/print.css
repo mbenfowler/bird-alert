@@ -1,0 +1,83 @@
+/* Print pieces: US Letter pages at 96 px to the inch, the slides' fonts, colours and prints.
+   White paper instead of the slides' grey canvas, so a home printer doesn't lay down a wash. */
+@import url('../slides/slides.css');
+
+@page { size: letter; margin: 0; }
+html, body { width: 816px; height: 1056px; overflow: hidden; background: #fff; }
+body.landscape, html:has(body.landscape) { width: 1056px; height: 816px; }
+
+.sheet { position: absolute; inset: 0; padding: 56px 56px 0; }
+.sheet h1 { font-size: 60px; margin-top: 18px; }
+.sheet .pill { font-size: 20px; padding: 6px 16px 7px; border-width: 3px; }
+.sheet .wordmark { font-size: 40px; }
+.sheet .phone { width: 300px; padding: 10px; border-radius: 42px; box-shadow: -14px 16px 0 rgba(0, 0, 0, 0.16), 0 0 0 2px #3a3a3a inset; }
+.sheet .phone img { border-radius: 33px; }
+.sheet .print figcaption { font-size: 14px; margin-top: 8px; }
+.sheet .print__paper { padding: 12px; }
+.sheet .credit { font-size: 10.5px; line-height: 1.35; color: #555; }
+
+.lede { font: 400 21px/1.42 var(--sans); color: #2b2b2b; margin-top: 18px; }
+
+.points { list-style: none; margin-top: 30px; display: grid; gap: 20px; }
+.points li { font: 400 15.5px/1.42 var(--sans); color: #2b2b2b; padding-left: 40px; position: relative; }
+.points li b { display: block; font-size: 17px; color: var(--ink); margin-bottom: 2px; }
+.points li::before {
+  content: '';
+  position: absolute; left: 0; top: 3px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); border: 3px solid var(--ink);
+}
+
+/* The bottom band: the QR code, the address, and what it costs (nothing). */
+.band {
+  position: absolute; left: 40px; right: 40px; bottom: 40px;
+  display: grid; grid-template-columns: auto 1fr; gap: 0 26px; align-items: center;
+  padding: 22px 26px; border: 4px solid var(--ink); border-radius: 26px; background: #fffbe0;
+  box-shadow: 10px 12px 0 var(--ink);
+}
+.qr { width: 150px; height: 150px; background: #fff; padding: 8px; border-radius: 10px; }
+.qr svg { display: block; width: 100%; height: 100%; }
+.band .scan { font: 700 26px/1.15 var(--sans); }
+.band .url { font-size: 26px; margin-top: 8px; }
+.band .free { font: 400 16px/1.4 var(--sans); color: #2b2b2b; margin-top: 10px; }
+
+/* Half-page handouts, two to a landscape sheet, with a dashed line to cut on. */
+.half { position: absolute; top: 0; bottom: 0; width: 528px; padding: 40px 38px 0; }
+.half + .half { left: 528px; border-left: 1.5px dashed #9a9a9a; }
+.half h1 { font-size: 40px; margin-top: 14px; }
+.half .wordmark { font-size: 30px; }
+.half .pill { font-size: 16px; padding: 5px 13px 6px; border-width: 3px; }
+.half .points { margin-top: 18px; gap: 12px; }
+.half .points li { font-size: 14px; padding-left: 30px; }
+.half .points li b { font-size: 15.5px; }
+.half .points li::before { width: 16px; height: 16px; border-width: 2.5px; top: 2px; }
+.half .band { left: 26px; right: 26px; bottom: 28px; padding: 14px 16px; gap: 0 16px; border-width: 3px; border-radius: 18px; box-shadow: 7px 8px 0 var(--ink); }
+.half .qr { width: 112px; height: 112px; padding: 6px; }
+.half .band .scan { font-size: 19px; }
+.half .band .url { font-size: 18px; margin-top: 6px; }
+.half .band .free { font-size: 12.5px; margin-top: 6px; }
+.half .credit { font-size: 8.5px; }
+
+/* Join cards: four to a Letter sheet (4.25 × 5.5 in each), cut lines between them. */
+.card { position: absolute; width: 408px; height: 528px; padding: 26px 28px 0; }
+.card:nth-child(odd) { border-right: 1.5px dashed #9a9a9a; }
+.card:nth-child(-n+2) { border-bottom: 1.5px dashed #9a9a9a; }
+.card .wordmark { font-size: 22px; }
+.card .kicker { font: 700 15px/1.2 var(--sans); margin-top: 16px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.card h1 { font-size: 34px; line-height: 1.05; margin-top: 6px; }
+.card .when { font: 600 15px/1.35 var(--sans); margin-top: 8px; }
+.card .row { display: grid; grid-template-columns: 150px 1fr; gap: 16px; align-items: start; margin-top: 18px; }
+.card .qr { width: 150px; height: 150px; padding: 0; border-radius: 0; }
+.card ol { list-style: none; counter-reset: step; display: grid; gap: 9px; }
+.card ol li { counter-increment: step; position: relative; padding-left: 28px; font: 400 13.5px/1.35 var(--sans); color: #2b2b2b; }
+.card ol li::before {
+  content: counter(step);
+  position: absolute; left: 0; top: -1px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--accent); border: 2px solid var(--ink);
+  font: 700 11px/16px var(--sans); text-align: center;
+}
+.card .foot-note { position: absolute; left: 28px; right: 28px; bottom: 22px; font: 400 12px/1.4 var(--sans); color: var(--muted); }
+.card .foot-note b { color: var(--ink); }
+.card .print__paper { padding: 8px; }
+.card .print figcaption { font-size: 10px; margin-top: 4px; }
