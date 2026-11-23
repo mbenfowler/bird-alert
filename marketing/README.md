@@ -29,6 +29,11 @@ and `<name>.png` (to look at):
 | --- | --- |
 | `flyer.pdf` | One page for a handout table: headline, three points, the home screen, a Snow Goose print, and a QR code. |
 | `handout.pdf` | Two half-page handouts on one landscape sheet, with a dashed line to cut on. |
+| `join-card.pdf` | Four cards to a sheet for a guide's group: the event's name, when and where, and a QR code of its invite link. |
+
+The join card takes its words and link from `print/join-card.json` (`name`, `when`, `organizer`,
+`url`). For a guide's event, put their invite link in `url` and render with `--print`. The sample
+in the repository is made up and links to the app.
 
 The QR codes go to `bird-alert.vercel.app/?utm_source=snowgoose`, so signups from them show up as
 `snowgoose` in the signup sources. Change `data-qr` for another event. White paper, not the slides'

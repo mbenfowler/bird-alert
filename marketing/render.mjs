@@ -397,6 +397,10 @@ const SCREENS = [
     })
   },
   {
+    // Making an event: the form a guide or a group's organizer starts from.
+    name: 'event-new', path: '/events/new', ready: '.event-page form', shot: element('event-new', '.event-page')
+  },
+  {
     name: 'install', path: '/settings?tab=alerts', iphone: true, ready: '.install-group', shot: element('install', '.install-group')
   }
 ]
@@ -551,6 +555,14 @@ const renderPrint = async (used, platesUsed) => {
       const page = await context.newPage()
       await page.goto(pathToFileURL(join(PRINT, file)).href)
       await settle(page)
+      // A page with its own <name>.json (the join cards) takes its words and its QR link from it:
+      // [data-field="key"] gets the text, [data-qr-field="key"] a QR code of the link.
+      const dataFile = join(PRINT, file.replace(/\.html$/, '.json'))
+      const fields = existsSync(dataFile) ? JSON.parse(readFileSync(dataFile, 'utf8')) : {}
+      await page.evaluate((f) => {
+        document.querySelectorAll('[data-field]').forEach(el => { el.textContent = f[el.getAttribute('data-field')] ?? '' })
+        document.querySelectorAll('[data-qr-field]').forEach(el => { el.setAttribute('data-qr', f[el.getAttribute('data-qr-field')] ?? '') })
+      }, fields)
       const urls = await page.evaluate(() => [...document.querySelectorAll('[data-qr]')].map(el => el.getAttribute('data-qr')))
       const svgs = await Promise.all(urls.map(url => QRCode.toString(url, { type: 'svg', margin: 0, errorCorrectionLevel: 'M' })))
       await page.evaluate((list) => { document.querySelectorAll('[data-qr]').forEach((el, i) => { el.innerHTML = list[i] }) }, svgs)
