@@ -1,11 +1,11 @@
 /**
  * What brought a visitor in, noted on their first visit so a signup can say where it came from:
  * the referring site's name (never the full address), a ?utm_source= tag, the share link they
- * landed on, a friend's invite (?ref=invite-<code>, kept whole), and the kind of page. Kept in this
- * browser for 30 days, first visit wins, except that a friend's invite always replaces what was kept
- * (the friend gets the credit), and sent only with a signup. Storage can be unavailable (private mode); then nothing is kept.
+ * landed on, a friend's invite (?ref=invite-<code>, kept whole), and the kind of page (an event's
+ * invite or view-only page among them). Kept in this browser for 30 days, first visit wins, except
+ * that a friend's invite or an event's invite always replaces what was kept (it gets the credit), and sent only with a signup. Storage can be unavailable (private mode); then nothing is kept.
  */
-export interface Arrival { ref?: string; utm?: string; share?: string; invite?: string; landing: 'home' | 'share-sighting' | 'share-route' | 'login' | 'other'; at: number }
+export interface Arrival { ref?: string; utm?: string; share?: string; invite?: string; landing: 'home' | 'share-sighting' | 'share-route' | 'event-invite' | 'event-view' | 'login' | 'other'; at: number }
 
 const KEY = 'arrivedFrom'
 const KEEP_MS = 30 * 24 * 60 * 60 * 1000
@@ -14,7 +14,11 @@ const KEEP_MS = 30 * 24 * 60 * 60 * 1000
 export const arrivalFor = (href: string, referrer: string, now = Date.now()): Arrival => {
   const url = new URL(href)
   const share = /^\/share\/([sr])\/([A-Za-z0-9]{10})\/?$/.exec(url.pathname)
-  const landing: Arrival['landing'] = url.pathname === '/' ? 'home' : share ? (share[1] === 's' ? 'share-sighting' : 'share-route') : url.pathname === '/login' ? 'login' : 'other'
+  const event = /^\/events\/(join|view)\//.exec(url.pathname)
+  const landing: Arrival['landing'] = url.pathname === '/' ? 'home'
+    : share ? (share[1] === 's' ? 'share-sighting' : 'share-route')
+    : event ? (event[1] === 'join' ? 'event-invite' : 'event-view')
+    : url.pathname === '/login' ? 'login' : 'other'
   const out: Arrival = { landing, at: now }
   try {
     const host = referrer ? new URL(referrer).hostname : ''
@@ -37,7 +41,7 @@ export const noteArrival = () => {
   thisVisit = arrivalFor(window.location.href, document.referrer)
   try {
     const kept = JSON.parse(localStorage.getItem(KEY) || 'null') as Arrival | null
-    if (kept && Date.now() - kept.at < KEEP_MS && !thisVisit.invite) return
+    if (kept && Date.now() - kept.at < KEEP_MS && !thisVisit.invite && thisVisit.landing !== 'event-invite') return
     localStorage.setItem(KEY, JSON.stringify(thisVisit))
   } catch { /* storage unavailable: the in-memory note stands in */ }
 }
