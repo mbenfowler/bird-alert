@@ -157,10 +157,11 @@ const App = () => {
     return () => document.removeEventListener('visibilitychange', onVisible)
   }, [signedInId])
   // A new account goes through the short setup once. Only an explicit null (setup not yet done)
-  // counts: an account the server doesn't mark either way is left alone.
+  // counts: an account the server doesn't mark either way is left alone. Never over an event's own
+  // page: someone who just joined from an invite sees the plan first, and setup comes after.
   const needsSetup = Boolean(user) && user?.onboarded_at === null
   useEffect(() => {
-    if (needsSetup && pathname !== '/welcome' && !pathname.startsWith('/share/') && !pathname.startsWith('/confirm/') && !pathname.startsWith('/unsubscribe/') && !pathname.startsWith('/events/join/') && !pathname.startsWith('/events/view/') && !pathname.startsWith('/recap/')) navigate('/welcome', { replace: true })
+    if (needsSetup && pathname !== '/welcome' && !pathname.startsWith('/share/') && !pathname.startsWith('/confirm/') && !pathname.startsWith('/unsubscribe/') && !pathname.startsWith('/events/join/') && !pathname.startsWith('/events/view/') && !/^\/events\/\d+(\/|$)/.test(pathname) && !pathname.startsWith('/recap/')) navigate('/welcome', { replace: true })
   }, [needsSetup, pathname, navigate])
   // Signed in and arrived where the login was taking them (a new account, after its setup): done with it.
   useEffect(() => {

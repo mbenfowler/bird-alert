@@ -8,7 +8,7 @@ import { useEventPreviewQuery, useSessionQuery } from '../../hooks/queries'
 import { useJoinEventMutation } from '../../hooks/mutations'
 import { dateRange, t } from '../../i18n'
 import { forgetJoin, rememberJoin } from './pendingJoin'
-import { forgetNext, useLoginHere } from '../../returnTo'
+import { rememberNext, useLoginHere } from '../../returnTo'
 import '../AlertCenter/Places.css'
 import './Events.css'
 
@@ -39,7 +39,13 @@ const JoinEvent = () => {
     if (!name.trim()) return setProblem(t('events.pickName'))
     setProblem(null)
     join.mutate({ token, displayName: name.trim() }, {
-      onSuccess: (joined) => { forgetJoin(); forgetNext(); toast.success(t('events.joined'), { position: 'bottom-center' }); navigate(`/events/${encodeURIComponent(String(joined.id))}`) },
+      onSuccess: (joined) => {
+        forgetJoin()
+        // If setup does come up for a new account, it ends back on the event.
+        rememberNext(`/events/${encodeURIComponent(String(joined.id))}`)
+        toast.success(t('events.joined'), { position: 'bottom-center' })
+        navigate(`/events/${encodeURIComponent(String(joined.id))}`)
+      },
       onError: (error) => setProblem(errorMessage(error))
     })
   }

@@ -35,6 +35,23 @@ describe('invites', () => {
       window.history.replaceState(null, '', '/')
     }
   })
+  it('an event\'s invite page counts as its own landing, never with its token, and replaces an earlier visit', async () => {
+    expect(arrivalFor('https://bird-alert.vercel.app/events/join/AbC123token?utm_source=snowgoose', '', 1)).toEqual({ landing: 'event-invite', utm: 'snowgoose', at: 1 })
+    expect(arrivalFor('https://bird-alert.vercel.app/events/view/view456', '', 1)).toEqual({ landing: 'event-view', at: 1 })
+    const { noteArrival, arrival } = await import('./arrival')
+    try {
+      localStorage.setItem('arrivedFrom', JSON.stringify({ landing: 'home', utm: 'fb', at: Date.now() - 86_400_000 }))
+      window.history.replaceState(null, '', '/events/view/view456')
+      noteArrival()
+      expect(arrival()).toEqual({ landing: 'home', utm: 'fb' })
+      window.history.replaceState(null, '', '/events/join/AbC123token')
+      noteArrival()
+      expect(arrival()).toEqual({ landing: 'event-invite' })
+    } finally {
+      localStorage.removeItem('arrivedFrom')
+      window.history.replaceState(null, '', '/')
+    }
+  })
 })
 
 describe('arrival', () => {
