@@ -262,6 +262,27 @@ describe('Events', () => {
     cy.window().then((win) => expect(win.localStorage.getItem('bird-alert:join')).to.eq(null))
   })
 
+  it('a brand-new account that joins from an invite sees the plan first, and setup afterwards comes back to it', () => {
+    stubAuth({ loggedIn: true, user: { ...TEST_USER, onboarded_at: null } })
+    stubRegions()
+    stubBirds()
+    cy.intercept('GET', '**/api/saved?kind=event-preview*', { statusCode: 200, body: { name: 'Chiricahuas', area: 'Cochise County, Arizona', starts_on: '2027-05-09', ends_on: '2027-05-09', kind: 'bigday', members: 3 } })
+    cy.intercept('GET', '**/api/saved?kind=events*', { statusCode: 200, body: [event({ role: 'member' })] })
+    cy.intercept('POST', '**/api/saved?kind=event-join', { statusCode: 200, body: event({ role: 'member' }) }).as('join')
+    cy.visit('http://localhost:3000/events/join/inv123')
+    cy.get('.event-page__join input[name="display_name"]').type('Jane')
+    cy.contains('.event-page__join button', 'Join').click()
+    cy.wait('@join')
+    // Not sent off to setup: the event, with its plan.
+    cy.url().should('match', /\/events\/5$/)
+    cy.contains('Chiricahuas')
+    cy.window().then((win) => expect(win.sessionStorage.getItem('bird-alert:next')).to.eq('/events/5'))
+    // Anywhere else, setup comes up, and it knows to come back to the event.
+    cy.visit('http://localhost:3000/settings')
+    cy.url().should('include', '/welcome')
+    cy.window().then((win) => expect(win.sessionStorage.getItem('bird-alert:next')).to.eq('/events/5'))
+  })
+
   it('the view-only page is public, shows no names, and refreshes the tally on the day', () => {
     stubAuth({ loggedIn: false })
     let calls = 0
