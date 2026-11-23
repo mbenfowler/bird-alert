@@ -7,6 +7,7 @@
  *   npm run slides                 every screen, then every slide
  *   npm run slides -- --slides     the slides only, from the screens already in .cache/shots
  *   npm run slides -- --only=go    one screen (by name), then every slide
+ *   npm run slides -- --print      the print pieces only (marketing/print, to PDF and PNG)
  *
  * Needs the network the first time for fonts, bird photos (Wikipedia) and map tiles
  * (OpenStreetMap); photos and tiles are cached in marketing/.cache after that.
@@ -16,7 +17,8 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { createServer } from 'node:net'
 import { dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { webkit, devices } from '@playwright/test'
+import { chromium, webkit, devices } from '@playwright/test'
+import QRCode from 'qrcode'
 import { NOW, IMG_HOST, SPECIES, NOTABLE, ROUTES, answer, setRoad } from './fixtures.mjs'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
@@ -25,10 +27,12 @@ const CACHE = join(HERE, '.cache')
 const SHOTS = join(CACHE, 'shots')
 const OUT = join(HERE, 'out')
 const SLIDES = join(HERE, 'slides')
+const PRINT = join(HERE, 'print')
 const UA_HEADERS = { 'User-Agent': 'bird-alert-marketing-render/1.0 (https://bird-alert.vercel.app)' }
 
 const args = process.argv.slice(2)
 const slidesOnly = args.includes('--slides')
+const printOnly = args.includes('--print')
 const only = args.find(a => a.startsWith('--only='))?.slice(7) ?? null
 
 for (const dir of [SHOTS, OUT, join(CACHE, 'photos'), join(CACHE, 'tiles')]) mkdirSync(dir, { recursive: true })
@@ -144,7 +148,8 @@ const PLATES = [
   { key: 'painted-bunting', bird: 'Painted Bunting', plate: 53, file: 'File:53 Painted Finch.jpg' },
   { key: 'ivory-billed-woodpecker', bird: 'Ivory-billed Woodpecker', plate: 66, file: 'File:66 Ivory-billed Woodpecker.jpg' },
   { key: 'snowy-owl', bird: 'Snowy Owl', plate: 121, file: 'File:121 Snowy Owl.jpg' },
-  { key: 'roseate-spoonbill', bird: 'Roseate Spoonbill', plate: 321, file: 'File:321 Roseate Spoonbill.jpg' }
+  { key: 'roseate-spoonbill', bird: 'Roseate Spoonbill', plate: 321, file: 'File:321 Roseate Spoonbill.jpg' },
+  { key: 'snow-goose', bird: 'Snow Goose', plate: 381, file: 'File:381 Snow Goose.jpg' }
 ]
 
 /** Downloads each plate once (1200 px wide), only if Commons says it is in the public domain. */
@@ -479,12 +484,34 @@ const writeCredits = (credits, prints) => {
   ].join('\n'))
 }
 
-const renderSlides = async () => {
-  /** @type {Map<string, any>} */
-  const used = new Map()
-  const allPlates = await plates()
-  /** @type {Map<string, Set<string>>} */
-  const platesUsed = new Map()
+/**
+ * Fills a page's photo credit lines with the photos that actually show on it, and notes the
+ * Audubon plates it uses, for CREDITS.md. `name` is the output file the page becomes.
+ */
+const fillCredits = async (page, name, used, platesUsed) => {
+  // A photo is credited when the top of it shows on the slide: inside the phone's crop and the slide's edge.
+  const wanted = await page.evaluate(() => [...document.querySelectorAll('[data-photos]')].map(el => el.getAttribute('data-photos')))
+  const lists = Object.fromEntries(wanted.map(name => [name, photosOn(name)]))
+  const shown = await page.evaluate((all) => Object.entries(all).flatMap(([name, list]) => {
+    const img = /** @type {HTMLImageElement | null} */ (document.querySelector(`img[src$="/${name}.png"]`))
+    if (!img) return []
+    const scale = img.offsetWidth / 390
+    const box = img.getBoundingClientRect()
+    const clip = img.closest('.clip')?.getBoundingClientRect()
+    const bottom = Math.min(innerHeight, clip ? clip.bottom : Infinity)
+    return list.filter(p => box.top + (p.top + 20) * scale < bottom).map(p => p.code)
+  }), lists)
+  const credits = [...new Set(shown)].map(photoCredit).filter(Boolean)
+  credits.forEach(c => { used.set(c.code, c) })
+  await page.evaluate((line) => { document.querySelectorAll('[data-photos]').forEach(el => { el.textContent = line }) }, creditLine(credits))
+  for (const src of await page.evaluate(() => [...document.querySelectorAll('.print img')].map(img => img.getAttribute('src')))) {
+    const key = src.split('/').pop().replace(/\.jpg$/, '')
+    if (!platesUsed.has(key)) platesUsed.set(key, new Set())
+    platesUsed.get(key).add(name)
+  }
+}
+
+const renderSlides = async (used, platesUsed) => {
   const browser = await webkit.launch()
   try {
     const files = readdirSync(SLIDES).filter(f => f.endsWith('.html')).sort()
@@ -494,26 +521,7 @@ const renderSlides = async () => {
       const page = await context.newPage()
       await page.goto(pathToFileURL(join(SLIDES, file)).href)
       await settle(page)
-      // A photo is credited when the top of it shows on the slide: inside the phone's crop and the slide's edge.
-      const wanted = await page.evaluate(() => [...document.querySelectorAll('[data-photos]')].map(el => el.getAttribute('data-photos')))
-      const lists = Object.fromEntries(wanted.map(name => [name, photosOn(name)]))
-      const shown = await page.evaluate((all) => Object.entries(all).flatMap(([name, list]) => {
-        const img = /** @type {HTMLImageElement | null} */ (document.querySelector(`img[src$="/${name}.png"]`))
-        if (!img) return []
-        const scale = img.offsetWidth / 390
-        const box = img.getBoundingClientRect()
-        const clip = img.closest('.clip')?.getBoundingClientRect()
-        const bottom = Math.min(innerHeight, clip ? clip.bottom : Infinity)
-        return list.filter(p => box.top + (p.top + 20) * scale < bottom).map(p => p.code)
-      }), lists)
-      const credits = [...new Set(shown)].map(photoCredit).filter(Boolean)
-      credits.forEach(c => { used.set(c.code, c) })
-      await page.evaluate((line) => { document.querySelectorAll('[data-photos]').forEach(el => { el.textContent = line }) }, creditLine(credits))
-      for (const src of await page.evaluate(() => [...document.querySelectorAll('.print img')].map(img => img.getAttribute('src')))) {
-        const key = src.split('/').pop().replace(/\.jpg$/, '')
-        if (!platesUsed.has(key)) platesUsed.set(key, new Set())
-        platesUsed.get(key).add(file.replace(/\.html$/, '.png'))
-      }
+      await fillCredits(page, file.replace(/\.html$/, '.png'), used, platesUsed)
       const broken = await page.evaluate(() => [...document.images].filter(img => !img.naturalWidth).map(img => img.getAttribute('src')))
       if (broken.length) throw new Error(`${file}: images missing: ${broken.join(', ')} (run without --slides to shoot the screens)`)
       const out = join(OUT, file.replace(/\.html$/, '.png'))
@@ -523,11 +531,50 @@ const renderSlides = async () => {
       console.log(`slide ${out.slice(ROOT.length + 1)}`)
       await context.close()
     }
-    writeCredits([...used.values()].sort((a, b) => a.bird.localeCompare(b.bird)), allPlates.filter(p => platesUsed.has(p.key)).map(p => ({ ...p, slides: [...platesUsed.get(p.key)].sort() })))
   } finally {
     await browser.close()
   }
 }
 
-if (!slidesOnly) await shootScreens()
-await renderSlides()
+/**
+ * The print pieces in marketing/print: US Letter pages, to a PDF for printing and a PNG to look
+ * at. Chromium, since WebKit can't print to PDF. Each [data-qr] element gets a QR code of its URL.
+ */
+const renderPrint = async (used, platesUsed) => {
+  mkdirSync(join(OUT, 'print'), { recursive: true })
+  const browser = await chromium.launch()
+  try {
+    for (const file of readdirSync(PRINT).filter(f => f.endsWith('.html')).sort()) {
+      const landscape = /class="landscape"/.test(readFileSync(join(PRINT, file), 'utf8'))
+      const size = landscape ? { width: 1056, height: 816 } : { width: 816, height: 1056 }
+      const context = await browser.newContext({ viewport: size, deviceScaleFactor: 2 })
+      const page = await context.newPage()
+      await page.goto(pathToFileURL(join(PRINT, file)).href)
+      await settle(page)
+      const urls = await page.evaluate(() => [...document.querySelectorAll('[data-qr]')].map(el => el.getAttribute('data-qr')))
+      const svgs = await Promise.all(urls.map(url => QRCode.toString(url, { type: 'svg', margin: 0, errorCorrectionLevel: 'M' })))
+      await page.evaluate((list) => { document.querySelectorAll('[data-qr]').forEach((el, i) => { el.innerHTML = list[i] }) }, svgs)
+      const base = join(OUT, 'print', file.replace(/\.html$/, ''))
+      await fillCredits(page, `print/${file.replace(/\.html$/, '.pdf')}`, used, platesUsed)
+      const broken = await page.evaluate(() => [...document.images].filter(img => !img.naturalWidth).map(img => img.getAttribute('src')))
+      if (broken.length) throw new Error(`${file}: images missing: ${broken.join(', ')} (run without --slides to shoot the screens)`)
+      await page.screenshot({ path: `${base}.png` })
+      await page.pdf({ path: `${base}.pdf`, width: `${size.width / 96}in`, height: `${size.height / 96}in`, printBackground: true, pageRanges: '1' })
+      console.log(`print ${base.slice(ROOT.length + 1)}.pdf`)
+      await context.close()
+    }
+  } finally {
+    await browser.close()
+  }
+}
+
+if (!slidesOnly && !printOnly) await shootScreens()
+/** @type {Map<string, any>} */
+const used = new Map()
+/** @type {Map<string, Set<string>>} */
+const platesUsed = new Map()
+const allPlates = await plates()
+if (!printOnly) await renderSlides(used, platesUsed)
+await renderPrint(used, platesUsed)
+// A print-only run doesn't know which photos the slides credit, so it leaves the credits alone.
+if (!printOnly) writeCredits([...used.values()].sort((a, b) => a.bird.localeCompare(b.bird)), allPlates.filter(p => platesUsed.has(p.key)).map(p => ({ ...p, slides: [...platesUsed.get(p.key)].sort() })))
